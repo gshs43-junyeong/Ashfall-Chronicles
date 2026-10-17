@@ -855,11 +855,11 @@
       last = now2;
       frame(Math.min(maxDt, rawDt), rawDt);
     };
-    const tick = (t) => {
-      requestAnimationFrame(tick);
+    const tick2 = (t) => {
+      requestAnimationFrame(tick2);
       if (!bgOn) step(t / 1e3);
     };
-    requestAnimationFrame(tick);
+    requestAnimationFrame(tick2);
     if (!opts.background || typeof document === "undefined" || typeof Worker === "undefined") return;
     const sync = () => {
       const want = document.hidden && !!opts.background && opts.background();
@@ -14437,20 +14437,20 @@
     s_whirl: { ob: ["#ffcf6a", 8, 58, 1.6], cv: "#ffd07a", ln: ["255,210,120", 0.3, 22] },
     s_quake: { fl: ["255,170,100", 0.1, 0.18], dim: [0.32, 0.8], ln: ["255,180,120", 0.3, 34], edge: ["200,120,70", 0.5] },
     s_guard: { ob: ["#ffe0a0", 6, 30, 1], lens: "#ffe0a0", cv: "#e8b86a" },
-    s_warcry: { fl: ["255,200,120", 0.12, 0.22], dim: [0.3, 0.9], ln: ["255,200,120", 0.5, 56], ob: ["#ffd88a", 10, 46, 1.3], edge: ["232,160,74", 0.7] },
+    s_warcry: { fl: ["255,200,120", 0.12, 0.22], dim: [0.26, 0.6], ln: ["255,200,120", 0.5, 56], ob: ["#ffd88a", 10, 46, 1.3], edge: ["232,160,74", 0.7] },
     s_volley: { lens: "#d8ffb0", cv: "#bff09a" },
-    s_rain: { dim: [0.26, 1.1], fl: ["190,240,150", 0.06, 0.2], cv: "#bff09a" },
+    s_rain: { dim: [0.22, 0.6], fl: ["190,240,150", 0.06, 0.2], cv: "#bff09a" },
     s_pierce: { lens: "#d8ffb0", ln: ["210,255,180", 0.22, 30], cv: "#bff09a" },
-    s_smoke: { dim: [0.4, 1.2], ob: ["#c8d8c0", 8, 40, 1.2] },
+    s_smoke: { dim: [0.3, 0.7], ob: ["#c8d8c0", 8, 40, 1.2] },
     s_mark: { dim: [0.28, 0.7], edge: ["255,224,112", 0.5], lens: "#ffe070" },
     s_fireball: { lens: "#ffb060", cv: "#ffb060" },
     s_nova: { fl: ["200,240,255", 0.14, 0.2], dim: [0.3, 0.8], ob: ["#bfefff", 10, 42, 1], edge: ["150,210,255", 0.6] },
     s_heal: { fl: ["170,255,170", 0.08, 0.25], ob: ["#c8ffc0", 12, 30, 1.5], edge: ["120,230,130", 0.6] },
     s_barrier: { ob: ["#bfe0ff", 10, 36, 1.4], lens: "#bfe0ff", fl: ["170,210,255", 0.06, 0.2] },
-    s_wolf: { dim: [0.24, 0.9], ob: ["#fff0c8", 8, 40, 1.2], cv: "#e8d8a8" },
+    s_wolf: { dim: [0.22, 0.6], ob: ["#fff0c8", 8, 40, 1.2], cv: "#e8d8a8" },
     s_chain: { fl: ["255,240,150", 0.1, 0.12], ln: ["255,240,150", 0.2, 30], cv: "#ffe86a" },
     s_blink: { fl: ["200,160,255", 0.12, 0.14], ln: ["200,160,255", 0.2, 28, 1] },
-    s_meteor: { dim: [0.42, 1.6], edge: ["255,150,60", 1.2], cv: "#ffb04a", ob: ["#ffd07a", 8, 50, 1.2] },
+    s_meteor: { dim: [0.32, 1], edge: ["255,150,60", 1.2], cv: "#ffb04a", ob: ["#ffd07a", 8, 50, 1.2] },
     s_meteor_hit: { fl: ["255,220,160", 0.18, 0.3], ln: ["255,200,120", 0.45, 60], edge: ["255,140,50", 0.8] }
   };
   var PART_CAP = 900;
@@ -17809,7 +17809,7 @@
         흔한 유적처럼 방을 BSP 로 나누지 않고 성의 짜임 그대로 짓는다(사용자 요청). 상자는 늘 바닥 **위**에(chestOn). 사연: docs/code-history.md#h194 */
     buildCitadel(rng) {
       const { SX: SX2, SKY_Y: SKY_Y2 } = this.dims;
-      const w = 80, gy = SKY_Y2 - 14;
+      const w = 80, gy = SKY_Y2 - 11;
       const x0 = SX2(3300 + SHIFT), y0 = 1;
       this.citadel = { x0, y0, w, h: SKY_Y2 - 3 - y0, cx: x0 + (w >> 1), anc: [0, 0, 0], links: [[], [], []], gate: [], vault: [] };
       const C = this.citadel, r2 = new RNG(this.seed + "_citadel");
@@ -17825,6 +17825,14 @@
           for (let x = xa; x <= xb; x++) if ((x - xa) % 2 === 0) this.set(x, y, T.BATTLEMENT);
         }
       };
+      const parapet = (xa, xb, y) => {
+        if (y < 1) return;
+        for (let x = xa; x <= xb; x++) {
+          this.setWall(x, y, 13);
+          if ((x - xa) % 2 === 0 && y - 1 >= 1) this.setWall(x, y - 1, 13);
+        }
+        for (const x of [xa, xb]) this.set(x, y, T.BATTLEMENT);
+      };
       const chestOn = (tx, fy, extra) => {
         for (const x of [tx, tx + 1]) for (const y of [fy - 1, fy - 2]) if (this.solid(x, y)) this.set(x, y, T.AIR);
         this.objects.push(Object.assign({ type: "chest", tier: 6, loot: "session2", x: tx * TS - 4, y: fy * TS - 26, w: 30, h: 26, items: null }, extra || {}));
@@ -17834,7 +17842,7 @@
       };
       const ix0 = x0 - 3, ix1 = x0 + w + 3, half = (ix1 - ix0) / 2, icx = (ix0 + ix1) / 2;
       for (let x = ix0; x <= ix1; x++) {
-        const u = Math.abs(x - icx) / half, d = 2 + Math.round(Math.pow(Math.max(0, 1 - u * u), 0.8) * 10 + r2.int(-1, 1));
+        const u = Math.abs(x - icx) / half, d = 2 + Math.round(Math.pow(Math.max(0, 1 - u * u), 0.8) * 7 + r2.int(-1, 1));
         for (let y = gy; y <= Math.min(gy + d, SKY_Y2 - 2); y++) this.set(x, y, y === gy ? T.SKYGRASS : T.SKYSTONE);
         if (d > 6 && r2.chance(0.07)) this.set(x, gy + d - r2.int(1, 3), T.ORBITCORE);
       }
@@ -17859,7 +17867,7 @@
       const b0 = g1 + 1, b1 = x0 + 30;
       bg(b0, F - 7, b1, F - 1);
       for (let x = b0; x <= b1; x++) this.set(x, F - 8, T.PLATFORM);
-      crenel(b0, b1, F - 9);
+      parapet(b0, b1, F - 9);
       torch(b0 + 3, F - 3);
       torch(b1 - 2, F - 3);
       chestOn(b0 + 10, F);
@@ -17874,7 +17882,7 @@
         this.set(x, F - 10, T.ORBITPLATE);
         this.set(x, F - 16, T.ORBITPLATE);
       }
-      const sx = k0 + 3;
+      const sx = k0 + 6;
       for (let y = F - 3; y >= top; y -= 3) {
         this.set(sx, y, T.PLATFORM);
         this.set(sx + 1, y, T.PLATFORM);
@@ -17883,7 +17891,7 @@
         this.set(sx, y, T.PLATFORM);
         this.set(sx + 1, y, T.PLATFORM);
       }
-      crenel(k0, k1, top - 1);
+      parapet(k0 + 4, k1 - 4, top - 1);
       for (const tx of [k0, k1 - 3]) {
         box(tx, top - 5, tx + 3, top - 1, T.WALLSTONE);
         box(tx + 1, top - 4, tx + 2, top - 1, T.AIR);
@@ -17910,7 +17918,7 @@
       }
       chestOn(v0 + 4, F - 10, { relic: "jetpack" });
       torch(v0 + 2, F - 14);
-      torch(k0 + 7, F - 14);
+      torch(k0 + 10, F - 14);
       torch(k0 + 18, F - 14);
       chestOn(k0 + 12, F - 10);
       this.putTileTrap({ x: k0 + 1, y: F - 15, w: v0 - k0, h: 5 }, F - 11, "dart", r2);
@@ -17920,7 +17928,7 @@
       const i0 = k1 + 1, i1 = x0 + 66;
       bg(i0, F - 7, i1, F - 1);
       for (let x = i0; x <= i1; x++) this.set(x, F - 8, T.PLATFORM);
-      crenel(i0, i1, F - 9);
+      parapet(i0, i1, F - 9);
       const t0 = x0 + 67, t1 = x0 + w - 3, ttop = F - 22;
       box(t0, ttop, t1, F, T.WALLSTONE);
       box(t0 + 1, ttop + 1, t1 - 1, F - 1, T.AIR);
@@ -26990,8 +26998,8 @@
     stop_glass: { k: "hourglass" },
     sword_iron: { k: "sword", c: "#b8bcc4", g: "#6a6e76", grip: "#4a3122", w: 4 },
     sword_bone: { k: "sword", c: "#e0d8bd", g: "#9c9280", grip: "#5a4a3a", w: 4, jag: 1 },
-    sword_mythril: { k: "sword", c: "#5fd0c0", g: "#2a8a80", grip: "#3a4a52", w: 4, glow: "#5fd0c0" },
-    sword_dawn: { k: "sword", c: "#ffd98a", g: "#d89428", grip: "#7a4a1a", w: 5.5, glow: "#ffb24a" },
+    sword_mythril: { k: "sword", c: "#5fd0c0", g: "#2a8a80", grip: "#3a4a52", w: 4, glow: "#5fd0c0", orn: 1 },
+    sword_dawn: { k: "sword", c: "#ffd98a", g: "#d89428", grip: "#7a4a1a", w: 5.5, glow: "#ffb24a", orn: 2, gem: "#ff6a3a" },
     scythe_void: { k: "scythe", c: "#b48aff", shaft: "#2e2438", glow: "#a06fff" },
     /* 원거리 */
     bow_hunt: { k: "bow", c: "#7a5734", s: "#d8cbb0" },
@@ -27038,9 +27046,9 @@
     pick_copper: { k: "pick", c: "#c0762f" },
     pick_sharp: { k: "pick", c: "#d9903f" },
     // 날을 세운 구리 — 조금 더 밝다
-    pick_iron: { k: "pick", c: "#b8bcc4" },
-    pick_mythril: { k: "pick", c: "#5fd0c0", glow: "#5fd0c0" },
-    pick_soul: { k: "pick", c: "#c49fff", glow: "#c49fff" },
+    pick_iron: { k: "pick", c: "#b8bcc4", orn: 1, gem: "#e05a4a" },
+    pick_mythril: { k: "pick", c: "#5fd0c0", glow: "#5fd0c0", orn: 2 },
+    pick_soul: { k: "pick", c: "#c49fff", glow: "#c49fff", orn: 3 },
     axe_iron: { k: "axe", c: "#b8bcc4" },
     /* 방어구 */
     helm_cloth: { k: "helm", c: "#9c8a68", soft: 1 },
@@ -27217,10 +27225,10 @@
     charm_prism: { k: "shard", c: "#9fd8f0", glow: 1 },
     charm_lamp: { k: "torchitem" },
     /* --- 2부 --- */
-    sword_aether: { k: "sword", c: "#9fe8dc", g: "#3f8f86", grip: "#3a4a52", w: 4.5, glow: "#8fe0d8" },
+    sword_aether: { k: "sword", c: "#9fe8dc", g: "#3f8f86", grip: "#3a4a52", w: 4.5, glow: "#8fe0d8", orn: 2 },
     bow_gale: { k: "bow", c: "#bcd8f0", s: "#ffffff", glow: "#bcd8f0" },
     staff_storm: { k: "staff", c: "#4a5a6e", head: "#9fd8ff", style: "claw", glow: "#9fd8ff" },
-    sword_first: { k: "sword", c: "#fff0b8", g: "#d8a94b", grip: "#7a5a28", w: 6, glow: "#ffe08a" },
+    sword_first: { k: "sword", c: "#fff0b8", g: "#d8a94b", grip: "#7a5a28", w: 6, glow: "#ffe08a", orn: 3, gem: "#ff5a7a" },
     helm_aether: { k: "helm", c: "#9fe8dc", crest: "#d8a94b", glow: "#8fe0d8" },
     chest_aether: { k: "chest", c: "#9fe8dc", glow: "#8fe0d8" },
     boots_aether: { k: "boots", c: "#9fe8dc", glow: "#8fe0d8" },
@@ -27294,7 +27302,7 @@
     m_trap: { k: "machine", tile: T.M_TRAP, glow: "#9fd8ff" },
     m_switch: { k: "machine", tile: T.M_SWITCH, glow: "#e0563c" },
     /* --- 동력 장비 --- */
-    pick_arc: { k: "pick", c: "#7fd0e8", glow: "#9fd8ff" },
+    pick_arc: { k: "pick", c: "#7fd0e8", glow: "#9fd8ff", orn: 3 },
     saw_auto: { k: "sawblade", c: "#c8ccd4", glow: "#e0b93d" },
     gun_rail: { k: "railgun", c: "#8a8a96", glow: "#9fd8ff" },
     helm_exo: { k: "helm", c: "#8fa8b8", crest: "#6fe0c0", glow: "#6fe0c0" },
@@ -27346,7 +27354,7 @@
     proto_ash: { k: "sigil", c: "#b8b0a0" },
     atelier_key: { k: "sigil", c: "#e0c878" },
     arche_core: { k: "heart", c: "#e8dcc0" },
-    blade_arche: { k: "sword", c: "#f0e8d0", g: "#c8a05a", grip: "#8a7a5a", w: 5.5, glow: "#ffe8a0" },
+    blade_arche: { k: "sword", c: "#f0e8d0", g: "#c8a05a", grip: "#8a7a5a", w: 5.5, glow: "#ffe8a0", orn: 3, gem: "#7ad8ff" },
     tome_origin: { k: "staff", c: "#8a7a5a", head: "#e8dcc0", style: "crystal", glow: "#ffe8a0" },
     charm_maker: { k: "rune", c: "#e8dcc0" },
     /* --- 특별 유적 ① 부유 성채 --- */
@@ -27464,7 +27472,7 @@
     hammer_tide: { k: "hammer", c: "#5f9cc0", glow: "#8fd4ef" },
     gun_harpoon: { k: "railgun", c: "#5a6a72", glow: "#8fd0e8" },
     tome_abyss: { k: "staff", c: "#2e3a4a", head: "#8fb8e8", style: "crystal", glow: "#7fb8e8" },
-    pick_abyss: { k: "pick", c: "#5f9cc0", glow: "#8fd4ef" },
+    pick_abyss: { k: "pick", c: "#5f9cc0", glow: "#8fd4ef", orn: 3, gem: "#bfefff" },
     /* 바다 방어구·장신구 */
     helm_diver: { k: "helm", c: "#7fa8c0" },
     chest_scale: { k: "chest", c: "#6a9ab0" },
@@ -27805,6 +27813,10 @@
       keys.forEach(([key, spec], n) => {
         const cx = n % cols, cy = n / cols | 0;
         this.cells[key] = [cx, cy];
+        if (key.startsWith("s:")) {
+          this.skillEmblem(g, key.slice(2), spec, rng, cx * S32, cy * S32);
+          return;
+        }
         g.save();
         g.translate(cx * S32, cy * S32);
         try {
@@ -27818,6 +27830,103 @@
       });
       this.atlas = cv;
       this.ready = true;
+    },
+    /** 스킬 아이콘 — 그림을 갈래 모양 메달 위에 올린다. 쓰는 기술(active)은 둥근 메달 + 빛살, 지니는 기술(passive)은 마름모 패.
+        그림만 덩그러니 놓으면 아이템과 구별이 안 되고 밋밋했다 — 메달 · 속빛 · 테 광택 · 반짝임으로 한눈에 '기술'로 읽힌다 */
+    skillEmblem(g, id, spec, rng, ox, oy) {
+      const sk = SKILLS[id] || {}, c = spec.c || "#c8c8c8", active = sk.type === "active";
+      const t = document.createElement("canvas");
+      t.width = t.height = S32;
+      const tg = t.getContext("2d", { willReadFrequently: true });
+      try {
+        this.paint(tg, spec, rng);
+      } catch (e) {
+        console.warn("[skill icon] " + id, e && e.message);
+      }
+      this.outline(tg, 0, 0);
+      const RIM = { blade: ["#ffd27a", "#8a4a20"], ranger: ["#d8f0a0", "#3e6a2a"], arcane: ["#d8c8ff", "#40307a"], explore: ["#f0d8a0", "#6a4a2a"] };
+      const [hi, lo] = RIM[sk.br] || ["#e8e0d0", "#5a5048"];
+      g.save();
+      g.translate(ox, oy);
+      const shape = (r) => {
+        g.beginPath();
+        if (active) g.arc(16, 16, r, 0, TAU);
+        else {
+          g.moveTo(16, 16 - r);
+          g.lineTo(16 + r, 16);
+          g.lineTo(16, 16 + r);
+          g.lineTo(16 - r, 16);
+          g.closePath();
+        }
+      };
+      const R = active ? 15 : 15.5;
+      shape(R + 0.5);
+      g.fillStyle = "#0a0810";
+      g.fill();
+      const bg = g.createRadialGradient(16, 13, 1, 16, 16, R);
+      bg.addColorStop(0, sh2(c, 0.6));
+      bg.addColorStop(0.55, sh2(c, 0.28));
+      bg.addColorStop(1, "#120e18");
+      shape(R - 1);
+      g.fillStyle = bg;
+      g.fill();
+      g.save();
+      shape(R - 1);
+      g.clip();
+      g.globalCompositeOperation = "lighter";
+      for (let i = 0; i < 12; i++) {
+        const a = i * TAU / 12 + (active ? 0.13 : TAU / 24), w = i % 2 ? 0.07 : 0.13;
+        g.globalAlpha = i % 2 ? 0.07 : 0.15;
+        g.fillStyle = sh2(c, 1.4);
+        g.beginPath();
+        g.moveTo(16, 16);
+        g.arc(16, 16, R, a - w, a + w);
+        g.closePath();
+        g.fill();
+      }
+      g.restore();
+      const rim = g.createLinearGradient(0, 1, 0, 31);
+      rim.addColorStop(0, hi);
+      rim.addColorStop(0.5, sh2(hi, 0.8));
+      rim.addColorStop(1, lo);
+      shape(R - 0.5);
+      g.strokeStyle = rim;
+      g.lineWidth = 1.6;
+      g.stroke();
+      g.save();
+      g.shadowColor = sh2(c, 1.3);
+      g.shadowBlur = 5;
+      g.drawImage(t, 3, 3, 26, 26);
+      g.restore();
+      g.drawImage(t, 3, 3, 26, 26);
+      g.save();
+      shape(R - 1.5);
+      g.clip();
+      const gl = g.createLinearGradient(6, 4, 18, 18);
+      gl.addColorStop(0, "rgba(255,255,255,.34)");
+      gl.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = gl;
+      g.beginPath();
+      g.ellipse(12, 9, 11, 6, -0.5, 0, TAU);
+      g.fill();
+      g.restore();
+      const star3 = (x, y, r) => {
+        g.fillStyle = "#ffffff";
+        g.beginPath();
+        g.moveTo(x, y - r);
+        g.lineTo(x + r * 0.28, y - r * 0.28);
+        g.lineTo(x + r, y);
+        g.lineTo(x + r * 0.28, y + r * 0.28);
+        g.lineTo(x, y + r);
+        g.lineTo(x - r * 0.28, y + r * 0.28);
+        g.lineTo(x - r, y);
+        g.lineTo(x - r * 0.28, y - r * 0.28);
+        g.closePath();
+        g.fill();
+      };
+      star3(active ? 26 : 24, active ? 7 : 8, 3);
+      star3(active ? 6 : 8, active ? 25 : 24, 1.8);
+      g.restore();
     },
     /** 손그림 아이콘이 로드되면 절차 생성 아틀라스의 해당 칸을 덮어 그린다. */
     /* ★ file:// 로 열었을 때는 손그림을 아틀라스에 얹지 않는다. */
@@ -28290,6 +28399,81 @@
   __export(gear_exports, {
     ItemPaintGear: () => ItemPaintGear
   });
+  function orn(H, kind, s) {
+    const { g, P: P2, poly: poly2, circ: circ2, stroke, glow: glow4 } = H, n = s.orn, gl = s.glow || sh2(s.c, 1.5), gem = s.gem || gl, gold = "#ffd86a";
+    const jewel = (x, y, r) => {
+      circ2(x, y, r + 0.7, "#2a1a10");
+      circ2(x, y, r, sh2(gem, 0.8));
+      circ2(x - r * 0.3, y - r * 0.3, r * 0.45, "#ffffff");
+      glow4(x, y, r * 3, gem, 0.35);
+    };
+    const spark = (x, y, r) => {
+      g.fillStyle = "#ffffff";
+      g.beginPath();
+      g.moveTo(x, y - r);
+      g.lineTo(x + r * 0.25, y - r * 0.25);
+      g.lineTo(x + r, y);
+      g.lineTo(x + r * 0.25, y + r * 0.25);
+      g.lineTo(x, y + r);
+      g.lineTo(x - r * 0.25, y + r * 0.25);
+      g.lineTo(x - r, y);
+      g.lineTo(x - r * 0.25, y - r * 0.25);
+      g.closePath();
+      g.fill();
+    };
+    if (kind === "sword") {
+      const bw = s.w;
+      if (n >= 3) {
+        for (const d of [-1, 1]) poly2([[16 + d * 9, 20], [16 + d * 14, 13], [16 + d * 13, 17], [16 + d * 15.5, 16], [16 + d * 12, 21.5]], gold);
+        for (const d of [-1, 1]) stroke(sh2(gold, 1.3), 0.8, () => {
+          g.moveTo(16 + d * 10, 20);
+          g.lineTo(16 + d * 13.6, 14);
+        });
+      }
+      if (n >= 2) {
+        stroke(gl, 1.2, () => {
+          g.moveTo(16, 6);
+          g.lineTo(16, 19);
+        });
+        glow4(16, 12, 6, gl, 0.3);
+        for (let y = 8; y < 19; y += 3.5) P2(15.5, y, 1, 1.3, "#ffffff");
+        P2(14, 24, 4, 0.8, gold);
+        P2(14, 27, 4, 0.8, gold);
+        stroke(sh2(s.c, 1.7), 0.7, () => {
+          g.moveTo(16 - bw + 0.4, 9);
+          g.lineTo(16 - bw + 0.9, 19.5);
+        });
+      }
+      jewel(16, 21.5, 1.6);
+      if (n >= 2) jewel(16, 29.6, 1.2);
+      if (n >= 3) {
+        spark(23, 5, 2.6);
+        spark(8, 12, 1.6);
+        spark(25, 26, 1.4);
+      }
+    } else {
+      if (n >= 2) {
+        glow4(16, 9, 9, gl, 0.3);
+        for (let i = 0; i < 7; i++) {
+          const a = Math.PI + 0.55 + i * (Math.PI - 1.1) / 6;
+          P2(16 + Math.cos(a) * 13 - 0.6, 20 + Math.sin(a) * 13 - 0.6, 1.3, 1.3, i % 2 ? gl : "#ffffff");
+        }
+        for (const y of [17, 21, 25]) P2(14.2, y, 3.6, 0.9, gold);
+        poly2([[1, 17.6], [-0.5, 15], [3.6, 14.2]], sh2(gl, 1.2));
+        poly2([[31, 17.6], [32.5, 15], [28.4, 14.2]], sh2(gl, 1.2));
+      }
+      if (n >= 3) {
+        for (const d of [-1, 1]) {
+          poly2([[16 + d * 11.5, 13], [16 + d * 13.5, 6.5], [16 + d * 14.5, 12.5]], sh2(gem, 1.15));
+          poly2([[16 + d * 13.5, 6.5], [16 + d * 14.5, 12.5], [16 + d * 13.2, 12.8]], sh2(gem, 0.75));
+          glow4(16 + d * 13.5, 9, 5, gem, 0.35);
+        }
+        spark(26, 6, 2.4);
+        spark(5, 9, 1.5);
+      }
+      jewel(16, 13.2, 1.7);
+    }
+  }
   var ItemPaintGear = {
     /* ---------- 무기 ---------- */
     sword(H) {
@@ -28316,6 +28500,7 @@
           P2(14, 26.5, 4, 1, sh2(s.grip, 0.55));
           circ2(16, 29.6, 2.3, gd);
           circ2(15.4, 29, 0.8, sh2(gd, 1.4));
+          if (s.orn) orn(H, "sword", s);
           return;
         }
       }
@@ -28510,6 +28695,7 @@
           poly2([[28.4, 14.2], [31, 17.6], [26, 17.4]], sh2(c, 0.78));
           P2(13.4, 10.6, 5.2, 5.4, sh2(c, 0.82));
           P2(13.4, 10.6, 5.2, 1.4, lt);
+          if (s.orn) orn(H, "pick", s);
           return;
         }
       }
@@ -34598,7 +34784,7 @@
       if (GEN.includes(id)) app.skillVfx(id, fo);
       app.stageFx(id, this);
       const fx = SKILL_FX[id] || {};
-      if (fx.c) app.ringFx(this.cx, this.cy, fx.r || 44, fx.c, 0.26);
+      if (fx.c) app.ringFx(this.cx, this.cy, fx.r || 44, fx.c, 0.4);
       if (fx.k) app.shake = Math.max(app.shake, fx.k);
       if (fx.st) app.hitStop(fx.st);
       app.sfx(fx.s || "skill");
@@ -42985,7 +43171,7 @@
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
     };
-    const tick = () => {
+    const tick2 = () => {
       if (!live) return;
       const t = (performance.now() - t0) / (unit || 1);
       let k = shown;
@@ -43000,7 +43186,7 @@
         o.done();
         return;
       }
-      raf = requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick2);
     };
     if (!n) {
       el.textContent = text;
@@ -43008,7 +43194,7 @@
       o.done();
     } else {
       el.textContent = "";
-      raf = requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick2);
     }
     return {
       finish() {
@@ -43774,7 +43960,7 @@
       this.craftRun = { i, r, st, S, t0: performance.now(), step: -1, parts: [] };
       const cv = this.craftStageEl();
       cv.classList.add("on");
-      const tick = () => {
+      const tick2 = () => {
         const R = this.craftRun;
         if (!R) return;
         if (this.open !== "craft") {
@@ -43792,9 +43978,9 @@
           this.craftStepSfx(R.st, step);
         }
         this.craftStageDraw(k);
-        R.raf = requestAnimationFrame(tick);
+        R.raf = requestAnimationFrame(tick2);
       };
-      tick();
+      tick2();
     },
     craftStepSfx(st, step) {
       if (st === "work") app.sfx(step === 2 ? "hit_blunt" : "mat_wood", 1.1, 0.7);
@@ -46820,12 +47006,12 @@
       for (const r of this.rings) {
         const k = r.t / r.max, R = r.r * (1.3 - k * 0.3), im = this.art && this.art("ring", r.c);
         if (im) {
-          c.globalAlpha = k * 0.9;
+          c.globalAlpha = k * k * 0.9;
           c.drawImage(im, r.x - camX - R / 0.95, r.y - camY - R / 0.95, R / 0.95 * 2, R / 0.95 * 2);
           continue;
         }
         c.strokeStyle = r.c;
-        c.globalAlpha = k * 0.8;
+        c.globalAlpha = k * k * 0.8;
         c.lineWidth = 3;
         c.beginPath();
         c.arc(r.x - camX, r.y - camY, R, 0, TAU4);
@@ -48363,7 +48549,7 @@
       const t0 = Date.now();
       let best = -1, seenBest = -1, bestAt = t0;
       const STALL = 1e4, CAP = 25e3;
-      const tick = () => {
+      const tick2 = () => {
         if (this.booted) return;
         const got = TitleBG.artReady();
         const seen = typeof Sprites !== "undefined" && Sprites.img ? Object.keys(Sprites.img).length : 0;
@@ -48386,9 +48572,9 @@
           return;
         }
         this.showLoading(tr("불러오는 중… {got}/{need}", { got, need: NEED }));
-        setTimeout(tick, 120);
+        setTimeout(tick2, 120);
       };
-      tick();
+      tick2();
     },
     /** 애셋이 다 붙었다 — 로딩을 걷고 타이틀을 연다 (한 번만) */
     bootDone() {
@@ -50983,8 +51169,9 @@
       c.save();
       c.translate(wx, foot + (1 - up) * 20);
       c.scale(a.f, 1);
-      c.globalAlpha = (k > 0.6 ? (1 - k) / 0.4 : 1) * up;
-      glow3(c, 0, -26, 40, "rgba(200,230,255,.8)", 0.5 * up);
+      const fade = k > 0.6 ? ((1 - k) / 0.4) ** 2 : 1;
+      c.globalAlpha = fade * up;
+      glow3(c, 0, -26, 40, "rgba(200,230,255,.8)", 0.5 * up * fade);
       c.fillStyle = "rgba(214,236,255,.82)";
       c.strokeStyle = "#eaf6ff";
       c.lineWidth = 1.5;
@@ -50999,7 +51186,7 @@
       c.lineWidth = 1.5;
       for (let w = 0; w < 3; w++) {
         const r = 6 + (age * 40 + w * 8) % 24;
-        c.globalAlpha = 0.7 * (1 - r / 30) * up;
+        c.globalAlpha = 0.7 * (1 - r / 30) * up * fade;
         c.beginPath();
         c.arc(12, -50 - 10 * lift2, r, -1.6, -0.4);
         c.stroke();
@@ -51793,6 +51980,11 @@
   });
   var SWIPE_SEQ = ["swipe0", "swipe2", "swipe1", "swipe3"];
   var CUT_ART = ["cut0", "cut2", "cut0", "cut1"];
+  var tick = (o, now2) => {
+    o.t -= o.at === void 0 ? 0 : Math.max(0, Math.min(0.1, now2 - o.at));
+    o.at = now2;
+    return o.t;
+  };
   var StageFxPart = {
     /** 스킬 시전 순간의 무대 — SKILL_STAGE[id] 를 화면 · 시전자 둘레에 편다. who: 시전자(없으면 이 화면 플레이어) */
     stageFx(id, who) {
@@ -51881,17 +52073,16 @@
     drawStageDim(f) {
       const st = this.stage, d = st && st.dim;
       if (!d) return;
-      d.t -= 1 / 60;
-      if (d.t <= 0) {
+      if (tick(d, this.time) <= 0) {
         st.dim = null;
         return;
       }
-      const { c, camX, camY } = f, k = d.t / d.max, a = d.a * Math.min(1, (1 - k) * 8, k * 2.5);
+      const { c, camX, camY } = f, k = d.t / d.max, a = Math.min(0.3, d.a) * Math.min(1, (1 - k) * 8, k * k * 6);
       const x = d.p.cx - camX, y = d.p.cy - camY, R = Math.max(this.W, this.H);
-      const g = c.createRadialGradient(x, y, 90, x, y, R * 0.75);
+      const g = c.createRadialGradient(x, y, 150, x, y, R * 0.8);
       g.addColorStop(0, "rgba(6,4,10,0)");
-      g.addColorStop(0.35, "rgba(6,4,10,.75)");
-      g.addColorStop(1, "rgba(6,4,10,1)");
+      g.addColorStop(0.4, "rgba(6,4,10,.5)");
+      g.addColorStop(1, "rgba(6,4,10,.85)");
       c.globalAlpha = a;
       c.fillStyle = g;
       c.fillRect(0, 0, this.W, this.H);
@@ -51904,8 +52095,7 @@
       const { c, camX, camY } = f, W = this.W, H = this.H;
       if (st.ln) {
         const L = st.ln;
-        L.t -= 1 / 60;
-        if (L.t <= 0) st.ln = null;
+        if (tick(L, this.time) <= 0) st.ln = null;
         else {
           const k = L.t / L.max, x = L.p.cx - camX, y = L.p.cy - camY, R = Math.hypot(W, H) * 0.6, im = Sprites.vfxArt("spark", `rgb(${L.rgb})`);
           if (Math.floor(this.time * 30) !== L.f) L.f = Math.floor(this.time * 30), L.seed = Math.random() * 1e6 | 0;
@@ -51952,8 +52142,7 @@
     drawStageFlash(c, W, H) {
       const st = this.stage, F = st && st.fl;
       if (!F) return;
-      F.t -= 1 / 60;
-      if (F.t <= 0) {
+      if (tick(F, this.time) <= 0) {
         st.fl = null;
         return;
       }
@@ -66638,22 +66827,23 @@
       const { c, w, p, camX, camY, dayF, tx0, ty0, tx1, ty1 } = f;
       if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
         const b = this.bursts[i];
-        b.t += 1 / 60;
-        const fr = Math.floor(b.t / (0.04 * (b.sp || 1)));
-        if (fr >= 6) {
+        b.t += b.at === void 0 ? 1 / 60 : Math.max(0, Math.min(0.1, this.time - b.at));
+        b.at = this.time;
+        const fd = 0.04 * (b.sp || 1), fr = Math.min(5, Math.floor(b.t / fd)), end = 6 * fd + 0.1;
+        if (b.t >= end) {
           this.bursts.splice(i, 1);
           continue;
         }
+        const fa = b.t < 4 * fd ? 1 : 1 - (b.t - 4 * fd) / (end - 4 * fd);
+        c.save();
+        c.globalAlpha = fa * fa;
         if (b.rot !== void 0) {
-          c.save();
           c.translate(b.x - camX, b.y - camY);
           c.rotate(b.rot);
           c.scale(b.fl, 1);
           Sprites.drawFx(c, "burst_" + b.kind, fr, -b.s / 2, -b.s / 2, b.s);
-          c.restore();
-          continue;
-        }
-        Sprites.drawFx(c, "burst_" + b.kind, fr, b.x - camX - b.s / 2, b.y - camY - b.s / 2, b.s);
+        } else Sprites.drawFx(c, "burst_" + b.kind, fr, b.x - camX - b.s / 2, b.y - camY - b.s / 2, b.s);
+        c.restore();
       }
       for (const pr of this.projs) {
         const st = PROJ_STYLE[pr.type] || PROJ_STYLE.bolt;

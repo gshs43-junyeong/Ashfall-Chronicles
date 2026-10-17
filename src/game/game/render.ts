@@ -407,14 +407,17 @@ export const RenderPart: Bag = {
     // ---- 폭발/타격 이펙트 ----
     if (this.bursts) for (let i = this.bursts.length - 1; i >= 0; i--) {
       const b = this.bursts[i];
-      b.t += 1 / 60;
-      const fr = Math.floor(b.t / (0.04 * (b.sp || 1)));
-      if (fr >= 6) { this.bursts.splice(i, 1); continue; }
+      b.t += b.at === undefined ? 1 / 60 : Math.max(0, Math.min(0.1, this.time - b.at)); b.at = this.time;
+      /* ★ 시트 마지막 장도 진하다 — 장이 끝나는 순간 지우면 폭발 고리가 한 프레임에 사라진다. 끝 두 장 동안 옅어지며 마지막 장에 조금 머문다 */
+      const fd = 0.04 * (b.sp || 1), fr = Math.min(5, Math.floor(b.t / fd)), end = 6 * fd + 0.1;
+      if (b.t >= end) { this.bursts.splice(i, 1); continue; }
+      const fa = b.t < 4 * fd ? 1 : 1 - (b.t - 4 * fd) / (end - 4 * fd);
+      c.save(); c.globalAlpha = fa * fa;
       if (b.rot !== undefined) {                     // 베기 자국은 돌리고 뒤집어 같은 그림이 되풀이돼 보이지 않게
-        c.save(); c.translate(b.x - camX, b.y - camY); c.rotate(b.rot); c.scale(b.fl, 1);
-        Sprites.drawFx(c, 'burst_' + b.kind, fr, -b.s / 2, -b.s / 2, b.s); c.restore(); continue;
-      }
-      Sprites.drawFx(c, 'burst_' + b.kind, fr, b.x - camX - b.s / 2, b.y - camY - b.s / 2, b.s);
+        c.translate(b.x - camX, b.y - camY); c.rotate(b.rot); c.scale(b.fl, 1);
+        Sprites.drawFx(c, 'burst_' + b.kind, fr, -b.s / 2, -b.s / 2, b.s);
+      } else Sprites.drawFx(c, 'burst_' + b.kind, fr, b.x - camX - b.s / 2, b.y - camY - b.s / 2, b.s);
+      c.restore();
     }
 
     // ---- 투사체 ----

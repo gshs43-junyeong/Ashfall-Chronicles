@@ -5,6 +5,7 @@ import { RNG } from '../engine/core/rng.js';
 import { tr } from './lang.js';
 import { T } from './data.js';
 import { ITEMS } from './data/items.js';
+import { SKILLS } from './data/skills.js';
 import { PETS } from './data/pets.js';
 
 export const S32 = 32;
@@ -21,8 +22,8 @@ export const ISPEC: Bag = {
   grave_compass: { k: 'compass' }, stop_glass: { k: 'hourglass' },
   sword_iron: { k: 'sword', c: '#b8bcc4', g: '#6a6e76', grip: '#4a3122', w: 4 },
   sword_bone: { k: 'sword', c: '#e0d8bd', g: '#9c9280', grip: '#5a4a3a', w: 4, jag: 1 },
-  sword_mythril: { k: 'sword', c: '#5fd0c0', g: '#2a8a80', grip: '#3a4a52', w: 4, glow: '#5fd0c0' },
-  sword_dawn: { k: 'sword', c: '#ffd98a', g: '#d89428', grip: '#7a4a1a', w: 5.5, glow: '#ffb24a' },
+  sword_mythril: { k: 'sword', c: '#5fd0c0', g: '#2a8a80', grip: '#3a4a52', w: 4, glow: '#5fd0c0', orn: 1 },
+  sword_dawn: { k: 'sword', c: '#ffd98a', g: '#d89428', grip: '#7a4a1a', w: 5.5, glow: '#ffb24a', orn: 2, gem: '#ff6a3a' },
   scythe_void: { k: 'scythe', c: '#b48aff', shaft: '#2e2438', glow: '#a06fff' },
 
   /* 원거리 */
@@ -71,9 +72,9 @@ export const ISPEC: Bag = {
   amul_undertow: { k: 'amulet', c: '#4a6a8a', gem: '#7f9fd8' },
   pick_copper: { k: 'pick', c: '#c0762f' },
   pick_sharp: { k: 'pick', c: '#d9903f' },      // 날을 세운 구리 — 조금 더 밝다
-  pick_iron: { k: 'pick', c: '#b8bcc4' },
-  pick_mythril: { k: 'pick', c: '#5fd0c0', glow: '#5fd0c0' },
-  pick_soul: { k: 'pick', c: '#c49fff', glow: '#c49fff' },
+  pick_iron: { k: 'pick', c: '#b8bcc4', orn: 1, gem: '#e05a4a' },
+  pick_mythril: { k: 'pick', c: '#5fd0c0', glow: '#5fd0c0', orn: 2 },
+  pick_soul: { k: 'pick', c: '#c49fff', glow: '#c49fff', orn: 3 },
   axe_iron: { k: 'axe', c: '#b8bcc4' },
 
   /* 방어구 */
@@ -254,10 +255,10 @@ export const ISPEC: Bag = {
   charm_lamp: { k: 'torchitem' },
 
   /* --- 2부 --- */
-  sword_aether: { k: 'sword', c: '#9fe8dc', g: '#3f8f86', grip: '#3a4a52', w: 4.5, glow: '#8fe0d8' },
+  sword_aether: { k: 'sword', c: '#9fe8dc', g: '#3f8f86', grip: '#3a4a52', w: 4.5, glow: '#8fe0d8', orn: 2 },
   bow_gale: { k: 'bow', c: '#bcd8f0', s: '#ffffff', glow: '#bcd8f0' },
   staff_storm: { k: 'staff', c: '#4a5a6e', head: '#9fd8ff', style: 'claw', glow: '#9fd8ff' },
-  sword_first: { k: 'sword', c: '#fff0b8', g: '#d8a94b', grip: '#7a5a28', w: 6, glow: '#ffe08a' },
+  sword_first: { k: 'sword', c: '#fff0b8', g: '#d8a94b', grip: '#7a5a28', w: 6, glow: '#ffe08a', orn: 3, gem: '#ff5a7a' },
   helm_aether: { k: 'helm', c: '#9fe8dc', crest: '#d8a94b', glow: '#8fe0d8' },
   chest_aether: { k: 'chest', c: '#9fe8dc', glow: '#8fe0d8' },
   boots_aether: { k: 'boots', c: '#9fe8dc', glow: '#8fe0d8' },
@@ -334,7 +335,7 @@ export const ISPEC: Bag = {
   m_switch: { k: 'machine', tile: T.M_SWITCH, glow: '#e0563c' },
 
   /* --- 동력 장비 --- */
-  pick_arc: { k: 'pick', c: '#7fd0e8', glow: '#9fd8ff' },
+  pick_arc: { k: 'pick', c: '#7fd0e8', glow: '#9fd8ff', orn: 3 },
   saw_auto: { k: 'sawblade', c: '#c8ccd4', glow: '#e0b93d' },
   gun_rail: { k: 'railgun', c: '#8a8a96', glow: '#9fd8ff' },
   helm_exo: { k: 'helm', c: '#8fa8b8', crest: '#6fe0c0', glow: '#6fe0c0' },
@@ -390,7 +391,7 @@ export const ISPEC: Bag = {
   proto_ash: { k: 'sigil', c: '#b8b0a0' },
   atelier_key: { k: 'sigil', c: '#e0c878' },
   arche_core: { k: 'heart', c: '#e8dcc0' },
-  blade_arche: { k: 'sword', c: '#f0e8d0', g: '#c8a05a', grip: '#8a7a5a', w: 5.5, glow: '#ffe8a0' },
+  blade_arche: { k: 'sword', c: '#f0e8d0', g: '#c8a05a', grip: '#8a7a5a', w: 5.5, glow: '#ffe8a0', orn: 3, gem: '#7ad8ff' },
   tome_origin: { k: 'staff', c: '#8a7a5a', head: '#e8dcc0', style: 'crystal', glow: '#ffe8a0' },
   charm_maker: { k: 'rune', c: '#e8dcc0' },
 
@@ -515,7 +516,7 @@ export const ISPEC: Bag = {
   hammer_tide: { k: 'hammer', c: '#5f9cc0', glow: '#8fd4ef' },
   gun_harpoon: { k: 'railgun', c: '#5a6a72', glow: '#8fd0e8' },
   tome_abyss: { k: 'staff', c: '#2e3a4a', head: '#8fb8e8', style: 'crystal', glow: '#7fb8e8' },
-  pick_abyss: { k: 'pick', c: '#5f9cc0', glow: '#8fd4ef' },
+  pick_abyss: { k: 'pick', c: '#5f9cc0', glow: '#8fd4ef', orn: 3, gem: '#bfefff' },
   /* 바다 방어구·장신구 */
   helm_diver: { k: 'helm', c: '#7fa8c0' },
   chest_scale: { k: 'chest', c: '#6a9ab0' },
@@ -744,6 +745,7 @@ export const Art: Bag = {
     keys.forEach(([key, spec], n) => {
       const cx = n % cols, cy = (n / cols) | 0;
       this.cells[key] = [cx, cy];
+      if (key.startsWith('s:')) { this.skillEmblem(g, key.slice(2), spec, rng, cx * S32, cy * S32); return; }
       g!.save();
       g!.translate(cx * S32, cy * S32);
       /* ★ 한 칸이 터져도 나머지는 그린다. */
@@ -760,6 +762,52 @@ export const Art: Bag = {
 
     this.atlas = cv;
     this.ready = true;
+  },
+
+  /** 스킬 아이콘 — 그림을 갈래 모양 메달 위에 올린다. 쓰는 기술(active)은 둥근 메달 + 빛살, 지니는 기술(passive)은 마름모 패.
+      그림만 덩그러니 놓으면 아이템과 구별이 안 되고 밋밋했다 — 메달 · 속빛 · 테 광택 · 반짝임으로 한눈에 '기술'로 읽힌다 */
+  skillEmblem(g: CanvasRenderingContext2D, id: string, spec: Bag, rng: RNG, ox: number, oy: number) {
+    const sk: Bag = SKILLS[id] || {}, c = spec.c || '#c8c8c8', active = sk.type === 'active';
+    const t = document.createElement('canvas'); t.width = t.height = S32;
+    const tg = t.getContext('2d', { willReadFrequently: true })!;
+    try { this.paint(tg, spec, rng); } catch (e) { console.warn('[skill icon] ' + id, e && (e as Error).message); }
+    this.outline(tg, 0, 0);
+    const RIM: Bag = { blade: ['#ffd27a', '#8a4a20'], ranger: ['#d8f0a0', '#3e6a2a'], arcane: ['#d8c8ff', '#40307a'], explore: ['#f0d8a0', '#6a4a2a'] };
+    const [hi, lo] = RIM[sk.br] || ['#e8e0d0', '#5a5048'];
+    g.save(); g.translate(ox, oy);
+    const shape = (r: number) => {
+      g.beginPath();
+      if (active) g.arc(16, 16, r, 0, TAU);
+      else { g.moveTo(16, 16 - r); g.lineTo(16 + r, 16); g.lineTo(16, 16 + r); g.lineTo(16 - r, 16); g.closePath(); }
+    };
+    const R = active ? 15 : 15.5;
+    shape(R + 0.5); g.fillStyle = '#0a0810'; g.fill();                                  // 바깥 검은 테
+    const bg = g.createRadialGradient(16, 13, 1, 16, 16, R);
+    bg.addColorStop(0, sh2(c, 0.6)); bg.addColorStop(0.55, sh2(c, 0.28));   // 그림과 같은 색이라 바탕은 낮춰야 그림이 떠오른다
+    bg.addColorStop(1, '#120e18');
+    shape(R - 1); g.fillStyle = bg; g.fill();
+    g.save(); shape(R - 1); g.clip();                                                    // 속빛 — 가운데서 뻗는 빛살
+    g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 12; i++) {
+      const a = i * TAU / 12 + (active ? 0.13 : TAU / 24), w = i % 2 ? 0.07 : 0.13;
+      g.globalAlpha = i % 2 ? 0.07 : 0.15; g.fillStyle = sh2(c, 1.4);
+      g.beginPath(); g.moveTo(16, 16); g.arc(16, 16, R, a - w, a + w); g.closePath(); g.fill();
+    }
+    g.restore();
+    const rim = g.createLinearGradient(0, 1, 0, 31); rim.addColorStop(0, hi); rim.addColorStop(0.5, sh2(hi, 0.8)); rim.addColorStop(1, lo);
+    shape(R - 0.5); g.strokeStyle = rim; g.lineWidth = 1.6; g.stroke();                 // 금속 테
+    g.save(); g.shadowColor = sh2(c, 1.3); g.shadowBlur = 5;                              // 그림 — 갈래 빛으로 번진다
+    g.drawImage(t, 3, 3, 26, 26); g.restore();
+    g.drawImage(t, 3, 3, 26, 26);
+    g.save(); shape(R - 1.5); g.clip();                                                  // 유리 광택 — 왼쪽 위 반달
+    const gl = g.createLinearGradient(6, 4, 18, 18); gl.addColorStop(0, 'rgba(255,255,255,.34)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gl; g.beginPath(); g.ellipse(12, 9, 11, 6, -0.5, 0, TAU); g.fill(); g.restore();
+    const star = (x: number, y: number, r: number) => {                                  // 반짝임 — 테 위 네 갈래 별
+      g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * 0.28, y - r * 0.28); g.lineTo(x + r, y); g.lineTo(x + r * 0.28, y + r * 0.28);
+      g.lineTo(x, y + r); g.lineTo(x - r * 0.28, y + r * 0.28); g.lineTo(x - r, y); g.lineTo(x - r * 0.28, y - r * 0.28); g.closePath(); g.fill();
+    };
+    star(active ? 26 : 24, active ? 7 : 8, 3); star(active ? 6 : 8, active ? 25 : 24, 1.8);
+    g.restore();
   },
 
   /** 손그림 아이콘이 로드되면 절차 생성 아틀라스의 해당 칸을 덮어 그린다. */

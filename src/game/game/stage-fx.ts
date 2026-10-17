@@ -8,6 +8,8 @@ import { Game } from '../game.js';
 /* 근접 연타 자국 차례 — 같은 그림이 되풀이되면 손맛이 죽는다. 넷째 타는 무거운 마무리 */
 const SWIPE_SEQ = ['swipe0', 'swipe2', 'swipe1', 'swipe3'];
 const CUT_ART = ['cut0', 'cut2', 'cut0', 'cut1'];
+/* 무대 시계 — 프레임 수(1/60)로 깎으면 120Hz 화면에선 절반 길이로 끊기고 30fps 에선 두 배로 늘어진다. 게임 시각으로 깎는다 */
+const tick = (o: any, now: number) => { o.t -= o.at === undefined ? 0 : Math.max(0, Math.min(0.1, now - o.at)); o.at = now; return o.t; };
 
 export const StageFxPart: Bag = {
 
@@ -78,11 +80,11 @@ export const StageFxPart: Bag = {
   /** 무대 — 어둠 깔기(빛 다음 · 연출 앞 — 스킬 빛은 어둠 위에서 빛난다) */
   drawStageDim(f: any) {
     const st = this.stage, d = st && st.dim; if (!d) return;
-    d.t -= 1 / 60; if (d.t <= 0) { st.dim = null; return; }
-    const { c, camX, camY } = f, k = d.t / d.max, a = d.a * Math.min(1, (1 - k) * 8, k * 2.5);
+    if (tick(d, this.time) <= 0) { st.dim = null; return; }
+    const { c, camX, camY } = f, k = d.t / d.max, a = Math.min(0.3, d.a) * Math.min(1, (1 - k) * 8, k * k * 6);
     const x = d.p.cx - camX, y = d.p.cy - camY, R = Math.max(this.W, this.H);
-    const g = c.createRadialGradient(x, y, 90, x, y, R * 0.75);
-    g.addColorStop(0, 'rgba(6,4,10,0)'); g.addColorStop(0.35, 'rgba(6,4,10,.75)'); g.addColorStop(1, 'rgba(6,4,10,1)');
+    const g = c.createRadialGradient(x, y, 150, x, y, R * 0.8);   // 둘레 150px 은 트어 둔다 — 붙어 싸우는 몹이 어둠에 묻히지 않게
+    g.addColorStop(0, 'rgba(6,4,10,0)'); g.addColorStop(0.4, 'rgba(6,4,10,.5)'); g.addColorStop(1, 'rgba(6,4,10,.85)');
     c.globalAlpha = a; c.fillStyle = g; c.fillRect(0, 0, this.W, this.H); c.globalAlpha = 1;
   },
 
@@ -91,8 +93,8 @@ export const StageFxPart: Bag = {
     const st = this.stage; if (!st) return;
     const { c, camX, camY } = f, W = this.W, H = this.H;
     if (st.ln) {
-      const L = st.ln; L.t -= 1 / 60;
-      if (L.t <= 0) st.ln = null;
+      const L = st.ln;
+      if (tick(L, this.time) <= 0) st.ln = null;
       else {
         const k = L.t / L.max, x = L.p.cx - camX, y = L.p.cy - camY, R = Math.hypot(W, H) * 0.6, im = Sprites.vfxArt('spark', `rgb(${L.rgb})`);
         if (Math.floor(this.time * 30) !== L.f) L.f = Math.floor(this.time * 30), L.seed = (Math.random() * 1e6) | 0;      // 두 장마다 선을 새로 뽑아 일렁인다
@@ -126,8 +128,7 @@ export const StageFxPart: Bag = {
   },
   drawStageFlash(c: CanvasRenderingContext2D, W: number, H: number) {
     const st = this.stage, F = st && st.fl; if (!F) return;
-    F.t -= 1 / 60;
-    if (F.t <= 0) { st.fl = null; return; }
+    if (tick(F, this.time) <= 0) { st.fl = null; return; }
     const k = F.t / F.max;
     c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = F.a * k * k;
     c.fillStyle = `rgb(${F.rgb})`; c.fillRect(0, 0, W, H); c.restore();

@@ -3,6 +3,46 @@ import { TAU } from '../../../engine/core/math.js';
 import { ITEM_PAINT, sh2 } from '../../itemart.js';
 /* itemart.js Art.paint 의 갈래들 — 읽히는 순간 ITEM_PAINT 에 붙는다. H 는 paint 의 인자·도우미 묶음, this 는 Art. */
 
+/** 높은 등급 장식 — s.orn 1~3. 1 = 보석 박기, 2 = 빛나는 룬 · 금테, 3 = 날개 가드 · 별빛.
+    같은 틀(검 · 곡괭이)이라 등급이 그림에서 안 보였다 — 장식이 겹겹이 늘어야 한눈에 '좋은 것'으로 읽힌다 */
+function orn(H: ItemPaintKit, kind: 'sword' | 'pick', s: Bag) {
+  const { g, P, poly, circ, stroke, glow } = H, n = s.orn, gl = s.glow || sh2(s.c, 1.5), gem = s.gem || gl, gold = '#ffd86a';
+  const jewel = (x: number, y: number, r: number) => { circ(x, y, r + .7, '#2a1a10'); circ(x, y, r, sh2(gem, .8)); circ(x - r * .3, y - r * .3, r * .45, '#ffffff'); glow(x, y, r * 3, gem, .35); };
+  const spark = (x: number, y: number, r: number) => { g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * .25, y - r * .25); g.lineTo(x + r, y); g.lineTo(x + r * .25, y + r * .25); g.lineTo(x, y + r); g.lineTo(x - r * .25, y + r * .25); g.lineTo(x - r, y); g.lineTo(x - r * .25, y - r * .25); g.closePath(); g.fill(); };
+  if (kind === 'sword') {
+    const bw = s.w;
+    if (n >= 3) {                                                   // 날개 가드 — 손잡이 위로 펼친 깃
+      for (const d of [-1, 1]) poly([[16 + d * 9, 20], [16 + d * 14, 13], [16 + d * 13, 17], [16 + d * 15.5, 16], [16 + d * 12, 21.5]], gold);
+      for (const d of [-1, 1]) stroke(sh2(gold, 1.3), .8, () => { g.moveTo(16 + d * 10, 20); g.lineTo(16 + d * 13.6, 14); });
+    }
+    if (n >= 2) {                                                   // 날 가운데 빛 홈 + 룬 점
+      stroke(gl, 1.2, () => { g.moveTo(16, 6); g.lineTo(16, 19); }); glow(16, 12, 6, gl, .3);
+      for (let y = 8; y < 19; y += 3.5) P(15.5, y, 1, 1.3, '#ffffff');
+      P(14, 24, 4, .8, gold); P(14, 27, 4, .8, gold);            // 금실 감은 손잡이
+      stroke(sh2(s.c, 1.7), .7, () => { g.moveTo(16 - bw + .4, 9); g.lineTo(16 - bw + .9, 19.5); });
+    }
+    jewel(16, 21.5, 1.6);                                          // 가드 한가운데 보석
+    if (n >= 2) jewel(16, 29.6, 1.2);
+    if (n >= 3) { spark(23, 5, 2.6); spark(8, 12, 1.6); spark(25, 26, 1.4); }
+  } else {
+    if (n >= 2) {                                                   // 날 테두리를 따라 빛나는 금
+      glow(16, 9, 9, gl, .3);
+      for (let i = 0; i < 7; i++) { const a = Math.PI + .55 + i * (Math.PI - 1.1) / 6; P(16 + Math.cos(a) * 13 - .6, 20 + Math.sin(a) * 13 - .6, 1.3, 1.3, i % 2 ? gl : '#ffffff'); }   // 머리에 박힌 룬 점
+      for (const y of [17, 21, 25]) P(14.2, y, 3.6, .9, gold);    // 금테 두른 자루
+      poly([[1, 17.6], [-0.5, 15], [3.6, 14.2]], sh2(gl, 1.2)); poly([[31, 17.6], [32.5, 15], [28.4, 14.2]], sh2(gl, 1.2));
+    }
+    if (n >= 3) {                                                   // 머리 위 결정 돌기
+      for (const d of [-1, 1]) {                                    // 양 끝에서 솟는 결정
+        poly([[16 + d * 11.5, 13], [16 + d * 13.5, 6.5], [16 + d * 14.5, 12.5]], sh2(gem, 1.15));
+        poly([[16 + d * 13.5, 6.5], [16 + d * 14.5, 12.5], [16 + d * 13.2, 12.8]], sh2(gem, .75));
+        glow(16 + d * 13.5, 9, 5, gem, .35);
+      }
+      spark(26, 6, 2.4); spark(5, 9, 1.5);
+    }
+    jewel(16, 13.2, 1.7);                                          // 결합부 보석
+  }
+}
+
 export const ItemPaintGear: Bag = {
   /* ---------- 무기 ---------- */
   sword(H: ItemPaintKit) {
@@ -25,6 +65,7 @@ export const ItemPaintGear: Bag = {
         P(14, 23, 4, 6, s.grip);
         P(14, 24.5, 4, 1, sh2(s.grip, .55)); P(14, 26.5, 4, 1, sh2(s.grip, .55));
         circ(16, 29.6, 2.3, gd); circ(15.4, 29, .8, sh2(gd, 1.4));
+        if (s.orn) orn(H, 'sword', s);
         return;
       }
     }
@@ -162,6 +203,7 @@ export const ItemPaintGear: Bag = {
         // 자루 결합부
         P(13.4, 10.6, 5.2, 5.4, sh2(c, .82));
         P(13.4, 10.6, 5.2, 1.4, lt);
+        if (s.orn) orn(H, 'pick', s);
         return;
       }
     }

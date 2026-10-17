@@ -195,13 +195,14 @@ export const SKILL_ART: Record<string, { life: number; draw: (c: C2, a: Art, age
       [5, -40 - 8 * lift], [10, -50 - 10 * lift], [12, -47 - 10 * lift], [8, -38 - 6 * lift], [11, -36 - 6 * lift], [7, -32 - 2 * lift],   // 치켜든 주둥이(벌린 입)
       [6, -24], [8, -10], [10, 0], [4, 0], [2, -12], [-2, -6], [-6, 0]];                                                                 // 가슴 · 앞다리
     c.save(); c.translate(wx, foot + (1 - up) * 20); c.scale(a.f, 1);
-    c.globalAlpha = (k > 0.6 ? (1 - k) / 0.4 : 1) * up;
-    glow(c, 0, -26, 40, 'rgba(200,230,255,.8)', 0.5 * up);
+    const fade = k > 0.6 ? ((1 - k) / 0.4) ** 2 : 1;   // glow 는 globalAlpha 를 덮어쓰므로 fade 를 따로 곱한다
+    c.globalAlpha = fade * up;
+    glow(c, 0, -26, 40, 'rgba(200,230,255,.8)', 0.5 * up * fade);
     c.fillStyle = 'rgba(214,236,255,.82)'; c.strokeStyle = '#eaf6ff'; c.lineWidth = 1.5;
     c.beginPath(); P.forEach(([px, py], i) => c[i ? 'lineTo' : 'moveTo'](px, py)); c.closePath(); c.fill(); c.stroke();
     c.fillStyle = '#5ab8ff'; c.fillRect(3, -39 - 6 * lift, 2, 2);                                                            // 눈
     c.strokeStyle = 'rgba(220,240,255,.7)'; c.lineWidth = 1.5;                                                            // 울음 — 주둥이 끝에서 퍼지는 호
-    for (let w = 0; w < 3; w++) { const r = 6 + ((age * 40 + w * 8) % 24); c.globalAlpha = 0.7 * (1 - r / 30) * up; c.beginPath(); c.arc(12, -50 - 10 * lift, r, -1.6, -0.4); c.stroke(); }
+    for (let w = 0; w < 3; w++) { const r = 6 + ((age * 40 + w * 8) % 24); c.globalAlpha = 0.7 * (1 - r / 30) * up * fade; c.beginPath(); c.arc(12, -50 - 10 * lift, r, -1.6, -0.4); c.stroke(); }
     c.restore();
   } },
   s_chain_hop: { life: 0.35, draw(c, a, age, k, x, y) {              // 사슬 번개 — 번개 길에 쇠사슬 고리가 엮인다

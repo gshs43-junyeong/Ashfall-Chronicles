@@ -36,8 +36,9 @@ export class ShapeFx {
     const TAU = Math.PI * 2;
     for (const r of this.rings) {
       const k = r.t / r.max, R = r.r * (1.3 - k * 0.3), im = this.art && this.art('ring', r.c);
-      if (im) { c.globalAlpha = k * .9; c.drawImage(im, r.x - camX - R / 0.95, r.y - camY - R / 0.95, R / 0.95 * 2, R / 0.95 * 2); continue; }
-      c.strokeStyle = r.c; c.globalAlpha = k * .8; c.lineWidth = 3;
+      if (im) { c.globalAlpha = k * k * .9;   // 제곱 — 끝으로 갈수록 천천히 옅어져 마지막 장에 툭 끊기지 않는다
+        c.drawImage(im, r.x - camX - R / 0.95, r.y - camY - R / 0.95, R / 0.95 * 2, R / 0.95 * 2); continue; }
+      c.strokeStyle = r.c; c.globalAlpha = k * k * .8; c.lineWidth = 3;
       c.beginPath(); c.arc(r.x - camX, r.y - camY, R, 0, TAU); c.stroke();
     }
     for (const w of this.warns) {

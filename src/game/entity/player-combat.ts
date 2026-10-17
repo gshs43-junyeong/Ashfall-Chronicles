@@ -396,7 +396,7 @@ export const PlayerCombat: Bag & ThisType<Player> = {
     G.stageFx(id, this);
     /* 시전의 끝맺음 — 소리·흔들림·멈춤·고리를 SKILL_FX 한 표에서 가져온다. */
     const fx = SKILL_FX[id] || {};
-    if (fx.c) G.ringFx(this.cx, this.cy, fx.r || 44, fx.c, .26);
+    if (fx.c) G.ringFx(this.cx, this.cy, fx.r || 44, fx.c, .4);
     if (fx.k) G.shake = Math.max(G.shake, fx.k);
     if (fx.st) G.hitStop(fx.st);
     G.sfx(fx.s || 'skill');

@@ -277,7 +277,7 @@ export const WorldVillage: Bag & ThisType<World> = {
   /** 부유 성채 — 하늘섬 위에 선 성. 왼쪽부터 성문루 → 바깥뜰(성벽 위 보행로) → 본성(큰 홀 · 2층 방 · 보관고 · 3층 · 옥상 망루) → 안뜰 → 원탑.
       흔한 유적처럼 방을 BSP 로 나누지 않고 성의 짜임 그대로 짓는다(사용자 요청). 상자는 늘 바닥 **위**에(chestOn). 사연: docs/code-history.md#h194 */
   buildCitadel(rng: any) { const { SX, SKY_Y } = this.dims;
-    const w = 80, gy = SKY_Y - 14;                // gy = 성 바닥(섬 윗면) 줄 — 섬 밑동이 SKY_Y 위에 남아 땅에 그늘을 안 떨군다
+    const w = 80, gy = SKY_Y - 11;                // gy = 성 바닥(섬 윗면) 줄 — 망루 지붕까지 세계 맨 윗줄 아래, 섬 밑동은 SKY_Y 위(땅에 그늘을 안 떨군다)
     const x0 = SX(3300 + SHIFT), y0 = 1;
     this.citadel = { x0, y0, w, h: SKY_Y - 3 - y0, cx: x0 + (w >> 1), anc: [0, 0, 0], links: [[], [], []], gate: [], vault: [] };
     const C = this.citadel, r2 = new RNG(this.seed + '_citadel');
@@ -285,6 +285,12 @@ export const WorldVillage: Bag & ThisType<World> = {
     const box = (xa: number, ya: number, xb: number, yb: number, t: number) => { for (let x = xa; x <= xb; x++) for (let y = Math.max(1, ya); y <= yb; y++) this.set(x, y, t); };
     const bg = (xa: number, ya: number, xb: number, yb: number) => { for (let x = xa; x <= xb; x++) for (let y = Math.max(1, ya); y <= yb; y++) this.setWall(x, y, 13); };
     const crenel = (xa: number, xb: number, y: number) => { if (y >= 1) for (let x = xa; x <= xb; x++) if ((x - xa) % 2 === 0) this.set(x, y, T.BATTLEMENT); };
+    /* 걷는 길(보행로 · 옥상)의 흉벽 — 막는 칸은 양 끝 둘씩만, 사이는 뒤 흉벽(벽지)으로. 한 칸 걸러 흉벽 타일을 세우면 길이 칸마다 막혔다 */
+    const parapet = (xa: number, xb: number, y: number) => {
+      if (y < 1) return;
+      for (let x = xa; x <= xb; x++) { this.setWall(x, y, 13); if ((x - xa) % 2 === 0 && y - 1 >= 1) this.setWall(x, y - 1, 13); }
+      for (const x of [xa, xb]) this.set(x, y, T.BATTLEMENT);
+    };
     const chestOn = (tx: number, fy: number, extra?: Bag) => {   // fy = 바닥(고체) 줄 — 상자는 그 위 두 칸에
       for (const x of [tx, tx + 1]) for (const y of [fy - 1, fy - 2]) if (this.solid(x, y)) this.set(x, y, T.AIR);
       this.objects.push(Object.assign({ type: 'chest', tier: 6, loot: 'session2', x: tx * TS - 4, y: fy * TS - 26, w: 30, h: 26, items: null }, extra || {}));
@@ -294,7 +300,7 @@ export const WorldVillage: Bag & ThisType<World> = {
     /* ① 섬 — 하늘돌 덩어리, 윗면은 풀, 밑은 가운데가 깊게 늘어지고 궤도핵이 박혀 빛난다(성을 띄우는 것) */
     const ix0 = x0 - 3, ix1 = x0 + w + 3, half = (ix1 - ix0) / 2, icx = (ix0 + ix1) / 2;
     for (let x = ix0; x <= ix1; x++) {
-      const u = Math.abs(x - icx) / half, d = 2 + Math.round(Math.pow(Math.max(0, 1 - u * u), 0.8) * 10 + r2.int(-1, 1));
+      const u = Math.abs(x - icx) / half, d = 2 + Math.round(Math.pow(Math.max(0, 1 - u * u), 0.8) * 7 + r2.int(-1, 1));
       for (let y = gy; y <= Math.min(gy + d, SKY_Y - 2); y++) this.set(x, y, y === gy ? T.SKYGRASS : T.SKYSTONE);
       if (d > 6 && r2.chance(0.07)) this.set(x, gy + d - r2.int(1, 3), T.ORBITCORE);
     }
@@ -314,7 +320,7 @@ export const WorldVillage: Bag & ThisType<World> = {
     const b0 = g1 + 1, b1 = x0 + 30;
     bg(b0, F - 7, b1, F - 1);
     for (let x = b0; x <= b1; x++) this.set(x, F - 8, T.PLATFORM);
-    crenel(b0, b1, F - 9);
+    parapet(b0, b1, F - 9);
     torch(b0 + 3, F - 3); torch(b1 - 2, F - 3);
     chestOn(b0 + 10, F);
     /* ④ 본성 — 벽 두 칸, 1층 큰 홀(주인) · 2층 방과 봉인된 보관고 · 3층 · 옥상 · 모서리 망루 둘 */
@@ -325,16 +331,16 @@ export const WorldVillage: Bag & ThisType<World> = {
     box(k0 + 2, F - 20, k1 - 2, F - 17, T.AIR);    // 3층
     box(k0, F - 3, k0 + 1, F - 1, T.AIR);          // 뜰 → 홀 아치문
     for (let x = k0 + 2; x <= k1 - 2; x++) { this.set(x, F - 10, T.ORBITPLATE); this.set(x, F - 16, T.ORBITPLATE); }   // 층 바닥
-    /* 오르는 길 — 왼쪽 벽 곁 계단통: 층 바닥에 구멍 · 세 칸마다 발판, 옥상까지 */
-    const sx = k0 + 3;
+    /* 오르는 길 — 왼쪽 망루(k0~k0+3) 밖의 계단통: 층 바닥에 구멍 · 세 칸마다 발판, 옥상까지. 망루 벽 밑으로 나면 옥상이 막힌다 */
+    const sx = k0 + 6;
     for (let y = F - 3; y >= top; y -= 3) { this.set(sx, y, T.PLATFORM); this.set(sx + 1, y, T.PLATFORM); }
     for (const y of [F - 10, F - 16, top]) { this.set(sx, y, T.PLATFORM); this.set(sx + 1, y, T.PLATFORM); }
-    crenel(k0, k1, top - 1);
+    parapet(k0 + 4, k1 - 4, top - 1);
     for (const tx of [k0, k1 - 3]) {               // 모서리 망루 — 옥상 위로 솟은 속 빈 탑, 지붕은 계단형
       box(tx, top - 5, tx + 3, top - 1, T.WALLSTONE); box(tx + 1, top - 4, tx + 2, top - 1, T.AIR); bg(tx, top - 5, tx + 3, top - 1);
       this.set(tx + 1, top, T.PLATFORM); this.set(tx + 2, top, T.PLATFORM);
       this.set(tx + 1, top - 3, T.WINDOW);
-      for (let k = 0; k < 3; k++) box(tx - 1 + k, top - 6 - k, tx + 4 - k, top - 6 - k, T.ROOFTILE);
+      for (let k = 0; k < 3; k++) box(tx - 1 + k, top - 6 - k, tx + 4 - k, top - 6 - k, T.ROOFTILE);   // 지붕 꼭대기 top-8 ≥ 1
     }
     for (const y of [F - 13, F - 19]) for (const x of [k0 + 9, k0 + 16, k1 - 9]) this.set(x, y, T.WINDOW);
     /* 큰 홀 — 제단 바닥 · 주인 · 비문 · 횃불 · 깃발 */
@@ -348,7 +354,7 @@ export const WorldVillage: Bag & ThisType<World> = {
     for (let y = F - 15; y <= F - 11; y++) this.set(v0, y, T.WALLSTONE);
     for (let y = F - 13; y <= F - 11; y++) { this.set(v0, y, T.ORBITSEAL); C.vault.push([v0, y]); }
     chestOn(v0 + 4, F - 10, { relic: 'jetpack' });
-    torch(v0 + 2, F - 14); torch(k0 + 7, F - 14); torch(k0 + 18, F - 14);
+    torch(v0 + 2, F - 14); torch(k0 + 10, F - 14); torch(k0 + 18, F - 14);
     chestOn(k0 + 12, F - 10); this.putTileTrap({ x: k0 + 1, y: F - 15, w: v0 - k0, h: 5 }, F - 11, 'dart', r2);   // 양 벽(k0+1 · 보관고 벽)에 화살 구멍
     /* 3층 — 망루로 오르기 전 마지막 방 */
     chestOn(k0 + 20, F - 16); torch(k0 + 10, F - 19); torch(k1 - 5, F - 19);
@@ -356,7 +362,7 @@ export const WorldVillage: Bag & ThisType<World> = {
     const i0 = k1 + 1, i1 = x0 + 66;
     bg(i0, F - 7, i1, F - 1);
     for (let x = i0; x <= i1; x++) this.set(x, F - 8, T.PLATFORM);
-    crenel(i0, i1, F - 9);
+    parapet(i0, i1, F - 9);
     /* ⑥ 원탑 — 한 칸 벽, 여섯 칸마다 층(발판 구멍), 꼭대기는 원뿔 지붕 */
     const t0 = x0 + 67, t1 = x0 + w - 3, ttop = F - 22;
     box(t0, ttop, t1, F, T.WALLSTONE); box(t0 + 1, ttop + 1, t1 - 1, F - 1, T.AIR); bg(t0, ttop, t1, F - 1);
