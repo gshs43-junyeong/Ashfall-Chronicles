@@ -18,7 +18,7 @@ export interface DuelDiff {
 }
 /** 변주 — 판 돌기(rad/s) · 숨김 · 꿈틀(px) · 끌림(0~1, 커서가 아래로 당겨진다) */
 export interface DuelMods { roll?: number; hidden?: boolean; wiggle?: number; pull?: number }
-export interface DuelTheme { bg: string; edge: string; ink: string; font: string; body: string; colors: string[]; gauge: string; gaugeLow: string; art?: DuelArt; frame?: boolean }
+export interface DuelTheme { bg: string; edge: string; ink: string; font: string; body: string; colors: string[]; gauge: string; gaugeLow: string; art?: DuelArt; frame?: boolean; judge?: Record<number, string> }
 /** 그림 갈래 — 게임이 제 모양으로 바꿔 그린다(없는 것은 기본 그림). 좌표는 놀이판(512×384) · r 은 원 반지름 · t 는 겨루기 시각 */
 export interface DuelArt {
   /** kind — 'c' 단타 · 's' 슬라이더 머리 · 'r' 되돌아오는 슬라이더 머리 · 'q' 연타(반 박 안쪽) */
@@ -223,13 +223,13 @@ export class RhythmDuel {
     else { this.combo = 0; this.shake = 0.3; }
     const g = res === 300 ? 1 : res === 100 ? 0.45 : res === 50 ? 0.12 : -(0.8 + 0.15 * this.d.hp) * pen;
     this.gauge = Math.max(0, Math.min(1, this.gauge + this.unit * g));
-    this.pops.push({ x, y, t: 0, s: res ? String(res) : '✕', c: JUDGE_COL[res], res });
+    this.pops.push({ x, y, t: 0, s: res ? String(res) : '✕', c: (this.th.judge || JUDGE_COL)[res], res });
     this.o.onJudge && this.o.onJudge(res, kind);
   }
   private brk(x: number, y: number): void {
     if (this.combo > 0) this.shake = 0.2;
     this.combo = 0; this.gauge = Math.max(0, this.gauge - this.unit * 0.25);
-    this.pops.push({ x, y, t: 0, s: '✕', c: JUDGE_COL[0], res: 0 });
+    this.pops.push({ x, y, t: 0, s: '✕', c: (this.th.judge || JUDGE_COL)[0], res: 0 });
     this.o.onJudge && this.o.onJudge(0, 'break');
   }
 

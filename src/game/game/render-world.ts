@@ -127,24 +127,114 @@ export const RenderWorldPart: Bag = {
   },
 
   /** 폭포 한 칸 — 물줄기를 세계 y 에 걸고 시간만큼 **아래로** 민다(칸 경계에서 이어진다).
-      ★ 아틀라스 프레임을 돌리면 안 된다 — 프레임마다 줄기가 제멋대로라 위상(ty*0.4)과 겹쳐 물이 거슬러 오르는 듯 보였다. */
+      ★ 아틀라스 프레임을 돌리면 안 된다 — 프레임마다 줄기가 제멋대로라 위상(ty*0.4)과 겹쳐 물이 거슬러 오르는 듯 보였다.
+      줄기 길이 · 밝기는 **그 줄기의 세계 y** 로 정한다(칸마다 다르게 정하면 경계에서 끊긴다) — 떨어질수록 길고 하얗게 부서진다. */
   drawFallsTile(c: CanvasRenderingContext2D, tx: number, ty: number, sx: number, sy: number) {
-    const t = this.time, top = ty * TS;
-    c.globalAlpha = 0.5; c.fillStyle = ART[T.FALLS].c; c.fillRect(sx, sy, TS, TS);
-    for (let i = 0; i < 7; i++) {
+    const w = this.world, t = this.time, top = ty * TS;
+    const isF = (x: number, y: number) => w.get(x, y) === T.FALLS;
+    const L = isF(tx - 1, ty), R = isF(tx + 1, ty);
+    let d = 0; while (d < 30 && isF(tx, ty - 1 - d)) d++;
+    const headY = (ty - d) * TS, foot = !isF(tx, ty + 1);
+    /* 머리 칸 위가 물이 아니면(턱 밖으로 내민 줄) 물이 턱을 넘으며 휘어 나온다 — 바깥쪽 위 모서리를 둥글게 비운다 */
+    const liq = (x: number, y: number) => !!TILE_DEF[w.get(x, y)].liquid && w.get(x, y) !== T.FALLS;
+    const curl = d === 0 && !liq(tx, ty - 1) ? (liq(tx + 1, ty - 1) || isF(tx + 1, ty) && liq(tx + 2, ty - 1) ? -1 : liq(tx - 1, ty - 1) ? 1 : 0) : 0;
+    const lipOff = (x: number) => curl === 0 ? 0 : Math.round(Math.pow(curl > 0 ? x / TS : 1 - x / TS, 2) * 9);
+    // 물 막 — 2px 열마다 짙기가 다르고 바깥 가장자리는 옅다(네모난 기둥으로 안 보이게)
+    for (let x = 0; x < TS; x += 2) {
+      const h = tileHash(tx * TS + x, 977);
+      const e = !L && x < 4 ? (x < 2 ? 0.4 : 0.72) : !R && x >= TS - 4 ? (x >= TS - 2 ? 0.4 : 0.72) : 1;
+      c.globalAlpha = (0.4 + h * 0.2) * e;
+      c.fillStyle = h > 0.72 ? '#6aa8c8' : h > 0.36 ? '#4a8fc0' : '#3a78a6';
+      const o = lipOff(x + 1); c.fillRect(sx + x, sy + o, 2, TS - o);
+    }
+    const foam = Math.min(1, d / 12);                                 // 떨어질수록 공기가 섞여 희다
+    if (foam > 0) { c.globalAlpha = foam * 0.13; c.fillStyle = '#e8f6ff'; c.fillRect(sx + (L ? 0 : 2), sy, TS - (L ? 0 : 2) - (R ? 0 : 2), TS); }
+    // 줄기 — 머리에서 멀수록 길고 빠르다
+    for (let i = 0; i < 8; i++) {
       const h1 = tileHash(tx, i * 131 + 7), h2 = tileHash(tx, i * 131 + 8), h3 = tileHash(tx, i * 131 + 9);
-      const drop = i >= 5;                                  // 뒤 둘은 빠르고 짧은 물방울
-      const x = Math.round(h1 * (TS - 2)), wd = drop ? 1 : 1 + ((h2 * 2) | 0);
-      const P = drop ? 22 + h3 * 14 : 26 + h2 * 18, L = drop ? 3 + h3 * 2 : 9 + h3 * 12;
-      const off = ((t * (drop ? 190 : 120 + h3 * 50) + h2 * P) % P + P) % P;
-      c.globalAlpha = drop ? 0.55 : 0.28 + h2 * 0.3;
-      c.fillStyle = drop ? '#eaf6ff' : '#bfe3fa';
-      for (let y = off + Math.floor((top - L - off) / P) * P; y < top + TS; y += P) {
-        const y0 = Math.max(y, top), y1 = Math.min(y + L, top + TS);
-        if (y1 > y0) c.fillRect(sx + x, sy + y0 - top, wd, y1 - y0);
+      const drop = i >= 6;
+      const x = 1 + Math.round(h1 * (TS - 3)), wd = drop ? 1 : 1 + ((h2 * 2) | 0);
+      const P = drop ? 22 + h3 * 14 : 24 + h2 * 16;
+      const off = ((t * (drop ? 200 : 130 + h3 * 60) + h2 * P) % P + P) % P;
+      const edge = (!L && x < 3) || (!R && x > TS - 4);
+      c.fillStyle = drop ? '#f2faff' : h2 > 0.5 ? '#d8eefa' : '#a8d4ee';
+      for (let y = off + Math.floor((top - 40 - off) / P) * P; y < top + TS; y += P) {
+        const fall = Math.max(0, y - headY), Ln = drop ? 3 + h3 * 2 : Math.min(26, 4 + h3 * 6 + fall * 0.06);
+        if (fall < 3) continue;                                         // 머리 굽이는 따로 그린다
+        const y0 = Math.max(y, top + lipOff(x)), y1 = Math.min(y + Ln, top + TS);
+        if (y1 <= y0) continue;
+        c.globalAlpha = (drop ? 0.6 : 0.22 + h2 * 0.28 + Math.min(0.2, fall / 300)) * (edge ? 0.6 : 1);
+        c.fillRect(sx + x, sy + y0 - top, wd, y1 - y0);
       }
     }
+    // 가장자리 — 바깥 면에 흔들리는 밝은 테 한 줄
+    c.fillStyle = '#cfe8f6';
+    if (!L) { c.globalAlpha = 0.22 + 0.1 * Math.sin(t * 9 + ty); c.fillRect(sx + 1, sy, 1, TS); }
+    if (!R) { c.globalAlpha = 0.22 + 0.1 * Math.sin(t * 9 + ty + 2); c.fillRect(sx + TS - 2, sy, 1, TS); }
+    if (d === 0) {                                                    // 머리 — 물이 턱을 넘으며 둥글게 굽는다
+      for (let x = 0; x < TS; x++) {
+        const wob = Math.sin(t * 5 + (tx * TS + x) * 0.35) * 0.8;
+        const e = (!L && x < 2) || (!R && x > TS - 3) ? 0.5 : 1;
+        const o = lipOff(x);
+        c.globalAlpha = 0.55 * e; c.fillStyle = '#e4f4fc'; c.fillRect(sx + x, sy + 1 + o + wob, 1, 2);
+        c.globalAlpha = 0.25 * e; c.fillStyle = '#b8dcf0'; c.fillRect(sx + x, sy + 3 + o + wob, 1, 3);
+      }
+    }
+    if (foot) {                                                       // 발치 — 부딪히기 직전 하얗게 일어난다
+      for (let k = 0; k < 6; k++) { c.globalAlpha = 0.07 * (k + 1); c.fillStyle = '#f2faff'; c.fillRect(sx, sy + TS - 12 + k * 2, TS, 2); }
+      (this._fallFeet = this._fallFeet || []).push(tx, ty);
+    }
     c.globalAlpha = 1;
+  },
+  /** 폭포 발치 물거품 — 타일을 다 그린 **뒤에** 얹는다(아래 물 칸이 나중에 그려져 거품을 덮었다).
+      물에 떨어지면 수면을 따라 양옆으로 퍼지는 흰 거품 · 물속에서 이는 기포 · 피어오르는 물안개, 바닥이면 작게 튄다. */
+  drawFallsFoam(c: CanvasRenderingContext2D, camX: number, camY: number) {
+    const F = this._fallFeet; if (!F || !F.length) return;
+    const w = this.world, t = this.time;
+    c.save();
+    for (let i = 0; i < F.length; i += 2) {
+      const tx = F[i], ty = F[i + 1];
+      const footAt = (x: number) => w.get(x, ty) === T.FALLS && w.get(x, ty + 1) !== T.FALLS;
+      if (footAt(tx - 1)) continue;                                   // 이어진 발치는 맨 왼쪽 칸에서 한 번만
+      let n = 1; while (n < 8 && footAt(tx + n)) n++;
+      const below = w.get(tx, ty + 1), wet = !!TILE_DEF[below].liquid;
+      const cx = (tx + n / 2) * TS - camX, sy = (ty + 1) * TS - camY, half = n * TS / 2;
+      const spread = wet ? half + TS * 1.6 : half + TS * 0.5;
+      // 물안개 — 발치 위로 부드럽게
+      const mr = spread * 0.85 + 6;
+      c.save(); c.translate(cx, sy - 3); c.scale(1, 0.42);
+      const mg = c.createRadialGradient(0, 0, 0, 0, 0, mr);
+      mg.addColorStop(0, `rgba(236,246,252,${0.24 + 0.05 * Math.sin(t * 3 + tx)})`); mg.addColorStop(1, 'rgba(236,246,252,0)');
+      c.globalAlpha = 1; c.fillStyle = mg; c.beginPath(); c.arc(0, 0, mr, 0, Math.PI * 2); c.fill(); c.restore();
+      // 거품 — 가운데는 두껍게 일고 바깥으로 갈수록 엷게 흩어진다
+      const N = Math.round(spread / 1.2);
+      for (let j = 0; j < N; j++) {
+        const h = tileHash(tx * 31 + j, ty), h2 = tileHash(j, tx + 7);
+        const side = j & 1 ? 1 : -1, u = (h * 0.6 + ((t * (0.35 + h2 * 0.3) + h2) % 1) * 0.4);   // 바깥으로 밀려 나간다
+        const px = cx + side * u * spread, k = 1 - u;
+        if (!TILE_DEF[w.get(Math.floor((px + camX) / TS), ty + 1)].liquid && Math.abs(px - cx) > half) continue;   // 거품은 수면에만
+        const py = sy - 1 - k * (2 + Math.sin(t * 7 + j) * 1.6);
+        c.globalAlpha = (0.25 + k * 0.6) * (0.7 + 0.3 * Math.sin(t * 6 + j * 1.3));
+        c.fillStyle = h2 > 0.5 ? '#f4fbff' : '#d6ecf8';
+        c.beginPath(); c.arc(px, py, 1 + k * 3 * (0.6 + h * 0.6), 0, Math.PI * 2); c.fill();
+      }
+      if (wet) {                                                      // 물속 기포 — 떨어진 물이 끌고 들어간 공기
+        for (let j = 0; j < 7 * n; j++) {
+          const h = tileHash(j, tx * 13 + ty), ph = (t * (0.8 + h * 0.6) + h) % 1;
+          const px = cx + (h - 0.5) * (half * 2 + 6) + Math.sin(t * 4 + j) * 1.5, py = sy + 2 + (1 - ph) * 14;
+          c.globalAlpha = 0.6 * Math.sin(ph * Math.PI); c.fillStyle = '#e8f6ff';
+          c.beginPath(); c.arc(px, py, 1 + h * 1.4, 0, Math.PI * 2); c.fill();
+        }
+        c.fillStyle = '#f4fbff';                                      // 내리꽂히는 자리 — 끓어오르는 흰 띠
+        for (let x = -half - 4; x < half + 4; x += 2) {
+          const hh = 2 + 2.5 * Math.abs(Math.sin(t * 11 + x * 0.7 + tx)), ed = Math.min(1, (half + 4 - Math.abs(x)) / 6);
+          c.globalAlpha = 0.7 * ed; c.fillRect(cx + x, sy - hh, 2, hh + 2);
+          c.globalAlpha = 0.3 * ed; c.fillRect(cx + x, sy + 2, 2, 3 + 2 * Math.abs(Math.sin(t * 7 + x)));
+        }
+      }
+    }
+    c.restore();
+    F.length = 0;
   },
 
   /** 폭포 밑 물보라 — 물줄기가 수면·바닥에 닿는 칸에서 물방울이 튄다. */

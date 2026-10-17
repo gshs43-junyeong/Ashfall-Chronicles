@@ -60,7 +60,8 @@ export const FishDuelPart: Bag = {
       start: clamp(0.45 + (rod.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.3, 0.7),
       ease: 0.012 + (flv >= 3 ? 0.02 : 0),                        // 기본도 조금 너그럽게 · 3레벨 '가벼운 손목'은 더
       drainMul: baited ? 0.8 : 1,
-      theme: { font: FONT || 'sans-serif', art: FISH_DUEL_ART, frame: false, colors: ['#4ab8d8', '#e8a840', '#6ac87a', '#d87aa0'] },
+      theme: { font: FONT || 'sans-serif', art: FISH_DUEL_ART, frame: false, colors: ['#d8a94b', '#c8743a', '#9aae5a', '#b88ab0'], gauge: '#d8a94b', gaugeLow: '#c8433c', ink: '#e8e3d4',
+        judge: { 300: '#f0d48a', 100: '#c9c3b0', 50: '#c8743a', 0: '#c8433c' } },
       onBeat: (i: number) => this.duelBeat(i),
       onJudge: (res: number, kind: string) => this.duelHitSfx(res, kind)
     });
@@ -216,11 +217,11 @@ export const FishDuelPart: Bag = {
   },
   /** 안내 그림 하나 — k: c 고리 · s 슬라이더 · p 스피너 · g 게이지. 1.6초 고리로 돈다 */
   duelTutArt(c: CanvasRenderingContext2D, k: string, t: number) {
-    const W = 132, H = 92, u = (t % 1.6) / 1.6, col = '#4ab8d8';
+    const W = 132, H = 92, u = (t % 1.6) / 1.6, col = '#d8a94b';
     c.clearRect(0, 0, W, H);
     const disc = (x: number, y: number, r: number) => {
       c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-      c.strokeStyle = '#f4fbff'; c.lineWidth = 2.5; c.stroke();
+      c.strokeStyle = '#e8e3d4'; c.lineWidth = 2.5; c.stroke();
     };
     const finger = (x: number, y: number, down: boolean) => {      // 누르는 손끝 — 누르면 작아지고 물결
       c.fillStyle = down ? '#ffe8a0' : 'rgba(255,232,160,.6)'; c.beginPath(); c.arc(x, y, down ? 5 : 6, 0, Math.PI * 2); c.fill();
@@ -228,29 +229,28 @@ export const FishDuelPart: Bag = {
     };
     if (k === 'c') {
       const r = 16, ar = r + (1 - Math.min(1, u / 0.7)) * 26;
-      if (u < 0.85) { disc(66, 46, r); c.strokeStyle = '#bfeaff'; c.lineWidth = 2; c.beginPath(); c.arc(66, 46, ar, 0, Math.PI * 2); c.stroke(); }
+      if (u < 0.85) { disc(66, 46, r); c.strokeStyle = '#f0d48a'; c.lineWidth = 2; c.beginPath(); c.arc(66, 46, ar, 0, Math.PI * 2); c.stroke(); }
       const hit = u >= 0.68 && u < 0.85;
       if (u >= 0.7) { c.globalAlpha = 1 - (u - 0.7) / 0.3; c.fillStyle = '#ffe08a'; c.font = '700 15px sans-serif'; c.textAlign = 'center'; c.fillText('300', 66, 22 - (u - 0.7) * 30); c.globalAlpha = 1; }
       finger(84, 62, hit);
     } else if (k === 's') {
       const x0 = 24, x1 = 108, y = 46, v = Math.min(1, Math.max(0, (u - 0.15) / 0.65));
-      c.strokeStyle = 'rgba(74,184,216,.45)'; c.lineWidth = 26; c.lineCap = 'round'; c.beginPath(); c.moveTo(x0, y); c.quadraticCurveTo(66, 14, x1, y); c.stroke();
-      c.strokeStyle = '#f4fbff'; c.lineWidth = 2; c.stroke();
+      c.strokeStyle = 'rgba(216,169,75,.28)'; c.lineWidth = 26; c.lineCap = 'round'; c.beginPath(); c.moveTo(x0, y); c.quadraticCurveTo(66, 14, x1, y); c.stroke();
+      c.strokeStyle = '#e8e3d4'; c.lineWidth = 2; c.stroke();
       const q = (a: number, b: number, cc: number) => (1 - v) * (1 - v) * a + 2 * (1 - v) * v * b + v * v * cc;
       const bx = q(x0, 66, x1), by = q(y, 14, y);
       disc(bx, by, 11); finger(bx + 6, by + 8, u > 0.12 && u < 0.85);
     } else if (k === 'p') {
-      c.strokeStyle = 'rgba(244,251,255,.35)'; c.lineWidth = 2; c.beginPath(); c.arc(66, 46, 34, 0, Math.PI * 2); c.stroke();
-      c.strokeStyle = '#e8a840'; c.lineWidth = 4; c.beginPath(); c.arc(66, 46, 34, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u); c.stroke();
+      c.strokeStyle = '#3b3527'; c.lineWidth = 4; c.beginPath(); c.arc(66, 46, 34, 0, Math.PI * 2); c.stroke();
+      c.strokeStyle = '#d8a94b'; c.lineWidth = 4; c.beginPath(); c.arc(66, 46, 34, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u); c.stroke();
       const a = t * 7; finger(66 + Math.cos(a) * 22, 46 + Math.sin(a) * 22, true);
-      c.fillStyle = '#f4fbff'; c.beginPath(); c.arc(66, 46, 4, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#e8e3d4'; c.beginPath(); c.arc(66, 46, 4, 0, Math.PI * 2); c.fill();
     } else {
       const g = 0.25 + 0.6 * (u < 0.75 ? u / 0.75 : 1 - (u - 0.75) * 1.4), gx = 14, gw = 104, gy = 46;
-      c.fillStyle = 'rgba(4,14,20,.8)'; c.beginPath(); c.roundRect(gx - 4, gy - 6, gw + 8, 12, 6); c.fill();
-      c.fillStyle = '#2a8ab0'; c.beginPath(); c.roundRect(gx, gy - 3, gw * g, 6, 3); c.fill();
-      const fx = gx + gw * g; c.fillStyle = '#dff4ff'; c.beginPath(); c.ellipse(fx, gy, 8, 4, 0, 0, Math.PI * 2); c.fill();
+      this.duelGauge(c, gx, gw, gy, g, false, 0.8);
+      const fx = gx + gw * g; c.fillStyle = '#e8e3d4'; c.beginPath(); c.ellipse(fx, gy, 8, 4, 0, 0, Math.PI * 2); c.fill();
       c.beginPath(); c.moveTo(fx - 6, gy); c.lineTo(fx - 12, gy - 5); c.lineTo(fx - 12, gy + 5); c.fill();
-      c.fillStyle = u < 0.75 ? '#6ac87a' : '#ff8a7a'; c.font = '700 12px sans-serif'; c.textAlign = 'center';
+      c.fillStyle = u < 0.75 ? '#9aae5a' : '#c8433c'; c.font = '700 12px sans-serif'; c.textAlign = 'center';
       c.fillText(u < 0.75 ? '+' : '−', fx, gy - 12);
     }
   },
@@ -262,7 +262,7 @@ export const FishDuelPart: Bag = {
     const p = this.player, f = p.fish, z = this.viewZoom();
     const sx = (x: number) => (x - this.cam.x) * z, sy = (y: number) => (y - this.cam.y) * z;
     c.save();
-    c.fillStyle = 'rgba(2,8,14,.8)'; c.fillRect(0, 0, innerWidth, innerHeight);
+    c.fillStyle = 'rgba(10,9,6,.8)'; c.fillRect(0, 0, innerWidth, innerHeight);
     c.globalCompositeOperation = 'destination-out';
     const pool = (x: number, y: number, rx: number, ry: number, a: number) => {
       c.save(); c.translate(x, y); c.scale(1, ry / rx);
@@ -289,9 +289,24 @@ export const FishDuelPart: Bag = {
       c.globalCompositeOperation = 'lighter';
       c.save(); c.translate(bx, by + 4 * z); c.scale(1, 0.4);
       const g = c.createRadialGradient(0, 0, 0, 0, 0, 120 * z);
-      g.addColorStop(0, 'rgba(110,170,210,.22)'); g.addColorStop(1, 'rgba(110,170,210,0)');
+      g.addColorStop(0, 'rgba(200,190,160,.16)'); g.addColorStop(1, 'rgba(200,190,160,0)');
       c.fillStyle = g; c.beginPath(); c.arc(0, 0, 120 * z, 0, Math.PI * 2); c.fill(); c.restore();
     }
+    c.restore();
+  },
+  /** 게이지 — 기본 창과 같은 결(짙은 갈색 판 · 테 #3b3527 · 안쪽 검은 선)에 금빛 줄. 줄어들면 붉게 깜빡인다 */
+  duelGauge(c: CanvasRenderingContext2D, x: number, w: number, y: number, g: number, low: boolean, k: number) {
+    c.save();
+    const bg = c.createLinearGradient(0, y - 7 * k, 0, y + 7 * k);
+    bg.addColorStop(0, '#16150f'); bg.addColorStop(1, '#0e0d0a');
+    c.fillStyle = bg; c.beginPath(); c.roundRect(x - 6 * k, y - 7 * k, w + 12 * k, 14 * k, 3); c.fill();
+    c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = '#3b3527'; c.beginPath(); c.roundRect(x - 5.5 * k, y - 6.5 * k, w + 11 * k, 13 * k, 3); c.stroke();
+    const gr = c.createLinearGradient(0, y - 3 * k, 0, y + 3 * k);
+    gr.addColorStop(0, low ? '#e0705a' : '#f0d48a'); gr.addColorStop(0.5, low ? '#c8433c' : '#d8a94b'); gr.addColorStop(1, low ? '#7a2a22' : '#8a6a2a');
+    c.fillStyle = gr; c.beginPath(); c.roundRect(x, y - 3 * k, Math.max(0, w * g), 6 * k, 1.5); c.fill();
+    c.strokeStyle = 'rgba(232,227,212,.35)'; c.lineWidth = 1; c.setLineDash([2, 3]);        // 남은 줄 — 풀린 낚싯줄
+    c.beginPath(); c.moveTo(x + w * g, y); c.lineTo(x + w, y); c.stroke();
     c.restore();
   },
   duelDraw() {
@@ -304,23 +319,17 @@ export const FishDuelPart: Bag = {
     d.draw(c, r);
     // 게이지 — 화면 위 끝에서 끝까지 팽팽한 낚싯줄 · 끝의 물고기가 끌려온다
     const W = innerWidth, gx0 = Math.max(24, W * 0.08), gw = W - gx0 * 2, gy = 20, g = clamp(d.gauge, 0, 1);
-    c.save();
-    c.fillStyle = 'rgba(4,14,20,.7)'; c.beginPath(); c.roundRect(gx0 - 6, gy - 7, gw + 12, 14, 7); c.fill();
-    const low = g < 0.25 && Math.sin(d.t * 14) > 0, gr = c.createLinearGradient(gx0, 0, gx0 + gw, 0);
-    gr.addColorStop(0, low ? '#ff6a5a' : '#2a8ab0'); gr.addColorStop(1, low ? '#ffb0a0' : '#bfeaff');
-    c.fillStyle = gr; c.beginPath(); c.roundRect(gx0, gy - 3, Math.max(0, gw * g), 6, 3); c.fill();
-    c.strokeStyle = 'rgba(244,251,255,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(gx0 + gw * g, gy); c.lineTo(gx0 + gw, gy); c.stroke();
-    c.restore();
+    this.duelGauge(c, gx0, gw, gy, g, g < 0.25 && Math.sin(d.t * 14) > 0, 1);
     const fx = gx0 + gw * g, fy = gy + Math.sin(d.t * 18) * 1.5;
-    c.save(); c.fillStyle = g < 0.25 ? '#ff8a7a' : '#dff4ff';
+    c.save(); c.fillStyle = g < 0.25 ? '#e0705a' : '#e8e3d4';
     c.beginPath(); c.ellipse(fx, fy, 9, 4.5, 0, 0, Math.PI * 2); c.fill();
     c.beginPath(); c.moveTo(fx - 7, fy); c.lineTo(fx - 14, fy - 5 + Math.sin(d.t * 22) * 2); c.lineTo(fx - 14, fy + 5 + Math.sin(d.t * 22) * 2); c.fill();
     c.restore();
-    c.save(); c.textAlign = 'center'; c.fillStyle = 'rgba(230,240,248,.75)'; c.font = `12px ${FONT || 'sans-serif'}`;
+    c.save(); c.textAlign = 'center'; c.fillStyle = '#9b957f'; c.font = `12px ${FONT || 'sans-serif'}`;
     const touch = document.body.classList.contains('touch');
     c.fillText(touch ? tr('탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다') : tr('클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다'), innerWidth / 2, innerHeight - 14);
     if (D.intro > 0) {
-      c.globalAlpha = Math.min(1, D.intro * 1.5); c.fillStyle = '#ffe8a0'; c.font = `700 22px ${FONT || 'sans-serif'}`;
+      c.globalAlpha = Math.min(1, D.intro * 1.5); c.fillStyle = '#d8a94b'; c.font = `700 22px ${FONT || 'sans-serif'}`;
       c.fillText(tr('입질이다 — 박자에 맞춰 당겨라!'), r.x + r.w / 2, r.y + r.h / 2);
     }
     c.restore();

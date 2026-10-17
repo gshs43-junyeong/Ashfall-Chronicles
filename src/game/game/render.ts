@@ -160,6 +160,7 @@ export const RenderPart: Bag = {
         }
       }
     }
+    this.drawFallsFoam(c, camX, camY);
   },
   /** 렌더 단계 — 기계 몸체 · 벨트 위 물건 · 놓을 자리 */
   rMachines(f: any) {

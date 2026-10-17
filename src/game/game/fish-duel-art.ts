@@ -6,7 +6,6 @@ import { FONT } from '../lang.js';
 import type { DuelArt } from '../../engine/rhythm/duel.js';
 
 type C2 = CanvasRenderingContext2D;
-const DEEP = '#08202c';
 const lift = (hex: string, k: number) => {                              // 밝게(k>1) · 어둡게(k<1)
   const n = parseInt(hex.slice(1), 16), f = (v: number) => Math.max(0, Math.min(255, Math.round(k > 1 ? v + (255 - v) * (k - 1) : v * k)));
   return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
@@ -48,9 +47,9 @@ export const FISH_DUEL_ART: DuelArt = {
     const gl = c.createRadialGradient(x, y, r * 0.55, x, y, r * 1.4);         // 금빛 번짐
     gl.addColorStop(0, `rgba(${S[3]},.45)`); gl.addColorStop(1, `rgba(${S[3]},0)`);
     c.fillStyle = gl; c.beginPath(); c.arc(x, y, r * 1.4, 0, TAU); c.fill();
-    // 밤하늘 유리 — 가운데 등급색이 옅게 비치고 가장자리는 깊은 밤
+    // 짙은 유리 — 가운데 등급색이 옅게 비치고 가장자리는 기본 창의 짙은 갈색
     const g = c.createRadialGradient(x, y - r * 0.1, r * 0.05, x, y, r * 0.86);
-    g.addColorStop(0, lift(col, 1.25)); g.addColorStop(0.35, lift(col, 0.62)); g.addColorStop(1, '#070d1c');
+    g.addColorStop(0, lift(col, 1.25)); g.addColorStop(0.35, lift(col, 0.62)); g.addColorStop(1, '#0e0d0a');
     c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 0.86, 0, TAU); c.fill();
     // 도는 별가루
     c.fillStyle = 'rgba(255,240,200,.8)';
@@ -113,25 +112,25 @@ export const FISH_DUEL_ART: DuelArt = {
   sliderBody(c, p, r, col, t) {
     const path = () => { c.beginPath(); c.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); };
     c.lineCap = 'round'; c.lineJoin = 'round';
-    path(); c.strokeStyle = 'rgba(200,236,255,.55)'; c.lineWidth = r * 1.9; c.stroke();     // 물길 둑
-    path(); c.strokeStyle = 'rgba(8,32,44,.88)'; c.lineWidth = r * 1.66; c.stroke();
+    path(); c.strokeStyle = 'rgba(59,53,39,.95)'; c.lineWidth = r * 1.9; c.stroke();       // 둑 — 기본 창 테 색
+    path(); c.strokeStyle = 'rgba(14,13,10,.9)'; c.lineWidth = r * 1.66; c.stroke();
     const a0 = c.globalAlpha;
     path(); c.strokeStyle = col; c.globalAlpha = a0 * 0.35; c.lineWidth = r * 1.1; c.stroke();
     c.globalAlpha = a0 * 0.5; c.strokeStyle = lift(col, 1.5); c.lineWidth = 2;               // 흐르는 물살
     c.setLineDash([6, 14]); c.lineDashOffset = -t * 60; path(); c.stroke(); c.setLineDash([]);
-    c.globalAlpha = a0 * 0.9; c.strokeStyle = '#f4fbff'; c.lineWidth = 1.2; path(); c.stroke();  // 낚싯줄
+    c.globalAlpha = a0 * 0.9; c.strokeStyle = '#e8e3d4'; c.lineWidth = 1.2; path(); c.stroke();  // 낚싯줄
     c.globalAlpha = a0;
   },
   ball(c, x, y, r, col, ang, track, t) {
     if (track) {                                                         // 바늘에 걸렸다 — 도는 점선 고리
-      c.save(); c.strokeStyle = 'rgba(244,251,255,.85)'; c.lineWidth = 2.4; c.setLineDash([8, 7]); c.lineDashOffset = -t * 40;
+      c.save(); c.strokeStyle = 'rgba(232,227,212,.85)'; c.lineWidth = 2.4; c.setLineDash([8, 7]); c.lineDashOffset = -t * 40;
       c.beginPath(); c.arc(x, y, r * 2.2, 0, TAU); c.stroke(); c.restore();
     }
     c.save(); c.translate(x, y); c.rotate(ang);
     const gl = c.createRadialGradient(0, 0, 0, 0, 0, r * 1.2); gl.addColorStop(0, lift(col, 1.2)); gl.addColorStop(1, 'rgba(0,0,0,0)');
     c.globalAlpha *= 0.5; c.fillStyle = gl; c.beginPath(); c.arc(0, 0, r * 1.2, 0, TAU); c.fill(); c.globalAlpha /= 0.5;
     const flap = Math.sin(t * 16) * r * 0.12;
-    fish(c, r * 1.7, '#f4fbff', flap);
+    fish(c, r * 1.7, '#e8e3d4', flap);
     fish(c, r * 1.5, col, flap);
     c.fillStyle = lift(col, 0.55); c.beginPath(); c.ellipse(-r * 0.05, -r * 0.12, r * 0.55, r * 0.12, 0, 0, TAU); c.fill();   // 등
     c.fillStyle = '#081018'; c.beginPath(); c.arc(r * 0.45, -r * 0.06, r * 0.09, 0, TAU); c.fill();   // 눈
@@ -139,17 +138,18 @@ export const FISH_DUEL_ART: DuelArt = {
   },
   spinner(c, cx, cy, R, spun, k, left, need, col, t) {
     // 릴 — 감긴 줄이 두꺼워지고, 손잡이가 돈 만큼 돈다
-    c.fillStyle = 'rgba(8,24,32,.72)'; c.beginPath(); c.arc(cx, cy, R + 8, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(14,13,10,.82)'; c.beginPath(); c.arc(cx, cy, R + 8, 0, TAU); c.fill();
+    c.strokeStyle = '#3b3527'; c.lineWidth = 1.5; c.stroke();
     c.strokeStyle = '#8a6a3a'; c.lineWidth = 10; c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.stroke();
     c.strokeStyle = '#c8a060'; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, R - 3, 0, TAU); c.stroke();
     for (let i = 0; i < 6; i++) {                                        // 테 볼트
       const a = i / 6 * TAU; c.fillStyle = '#e8d090'; c.beginPath(); c.arc(cx + Math.cos(a) * R, cy + Math.sin(a) * R, 3, 0, TAU); c.fill();
     }
     const sp = 30 + k * 70;                                              // 감긴 줄 뭉치
-    c.fillStyle = k >= 1 ? '#9ef08a' : col; c.globalAlpha *= 0.85; c.beginPath(); c.arc(cx, cy, sp, 0, TAU); c.fill(); c.globalAlpha /= 0.85;
-    c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1;
+    c.fillStyle = k >= 1 ? '#9aae5a' : col; c.globalAlpha *= 0.85; c.beginPath(); c.arc(cx, cy, sp, 0, TAU); c.fill(); c.globalAlpha /= 0.85;
+    c.strokeStyle = 'rgba(232,227,212,.35)'; c.lineWidth = 1;
     for (let rr = 26; rr < sp; rr += 6) { c.beginPath(); c.arc(cx, cy, rr, spun, spun + 4.5); c.stroke(); }
-    c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3;             // 남은 시간 — 안쪽에서 줄어드는 물결
+    c.strokeStyle = 'rgba(232,227,212,.6)'; c.lineWidth = 3;             // 남은 시간 — 안쪽에서 줄어드는 물결
     ripple(c, cx, cy, Math.max(10, (R - 14) * left), t, 9, 2);
     c.save(); c.translate(cx, cy); c.rotate(spun);                       // 손잡이
     c.fillStyle = '#5a4428'; c.fillRect(-4, -R * 0.8, 8, R * 0.8);
@@ -177,19 +177,19 @@ export const FISH_DUEL_ART: DuelArt = {
     // 물방울 튐 — 잘 칠수록 많이 · 멀리, 놓치면 끊어진 줄
     c.globalAlpha = 1 - k;
     if (!res) {
-      c.strokeStyle = '#ff6a5a'; c.lineWidth = 3; c.lineCap = 'round';
+      c.strokeStyle = '#c8433c'; c.lineWidth = 3; c.lineCap = 'round';
       c.beginPath(); c.moveTo(x - 16, y - 4 - k * 8); c.quadraticCurveTo(x - 6, y - 12, x - 3, y - 2 + k * 10); c.stroke();
       c.beginPath(); c.moveTo(x + 16, y + 4 - k * 8); c.quadraticCurveTo(x + 6, y - 8, x + 3, y + 2 + k * 10); c.stroke();
       return;
     }
     const n = res === 300 ? 10 : res === 100 ? 7 : 4, d = (res === 300 ? 34 : 24) * (0.3 + k);
-    const col = res === 300 ? '#bfeaff' : res === 100 ? '#a8f0a0' : '#ffd890';
+    const col = res === 300 ? '#f0d48a' : res === 100 ? '#c9c3b0' : '#9b957f';
     c.fillStyle = col;
     for (let i = 0; i < n; i++) {
       const a = i / n * TAU + res, px = x + Math.cos(a) * d, py = y + Math.sin(a) * d * 0.8 + k * k * 18;
       c.beginPath(); c.ellipse(px, py, 3.2 * (1 - k * 0.5), 4.4 * (1 - k * 0.5), a + Math.PI / 2, 0, TAU); c.fill();
     }
     c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 8 + k * 26, 0, TAU); c.stroke();
-    if (res === 300) { c.fillStyle = '#ffffff'; c.font = `700 15px ${FONT || 'sans-serif'}`; c.textAlign = 'center'; c.fillText('✦', x, y + 5 - k * 10); }
+    if (res === 300) { c.fillStyle = '#fff4d0'; c.font = `700 15px ${FONT || 'sans-serif'}`; c.textAlign = 'center'; c.fillText('✦', x, y + 5 - k * 10); }
   }
 };

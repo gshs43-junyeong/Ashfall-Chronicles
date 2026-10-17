@@ -1315,16 +1315,17 @@ body.booting #title-screen{visibility:hidden}
 /* 낚시 겨루기(game/fish-duel.ts) — 판 위의 누름 · 끌기가 게임 캔버스에 안 가게 덮는다 */
 #fishduel{position:fixed;inset:0;width:100%;height:100%;z-index:9500;touch-action:none;cursor:none}
 /* 낚시 겨루기 처음 안내 — 판 위 · 움직이는 그림 넷 */
-#fishtut{position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;background:rgba(2,8,14,.55);padding:16px}
-#fishtut .ft-box{max-width:680px;width:100%;background:linear-gradient(#10232e,#0a1820);border:1px solid #3f7f98;border-radius:10px;padding:18px 20px 16px;box-shadow:0 10px 40px #000a;color:#e6f2f8;text-align:center}
-#fishtut h2{margin:0 0 6px;font-size:20px;color:#ffe8a0;letter-spacing:.04em}
-#fishtut .ft-lead{margin:0 0 14px;font-size:13px;color:#bcd6e2}
-#fishtut .ft-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-#fishtut .ft-card{background:#0b1c25;border:1px solid #234b5c;border-radius:8px;padding:8px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+#fishtut{position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;background:rgba(6,5,3,.6);padding:16px}
+#fishtut .ft-box{max-width:680px;width:100%;background:linear-gradient(#16150f,#0e0d0a);border:1px solid var(--frame);border-radius:5px;padding:0 0 16px;box-shadow:0 20px 60px #000d,0 0 0 1px #000 inset;color:var(--ink);text-align:center;overflow:hidden}
+#fishtut h2{margin:0 0 12px;padding:12px 16px;font-size:15px;font-weight:600;color:var(--gold);letter-spacing:.06em;background:#100f0b;border-bottom:1px solid var(--frame)}
+#fishtut .ft-lead{margin:0 20px 14px;font-size:13px;color:var(--dim)}
+#fishtut .ft-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 20px}
+#fishtut .ft-card{background:linear-gradient(#14120ce8,#0c0b08ee);border:1px solid #2e2a1e;border-radius:4px;box-shadow:inset 0 0 18px #000a;padding:8px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:4px}
 #fishtut .ft-card canvas{width:132px;max-width:100%;height:auto}
-#fishtut .ft-card b{font-size:14px;color:#9fe0ff}
-#fishtut .ft-card p{margin:0;font-size:12px;line-height:1.35;color:#cfe2ea}
-#fishtut .ft-go{margin-top:14px;padding:8px 28px;font:inherit;font-size:15px;color:#1a1208;background:linear-gradient(#ffe8a0,#e8b84a);border:0;border-radius:6px;cursor:pointer}
+#fishtut .ft-card b{font-size:13px;color:var(--gold);letter-spacing:.04em}
+#fishtut .ft-card p{margin:0;font-size:12px;line-height:1.35;color:#c9c3b0}
+#fishtut .ft-go{margin-top:14px;padding:8px 28px;font:inherit;font-size:14px;color:var(--gold);background:linear-gradient(#2a2a22,#171612);border:1px solid var(--gold);border-radius:3px;cursor:pointer;letter-spacing:.04em}
+#fishtut .ft-go:hover{background:linear-gradient(#3a3424,#1f1c14)}
 @media (max-width:620px){#fishtut .ft-row{grid-template-columns:repeat(2,1fr)}}
 
 /* 창의 움직임(ui/motion.ts) — 날아가는 아이콘 · 불꽃은 맨 위 겹에, 클릭은 그대로 아래로 */

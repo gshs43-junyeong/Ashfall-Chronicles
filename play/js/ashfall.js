@@ -2176,14 +2176,14 @@
       }
       const g = res === 300 ? 1 : res === 100 ? 0.45 : res === 50 ? 0.12 : -(0.8 + 0.15 * this.d.hp) * pen;
       this.gauge = Math.max(0, Math.min(1, this.gauge + this.unit * g));
-      this.pops.push({ x, y, t: 0, s: res ? String(res) : "✕", c: JUDGE_COL[res], res });
+      this.pops.push({ x, y, t: 0, s: res ? String(res) : "✕", c: (this.th.judge || JUDGE_COL)[res], res });
       this.o.onJudge && this.o.onJudge(res, kind);
     }
     brk(x, y) {
       if (this.combo > 0) this.shake = 0.2;
       this.combo = 0;
       this.gauge = Math.max(0, this.gauge - this.unit * 0.25);
-      this.pops.push({ x, y, t: 0, s: "✕", c: JUDGE_COL[0], res: 0 });
+      this.pops.push({ x, y, t: 0, s: "✕", c: (this.th.judge || JUDGE_COL)[0], res: 0 });
       this.o.onJudge && this.o.onJudge(0, "break");
     }
     /* ---------------- 흐름 ---------------- */
@@ -54449,7 +54449,6 @@
   __export(fish_duel_art_exports, {
     FISH_DUEL_ART: () => FISH_DUEL_ART
   });
-  var DEEP = "#08202c";
   var lift = (hex, k) => {
     const n = parseInt(hex.slice(1), 16), f = (v) => Math.max(0, Math.min(255, Math.round(k > 1 ? v + (255 - v) * (k - 1) : v * k)));
     return `rgb(${f(n >> 16)},${f(n >> 8 & 255)},${f(n & 255)})`;
@@ -54510,7 +54509,7 @@
       const g = c.createRadialGradient(x, y - r * 0.1, r * 0.05, x, y, r * 0.86);
       g.addColorStop(0, lift(col, 1.25));
       g.addColorStop(0.35, lift(col, 0.62));
-      g.addColorStop(1, "#070d1c");
+      g.addColorStop(1, "#0e0d0a");
       c.fillStyle = g;
       c.beginPath();
       c.arc(x, y, r * 0.86, 0, TAU);
@@ -54630,11 +54629,11 @@
       c.lineCap = "round";
       c.lineJoin = "round";
       path();
-      c.strokeStyle = "rgba(200,236,255,.55)";
+      c.strokeStyle = "rgba(59,53,39,.95)";
       c.lineWidth = r * 1.9;
       c.stroke();
       path();
-      c.strokeStyle = "rgba(8,32,44,.88)";
+      c.strokeStyle = "rgba(14,13,10,.9)";
       c.lineWidth = r * 1.66;
       c.stroke();
       const a0 = c.globalAlpha;
@@ -54652,7 +54651,7 @@
       c.stroke();
       c.setLineDash([]);
       c.globalAlpha = a0 * 0.9;
-      c.strokeStyle = "#f4fbff";
+      c.strokeStyle = "#e8e3d4";
       c.lineWidth = 1.2;
       path();
       c.stroke();
@@ -54661,7 +54660,7 @@
     ball(c, x, y, r, col, ang, track, t) {
       if (track) {
         c.save();
-        c.strokeStyle = "rgba(244,251,255,.85)";
+        c.strokeStyle = "rgba(232,227,212,.85)";
         c.lineWidth = 2.4;
         c.setLineDash([8, 7]);
         c.lineDashOffset = -t * 40;
@@ -54683,7 +54682,7 @@
       c.fill();
       c.globalAlpha /= 0.5;
       const flap = Math.sin(t * 16) * r * 0.12;
-      fish(c, r * 1.7, "#f4fbff", flap);
+      fish(c, r * 1.7, "#e8e3d4", flap);
       fish(c, r * 1.5, col, flap);
       c.fillStyle = lift(col, 0.55);
       c.beginPath();
@@ -54696,10 +54695,13 @@
       c.restore();
     },
     spinner(c, cx, cy, R, spun, k, left, need, col, t) {
-      c.fillStyle = "rgba(8,24,32,.72)";
+      c.fillStyle = "rgba(14,13,10,.82)";
       c.beginPath();
       c.arc(cx, cy, R + 8, 0, TAU);
       c.fill();
+      c.strokeStyle = "#3b3527";
+      c.lineWidth = 1.5;
+      c.stroke();
       c.strokeStyle = "#8a6a3a";
       c.lineWidth = 10;
       c.beginPath();
@@ -54718,20 +54720,20 @@
         c.fill();
       }
       const sp = 30 + k * 70;
-      c.fillStyle = k >= 1 ? "#9ef08a" : col;
+      c.fillStyle = k >= 1 ? "#9aae5a" : col;
       c.globalAlpha *= 0.85;
       c.beginPath();
       c.arc(cx, cy, sp, 0, TAU);
       c.fill();
       c.globalAlpha /= 0.85;
-      c.strokeStyle = "rgba(255,255,255,.35)";
+      c.strokeStyle = "rgba(232,227,212,.35)";
       c.lineWidth = 1;
       for (let rr = 26; rr < sp; rr += 6) {
         c.beginPath();
         c.arc(cx, cy, rr, spun, spun + 4.5);
         c.stroke();
       }
-      c.strokeStyle = "rgba(255,255,255,.6)";
+      c.strokeStyle = "rgba(232,227,212,.6)";
       c.lineWidth = 3;
       ripple(c, cx, cy, Math.max(10, (R - 14) * left), t, 9, 2);
       c.save();
@@ -54793,7 +54795,7 @@
     pop(c, x, y, res, k, t) {
       c.globalAlpha = 1 - k;
       if (!res) {
-        c.strokeStyle = "#ff6a5a";
+        c.strokeStyle = "#c8433c";
         c.lineWidth = 3;
         c.lineCap = "round";
         c.beginPath();
@@ -54807,7 +54809,7 @@
         return;
       }
       const n = res === 300 ? 10 : res === 100 ? 7 : 4, d = (res === 300 ? 34 : 24) * (0.3 + k);
-      const col = res === 300 ? "#bfeaff" : res === 100 ? "#a8f0a0" : "#ffd890";
+      const col = res === 300 ? "#f0d48a" : res === 100 ? "#c9c3b0" : "#9b957f";
       c.fillStyle = col;
       for (let i = 0; i < n; i++) {
         const a = i / n * TAU + res, px = x + Math.cos(a) * d, py = y + Math.sin(a) * d * 0.8 + k * k * 18;
@@ -54821,7 +54823,7 @@
       c.arc(x, y, 8 + k * 26, 0, TAU);
       c.stroke();
       if (res === 300) {
-        c.fillStyle = "#ffffff";
+        c.fillStyle = "#fff4d0";
         c.font = `700 15px ${FONT || "sans-serif"}`;
         c.textAlign = "center";
         c.fillText("✦", x, y + 5 - k * 10);
@@ -54884,7 +54886,16 @@
         ease: 0.012 + (flv >= 3 ? 0.02 : 0),
         // 기본도 조금 너그럽게 · 3레벨 '가벼운 손목'은 더
         drainMul: baited ? 0.8 : 1,
-        theme: { font: FONT || "sans-serif", art: FISH_DUEL_ART, frame: false, colors: ["#4ab8d8", "#e8a840", "#6ac87a", "#d87aa0"] },
+        theme: {
+          font: FONT || "sans-serif",
+          art: FISH_DUEL_ART,
+          frame: false,
+          colors: ["#d8a94b", "#c8743a", "#9aae5a", "#b88ab0"],
+          gauge: "#d8a94b",
+          gaugeLow: "#c8433c",
+          ink: "#e8e3d4",
+          judge: { 300: "#f0d48a", 100: "#c9c3b0", 50: "#c8743a", 0: "#c8433c" }
+        },
         onBeat: (i) => this.duelBeat(i),
         onJudge: (res, kind) => this.duelHitSfx(res, kind)
       });
@@ -55106,14 +55117,14 @@
     },
     /** 안내 그림 하나 — k: c 고리 · s 슬라이더 · p 스피너 · g 게이지. 1.6초 고리로 돈다 */
     duelTutArt(c, k, t) {
-      const W = 132, H = 92, u = t % 1.6 / 1.6, col = "#4ab8d8";
+      const W = 132, H = 92, u = t % 1.6 / 1.6, col = "#d8a94b";
       c.clearRect(0, 0, W, H);
       const disc = (x, y, r) => {
         c.fillStyle = col;
         c.beginPath();
         c.arc(x, y, r, 0, Math.PI * 2);
         c.fill();
-        c.strokeStyle = "#f4fbff";
+        c.strokeStyle = "#e8e3d4";
         c.lineWidth = 2.5;
         c.stroke();
       };
@@ -55134,7 +55145,7 @@
         const r = 16, ar = r + (1 - Math.min(1, u / 0.7)) * 26;
         if (u < 0.85) {
           disc(66, 46, r);
-          c.strokeStyle = "#bfeaff";
+          c.strokeStyle = "#f0d48a";
           c.lineWidth = 2;
           c.beginPath();
           c.arc(66, 46, ar, 0, Math.PI * 2);
@@ -55152,14 +55163,14 @@
         finger(84, 62, hit);
       } else if (k === "s") {
         const x0 = 24, x1 = 108, y = 46, v = Math.min(1, Math.max(0, (u - 0.15) / 0.65));
-        c.strokeStyle = "rgba(74,184,216,.45)";
+        c.strokeStyle = "rgba(216,169,75,.28)";
         c.lineWidth = 26;
         c.lineCap = "round";
         c.beginPath();
         c.moveTo(x0, y);
         c.quadraticCurveTo(66, 14, x1, y);
         c.stroke();
-        c.strokeStyle = "#f4fbff";
+        c.strokeStyle = "#e8e3d4";
         c.lineWidth = 2;
         c.stroke();
         const q = (a, b, cc) => (1 - v) * (1 - v) * a + 2 * (1 - v) * v * b + v * v * cc;
@@ -55167,34 +55178,27 @@
         disc(bx, by, 11);
         finger(bx + 6, by + 8, u > 0.12 && u < 0.85);
       } else if (k === "p") {
-        c.strokeStyle = "rgba(244,251,255,.35)";
-        c.lineWidth = 2;
+        c.strokeStyle = "#3b3527";
+        c.lineWidth = 4;
         c.beginPath();
         c.arc(66, 46, 34, 0, Math.PI * 2);
         c.stroke();
-        c.strokeStyle = "#e8a840";
+        c.strokeStyle = "#d8a94b";
         c.lineWidth = 4;
         c.beginPath();
         c.arc(66, 46, 34, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u);
         c.stroke();
         const a = t * 7;
         finger(66 + Math.cos(a) * 22, 46 + Math.sin(a) * 22, true);
-        c.fillStyle = "#f4fbff";
+        c.fillStyle = "#e8e3d4";
         c.beginPath();
         c.arc(66, 46, 4, 0, Math.PI * 2);
         c.fill();
       } else {
         const g = 0.25 + 0.6 * (u < 0.75 ? u / 0.75 : 1 - (u - 0.75) * 1.4), gx = 14, gw = 104, gy = 46;
-        c.fillStyle = "rgba(4,14,20,.8)";
-        c.beginPath();
-        c.roundRect(gx - 4, gy - 6, gw + 8, 12, 6);
-        c.fill();
-        c.fillStyle = "#2a8ab0";
-        c.beginPath();
-        c.roundRect(gx, gy - 3, gw * g, 6, 3);
-        c.fill();
+        this.duelGauge(c, gx, gw, gy, g, false, 0.8);
         const fx = gx + gw * g;
-        c.fillStyle = "#dff4ff";
+        c.fillStyle = "#e8e3d4";
         c.beginPath();
         c.ellipse(fx, gy, 8, 4, 0, 0, Math.PI * 2);
         c.fill();
@@ -55203,7 +55207,7 @@
         c.lineTo(fx - 12, gy - 5);
         c.lineTo(fx - 12, gy + 5);
         c.fill();
-        c.fillStyle = u < 0.75 ? "#6ac87a" : "#ff8a7a";
+        c.fillStyle = u < 0.75 ? "#9aae5a" : "#c8433c";
         c.font = "700 12px sans-serif";
         c.textAlign = "center";
         c.fillText(u < 0.75 ? "+" : "−", fx, gy - 12);
@@ -55216,7 +55220,7 @@
       const p = this.player, f = p.fish, z = this.viewZoom();
       const sx = (x) => (x - this.cam.x) * z, sy = (y) => (y - this.cam.y) * z;
       c.save();
-      c.fillStyle = "rgba(2,8,14,.8)";
+      c.fillStyle = "rgba(10,9,6,.8)";
       c.fillRect(0, 0, innerWidth, innerHeight);
       c.globalCompositeOperation = "destination-out";
       const pool = (x, y, rx, ry, a) => {
@@ -55264,14 +55268,48 @@
         c.translate(bx, by + 4 * z);
         c.scale(1, 0.4);
         const g = c.createRadialGradient(0, 0, 0, 0, 0, 120 * z);
-        g.addColorStop(0, "rgba(110,170,210,.22)");
-        g.addColorStop(1, "rgba(110,170,210,0)");
+        g.addColorStop(0, "rgba(200,190,160,.16)");
+        g.addColorStop(1, "rgba(200,190,160,0)");
         c.fillStyle = g;
         c.beginPath();
         c.arc(0, 0, 120 * z, 0, Math.PI * 2);
         c.fill();
         c.restore();
       }
+      c.restore();
+    },
+    /** 게이지 — 기본 창과 같은 결(짙은 갈색 판 · 테 #3b3527 · 안쪽 검은 선)에 금빛 줄. 줄어들면 붉게 깜빡인다 */
+    duelGauge(c, x, w, y, g, low, k) {
+      c.save();
+      const bg = c.createLinearGradient(0, y - 7 * k, 0, y + 7 * k);
+      bg.addColorStop(0, "#16150f");
+      bg.addColorStop(1, "#0e0d0a");
+      c.fillStyle = bg;
+      c.beginPath();
+      c.roundRect(x - 6 * k, y - 7 * k, w + 12 * k, 14 * k, 3);
+      c.fill();
+      c.strokeStyle = "#000";
+      c.lineWidth = 1;
+      c.stroke();
+      c.strokeStyle = "#3b3527";
+      c.beginPath();
+      c.roundRect(x - 5.5 * k, y - 6.5 * k, w + 11 * k, 13 * k, 3);
+      c.stroke();
+      const gr = c.createLinearGradient(0, y - 3 * k, 0, y + 3 * k);
+      gr.addColorStop(0, low ? "#e0705a" : "#f0d48a");
+      gr.addColorStop(0.5, low ? "#c8433c" : "#d8a94b");
+      gr.addColorStop(1, low ? "#7a2a22" : "#8a6a2a");
+      c.fillStyle = gr;
+      c.beginPath();
+      c.roundRect(x, y - 3 * k, Math.max(0, w * g), 6 * k, 1.5);
+      c.fill();
+      c.strokeStyle = "rgba(232,227,212,.35)";
+      c.lineWidth = 1;
+      c.setLineDash([2, 3]);
+      c.beginPath();
+      c.moveTo(x + w * g, y);
+      c.lineTo(x + w, y);
+      c.stroke();
       c.restore();
     },
     duelDraw() {
@@ -55284,28 +55322,10 @@
       this.duelScrim(c);
       d.draw(c, r);
       const W = innerWidth, gx0 = Math.max(24, W * 0.08), gw = W - gx0 * 2, gy = 20, g = clamp(d.gauge, 0, 1);
-      c.save();
-      c.fillStyle = "rgba(4,14,20,.7)";
-      c.beginPath();
-      c.roundRect(gx0 - 6, gy - 7, gw + 12, 14, 7);
-      c.fill();
-      const low = g < 0.25 && Math.sin(d.t * 14) > 0, gr = c.createLinearGradient(gx0, 0, gx0 + gw, 0);
-      gr.addColorStop(0, low ? "#ff6a5a" : "#2a8ab0");
-      gr.addColorStop(1, low ? "#ffb0a0" : "#bfeaff");
-      c.fillStyle = gr;
-      c.beginPath();
-      c.roundRect(gx0, gy - 3, Math.max(0, gw * g), 6, 3);
-      c.fill();
-      c.strokeStyle = "rgba(244,251,255,.5)";
-      c.lineWidth = 1;
-      c.beginPath();
-      c.moveTo(gx0 + gw * g, gy);
-      c.lineTo(gx0 + gw, gy);
-      c.stroke();
-      c.restore();
+      this.duelGauge(c, gx0, gw, gy, g, g < 0.25 && Math.sin(d.t * 14) > 0, 1);
       const fx = gx0 + gw * g, fy = gy + Math.sin(d.t * 18) * 1.5;
       c.save();
-      c.fillStyle = g < 0.25 ? "#ff8a7a" : "#dff4ff";
+      c.fillStyle = g < 0.25 ? "#e0705a" : "#e8e3d4";
       c.beginPath();
       c.ellipse(fx, fy, 9, 4.5, 0, 0, Math.PI * 2);
       c.fill();
@@ -55317,13 +55337,13 @@
       c.restore();
       c.save();
       c.textAlign = "center";
-      c.fillStyle = "rgba(230,240,248,.75)";
+      c.fillStyle = "#9b957f";
       c.font = `12px ${FONT || "sans-serif"}`;
       const touch = document.body.classList.contains("touch");
       c.fillText(touch ? tr("탭으로 치고 · 누른 채 공을 따라간다 · 스피너는 누른 채 돌린다") : tr("클릭 · Z · X 로 치고 · 누른 채 공을 따라간다 · Esc 줄을 놓는다"), innerWidth / 2, innerHeight - 14);
       if (D.intro > 0) {
         c.globalAlpha = Math.min(1, D.intro * 1.5);
-        c.fillStyle = "#ffe8a0";
+        c.fillStyle = "#d8a94b";
         c.font = `700 22px ${FONT || "sans-serif"}`;
         c.fillText(tr("입질이다 — 박자에 맞춰 당겨라!"), r.x + r.w / 2, r.y + r.h / 2);
       }
@@ -67537,6 +67557,7 @@
           }
         }
       }
+      this.drawFallsFoam(c, camX, camY);
     },
     /** 렌더 단계 — 기계 몸체 · 벨트 위 물건 · 놓을 자리 */
     rMachines(f) {
@@ -68582,26 +68603,145 @@
       }
     },
     /** 폭포 한 칸 — 물줄기를 세계 y 에 걸고 시간만큼 **아래로** 민다(칸 경계에서 이어진다).
-        ★ 아틀라스 프레임을 돌리면 안 된다 — 프레임마다 줄기가 제멋대로라 위상(ty*0.4)과 겹쳐 물이 거슬러 오르는 듯 보였다. */
+        ★ 아틀라스 프레임을 돌리면 안 된다 — 프레임마다 줄기가 제멋대로라 위상(ty*0.4)과 겹쳐 물이 거슬러 오르는 듯 보였다.
+        줄기 길이 · 밝기는 **그 줄기의 세계 y** 로 정한다(칸마다 다르게 정하면 경계에서 끊긴다) — 떨어질수록 길고 하얗게 부서진다. */
     drawFallsTile(c, tx, ty, sx, sy) {
-      const t = this.time, top = ty * TS;
-      c.globalAlpha = 0.5;
-      c.fillStyle = ART[T.FALLS].c;
-      c.fillRect(sx, sy, TS, TS);
-      for (let i = 0; i < 7; i++) {
+      const w = this.world, t = this.time, top = ty * TS;
+      const isF = (x, y) => w.get(x, y) === T.FALLS;
+      const L = isF(tx - 1, ty), R = isF(tx + 1, ty);
+      let d = 0;
+      while (d < 30 && isF(tx, ty - 1 - d)) d++;
+      const headY = (ty - d) * TS, foot = !isF(tx, ty + 1);
+      const liq = (x, y) => !!TILE_DEF[w.get(x, y)].liquid && w.get(x, y) !== T.FALLS;
+      const curl = d === 0 && !liq(tx, ty - 1) ? liq(tx + 1, ty - 1) || isF(tx + 1, ty) && liq(tx + 2, ty - 1) ? -1 : liq(tx - 1, ty - 1) ? 1 : 0 : 0;
+      const lipOff = (x) => curl === 0 ? 0 : Math.round(Math.pow(curl > 0 ? x / TS : 1 - x / TS, 2) * 9);
+      for (let x = 0; x < TS; x += 2) {
+        const h = tileHash(tx * TS + x, 977);
+        const e = !L && x < 4 ? x < 2 ? 0.4 : 0.72 : !R && x >= TS - 4 ? x >= TS - 2 ? 0.4 : 0.72 : 1;
+        c.globalAlpha = (0.4 + h * 0.2) * e;
+        c.fillStyle = h > 0.72 ? "#6aa8c8" : h > 0.36 ? "#4a8fc0" : "#3a78a6";
+        const o = lipOff(x + 1);
+        c.fillRect(sx + x, sy + o, 2, TS - o);
+      }
+      const foam = Math.min(1, d / 12);
+      if (foam > 0) {
+        c.globalAlpha = foam * 0.13;
+        c.fillStyle = "#e8f6ff";
+        c.fillRect(sx + (L ? 0 : 2), sy, TS - (L ? 0 : 2) - (R ? 0 : 2), TS);
+      }
+      for (let i = 0; i < 8; i++) {
         const h1 = tileHash(tx, i * 131 + 7), h2 = tileHash(tx, i * 131 + 8), h3 = tileHash(tx, i * 131 + 9);
-        const drop = i >= 5;
-        const x = Math.round(h1 * (TS - 2)), wd = drop ? 1 : 1 + (h2 * 2 | 0);
-        const P2 = drop ? 22 + h3 * 14 : 26 + h2 * 18, L = drop ? 3 + h3 * 2 : 9 + h3 * 12;
-        const off = ((t * (drop ? 190 : 120 + h3 * 50) + h2 * P2) % P2 + P2) % P2;
-        c.globalAlpha = drop ? 0.55 : 0.28 + h2 * 0.3;
-        c.fillStyle = drop ? "#eaf6ff" : "#bfe3fa";
-        for (let y = off + Math.floor((top - L - off) / P2) * P2; y < top + TS; y += P2) {
-          const y0 = Math.max(y, top), y1 = Math.min(y + L, top + TS);
-          if (y1 > y0) c.fillRect(sx + x, sy + y0 - top, wd, y1 - y0);
+        const drop = i >= 6;
+        const x = 1 + Math.round(h1 * (TS - 3)), wd = drop ? 1 : 1 + (h2 * 2 | 0);
+        const P2 = drop ? 22 + h3 * 14 : 24 + h2 * 16;
+        const off = ((t * (drop ? 200 : 130 + h3 * 60) + h2 * P2) % P2 + P2) % P2;
+        const edge = !L && x < 3 || !R && x > TS - 4;
+        c.fillStyle = drop ? "#f2faff" : h2 > 0.5 ? "#d8eefa" : "#a8d4ee";
+        for (let y = off + Math.floor((top - 40 - off) / P2) * P2; y < top + TS; y += P2) {
+          const fall = Math.max(0, y - headY), Ln = drop ? 3 + h3 * 2 : Math.min(26, 4 + h3 * 6 + fall * 0.06);
+          if (fall < 3) continue;
+          const y0 = Math.max(y, top + lipOff(x)), y1 = Math.min(y + Ln, top + TS);
+          if (y1 <= y0) continue;
+          c.globalAlpha = (drop ? 0.6 : 0.22 + h2 * 0.28 + Math.min(0.2, fall / 300)) * (edge ? 0.6 : 1);
+          c.fillRect(sx + x, sy + y0 - top, wd, y1 - y0);
         }
       }
+      c.fillStyle = "#cfe8f6";
+      if (!L) {
+        c.globalAlpha = 0.22 + 0.1 * Math.sin(t * 9 + ty);
+        c.fillRect(sx + 1, sy, 1, TS);
+      }
+      if (!R) {
+        c.globalAlpha = 0.22 + 0.1 * Math.sin(t * 9 + ty + 2);
+        c.fillRect(sx + TS - 2, sy, 1, TS);
+      }
+      if (d === 0) {
+        for (let x = 0; x < TS; x++) {
+          const wob = Math.sin(t * 5 + (tx * TS + x) * 0.35) * 0.8;
+          const e = !L && x < 2 || !R && x > TS - 3 ? 0.5 : 1;
+          const o = lipOff(x);
+          c.globalAlpha = 0.55 * e;
+          c.fillStyle = "#e4f4fc";
+          c.fillRect(sx + x, sy + 1 + o + wob, 1, 2);
+          c.globalAlpha = 0.25 * e;
+          c.fillStyle = "#b8dcf0";
+          c.fillRect(sx + x, sy + 3 + o + wob, 1, 3);
+        }
+      }
+      if (foot) {
+        for (let k = 0; k < 6; k++) {
+          c.globalAlpha = 0.07 * (k + 1);
+          c.fillStyle = "#f2faff";
+          c.fillRect(sx, sy + TS - 12 + k * 2, TS, 2);
+        }
+        (this._fallFeet = this._fallFeet || []).push(tx, ty);
+      }
       c.globalAlpha = 1;
+    },
+    /** 폭포 발치 물거품 — 타일을 다 그린 **뒤에** 얹는다(아래 물 칸이 나중에 그려져 거품을 덮었다).
+        물에 떨어지면 수면을 따라 양옆으로 퍼지는 흰 거품 · 물속에서 이는 기포 · 피어오르는 물안개, 바닥이면 작게 튄다. */
+    drawFallsFoam(c, camX, camY) {
+      const F = this._fallFeet;
+      if (!F || !F.length) return;
+      const w = this.world, t = this.time;
+      c.save();
+      for (let i = 0; i < F.length; i += 2) {
+        const tx = F[i], ty = F[i + 1];
+        const footAt = (x) => w.get(x, ty) === T.FALLS && w.get(x, ty + 1) !== T.FALLS;
+        if (footAt(tx - 1)) continue;
+        let n = 1;
+        while (n < 8 && footAt(tx + n)) n++;
+        const below = w.get(tx, ty + 1), wet = !!TILE_DEF[below].liquid;
+        const cx = (tx + n / 2) * TS - camX, sy = (ty + 1) * TS - camY, half = n * TS / 2;
+        const spread = wet ? half + TS * 1.6 : half + TS * 0.5;
+        const mr = spread * 0.85 + 6;
+        c.save();
+        c.translate(cx, sy - 3);
+        c.scale(1, 0.42);
+        const mg = c.createRadialGradient(0, 0, 0, 0, 0, mr);
+        mg.addColorStop(0, `rgba(236,246,252,${0.24 + 0.05 * Math.sin(t * 3 + tx)})`);
+        mg.addColorStop(1, "rgba(236,246,252,0)");
+        c.globalAlpha = 1;
+        c.fillStyle = mg;
+        c.beginPath();
+        c.arc(0, 0, mr, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+        const N = Math.round(spread / 1.2);
+        for (let j = 0; j < N; j++) {
+          const h = tileHash(tx * 31 + j, ty), h2 = tileHash(j, tx + 7);
+          const side = j & 1 ? 1 : -1, u = h * 0.6 + (t * (0.35 + h2 * 0.3) + h2) % 1 * 0.4;
+          const px = cx + side * u * spread, k = 1 - u;
+          if (!TILE_DEF[w.get(Math.floor((px + camX) / TS), ty + 1)].liquid && Math.abs(px - cx) > half) continue;
+          const py = sy - 1 - k * (2 + Math.sin(t * 7 + j) * 1.6);
+          c.globalAlpha = (0.25 + k * 0.6) * (0.7 + 0.3 * Math.sin(t * 6 + j * 1.3));
+          c.fillStyle = h2 > 0.5 ? "#f4fbff" : "#d6ecf8";
+          c.beginPath();
+          c.arc(px, py, 1 + k * 3 * (0.6 + h * 0.6), 0, Math.PI * 2);
+          c.fill();
+        }
+        if (wet) {
+          for (let j = 0; j < 7 * n; j++) {
+            const h = tileHash(j, tx * 13 + ty), ph = (t * (0.8 + h * 0.6) + h) % 1;
+            const px = cx + (h - 0.5) * (half * 2 + 6) + Math.sin(t * 4 + j) * 1.5, py = sy + 2 + (1 - ph) * 14;
+            c.globalAlpha = 0.6 * Math.sin(ph * Math.PI);
+            c.fillStyle = "#e8f6ff";
+            c.beginPath();
+            c.arc(px, py, 1 + h * 1.4, 0, Math.PI * 2);
+            c.fill();
+          }
+          c.fillStyle = "#f4fbff";
+          for (let x = -half - 4; x < half + 4; x += 2) {
+            const hh = 2 + 2.5 * Math.abs(Math.sin(t * 11 + x * 0.7 + tx)), ed = Math.min(1, (half + 4 - Math.abs(x)) / 6);
+            c.globalAlpha = 0.7 * ed;
+            c.fillRect(cx + x, sy - hh, 2, hh + 2);
+            c.globalAlpha = 0.3 * ed;
+            c.fillRect(cx + x, sy + 2, 2, 3 + 2 * Math.abs(Math.sin(t * 7 + x)));
+          }
+        }
+      }
+      c.restore();
+      F.length = 0;
     },
     /** 폭포 밑 물보라 — 물줄기가 수면·바닥에 닿는 칸에서 물방울이 튄다. */
     updateFalls(dt) {
