@@ -47057,11 +47057,6 @@
         if (y >= -7 && y < -3 && x >= -7.5 + (y + 7) * 0.5 && x < -5.5) return y < -6 ? SKIN_L : SKIN;
         return null;
       });
-      if (o) {
-        const x = o < 0 ? 1 : 18;
-        p.px(x, 3, 1, 3, "#ffe08a");
-        p.px(o < 0 ? 2 : 17, 7, 1, 2, "#ffe08a");
-      }
     } },
     { k: "gg", g: "sign", f: 1, draw: (p) => {
       p.px(1, 4, 18, 12, "#3a2a5a");

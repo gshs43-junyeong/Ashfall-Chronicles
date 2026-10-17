@@ -136,10 +136,8 @@ export const EMOJI: EmoDef[] = [
       if (y >= -7 && y < -3 && x >= -7.5 + (y + 7) * 0.5 && x < -5.5) return y < -6 ? SKIN_L : SKIN;   // 엄지
       return null;
     });
-    if (o) {                                                                                    // 흔드는 쪽에 움직임 선
-      const x = o < 0 ? 1 : 18;
-      p.px(x, 3, 1, 3, '#ffe08a'); p.px(o < 0 ? 2 : 17, 7, 1, 2, '#ffe08a');
-    } } },
+    /* 흔드는 결 표시(연노란 막대 · 둥근 결)는 넣지 않는다 — 손끝 옆에 떨어진 부스러기처럼 보였다. 좌우 흔들림만으로 읽힌다 */
+  } },
   { k: 'gg', g: 'sign', f: 1, draw: p => { p.px(1, 4, 18, 12, '#3a2a5a'); p.px(1, 4, 18, 1, '#6a5a9a'); p.px(1, 15, 18, 1, '#24183a');
     for (const ox of [3, 11]) { p.px(ox, 6, 5, 1, '#ffd24a'); p.px(ox, 6, 1, 8, '#ffd24a'); p.px(ox, 13, 5, 1, '#ffd24a'); p.px(ox + 4, 10, 1, 4, '#ffd24a'); p.px(ox + 2, 10, 3, 1, '#ffd24a'); } } },
   { k: 'question', g: 'sign', f: 1, draw: p => { const c = '#7ab8ff'; p.px(6, 2, 8, 2, c); p.px(4, 4, 3, 3, c); p.px(13, 4, 3, 4, c); p.px(11, 8, 3, 2, c); p.px(9, 10, 3, 3, c); p.px(9, 15, 3, 3, c); p.px(6, 2, 8, 1, '#bfe0ff'); } },
