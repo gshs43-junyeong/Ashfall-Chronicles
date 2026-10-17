@@ -484,9 +484,6 @@
   "· 우클릭으로 슬롯 등록": [
    "ui/tree.showSkillTip"
   ],
-  "· 음악과 효과음은 위 두 서비스의 약관을 따릅니다": [
-   "index.html"
-  ],
   "· 처음": [
    "game/ruin-pulse.openEcho"
   ],
@@ -506,6 +503,9 @@
   ],
   "· 호위 {n}": [
    "game/ruin-pulse.openEcho"
+  ],
+  "· 효과음은 위 서비스의 약관을 따릅니다": [
+   "index.html"
   ],
   "— {n}% · {n2}초 남음": [
    "ui/machine.machLive"

@@ -134,7 +134,7 @@
  "v1.1.3 <span class=\"eyebrow-sub\">웹과 내려받는 판이 같은 판입니다</span>",
  "v1.1.3 · Windows · macOS · Linux(앱) <span class=\"eyebrow-sub\">웹과 내려받는 판이 같은 판입니다</span>",
  "v1.1.3 — 타오르는 불길",
- "zip 84 MB · 풀면 91 MB. 웹으로 열면 첫 방문에 7.5 MB 만 받고(배경음은 틀 때 흘러옵니다), 재방문은 약 1초",
+ "zip 84 MB · 풀면 91 MB. 웹으로 열면 첫 방문에 7.5 MB 만 받고, 재방문은 약 1초",
  "zip 을 더블클릭해 풀고, 나온 <strong>Ashfall Chronicles.app</strong> 을 <strong>응용 프로그램</strong> 폴더로 끌어 놓습니다.",
  "zip 을 오른쪽 클릭 → <strong>압축 풀기</strong>로 폴더에 풉니다(zip 안에서 바로 열면 게임 파일을 못 찾습니다).",
  "zip 을 폴더째 풀었는지 확인하세요. <code>assets</code> 폴더가 <code>index.html</code> 과 같은 자리에 있어야 합니다",
@@ -286,7 +286,6 @@
  "유적",
  "유적은 조용히 두면 잠들어 있지. 하지만 오래 머물면 맥박이 뛰기 시작한다네. 맥박이 오를수록 함정이 깨어나고, 끝방의 주인이 눈을 뜨지. 이기고 나면 메아리가 남아 — 더 센 놈과 다시 겨뤄 볼 수 있다네.",
  "유적의 맥박",
- "효과음 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)",
  "이 일은 처음이 아니었다",
  "이동",
  "이번에 달라진 것",
@@ -347,8 +346,8 @@
  "최소",
  "최초의 유적",
  "최초의 파수꾼",
- "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 효과음(<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>)은 각 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)",
  "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 음악·효과음은 위 두 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)",
+ "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 효과음(<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>)은 그 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)",
  "키보드와 마우스. 휴대폰·태블릿(터치)과 게임패드는 지원하지 않습니다",
  "키보드와 마우스로 조작합니다 · 소리가 나옵니다",
  "타이틀 화면에서도 설정을 열 수 있습니다.",
@@ -381,5 +380,6 @@
  "화면이 하얗거나 그림이 안 뜬다",
  "확인할 것",
  "회피 대시 (무적 프레임)",
+ "효과음 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)",
  "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다."
 ]

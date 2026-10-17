@@ -197,7 +197,7 @@ sync → (필요하면) 코드에서 그 키를 부르기, 셋이 다 있어야 
 Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 ```
 
-음악(`assets/audio/*.m4a`)과 효과음(`assets/sound_effects/*.mp3`)은 매니페스트를
+효과음(`assets/sound_effects/*.mp3`)은 매니페스트를
 타지 않고 `music.js`가 경로를 직접 안다. 효과음 파일은 **1.0초**이고 `SfxLoop`이
 0.9초에 겹쳐 이어 붙인다(끊김 방지).
 
@@ -333,7 +333,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   발자국을 줄이면 지형·난수가 밀려 유적이 끊긴다(d3 석판 유적 1 이 방 3/16). 광장·출발점은 x0+50.
 - **ITEMS 키는 두 번 적지 말 것** — 객체 리터럴은 뒤엣것이 조용히 덮는다(세션 1 낚시가 세션 3 삼지창을 줬다). 물건값(`ITEM_VAL`)은
   제작법이 여럿이면 가장 싼 것으로 매긴다.
-- 배경음악: 비 = `rain`(lonely_rain), 그 밖의 날씨·밤·어둠·저체력 = `tense`(clockwork).
+- **배경음악 없음**(2026-10-17 저작권 문제로 전부 삭제 · 히스토리에서도 지움 · `play/assets/audio/` 는 .gitignore). music.ts `BGM` 은 빈 표 — 곡을 다시 넣으려면 저작권이 분명한 파일로 키별로 적는다(상황 키는 game.ts `pickBgm`).
 - 유적 입구는 **벽돌로 두른 복도**다(`_buildPassage` — 계단·복도·층계참·계단실). 피라미드는
   삼각형(plan `'tri'`)이고 빗면에 문이 난다. 유적을 건드렸으면 `tools/ruindiag.py`
   (걸어서 오가는가)와 `tools/entdiag.py`(입구 발판이 어디서 왔나)를 여러 씨앗으로 돌릴 것.

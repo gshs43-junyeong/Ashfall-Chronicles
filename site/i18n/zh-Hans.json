@@ -131,7 +131,6 @@
  "v1.1.3 <span class=\"eyebrow-sub\">웹과 내려받는 판이 같은 판입니다</span>": "v1.1.3 <span class=\"eyebrow-sub\">网页版与下载版为同一版本</span>",
  "v1.1.3 · Windows · macOS · Linux(앱) <span class=\"eyebrow-sub\">웹과 내려받는 판이 같은 판입니다</span>": "v1.1.3 · Windows · macOS · Linux(应用) <span class=\"eyebrow-sub\">网页版与下载版为同一版本</span>",
  "v1.1.3 — 타오르는 불길": "v1.1.3 — 燃烧的火焰",
- "zip 84 MB · 풀면 91 MB. 웹으로 열면 첫 방문에 7.5 MB 만 받고(배경음은 틀 때 흘러옵니다), 재방문은 약 1초": "zip 84 MB · 解压后 91 MB。用网页打开时首次访问只需下载 7.5 MB（背景音乐边播边加载），再次访问约 1 秒",
  "zip 을 더블클릭해 풀고, 나온 <strong>Ashfall Chronicles.app</strong> 을 <strong>응용 프로그램</strong> 폴더로 끌어 놓습니다.": "双击 zip 解压，然后把得到的 <strong>Ashfall Chronicles.app</strong> 拖到<strong>应用程序</strong>文件夹。",
  "zip 을 오른쪽 클릭 → <strong>압축 풀기</strong>로 폴더에 풉니다(zip 안에서 바로 열면 게임 파일을 못 찾습니다).": "右键 zip → <strong>全部解压缩</strong>到文件夹（直接在 zip 内打开会找不到游戏文件）。",
  "zip 을 폴더째 풀었는지 확인하세요. <code>assets</code> 폴더가 <code>index.html</code> 과 같은 자리에 있어야 합니다": "请确认是否连同文件夹一起解压了 zip。<code>assets</code> 文件夹必须与 <code>index.html</code> 位于同一位置",
@@ -283,7 +282,6 @@
  "유적": "遗迹",
  "유적은 조용히 두면 잠들어 있지. 하지만 오래 머물면 맥박이 뛰기 시작한다네. 맥박이 오를수록 함정이 깨어나고, 끝방의 주인이 눈을 뜨지. 이기고 나면 메아리가 남아 — 더 센 놈과 다시 겨뤄 볼 수 있다네.": "遗迹若不去惊动，便一直沉睡。可待得久了，脉动就开始跳了。脉动越高，陷阱越苏醒，最深处的主人也会睁开眼。赢了之后会留下回响——还能和更强的家伙再较量一次。",
  "유적의 맥박": "遗迹的脉动",
- "효과음 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)": "音效 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)",
  "이 일은 처음이 아니었다": "这件事并非第一次",
  "이동": "移动",
  "이번에 달라진 것": "这次的变化",
@@ -344,7 +342,6 @@
  "최소": "最低",
  "최초의 유적": "最初的遗迹",
  "최초의 파수꾼": "最初的守望者",
- "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 효과음(<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>)은 각 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)": "代码和美术采用 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 音效（<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>）遵循各服务的条款（<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>）",
  "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 음악·효과음은 위 두 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)": "代码和美术采用 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 音乐和音效遵循上述两项服务的条款（<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>）",
  "키보드와 마우스. 휴대폰·태블릿(터치)과 게임패드는 지원하지 않습니다": "键盘和鼠标。不支持手机·平板（触屏）和游戏手柄",
  "키보드와 마우스로 조작합니다 · 소리가 나옵니다": "键盘和鼠标操作 · 有声音",
@@ -381,5 +378,8 @@
  "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "找到散落的碎片，让它们沉睡，或是唤醒它们 — 那就是你要做的事。",
  "<strong>게임 글꼴 Ashfall.</strong> 획 뼈대부터 직접 그린 글꼴(SIL OFL 1.1) — 깎은 모서리의 잿빛 결로 여섯 언어를 함께 씁니다.": "<strong>游戏字体 Ashfall。</strong> 从笔画骨架亲手绘制的原创字体(SIL OFL 1.1) — 以削角的灰烬质感统一六种语言。",
  "<span class=\"n\">86</span><span class=\"l\">종의 몬스터</span>": "<span class=\"n\">86</span><span class=\"l\">种怪物</span>",
- "<span class=\"n\">528</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">528</span><span class=\"l\">种物品</span>"
+ "<span class=\"n\">528</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">528</span><span class=\"l\">种物品</span>",
+ "zip 84 MB · 풀면 91 MB. 웹으로 열면 첫 방문에 7.5 MB 만 받고, 재방문은 약 1초": "zip 84 MB · 解压后 91 MB。用网页打开时首次访问只需下载 7.5 MB，再次访问约 1 秒",
+ "효과음 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)": "音效 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)",
+ "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 효과음(<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>)은 그 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)": "代码和美术采用 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 音效（<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>）遵循该服务的条款（<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>）"
 }

@@ -196,14 +196,14 @@ npm run check     # the full regression suite (syntax, types, modules, translati
 
 **[MIT](LICENSE)**. Use, change and redistribute the code and the art freely — just keep the copyright notice. Copyright belongs to `gshs43-junyeong`.
 
-**The audio folders and the fonts are exceptions.**
+**The sound effects folder and the fonts are exceptions.**
 
 | What | Where | Made with |
 |---|---|---|
 | 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
-These were made with outside services, so this repository has no right to re-license them under MIT. Playing the game is unrestricted,
-but **if you want to reuse the sound files on their own**, check those services' terms yourself. Details are in [`NOTICE.md`](NOTICE.md).
+These were made with an outside service, so this repository has no right to re-license them under MIT. Playing the game is unrestricted,
+but **if you want to reuse the sound files on their own**, check that service's terms yourself. Details are in [`NOTICE.md`](NOTICE.md).
 The fonts are **not MIT**: the game font **Ashfall** (an original font drawn from stroke skeletons by `tools/mkfont.py`, `play/assets/fonts/`) and the
 logo font source in `tools/art/fonts/` (Cinzel) are under the **SIL Open Font License 1.1** — keep `OFL.txt` · `FONTLOG.txt` with them, don't sell the font files on their own,
 and rename any modified version. Details are in [`NOTICE.md`](NOTICE.md).

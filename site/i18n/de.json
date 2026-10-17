@@ -131,7 +131,6 @@
  "v1.1.3 <span class=\"eyebrow-sub\">웹과 내려받는 판이 같은 판입니다</span>": "v1.1.3 <span class=\"eyebrow-sub\">Web und Download sind dieselbe Version</span>",
  "v1.1.3 · Windows · macOS · Linux(앱) <span class=\"eyebrow-sub\">웹과 내려받는 판이 같은 판입니다</span>": "v1.1.3 · Windows · macOS · Linux (App) <span class=\"eyebrow-sub\">Web und Download sind dieselbe Version</span>",
  "v1.1.3 — 타오르는 불길": "v1.1.3 — Lodernde Flammen",
- "zip 84 MB · 풀면 91 MB. 웹으로 열면 첫 방문에 7.5 MB 만 받고(배경음은 틀 때 흘러옵니다), 재방문은 약 1초": "zip 57 MB · entpackt 61 MB. Im Web lädt der erste Besuch nur 7,5 MB (Musik wird beim Abspielen gestreamt), weitere Besuche dauern etwa 1 Sekunde",
  "zip 을 더블클릭해 풀고, 나온 <strong>Ashfall Chronicles.app</strong> 을 <strong>응용 프로그램</strong> 폴더로 끌어 놓습니다.": "Doppelklicke die zip zum Entpacken und ziehe <strong>Ashfall Chronicles.app</strong> in den Ordner <strong>Programme</strong>.",
  "zip 을 오른쪽 클릭 → <strong>압축 풀기</strong>로 폴더에 풉니다(zip 안에서 바로 열면 게임 파일을 못 찾습니다).": "Rechtsklick auf die zip → <strong>Alle extrahieren</strong> in einen Ordner (direkt aus der zip geöffnet findet sie die Spieldateien nicht).",
  "zip 을 폴더째 풀었는지 확인하세요. <code>assets</code> 폴더가 <code>index.html</code> 과 같은 자리에 있어야 합니다": "Prüfe, ob du das zip samt Ordnern entpackt hast. Der Ordner <code>assets</code> muss neben <code>index.html</code> liegen",
@@ -283,7 +282,6 @@
  "유적": "Ruinen",
  "유적은 조용히 두면 잠들어 있지. 하지만 오래 머물면 맥박이 뛰기 시작한다네. 맥박이 오를수록 함정이 깨어나고, 끝방의 주인이 눈을 뜨지. 이기고 나면 메아리가 남아 — 더 센 놈과 다시 겨뤄 볼 수 있다네.": "Lässt man eine Ruine in Ruhe, schläft sie. Bleibt man zu lange, beginnt ihr Puls zu schlagen. Je höher der Puls, desto mehr Fallen erwachen – und der Herr des letzten Raums öffnet die Augen. Besiegst du ihn, bleibt ein Echo, und du kannst dich einem Stärkeren stellen.",
  "유적의 맥박": "Puls der Ruine",
- "효과음 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)": "Soundeffekte <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)",
  "이 일은 처음이 아니었다": "Es geschah nicht zum ersten Mal",
  "이동": "Bewegen",
  "이번에 달라진 것": "Was sich diesmal geändert hat",
@@ -344,7 +342,6 @@
  "최소": "Minimum",
  "최초의 유적": "Die erste Ruine",
  "최초의 파수꾼": "Der erste Wächter",
- "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 효과음(<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>)은 각 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)": "Code und Grafik stehen unter <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — Soundeffekte (<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>) unterliegen den Bedingungen des jeweiligen Dienstes (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)",
  "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 음악·효과음은 위 두 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)": "Code und Grafik stehen unter <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — Musik und Soundeffekte unterliegen den Bedingungen der beiden oben genannten Dienste (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)",
  "키보드와 마우스. 휴대폰·태블릿(터치)과 게임패드는 지원하지 않습니다": "Tastatur und Maus. Handys, Tablets (Touch) und Gamepads werden nicht unterstützt",
  "키보드와 마우스로 조작합니다 · 소리가 나옵니다": "Tastatur und Maus · Mit Ton",
@@ -381,5 +378,8 @@
  "흩어진 조각을 찾아 재우거나 깨우는 것 — 그것이 당신이 할 일이다.": "Die verstreuten Splitter finden und schlafen legen oder wecken — das ist deine Aufgabe.",
  "<strong>게임 글꼴 Ashfall.</strong> 획 뼈대부터 직접 그린 글꼴(SIL OFL 1.1) — 깎은 모서리의 잿빛 결로 여섯 언어를 함께 씁니다.": "<strong>Die Schrift Ashfall.</strong> Eine eigene Schrift, aus Strichskeletten gezeichnet (SIL OFL 1.1) — mit gemeißelten, aschgrauen Ecken in allen sechs Sprachen.",
  "<span class=\"n\">86</span><span class=\"l\">종의 몬스터</span>": "<span class=\"n\">86</span><span class=\"l\">Monster</span>",
- "<span class=\"n\">528</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">528</span><span class=\"l\">Gegenstände</span>"
+ "<span class=\"n\">528</span><span class=\"l\">종의 아이템</span>": "<span class=\"n\">528</span><span class=\"l\">Gegenstände</span>",
+ "zip 84 MB · 풀면 91 MB. 웹으로 열면 첫 방문에 7.5 MB 만 받고, 재방문은 약 1초": "zip 57 MB · entpackt 61 MB. Im Web lädt der erste Besuch nur 7,5 MB, weitere Besuche dauern etwa 1 Sekunde",
+ "효과음 <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)": "Soundeffekte <a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a> (https://elevenlabs.io)",
+ "코드와 그림은 <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — 효과음(<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>)은 그 서비스의 약관을 따릅니다 (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)": "Code und Grafik stehen unter <a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT</a> — Soundeffekte (<a href=\"https://elevenlabs.io\" target=\"_blank\" rel=\"noopener\">ElevenLabs</a>) unterliegen den Bedingungen dieses Dienstes (<a href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles/blob/main/NOTICE.md\" target=\"_blank\" rel=\"noopener\">NOTICE</a>)"
 }

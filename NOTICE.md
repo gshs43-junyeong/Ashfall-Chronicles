@@ -31,7 +31,7 @@ OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT �
 | 게임 글꼴 Ashfall | `play/assets/fonts/` | 이 프로젝트가 획 뼈대에서 직접 만든 글꼴(SIL OFL 1.1) — 아래 '글꼴' |
 | 글꼴 원본 | `tools/art/fonts/` | 로고에 쓰는 Cinzel 원본과 OFL 전문(`OFL-Cinzel.txt`) |
 
-음악 · 효과음 두 폴더의 파일은 **각 서비스의 이용 약관을 따르고**, 글꼴 두 폴더는 **SIL OFL 1.1** 을 따릅니다(아래 '글꼴').
+효과음 폴더의 파일은 **그 서비스의 이용 약관을 따르고**, 글꼴 두 폴더는 **SIL OFL 1.1** 을 따릅니다(아래 '글꼴').
 
 - 게임을 받아 즐기는 데에는 아무 제한이 없습니다.
 - **소리 파일만 떼어다 다른 곳에 쓰거나 따로 배포하는 것**은 MIT 가 허락하는 범위가
@@ -95,7 +95,7 @@ purchased or taken from elsewhere.
 | Game font Ashfall | `play/assets/fonts/` | Original font drawn by this project from stroke skeletons (SIL OFL 1.1) — see 'Fonts' |
 | Font sources | `tools/art/fonts/` | Cinzel (used by the logo) with its OFL text (`OFL-Cinzel.txt`) |
 
-The audio files are governed by the terms of the respective services; the two font folders are governed by the SIL OFL 1.1 (see *Fonts*).
+The sound effect files are governed by the terms of that service; the two font folders are governed by the SIL OFL 1.1 (see *Fonts*).
 
 - Playing the game is unaffected.
 - Extracting the audio files to use or distribute on their own is **not** granted by

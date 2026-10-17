@@ -132,7 +132,6 @@
   "· 실패 {fail}%": "· Fail {fail}%",
   "· 완료됨": "· Completed",
   "· 우클릭으로 슬롯 등록": "· Right-click to assign to a slot",
-  "· 음악과 효과음은 위 두 서비스의 약관을 따릅니다": "· Music and sound effects follow the terms of the two services above",
   "· 처음": "· first time",
   "· 축전 <b>{e}</b>/{emax}": "· Charge <b>{e}</b>/{emax}",
   "· 충족": "· Satisfied",
@@ -1164,7 +1163,8 @@
   "칸에서 빼기": "Remove from slot",
   "표정": "Faces",
   "신호": "Signs",
-  "잿빛 땅": "Ashlands"
+  "잿빛 땅": "Ashlands",
+  "· 효과음은 위 서비스의 약관을 따릅니다": "· Sound effects follow the terms of the service above"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

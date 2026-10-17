@@ -47425,36 +47425,7 @@
   }
 
   // src/game/music.ts
-  var BGM = {
-    // mp3 원본은 용량이 커서(5~11MB) AAC(m4a)로 다시 구웠다 — 브라우저 재생엔 문제없다.
-    title: "assets/audio/falling_stars.m4a",
-    // 타이틀 화면
-    normal: "assets/audio/stars_of_despair.m4a",
-    // 평상시
-    tense: "assets/audio/clockwork_hollow.m4a",
-    // 밤 · 어두움 · 저체력 · 비 말고 날씨(붉은 달·모래 폭풍·포자)
-    rain: "assets/audio/lonely_rain.m4a",
-    // 비(눈) 올 때만 (2:59)
-    boss: "assets/audio/bitcrusher_colossus.m4a",
-    // 보스전
-    village: "assets/audio/victorys_chiptune.m4a",
-    // 베이스캠프 · 여명 마을
-    east: "assets/audio/broken_quest.m4a",
-    // 버섯 골짜기 · 부패한 땅 (마을 동쪽)
-    catacomb: "assets/audio/catacomb_atlas.m4a",
-    // 심층 · 모든 던전과 유적
-    sky: "assets/audio/skyward_overture.m4a",
-    // 하늘 섬
-    // 세션 3 — 물 위와 물 아래.
-    sea: "assets/audio/patient_emptiness.m4a",
-    // 바다 수면 · 해변 · 빙하 지대 (2:30)
-    seadeep: "assets/audio/deep_pressure.m4a",
-    // 물에 잠겨 있는 동안 (2:45)
-    /* 쓰러진 자리 — 사망 화면이 떠 있는 동안. */
-    lastnote: "assets/audio/the_final_note.m4a",
-    /* ★ 값이 **배열**인 유일한 키다. */
-    finale: ["assets/audio/final_reprise_1.m4a", "assets/audio/final_reprise_2.m4a"]
-  };
+  var BGM = {};
   var BGM_FALLBACK = {
     east: "normal",
     catacomb: "tense",

@@ -132,7 +132,6 @@
   "· 실패 {fail}%": "· Fehlschlag {fail}%",
   "· 완료됨": "· Erledigt",
   "· 우클릭으로 슬롯 등록": "· Rechtsklick weist einen Platz zu",
-  "· 음악과 효과음은 위 두 서비스의 약관을 따릅니다": "· Musik und Soundeffekte unterliegen den Bedingungen der beiden obigen Dienste",
   "· 처음": "· erstes Mal",
   "· 축전 <b>{e}</b>/{emax}": "· Speicher <b>{e}</b>/{emax}",
   "· 충족": "· erfüllt",
@@ -1164,7 +1163,8 @@
   "칸에서 빼기": "Aus dem Slot nehmen",
   "표정": "Gesichter",
   "신호": "Zeichen",
-  "잿빛 땅": "Aschenland"
+  "잿빛 땅": "Aschenland",
+  "· 효과음은 위 서비스의 약관을 따릅니다": "· Soundeffekte unterliegen den Bedingungen des obigen Dienstes"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

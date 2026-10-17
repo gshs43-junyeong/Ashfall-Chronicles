@@ -132,7 +132,6 @@
   "· 실패 {fail}%": "· Fallo {fail}%",
   "· 완료됨": "· Completado",
   "· 우클릭으로 슬롯 등록": "· Clic derecho para asignar a una ranura",
-  "· 음악과 효과음은 위 두 서비스의 약관을 따릅니다": "· La música y los efectos de sonido siguen los términos de los dos servicios anteriores",
   "· 처음": "· primera vez",
   "· 축전 <b>{e}</b>/{emax}": "· Carga <b>{e}</b>/{emax}",
   "· 충족": "· Satisfecho",
@@ -1164,7 +1163,8 @@
   "칸에서 빼기": "Quitar de la ranura",
   "표정": "Caras",
   "신호": "Señales",
-  "잿빛 땅": "Tierra gris"
+  "잿빛 땅": "Tierra gris",
+  "· 효과음은 위 서비스의 약관을 따릅니다": "· Los efectos de sonido siguen los términos del servicio anterior"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

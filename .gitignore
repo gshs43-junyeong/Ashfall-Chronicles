@@ -25,3 +25,6 @@ tests/out/
 # wrangler dev 가 만드는 로컬 상태
 relay/.wrangler/
 __pycache__/
+
+# 배경음악 — 저작권 문제로 저장소에 담지 않는다(2026-10-17 히스토리에서도 지움)
+play/assets/audio/
