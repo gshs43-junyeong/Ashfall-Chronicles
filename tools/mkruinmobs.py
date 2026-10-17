@@ -336,4 +336,5 @@ def main():
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    # 그림은 mkruinmobs3.py(부위 명암 붓)가 다시 그린다 — 이 도구로 구우면 납작한 옛 그림으로 덮인다
+    raise SystemExit('mkruinmobs3.py 를 쓸 것 (이 도구의 그림은 은퇴했다)')

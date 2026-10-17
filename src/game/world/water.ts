@@ -1,7 +1,8 @@
 /* ===== world/water.js — 굴 물 · 지옥 · 정글 폭포 · 물가 장식 · 이끼 모서리 · 상자 ===== */
 import { factory as Factory } from '../ctx.js';
-import { clamp, lerp } from '../../engine/core/math.js';
+import { TAU, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
+import { RNG } from '../../engine/core/rng.js';
 import { SHIFT } from '../size.js';
 import { T, TILE_DEF } from '../data.js';
 import { FLUID_KIND } from '../data/materials.js';
@@ -245,31 +246,46 @@ export const WorldWater: Bag & ThisType<World> = {
     }
     // 물길 — 두 줄 깊이.
     for (let x = cliffL + 2; x < cliffL + RIV; x++) {
-      for (let y = rightY; y <= rightY + 1; y++) { this.set(x, y, T.WATER); this.setWall(x, y, 11); }
+      for (let y = rightY; y <= rightY + 1; y++) { this.set(x, y, T.WATER); this.setWall(x, y, x >= hill0 + 1 || y > rightY ? 11 : 0); }   // 트인 물길 윗줄은 뒤벽 없이 — 물이 가라앉으면 허공에 흙벽 띠가 남았다
       if (x >= hill0 + 1) for (let y = rightY - 2; y < rightY; y++) { this.set(x, y, T.AIR); this.setWall(x, y, 11); }
       if (x < hill0 + 1) this.surface[x] = rightY;
     }
     // 절벽 끝으로 내민 아랫줄 물 — 폭포의 머리
     for (const x of [cliffL, cliffL + 1]) {
       for (let y = rightY - 3; y <= rightY; y++) if (this.get(x, y) !== T.AIR && !TILE_DEF[this.get(x, y)].solid) this.set(x, y, T.AIR);
-      this.set(x, rightY + 1, T.WATER); this.setWall(x, rightY + 1, 11);
+      this.set(x, rightY + 1, T.WATER); this.setWall(x, rightY + 1, 0);
       for (let y = rightY + 2; y < leftY; y++) { this.set(x, y, T.FALLS); this.setWall(x, y, 11); }
       for (let y = leftY; y <= leftY + POOL_D; y++) { this.set(x, y, T.WATER); this.setWall(x, y, 11); }
       this.surface[x] = rightY + 1;
     }
-    // 절벽 면의 이끼 — 폭포 물보라가 닿는 면이라 축축하다
-    for (let y = rightY + 3; y < leftY + 2; y++)
-      if (rng.chance(0.45)) this.set(cliffL + 2, y, T.MOSSSTONE);
-    // 폭포 뒤 굴 — 수면 높이 바닥(leftY 줄은 돌로 남긴다), 둥근 천장
-    const gx0 = cliffL + 2, gw = 5, gh = 5;
+    /* 절벽 몸통의 결 — 한 덩어리 돌 직사각형이면 깎아 만든 벽처럼 보였다(사용자). 흙 · 돌 · 화강암 띠가 비스듬히 지나고,
+       물보라가 닿는 앞면 세 칸은 이끼, 몸통에 나무뿌리가 내려온다. 제 난수(seed+'_jfalls')라 본 난수를 안 뺏는다 */
+    const jr = new RNG(this.seed + '_jfalls'), ph0 = jr.range(0, TAU), ph1 = jr.range(0, TAU);
+    for (let x = cliffL + 2; x <= hill1; x++) for (let y = rightY + 3; y <= leftY + POOL_D + 2; y++) {
+      if (this.get(x, y) !== T.STONE) continue;
+      const band = Math.sin((y + x * 0.35) * 0.55 + ph0) + 0.6 * Math.sin((y - x * 0.2) * 1.3 + ph1);
+      const face = x - (cliffL + 2);
+      if (face < 3 && y < leftY + 1 && jr.chance(0.75 - face * 0.2)) this.set(x, y, T.MOSSSTONE);   // 물보라 면
+      else if (band > 1.05) this.set(x, y, T.DIRT);
+      else if (band < -1.2) this.set(x, y, T.GRANITE);
+    }
+    // 폭포 머리 위 허공의 벽지를 걷는다 — 물길 끝에 뒤벽 한 칸이 남아 허공에 뜬 흙덩이처럼 보였다
+    for (const x of [cliffL, cliffL + 1]) for (let y = rightY - 4; y <= rightY + 1; y++) if (this.get(x, y) === T.AIR) this.setWall(x, y, 0);
+    /* 폭포 뒤 굴 — 둥근 천장을 칸마다 흔들어 깎은 자국이 안 나게, 바닥은 물보라에 젖은 이끼 · 발광 버섯 · 고사리 */
+    const gx0 = cliffL + 2, gw = 6 + jr.int(0, 2), gh = 5;
     for (let dx = 0; dx < gw; dx++) {
-      const hh = Math.round(gh * Math.sqrt(1 - ((dx + 0.5) / gw) ** 2));
+      const u = (dx + 0.5) / gw, hh = Math.max(1, Math.round(gh * Math.sqrt(Math.max(0, 1 - u * u)) + jr.range(-0.6, 0.9)));
       for (let k = 1; k <= hh; k++) { this.set(gx0 + dx, leftY - k, T.AIR); this.setWall(gx0 + dx, leftY - k, 11); }
       const ceil = leftY - hh - 1;
-      if (this.get(gx0 + dx, ceil) === T.STONE) this.set(gx0 + dx, ceil, T.MOSSSTONE);
+      if (this.solid(gx0 + dx, ceil)) this.set(gx0 + dx, ceil, T.MOSSSTONE);
+      if (dx > 0 && dx < gw - 1 && jr.chance(0.35) && this.get(gx0 + dx, ceil + 1) === T.AIR && hh > 2) this.set(gx0 + dx, ceil + 1, T.HANGMOSS);
+      if (this.solid(gx0 + dx, leftY)) this.set(gx0 + dx, leftY, T.MOSSSTONE);
     }
     this.set(gx0 + gw - 1, leftY - 1, T.GLOWCAP);
     this.set(gx0 + 2, leftY - 1, T.FERN);
+    // 절벽 윗입술 — 물길이 쏟아지는 모서리는 젖은 이끼 돌
+    for (const x of [cliffL + 2, cliffL + 3]) if (this.get(x, rightY) === T.JUNGLEGRASS || this.get(x, rightY) === T.MUD) this.set(x, rightY, T.MOSSSTONE);
+
     this.falls = this.falls || [];
     this.falls.push({ x: cliffL, y: (rightY + leftY) / 2 });
 

@@ -16907,8 +16907,23 @@
         if (up === T.FALLS || up === T.SPRING || FLUID_KIND[up]) continue;
         if (up === T.BEDROCK) continue;
         const x = k % WW2, y = k / WW2 | 0;
-        if (TILE_DEF[up].solid === 1) this.set(x, y - 1, T.SPRING);
-        else this.set(x, y, T.SPRING);
+        if (TILE_DEF[up].solid === 1) {
+          this.set(x, y - 1, T.SPRING);
+          continue;
+        }
+        let fed = false;
+        for (let dy = -1; dy <= 0 && !fed; dy++) for (let dx = -2; dx <= 2; dx++) {
+          const t = this.get(x + dx, y + dy);
+          if (t !== T.FALLS && FLUID_KIND[t]) {
+            fed = true;
+            break;
+          }
+        }
+        if (fed) continue;
+        for (const dx of [-1, 1]) if (TILE_DEF[this.get(x + dx, y)].solid === 1 && this.get(x + dx, y) !== T.BEDROCK) {
+          this.set(x + dx, y, T.SPRING);
+          break;
+        }
       }
     }
     /* ================= 저장 ================= */
@@ -22670,7 +22685,7 @@
       for (let x = cliffL + 2; x < cliffL + RIV; x++) {
         for (let y = rightY; y <= rightY + 1; y++) {
           this.set(x, y, T.WATER);
-          this.setWall(x, y, 11);
+          this.setWall(x, y, x >= hill0 + 1 || y > rightY ? 11 : 0);
         }
         if (x >= hill0 + 1) for (let y = rightY - 2; y < rightY; y++) {
           this.set(x, y, T.AIR);
@@ -22681,7 +22696,7 @@
       for (const x of [cliffL, cliffL + 1]) {
         for (let y = rightY - 3; y <= rightY; y++) if (this.get(x, y) !== T.AIR && !TILE_DEF[this.get(x, y)].solid) this.set(x, y, T.AIR);
         this.set(x, rightY + 1, T.WATER);
-        this.setWall(x, rightY + 1, 11);
+        this.setWall(x, rightY + 1, 0);
         for (let y = rightY + 2; y < leftY; y++) {
           this.set(x, y, T.FALLS);
           this.setWall(x, y, 11);
@@ -22692,20 +22707,31 @@
         }
         this.surface[x] = rightY + 1;
       }
-      for (let y = rightY + 3; y < leftY + 2; y++)
-        if (rng.chance(0.45)) this.set(cliffL + 2, y, T.MOSSSTONE);
-      const gx0 = cliffL + 2, gw = 5, gh = 5;
+      const jr = new RNG(this.seed + "_jfalls"), ph0 = jr.range(0, TAU), ph1 = jr.range(0, TAU);
+      for (let x = cliffL + 2; x <= hill1; x++) for (let y = rightY + 3; y <= leftY + POOL_D + 2; y++) {
+        if (this.get(x, y) !== T.STONE) continue;
+        const band = Math.sin((y + x * 0.35) * 0.55 + ph0) + 0.6 * Math.sin((y - x * 0.2) * 1.3 + ph1);
+        const face = x - (cliffL + 2);
+        if (face < 3 && y < leftY + 1 && jr.chance(0.75 - face * 0.2)) this.set(x, y, T.MOSSSTONE);
+        else if (band > 1.05) this.set(x, y, T.DIRT);
+        else if (band < -1.2) this.set(x, y, T.GRANITE);
+      }
+      for (const x of [cliffL, cliffL + 1]) for (let y = rightY - 4; y <= rightY + 1; y++) if (this.get(x, y) === T.AIR) this.setWall(x, y, 0);
+      const gx0 = cliffL + 2, gw = 6 + jr.int(0, 2), gh = 5;
       for (let dx = 0; dx < gw; dx++) {
-        const hh = Math.round(gh * Math.sqrt(1 - ((dx + 0.5) / gw) ** 2));
+        const u = (dx + 0.5) / gw, hh = Math.max(1, Math.round(gh * Math.sqrt(Math.max(0, 1 - u * u)) + jr.range(-0.6, 0.9)));
         for (let k = 1; k <= hh; k++) {
           this.set(gx0 + dx, leftY - k, T.AIR);
           this.setWall(gx0 + dx, leftY - k, 11);
         }
         const ceil = leftY - hh - 1;
-        if (this.get(gx0 + dx, ceil) === T.STONE) this.set(gx0 + dx, ceil, T.MOSSSTONE);
+        if (this.solid(gx0 + dx, ceil)) this.set(gx0 + dx, ceil, T.MOSSSTONE);
+        if (dx > 0 && dx < gw - 1 && jr.chance(0.35) && this.get(gx0 + dx, ceil + 1) === T.AIR && hh > 2) this.set(gx0 + dx, ceil + 1, T.HANGMOSS);
+        if (this.solid(gx0 + dx, leftY)) this.set(gx0 + dx, leftY, T.MOSSSTONE);
       }
       this.set(gx0 + gw - 1, leftY - 1, T.GLOWCAP);
       this.set(gx0 + 2, leftY - 1, T.FERN);
+      for (const x of [cliffL + 2, cliffL + 3]) if (this.get(x, rightY) === T.JUNGLEGRASS || this.get(x, rightY) === T.MUD) this.set(x, rightY, T.MOSSSTONE);
       this.falls = this.falls || [];
       this.falls.push({ x: cliffL, y: (rightY + leftY) / 2 });
       const lakeR = cliffL - 1, lakeL = lakeR - 20;
@@ -25604,17 +25630,53 @@
       const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
       {
         {
-          this.paint(g, ox, oy, ART[T.STONE], rng);
-          g.globalAlpha = 0.45;
-          R(0, 0, TS, TS, "#2a4a5a");
+          R(0, 0, TS, TS, "#2e3a3e");
+          const rock2 = (cx, cy, rx, ry, c0, c1) => {
+            const gr = g.createRadialGradient(ox + cx - rx * 0.35, oy + cy - ry * 0.4, 1, ox + cx, oy + cy, Math.max(rx, ry));
+            gr.addColorStop(0, c0);
+            gr.addColorStop(1, c1);
+            g.fillStyle = gr;
+            g.beginPath();
+            g.ellipse(ox + cx, oy + cy, rx, ry, 0, 0, TAU);
+            g.fill();
+          };
+          const cx0 = rng.range(8, TS - 8);
+          rock2(cx0 - 7, 7, 9, 8, "#7a8a8c", "#3e4a4e");
+          rock2(cx0 + 8, 9, 8, 9, "#6e7e82", "#38444a");
+          rock2(cx0 - 5, TS - 4, 9, 7, "#5e6e72", "#2a3438");
+          rock2(cx0 + 7, TS - 3, 8, 6, "#58686c", "#283236");
+          g.fillStyle = "#142026";
+          g.beginPath();
+          g.moveTo(ox + cx0 - 1, oy + 1);
+          g.lineTo(ox + cx0 + 1.5, oy + 1);
+          g.lineTo(ox + cx0 + 3, oy + TS * 0.55);
+          g.lineTo(ox + cx0 + 1, oy + TS);
+          g.lineTo(ox + cx0 - 2.5, oy + TS);
+          g.lineTo(ox + cx0 - 2, oy + TS * 0.55);
+          g.closePath();
+          g.fill();
+          g.fillStyle = "#3f8fb8";
+          g.fillRect(ox + cx0 - 1, oy + TS * 0.45, 2, TS * 0.55);
+          g.fillStyle = "#bfe8ff";
+          g.fillRect(ox + cx0 - 0.5, oy + TS * 0.5, 1, TS * 0.3);
+          g.globalAlpha = 0.55;
+          g.fillStyle = "#1a2a32";
+          g.beginPath();
+          g.moveTo(ox + cx0 - 3, oy + TS * 0.5);
+          g.quadraticCurveTo(ox + cx0 - 7, oy + TS * 0.85, ox + cx0 - 5, oy + TS);
+          g.lineTo(ox + cx0 + 5, oy + TS);
+          g.quadraticCurveTo(ox + cx0 + 7, oy + TS * 0.8, ox + cx0 + 3, oy + TS * 0.5);
+          g.fill();
+          g.globalAlpha = 0.8;
+          g.fillStyle = "#9fd8f0";
+          for (let k = 0; k < 5; k++) R(cx0 + rng.range(-5, 5), rng.range(TS * 0.55, TS - 2), 1, rng.range(1, 3), "#9fd8f0");
           g.globalAlpha = 1;
-          const cx0 = rng.range(7, TS - 8);
-          for (let y = 0; y < TS; y += 2) R(cx0 + Math.sin(y * 0.7) * 2, y, 2, 2, "#1a2a32");
-          R(cx0 - 1, TS - 4, 5, 4, "#3f7fa8");
-          g.globalAlpha = 0.7;
-          for (let k = 0; k < 4; k++) R(rng.range(2, TS - 3), rng.range(4, TS - 2), 1, rng.range(2, 4), "#8fd0f0");
-          g.globalAlpha = 1;
-          R(cx0, TS - 2, 2, 2, "#bfe8ff");
+          for (let k = 0; k < 7; k++) {
+            const mx = rng.range(1, TS - 3);
+            R(mx, rng.range(0, 3), rng.range(2, 4), 2, k % 2 ? "#4a7a3a" : "#5e9a48");
+          }
+          R(cx0 - 9, 4, 2, 1, "#a8b8bc");
+          R(cx0 + 6, 5, 2, 1, "#a0b0b4");
           return;
         }
       }

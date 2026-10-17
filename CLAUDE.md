@@ -341,7 +341,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   data.js `PULSE` · `SURVEY_W` · `ECHO`). 맥박 값은 저장하지 않고 기록(`survey`)만 저장한다.
   유적 상자 **등급**은 맥박으로 올리지 않는다 — `rollChest`가 유적 상자를 4등급으로 묶는 이유를 따른다.
   **맥박 사건은 유적마다 제 것 둘**(`PULSE_EVENTS[].ruin` · game/ruin-events.ts — 18개, 사건마다 하는 일이 다르다; 공용 사건을 다시 만들지 말 것)이고,
-  유적마다 싸우는 법이 다른 몬스터가 하나씩 있다(`ENEMIES[].trait` · entity/enemy-traits.ts · 그림 `tools/mkruinmobs2.py`). 사건이 세계에 놓은 것(깜빡이는 발판 ·
+  유적마다 싸우는 법이 다른 몬스터가 하나씩 있다(`ENEMIES[].trait` · entity/enemy-traits.ts · 그림 `tools/mkruinmobs3.py` — 부위 명암 붓 `tools/pxfig.py`). 사건이 세계에 놓은 것(깜빡이는 발판 ·
   꺼진 바닥)은 `evCleanup` 이 되돌린다 — 새 사건도 바꾼 칸을 기억해 둘 것. 사연: docs/code-history.md#h169
 - **봉인 방**(game/ruin-puzzle.ts · data/ruins.ts `PUZZLE`): 유적마다 봉인 방 셋(석판 둘) — 들어서면 출입구를 `T.SEALSTONE` 으로 막고 퍼즐을 풀면 연다. 방은 해시로 고른다(생성 난수 안 뽑음). ★ 봉인은 저장하지 않는다 — `saveData` 의 `withoutSeal`. 여럿이면 호스트 판정(`puz` · `puzc`). 사연: docs/code-history.md#h171
 - **깊은 곳**(game/ruin-deep.ts · data/ruins.ts `DEEP_LEVELS`): 봉인 방을 다 풀면 가장 깊은 방 바닥이 열려 아래층(홀 + 곁방)이 **그때** 파이고, 홀 봉인을 풀면 다음 단계. 단계 수와 단계마다 고유 열쇠(횃불 · 시각 · 바치기 · 처치 · 암호 · 방 밟기 · 석판 · 격노)는 `DEEP_KEYS` — 같은 열쇠를 여러 유적에 되풀이하지 말 것(사연 #h175). ★ 미리 파지 말 것(몰래 캐서 들어간다 · 생성 해시). 단계 자리는 `ruinSites[].deep[]`(세이브 v14). 사연: docs/code-history.md#h172

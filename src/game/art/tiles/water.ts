@@ -227,16 +227,28 @@ export const TilePaintWater: Bag = {
   spring(H: TilePaintKit) {
     const { g, ox, oy, s, rng, v, seed, R, base, dk, dk2, lt, lt2 } = H;
     { {
-        /* 샘 바위 — 돌 바탕에 젖어 검게 번진 틈 하나와 거기서 새는 물방울. */
-        this.paint(g, ox, oy, ART[T.STONE], rng);
-        g.globalAlpha = .45; R(0, 0, TS, TS, '#2a4a5a'); g.globalAlpha = 1;
-        const cx0 = rng.range(7, TS - 8);
-        for (let y = 0; y < TS; y += 2) R(cx0 + Math.sin(y * .7) * 2, y, 2, 2, '#1a2a32');   // 틈
-        R(cx0 - 1, TS - 4, 5, 4, '#3f7fa8');                                                 // 고인 물기
-        g.globalAlpha = .7;
-        for (let k = 0; k < 4; k++) R(rng.range(2, TS - 3), rng.range(4, TS - 2), 1, rng.range(2, 4), '#8fd0f0');
+        /* 샘 바위 — 물에 닳아 둥근 바위 덩어리 셋이 겹친 면, 그 사이 갈라진 틈에서 물이 배어 나와 아래로 번진다.
+           ★ 돌 칸에 줄 하나 그은 그림이라 '물 나오는 돌'로 안 읽혔다(사용자) — 덩어리 · 젖은 결 · 이끼 · 틈 속 물빛을 따로 칠한다 */
+        R(0, 0, TS, TS, '#2e3a3e');
+        const rock = (cx: number, cy: number, rx: number, ry: number, c0: string, c1: string) => {
+          const gr = g.createRadialGradient(ox + cx - rx * 0.35, oy + cy - ry * 0.4, 1, ox + cx, oy + cy, Math.max(rx, ry));
+          gr.addColorStop(0, c0); gr.addColorStop(1, c1);
+          g.fillStyle = gr; g.beginPath(); g.ellipse(ox + cx, oy + cy, rx, ry, 0, 0, TAU); g.fill();
+        };
+        const cx0 = rng.range(8, TS - 8);
+        rock(cx0 - 7, 7, 9, 8, '#7a8a8c', '#3e4a4e'); rock(cx0 + 8, 9, 8, 9, '#6e7e82', '#38444a');
+        rock(cx0 - 5, TS - 4, 9, 7, '#5e6e72', '#2a3438'); rock(cx0 + 7, TS - 3, 8, 6, '#58686c', '#283236');
+        g.fillStyle = '#142026'; g.beginPath();                                                 // 갈라진 틈 — 위가 좁고 아래로 벌어진다
+        g.moveTo(ox + cx0 - 1, oy + 1); g.lineTo(ox + cx0 + 1.5, oy + 1); g.lineTo(ox + cx0 + 3, oy + TS * 0.55); g.lineTo(ox + cx0 + 1, oy + TS); g.lineTo(ox + cx0 - 2.5, oy + TS); g.lineTo(ox + cx0 - 2, oy + TS * 0.55); g.closePath(); g.fill();
+        g.fillStyle = '#3f8fb8'; g.fillRect(ox + cx0 - 1, oy + TS * 0.45, 2, TS * 0.55);       // 틈 속 물빛
+        g.fillStyle = '#bfe8ff'; g.fillRect(ox + cx0 - 0.5, oy + TS * 0.5, 1, TS * 0.3);
+        g.globalAlpha = .55; g.fillStyle = '#1a2a32';                                           // 물이 번진 젖은 결
+        g.beginPath(); g.moveTo(ox + cx0 - 3, oy + TS * 0.5); g.quadraticCurveTo(ox + cx0 - 7, oy + TS * 0.85, ox + cx0 - 5, oy + TS); g.lineTo(ox + cx0 + 5, oy + TS); g.quadraticCurveTo(ox + cx0 + 7, oy + TS * 0.8, ox + cx0 + 3, oy + TS * 0.5); g.fill();
+        g.globalAlpha = .8; g.fillStyle = '#9fd8f0';
+        for (let k = 0; k < 5; k++) R(cx0 + rng.range(-5, 5), rng.range(TS * 0.55, TS - 2), 1, rng.range(1, 3), '#9fd8f0');   // 물줄기 반짝임
         g.globalAlpha = 1;
-        R(cx0, TS - 2, 2, 2, '#bfe8ff');
+        for (let k = 0; k < 7; k++) { const mx = rng.range(1, TS - 3); R(mx, rng.range(0, 3), rng.range(2, 4), 2, k % 2 ? '#4a7a3a' : '#5e9a48'); }   // 윗면 이끼
+        R(cx0 - 9, 4, 2, 1, '#a8b8bc'); R(cx0 + 6, 5, 2, 1, '#a0b0b4');                       // 젖은 바위 반사
         return;
       }
     }

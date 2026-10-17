@@ -939,8 +939,14 @@ export class World extends TileMap {
       if (up === T.FALLS || up === T.SPRING || FLUID_KIND[up]) continue;
       if (up === T.BEDROCK) continue;
       const x = k % WW, y = (k / WW) | 0;
-      if (TILE_DEF[up].solid === 1) this.set(x, y - 1, T.SPRING);
-      else this.set(x, y, T.SPRING);
+      if (TILE_DEF[up].solid === 1) { this.set(x, y - 1, T.SPRING); continue; }
+      /* ★ 위가 트인 폭포 — 옆 두 칸 안에 물(물길 · 호수)이 있으면 그 물이 넘쳐 떨어지는 것이라 샘이 필요 없다.
+         예전엔 폭포 꼭대기 칸을 샘 바위로 바꿔 허공에 바위가 떠 있었다(정글 절벽, 사용자 지적) */
+      let fed = false;
+      for (let dy = -1; dy <= 0 && !fed; dy++) for (let dx = -2; dx <= 2; dx++) { const t = this.get(x + dx, y + dy); if (t !== T.FALLS && FLUID_KIND[t]) { fed = true; break; } }
+      if (fed) continue;
+      // 옆이 벽이면 그 벽에 샘을 박는다(물이 벽에서 나온다), 아니면 폭포 머리를 그냥 둔다
+      for (const dx of [-1, 1]) if (TILE_DEF[this.get(x + dx, y)].solid === 1 && this.get(x + dx, y) !== T.BEDROCK) { this.set(x + dx, y, T.SPRING); break; }
     }
   }
 
