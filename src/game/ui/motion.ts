@@ -90,6 +90,7 @@ export const UIMotionPart: Bag = {
   anvilShow(it: Bag | null) {
     const st = $('#anvil-stage'); if (!st || this.anvilBusy) return;
     const item = st.querySelector('.as-item');
+    this.anvilItem = it ? it.id : null; this.anvilSceneStart();
     if (!it) { item.style.backgroundImage = ''; st.querySelector('.as-line').textContent = tr('두들길 장비를 가리켜라'); this.anvilRisk(0, 0, true); return; }
     item.style.backgroundImage = `url(${Art.itemUrl(it.id)})`;
     const e = it.e || 0;
@@ -116,14 +117,15 @@ export const UIMotionPart: Bag = {
     const e = it.e || 0, cost = G.enhCost(it), mat = G.enhMat(e);
     const st = $('#anvil-stage');
     /* 못 하는 것(최대 · 금화 · 재료)은 망치질 없이 바로 — 까닭은 enhanceSlot 이 알린다 */
-    if (!st || !this.motionOn() || e >= G.ENH_MAX || p.gold < cost || !p.hasAll({ [mat.id]: mat.n })) {
+    if (!st || this.reducedMotion() || e >= G.ENH_MAX || p.gold < cost || !p.hasAll({ [mat.id]: mat.n })) {
       const res = G.enhanceSlot(i);
       if (st) this.anvilEnd(res, it);
       return;
     }
     this.anvilShow(it); this.anvilBusy = true; st.classList.add('busy');
     /* 가열(벌겋게 달군다) → 단조(망치 셋) → 담금질(김) → 결말 — 실제 벼리는 차례대로 */
-    const item = st.querySelector('.as-item'), ham = st.querySelector('.as-ham'), beat = 240, HEAT = 460, QUENCH = 420;
+    const item = st.querySelector('.as-item'), ham = st.querySelector('.as-ham'), beat = 360, HEAT = 760, QUENCH = 700;
+    this.anvilAnim = { t0: performance.now() / 1000, heat: HEAT, beat, quench: QUENCH, id: it.id, res: null }; this.anvilSceneStart();   // 장면(ui/craft-scene anvilScene)
     this.anvilSteps(st, 0); item.classList.add('heat'); G.sfx && G.sfx('fuse', 1, 0.6);
     for (let k = 0; k < 3; k++) setTimeout(() => {
       if (k === 0) this.anvilSteps(st, 1);
@@ -138,7 +140,7 @@ export const UIMotionPart: Bag = {
     // 박자 사이에 가방이 바뀌었을 수 있다 — 칸 번호가 아니라 그 물건을 다시 찾는다
     setTimeout(() => {
       this.anvilBusy = false; st.classList.remove('busy'); item.classList.remove('quench'); this.anvilSteps(st, 3);
-      const j = G.player.bag.indexOf(it); if (j >= 0) this.anvilEnd(G.enhanceSlot(j), it);
+      const j = G.player.bag.indexOf(it); if (j >= 0) { const res = G.enhanceSlot(j); if (this.anvilAnim) this.anvilAnim.res = res || 'fail'; this.anvilEnd(res, it); }
     }, HEAT + 3 * beat + QUENCH);
   },
   anvilEnd(res: string | null, it: Bag) {

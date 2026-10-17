@@ -368,6 +368,16 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 @keyframes tdrift{to{transform:translate(260px,110px)}}
 .bgrid.thump{animation:tthump .28s ease-out}
 @keyframes tthump{25%{transform:translate(1.5px,-1px) scale(1.004)}55%{transform:translate(-1px,1px)}100%{transform:none}}
+.bplane{position:absolute;left:0;top:0;will-change:transform}
+.bgrid{touch-action:none;cursor:grab}.bgrid.dragging{cursor:grabbing}
+#slotpick{position:fixed;z-index:9800;background:linear-gradient(#1c1a12,#100f0a);border:1px solid #6a5a32;border-radius:6px;padding:8px 10px;box-shadow:0 8px 24px #000c;color:#e8dcb8;font-size:12px}
+#slotpick .sp-t{margin-bottom:6px;color:#ffe7a8}
+#slotpick .sp-row{display:flex;gap:5px}
+#slotpick .sp-row button{width:42px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#0c0b08;border:1px solid #3a3420;border-radius:4px;color:#d8c898;cursor:pointer;font:inherit}
+#slotpick .sp-row button:hover{border-color:#ffcf6a;box-shadow:0 0 8px #ffcf6a66}
+#slotpick .sp-row button.on{border-color:#ffcf6a}
+#slotpick .sp-row .ic{width:26px;height:26px;background-size:contain;background-repeat:no-repeat;background-position:center}
+#slotpick .sp-off{margin-top:6px;width:100%;background:#2a1612;border:1px solid #6a2a20;color:#f0b8a8;border-radius:4px;padding:3px;cursor:pointer;font:inherit}
 .blines{position:absolute;left:50%;top:var(--cy);width:1px;height:1px;pointer-events:none;overflow:visible;z-index:1}
 .broot{stroke:var(--bc);stroke-width:1.4;opacity:.28;stroke-dasharray:2 5}
 .bcore{position:absolute;left:50%;top:var(--cy);width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;z-index:2;flex-direction:column;
@@ -1207,8 +1217,7 @@ body.booting #title-screen{visibility:hidden}
   #bag-grid{grid-template-columns:repeat(6,46px)}
   #chest-grid{grid-template-columns:repeat(6,46px)}
   /* 좁은 화면에서는 아홉 칸이 뭉개진다 — 가로로 밀어 보게 둔다(칸 크기는 지킨다) */
-  #tree-wrap{overflow-x:auto}
-  .bgrid,.tlegend{min-width:680px}
+  .tlegend{min-width:0}
   #prof-wrap{grid-template-columns:1fr}
   #craft-list{grid-template-columns:1fr}
   #quest-tracker{width:190px;font-size:11px}
@@ -1305,6 +1314,18 @@ body.booting #title-screen{visibility:hidden}
 
 /* 낚시 겨루기(game/fish-duel.ts) — 판 위의 누름 · 끌기가 게임 캔버스에 안 가게 덮는다 */
 #fishduel{position:fixed;inset:0;width:100%;height:100%;z-index:9500;touch-action:none;cursor:none}
+/* 낚시 겨루기 처음 안내 — 판 위 · 움직이는 그림 넷 */
+#fishtut{position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;background:rgba(2,8,14,.55);padding:16px}
+#fishtut .ft-box{max-width:680px;width:100%;background:linear-gradient(#10232e,#0a1820);border:1px solid #3f7f98;border-radius:10px;padding:18px 20px 16px;box-shadow:0 10px 40px #000a;color:#e6f2f8;text-align:center}
+#fishtut h2{margin:0 0 6px;font-size:20px;color:#ffe8a0;letter-spacing:.04em}
+#fishtut .ft-lead{margin:0 0 14px;font-size:13px;color:#bcd6e2}
+#fishtut .ft-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#fishtut .ft-card{background:#0b1c25;border:1px solid #234b5c;border-radius:8px;padding:8px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+#fishtut .ft-card canvas{width:132px;max-width:100%;height:auto}
+#fishtut .ft-card b{font-size:14px;color:#9fe0ff}
+#fishtut .ft-card p{margin:0;font-size:12px;line-height:1.35;color:#cfe2ea}
+#fishtut .ft-go{margin-top:14px;padding:8px 28px;font:inherit;font-size:15px;color:#1a1208;background:linear-gradient(#ffe8a0,#e8b84a);border:0;border-radius:6px;cursor:pointer}
+@media (max-width:620px){#fishtut .ft-row{grid-template-columns:repeat(2,1fr)}}
 
 /* 창의 움직임(ui/motion.ts) — 날아가는 아이콘 · 불꽃은 맨 위 겹에, 클릭은 그대로 아래로 */
 #uifx{position:fixed;inset:0;pointer-events:none;z-index:9000;overflow:hidden}
@@ -1330,9 +1351,12 @@ body.booting #title-screen{visibility:hidden}
 @keyframes progDone{30%{box-shadow:0 0 10px #bfe07a;border-color:#bfe07a}}
 /* 강화 모루 무대 — 모루 위 장비 · 망치 · 이번 망치질의 몫(성공 · 실패 · 파괴) */
 #anvil-stage{display:flex;align-items:center;gap:14px;margin:4px 16px 0;padding:10px 12px;background:#100f0a;border:1px solid #262418;border-radius:4px;transition:border-color .2s,box-shadow .2s}
-#anvil-stage .as-anvil{position:relative;flex:0 0 72px;height:64px;margin-right:12px}
+#anvil-stage .as-anvil{position:relative;flex:0 0 240px;height:124px;margin-right:6px}
+#anvil-stage .as-cv{position:absolute;inset:0;width:100%;height:100%;border-radius:3px}
+#anvil-stage .as-anvil::before,#anvil-stage .as-ham{display:none}
+#anvil-stage .as-item{opacity:0}
 #anvil-stage .as-anvil::before{content:'';position:absolute;left:4px;right:4px;bottom:2px;height:26px;background:linear-gradient(#5b5b66,#2c2c33);clip-path:polygon(0 0,100% 0,88% 38%,70% 46%,76% 100%,24% 100%,30% 46%,12% 38%);border-radius:2px}
-#anvil-stage .as-item{position:absolute;left:20px;bottom:26px;width:32px;height:32px;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 2px #000a)}
+#anvil-stage .as-item{position:absolute;left:104px;bottom:46px;width:32px;height:32px;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 2px #000a)}
 #anvil-stage .as-ham{position:absolute;right:-16px;top:-8px;width:30px;height:30px;transform:rotate(-35deg);transform-origin:85% 90%;opacity:.55;transition:opacity .15s}
 #anvil-stage .as-ham::before{content:'';position:absolute;left:12px;top:6px;width:4px;height:24px;border-radius:2px;background:linear-gradient(90deg,#8a5a2e,#5e3a1c)}
 #anvil-stage .as-ham::after{content:'';position:absolute;left:4px;top:2px;width:20px;height:9px;border-radius:2px;background:linear-gradient(#b8b8c4,#62626e);box-shadow:0 1px 0 #2a2a30}
@@ -1578,7 +1602,7 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 @media (max-height:440px){body.touch #pause-screen{padding-top:calc(44px + env(safe-area-inset-top,0px))}}
 #btn-mp-join:disabled{opacity:.45;cursor:default}
 /* ===== 공정(ui/process.ts) — 제작 무대 · 기계 가동 과정 · 모루 단계 ===== */
-#craft-stage{display:none;width:calc(100% - 32px);height:112px;margin:8px 16px 0;background:linear-gradient(#14120ce8,#0c0b08ee);border:1px solid #2e2a1e;border-radius:4px;box-shadow:inset 0 0 18px #000a}
+#craft-stage{display:none;width:calc(100% - 32px);height:176px;margin:8px 16px 0;background:linear-gradient(#14120ce8,#0c0b08ee);border:1px solid #2e2a1e;border-radius:4px;box-shadow:inset 0 0 18px #000a}
 #craft-stage.on{display:block}
 #mach-view{display:block;width:100%;height:184px;margin:0 0 6px;background:linear-gradient(#12110ce0,#0a0907e8);border:1px solid #262418;border-radius:4px}
 #anvil-stage .as-steps{display:flex;gap:4px}

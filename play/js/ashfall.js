@@ -15892,6 +15892,7 @@
       this.occT = new Float32Array(n);
       this.occA = new Float32Array(n);
       this.occB = new Float32Array(n);
+      this.occBase = null;
     }
     /** 새 창 — (x0, y0) 부터 w×h 칸. 버퍼를 비우고, 바뀐 칸 둘레의 광원 판을 버린다. 칸 번호 k = (y-y0)·w + (x-x0). */
     begin(x0, y0, w, h) {
@@ -15992,15 +15993,23 @@
       }
     }
     /** 움직이는 가림(몸 따위) — finish **뒤에** 곱한다. 한두 칸짜리 그늘은 번지기가 둘레 빛으로 메워 사라지므로,
-        같은 직사광(castSunlight)을 가림 있이 · 없이 두 번 쏘아 그 비만큼 어둡게 한다. cells = [판 칸 번호, 남는 빛(0~1), …] */
-    occlude(cells, strength) {
+        같은 직사광(castSunlight)을 가림 있이 · 없이 두 번 쏘아 그 비만큼 어둡게 한다. cells = [판 칸 번호, 남는 빛(0~1), …]
+        ground: 그늘을 처음 닿는 막힌 칸(땅 겉면)에만 떨군다 — 나무 그늘과 같은 꼴. 빈 칸까지 어둡게 하면 몸에서 땅까지
+        허공에 어두운 띠가 세로로 그어졌고, 해를 안 가리는 칸(하늘 섬 따위)을 뚫고 화면 끝까지 이어졌다 */
+    occlude(cells, strength, ground = false) {
       if (!this.sunOn || !cells.length || !this.sky) return;
-      const { n, w, h, x0, y0, L } = this, T2 = this.occT, A = this.occA, B = this.occB, [sx, sy] = this.sunDir;
-      T2.set(this.trans.subarray(0, n));
+      const { n, w, h, x0, y0, L, op } = this, T2 = this.occT, A = this.occA, B = this.occB, [sx, sy] = this.sunDir;
+      let base = this.trans;
+      if (ground) {
+        if (!this.occBase || this.occBase.length < n) this.occBase = new Float32Array(this.trans.length);
+        base = this.occBase;
+        for (let k = 0; k < n; k++) base[k] = op[k] ? 0 : this.trans[k];
+      }
+      T2.set(base.subarray(0, n));
       for (let i = 0; i < cells.length; i += 2) T2[cells[i]] *= cells[i + 1];
-      castSunlight(A, w, h, x0, y0, this.trans, sx, sy, this.sky);
+      castSunlight(A, w, h, x0, y0, base, sx, sy, this.sky);
       castSunlight(B, w, h, x0, y0, T2, sx, sy, this.sky);
-      for (let k = 0; k < n; k++) if (A[k] > 0.01 && B[k] < A[k]) L[k] *= 1 - (1 - B[k] / A[k]) * strength;
+      for (let k = 0; k < n; k++) if ((!ground || op[k]) && A[k] > 0.01 && B[k] < A[k]) L[k] *= 1 - (1 - B[k] / A[k]) * strength;
     }
     /** 세계 칸의 밝기(창 밖은 0) */
     at(x, y) {
@@ -16658,7 +16667,7 @@
             const cov = (Math.min(bx + bw, (x + 1) * TS) - Math.max(bx, x * TS)) * (Math.min(by + bh, (y + 1) * TS) - Math.max(by, y * TS)) / (TS * TS);
             if (cov > 0) cells.push((y - y0) * w + (x - x0), 1 - (1 - SUN_BODY) * Math.min(1, cov * 1.4));
           }
-        F.occlude(cells, 0.55 * sunK);
+        F.occlude(cells, 0.55 * sunK, true);
       }
     }
     /** 그늘은 땅 겉면 한 칸에만 떨어진다 — 그 밑 흙은 둘레 ±SOIL_R 칸 겉면의 평균 햇빛에서 칸마다 2.7씩 줄여 채운다.
@@ -17840,6 +17849,9 @@
       const torch = (x, y) => {
         if (this.get(x, y) === T.AIR) this.set(x, y, T.TORCH);
       };
+      const roof = (xa, xb, yb) => {
+        for (let a = xa - 1, b = xb + 1, y = yb; a <= b && y >= 1; a++, b--, y--) box(a, y, b, y, T.ROOFTILE);
+      };
       const ix0 = x0 - 3, ix1 = x0 + w + 3, half = (ix1 - ix0) / 2, icx = (ix0 + ix1) / 2;
       for (let x = ix0; x <= ix1; x++) {
         const u = Math.abs(x - icx) / half, d = 2 + Math.round(Math.pow(Math.max(0, 1 - u * u), 0.8) * 7 + r2.int(-1, 1));
@@ -17871,12 +17883,12 @@
       torch(b0 + 3, F - 3);
       torch(b1 - 2, F - 3);
       chestOn(b0 + 10, F);
-      const k0 = x0 + 31, k1 = x0 + 60, top = F - 21;
+      const k0 = x0 + 31, k1 = x0 + 60, top = F - 20;
       box(k0, top, k1, F, T.WALLSTONE);
       bg(k0, top, k1, F - 1);
       box(k0 + 2, F - 9, k1 - 2, F - 1, T.AIR);
       box(k0 + 2, F - 15, k1 - 2, F - 11, T.AIR);
-      box(k0 + 2, F - 20, k1 - 2, F - 17, T.AIR);
+      box(k0 + 2, F - 19, k1 - 2, F - 17, T.AIR);
       box(k0, F - 3, k0 + 1, F - 1, T.AIR);
       for (let x = k0 + 2; x <= k1 - 2; x++) {
         this.set(x, F - 10, T.ORBITPLATE);
@@ -17893,15 +17905,15 @@
       }
       parapet(k0 + 4, k1 - 4, top - 1);
       for (const tx of [k0, k1 - 3]) {
-        box(tx, top - 5, tx + 3, top - 1, T.WALLSTONE);
-        box(tx + 1, top - 4, tx + 2, top - 1, T.AIR);
-        bg(tx, top - 5, tx + 3, top - 1);
+        box(tx, top - 4, tx + 3, top - 1, T.WALLSTONE);
+        box(tx + 1, top - 3, tx + 2, top - 1, T.AIR);
+        bg(tx, top - 4, tx + 3, top - 1);
         this.set(tx + 1, top, T.PLATFORM);
         this.set(tx + 2, top, T.PLATFORM);
-        this.set(tx + 1, top - 3, T.WINDOW);
-        for (let k = 0; k < 3; k++) box(tx - 1 + k, top - 6 - k, tx + 4 - k, top - 6 - k, T.ROOFTILE);
+        this.set(tx + 1, top - 2, T.WINDOW);
+        roof(tx, tx + 3, top - 5);
       }
-      for (const y of [F - 13, F - 19]) for (const x of [k0 + 9, k0 + 16, k1 - 9]) this.set(x, y, T.WINDOW);
+      for (const y of [F - 13, F - 18]) for (const x of [k0 + 9, k0 + 16, k1 - 9]) this.set(x, y, T.WINDOW);
       for (let x = k0 + 6; x <= k1 - 4; x++) {
         this.set(x, F, T.ALTARSTONE);
         this.set(x, F + 1, T.ALTARSTONE);
@@ -17923,13 +17935,13 @@
       chestOn(k0 + 12, F - 10);
       this.putTileTrap({ x: k0 + 1, y: F - 15, w: v0 - k0, h: 5 }, F - 11, "dart", r2);
       chestOn(k0 + 20, F - 16);
-      torch(k0 + 10, F - 19);
-      torch(k1 - 5, F - 19);
+      torch(k0 + 10, F - 18);
+      torch(k1 - 5, F - 18);
       const i0 = k1 + 1, i1 = x0 + 66;
       bg(i0, F - 7, i1, F - 1);
       for (let x = i0; x <= i1; x++) this.set(x, F - 8, T.PLATFORM);
       parapet(i0, i1, F - 9);
-      const t0 = x0 + 67, t1 = x0 + w - 3, ttop = F - 22;
+      const t0 = x0 + 67, t1 = x0 + w - 3, ttop = F - 21;
       box(t0, ttop, t1, F, T.WALLSTONE);
       box(t0 + 1, ttop + 1, t1 - 1, F - 1, T.AIR);
       bg(t0, ttop, t1, F - 1);
@@ -17944,15 +17956,23 @@
       }
       chestOn(t0 + 1, F - 6);
       chestOn(t0 + 1, F - 18);
-      crenel(t0, t1, ttop - 1);
-      for (let k = 0; k < 5; k++) if (ttop - 2 - k >= 1) box(t0 + k, ttop - 2 - k, t1 - k, ttop - 2 - k, T.ROOFTILE);
-      const doorY = F - 1;
+      roof(t0, t1, ttop - 1);
+      const doorY = F - 1, SPAN = 10;
       let by = F, bx = ix0 - 1;
       for (let k = 0; k < 62 && bx > 6; k++, bx--) {
         this.set(bx, by, T.ORBITPLATE);
         for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
-        if (k > 14 && k % 6 === 5 && by < SKY_Y2 - 4) by++;
-        if (k % 9 === 4) this.set(bx, by - 1, T.TORCH);
+        const u = k % SPAN / SPAN, pier = k % SPAN === 0;
+        const th = pier ? 4 : 1 + Math.round(2 * Math.pow(Math.abs(Math.cos(Math.PI * u)), 3));
+        for (let d = 1; d <= th && by + d < SKY_Y2 - 1; d++) {
+          this.set(bx, by + d, T.WALLSTONE);
+          this.setWall(bx, by + d, 13);
+        }
+        if (pier && by + th + 1 < SKY_Y2 - 1) this.set(bx, by + th + 1, T.ORBITCORE);
+        const nearAnchor = bx >= x0 - 12 && bx <= x0 - 8;
+        if (k % 8 === 4) this.set(bx, by - 1, T.LAMPPOST);
+        else if (!nearAnchor) this.set(bx, by - 1, T.FENCE);
+        if (k > 14 && k % 6 === 5 && by < SKY_Y2 - 6) by++;
       }
       C.bridgeX = bx;
       const anchor = (i, kind, tx, fy) => this.objects.push({ type: "anchor", i, kind, x: tx * TS - 4, y: (fy + 1) * TS - 52, w: 30, h: 52 });
@@ -32657,6 +32677,8 @@
   var entity_exports2 = {};
   __export(entity_exports2, {
     BASE_BAG_SIZE: () => BASE_BAG_SIZE,
+    BOSS_DMG: () => BOSS_DMG,
+    BOSS_MOVE_DMG: () => BOSS_MOVE_DMG,
     BURST_SFX: () => BURST_SFX,
     Bomb: () => Bomb,
     DmgText: () => DmgText,
@@ -33049,6 +33071,7 @@
   var SAFE_FALL_VY = Math.sqrt(2 * GRAV * SAFE_FALL_TILES * TS);
   var BASE_BAG_SIZE = 40, MAX_BAG_SIZE = 56, HOTBAR = 10;
   var VAULT_SIZE = 60;
+  var BOSS_DMG = 1.3, BOSS_MOVE_DMG = 1.3;
   var Ent = class extends Entity {
     /** 타일 충돌을 포함한 이동 */
     move(dt, world, opts = {}) {
@@ -33174,7 +33197,8 @@
         critD: acc.critD,
         ms: 190 * (1 + acc.ms / 100),
         cdr: Math.min(55, acc.cdr),
-        lifesteal: acc.lifesteal,
+        lifesteal: acc.lifesteal * 0.5,
+        // 흡혈 수치당 회복을 절반으로 — 보이는 % 도 실제 비율
         jumps: 1 + (acc.jump || 0),
         mpreg: maxMp / REGEN_FULL * (1 + acc.mpreg / 100),
         hpreg,
@@ -33499,6 +33523,7 @@
       this.xp = Math.round(d.xp * sc * lf);
       this.gold = Math.round(d.gold * sc * lf);
       this.boss = !!d.boss;
+      if (this.boss) this.dmg *= BOSS_DMG;
       this.aggro = d.aggro || 460;
       this.flash = 0;
       this.atkCd = 0;
@@ -33732,7 +33757,7 @@
         );
       }
       if (src instanceof Player) {
-        if (src.d.lifesteal > 0) src.heal(dmg * src.d.lifesteal / 100);
+        if (src.d.lifesteal > 0) src.heal(Math.min(dmg * src.d.lifesteal / 100, src.d.maxHp * 0.03));
         src.hurtCd = Math.max(src.hurtCd, 0.6);
       }
       if (kb && !this.boss) {
@@ -37364,7 +37389,7 @@
     },
     /** 기술 실행 — 돌려준 busy 동안 보스가 묶인다(tick 이 있으면 그 동안 움직임을 그것이 맡는다) */
     mvStart(d, p, world, K) {
-      const m = d.m ?? 1, fly = this.flies(), E = this;
+      const m = (d.m ?? 1) * BOSS_MOVE_DMG, fly = this.flies(), E = this;
       const xf = d.fx || XFX_OF[d.proj] || "rock";
       const extra = () => {
         if (d.march) this.mvStart({ k: "march", cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: xf, m: 0.8 }, p, world, K);
@@ -41115,8 +41140,7 @@
         this.refreshTree();
         this.refreshSkillSlots();
         this.refreshProf();
-        const core = $("#tree-wrap .bcore");
-        if (core && this.skillTab !== "prof") core.scrollIntoView({ block: "center" });
+        this._treePan = null;
       }
       if (id === "quest") this.refreshQuest();
       if (id === "craft") this.refreshCraft();
@@ -41475,13 +41499,14 @@
        ★ 배운 칸과 이어진 칸만 드러난다 — 멀리 있는 칸은 틀도 선도 없다(미리 보이면 길을 고르는 맛이 없다, 사용자 결정 2026-10-16).
        자리는 예전 그대로 가운데 핵에서 네 쪽으로 뻗는다. 사연: docs/code-history.md#h90 · #h187 · #h191 */
     TREE_BOX: 44,
-    TREE_GX: 46,
-    TREE_GY: 52,
-    TREE_ROW: 86,
-    TREE_COL: 92,
-    TREE_SKEW: 26,
-    TREE_H: 716,
-    TREE_CY: 344,
+    /* 칸 사이를 넓혔다(사용자) — 판이 창보다 커서 끌거나 휠로 움직인다(_treePan) */
+    TREE_GX: 62,
+    TREE_GY: 70,
+    TREE_ROW: 118,
+    TREE_COL: 124,
+    TREE_SKEW: 34,
+    TREE_H: 600,
+    TREE_CY: 300,
     TREE_DIR: { blade: [-1, -1], ranger: [1, -1], arcane: [1, 1], explore: [-1, 1] },
     HOLD_T: 0.42,
     // 꾹 눌러 배우는 시간(초) — 한 번 클릭으로 잘못 찍던 것을 막고 '찍는 손맛'을 준다
@@ -41497,12 +41522,25 @@
       const NS = "http://www.w3.org/2000/svg";
       const legend = document.createElement("div");
       legend.className = "tlegend";
-      legend.innerHTML = ["active", "passive", "unlock"].map((k) => `<span class="tk" style="--bc:${NODE_KIND_COL[k]}"><i></i>${k === "active" ? tr("기술") : k === "passive" ? tr("힘") : tr("칸 열기")}</span>`).join("") + `<span class="thint">${tr("꾹 눌러 배운다 · 배운 칸과 이어진 칸만 드러난다 · 우클릭으로 스킬 칸 등록")}</span>`;
+      legend.innerHTML = ["active", "passive", "unlock"].map((k) => `<span class="tk" style="--bc:${NODE_KIND_COL[k]}"><i></i>${k === "active" ? tr("기술") : k === "passive" ? tr("힘") : tr("칸 열기")}</span>`).join("") + `<span class="thint">${tr("꾹 눌러 배운다 · 끌거나 휠로 판을 옮긴다 · 우클릭으로 스킬 칸 고르기")}</span>`;
       w.appendChild(legend);
+      let mx = 0, my = 0;
+      for (const id in SKILLS) {
+        const [x, y] = this._nodeXY(id);
+        mx = Math.max(mx, Math.abs(x));
+        my = Math.max(my, Math.abs(y));
+      }
+      const PW = Math.round((mx + 80) * 2), PH = Math.round((my + 80) * 2);
       const grid = document.createElement("div");
       grid.className = "bgrid";
-      grid.style.height = this.TREE_H + "px";
-      grid.style.setProperty("--cy", this.TREE_CY + "px");
+      grid.style.height = `min(${this.TREE_H}px, calc(100vh - 380px))`;
+      grid.style.setProperty("--cy", "50%");
+      const plane = document.createElement("div");
+      plane.className = "bplane";
+      plane.style.width = PW + "px";
+      plane.style.height = PH + "px";
+      plane.style.setProperty("--cy", PH / 2 + "px");
+      this._treePlane = { el: plane, grid, w: PW, h: PH };
       const svg = document.createElementNS(NS, "svg");
       svg.setAttribute("class", "blines");
       const line4 = (a, b, cls, c) => {
@@ -41542,7 +41580,7 @@
         ln.dataset.from = rq;
         ln.dataset.to = id;
       }
-      grid.appendChild(svg);
+      plane.appendChild(svg);
       const core = document.createElement("div");
       core.className = "bcore";
       core.innerHTML = '<span class="cst">✦</span><b class="cpts">0</b>';
@@ -41551,7 +41589,7 @@
         this.tipText(tr("트리의 심장"), (next !== void 0 ? tr("찍은 점수 {have} · 다음 단까지 {left}점", { have, left: next - have }) : tr("찍은 점수 {have} · 모든 단이 열렸다", { have })) + " — " + tr("모든 칸은 여기서 뻗어 나간다"), e);
       });
       core.addEventListener("mouseleave", () => this.hideTip());
-      grid.appendChild(core);
+      plane.appendChild(core);
       for (const id in SKILLS) {
         const sk = SKILLS[id];
         const [x, y] = this._nodeXY(id);
@@ -41570,7 +41608,7 @@
         for (const ev of ["pointerup", "pointerleave", "pointercancel"]) n.addEventListener(ev, () => this.holdStop(n));
         n.addEventListener("contextmenu", (e) => {
           e.preventDefault();
-          this.assign(id);
+          this.slotPicker(id, e.clientX, e.clientY);
         });
         n.addEventListener("mouseenter", (e) => {
           this.showSkillTip(id, e);
@@ -41581,10 +41619,132 @@
           this.hideTip();
           this.pathHi(id, false);
         });
-        grid.appendChild(n);
+        plane.appendChild(n);
       }
+      grid.appendChild(plane);
       w.appendChild(grid);
+      this.bindTreePan(grid);
       this.bindSkillTabs();
+    },
+    /** 판 옮기기 — 빈 곳을 끌거나 휠(Shift = 가로). 처음 열 때는 핵이 가운데 */
+    bindTreePan(grid) {
+      const P2 = this._treePlane;
+      const apply = () => {
+        if (!grid.clientWidth) return;
+        const vw = grid.clientWidth, vh = grid.clientHeight || this.TREE_H;
+        if (!this._treePan) this._treePan = { x: (vw - P2.w) / 2, y: (vh - P2.h) / 2 };
+        const t = this._treePan, pad = 60;
+        t.x = Math.min(pad, Math.max(vw - P2.w - pad, t.x));
+        t.y = Math.min(pad, Math.max(vh - P2.h - pad, t.y));
+        if (P2.w < vw) t.x = (vw - P2.w) / 2;
+        if (P2.h < vh) t.y = (vh - P2.h) / 2;
+        P2.el.style.transform = `translate(${Math.round(t.x)}px,${Math.round(t.y)}px)`;
+      };
+      this._treePanApply = apply;
+      grid.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        apply();
+        const t = this._treePan;
+        if (!t) return;
+        if (e.shiftKey) t.x -= e.deltaY;
+        else {
+          t.x -= e.deltaX;
+          t.y -= e.deltaY;
+        }
+        apply();
+      }, { passive: false });
+      let drag = null;
+      grid.addEventListener("pointerdown", (e) => {
+        if (e.target.closest(".node, .bcore") || e.button === 2) return;
+        apply();
+        const t = this._treePan;
+        if (!t) return;
+        drag = [e.clientX, e.clientY, t.x, t.y];
+        grid.classList.add("dragging");
+        try {
+          grid.setPointerCapture(e.pointerId);
+        } catch (_) {
+        }
+      });
+      grid.addEventListener("pointermove", (e) => {
+        if (!drag) return;
+        this._treePan.x = drag[2] + e.clientX - drag[0];
+        this._treePan.y = drag[3] + e.clientY - drag[1];
+        apply();
+      });
+      const end = () => {
+        drag = null;
+        grid.classList.remove("dragging");
+      };
+      grid.addEventListener("pointerup", end);
+      grid.addEventListener("pointercancel", end);
+      requestAnimationFrame(apply);
+    },
+    /** 우클릭 — 어느 스킬 칸(Q · E · R · F · G · V)에 끼울지 고르는 작은 판 */
+    slotPicker(id, cx, cy) {
+      const p = app.player, sk = SKILLS[id];
+      this.closeSlotPicker();
+      this.hideTip();
+      if (sk.type !== "active") {
+        app.toast(tr("지니는 힘은 칸에 끼우지 않는다"), "bad");
+        return;
+      }
+      if (!(p.skills[id] > 0)) {
+        app.toast(tr("먼저 배워야 칸에 끼울 수 있다"), "bad");
+        return;
+      }
+      const keys = ["Q", "E", "R", "F", "G", "V"], n = skillSlotN(p);
+      const box = document.createElement("div");
+      box.id = "slotpick";
+      box.innerHTML = `<div class="sp-t">${tr("{name} — 끼울 칸", { name: sk.n })}</div><div class="sp-row">` + keys.slice(0, n).map((k, i) => `<button data-i="${i}" class="${p.slots[i] === id ? "on" : ""}"><span class="ic"></span><b>${k}</b></button>`).join("") + `</div>` + (p.slots.includes(id) ? `<button class="sp-off">${tr("칸에서 빼기")}</button>` : "");
+      document.body.appendChild(box);
+      box.querySelectorAll(".sp-row button").forEach((b) => {
+        const i = +b.dataset.i;
+        this.setIcon(b.querySelector(".ic"), p.slots[i] ? Art.skillUrl(p.slots[i]) : "");
+        b.addEventListener("click", () => {
+          for (let j = 0; j < p.slots.length; j++) if (p.slots[j] === id) p.slots[j] = null;
+          p.slots[i] = id;
+          this.closeSlotPicker();
+          this.refreshTree();
+          this.refreshSkillSlots();
+          this.refreshSkillbar();
+        });
+      });
+      const off = box.querySelector(".sp-off");
+      if (off) off.addEventListener("click", () => {
+        for (let j = 0; j < p.slots.length; j++) if (p.slots[j] === id) p.slots[j] = null;
+        this.closeSlotPicker();
+        this.refreshTree();
+        this.refreshSkillSlots();
+        this.refreshSkillbar();
+      });
+      const r = box.getBoundingClientRect();
+      box.style.left = Math.max(8, Math.min(innerWidth - r.width - 8, cx - r.width / 2)) + "px";
+      box.style.top = Math.max(8, Math.min(innerHeight - r.height - 8, cy + 14)) + "px";
+      const out = (e) => {
+        if (!box.contains(e.target)) this.closeSlotPicker();
+      };
+      const esc = (e) => {
+        if (e.code === "Escape") {
+          e.stopPropagation();
+          this.closeSlotPicker();
+        }
+      };
+      setTimeout(() => {
+        addEventListener("pointerdown", out, true);
+        addEventListener("keydown", esc, true);
+      });
+      this._slotPickOff = () => {
+        removeEventListener("pointerdown", out, true);
+        removeEventListener("keydown", esc, true);
+        box.remove();
+      };
+    },
+    closeSlotPicker() {
+      if (this._slotPickOff) {
+        this._slotPickOff();
+        this._slotPickOff = null;
+      }
     },
     /** 팝업 위쪽 두 갈래 — 특성 트리 / 생활 숙련 */
     bindSkillTabs() {
@@ -41659,6 +41819,7 @@
       this.tipTarget = true;
     },
     refreshTree() {
+      if (this._treePanApply) requestAnimationFrame(this._treePanApply);
       const p = app.player;
       const vis = {}, fresh = [];
       for (const id in SKILLS) vis[id] = this.nodeVisible(id);
@@ -41843,8 +42004,8 @@
     buildSkillSlots() {
       const box = $("#skill-slots");
       box.innerHTML = "";
-      const keys = ["Q", "E", "R", "F", "G"];
-      for (let i = 0; i < 5; i++) {
+      const keys = ["Q", "E", "R", "F", "G", "V"];
+      for (let i = 0; i < 6; i++) {
         const d = document.createElement("div");
         d.className = "ss";
         d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span>`;
@@ -42250,6 +42411,7 @@
         el.addEventListener("mouseenter", (e) => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
         el.addEventListener("mouseleave", () => this.hideTip());
       });
+      if (!this.reducedMotion()) this.craftIdle();
     },
     /* ---------------- 마을 회관 ---------------- */
     openTownhall() {
@@ -43743,6 +43905,8 @@
       const st = $("#anvil-stage");
       if (!st || this.anvilBusy) return;
       const item = st.querySelector(".as-item");
+      this.anvilItem = it ? it.id : null;
+      this.anvilSceneStart();
       if (!it) {
         item.style.backgroundImage = "";
         st.querySelector(".as-line").textContent = tr("두들길 장비를 가리켜라");
@@ -43780,7 +43944,7 @@
       if (!it) return;
       const e = it.e || 0, cost = app.enhCost(it), mat = app.enhMat(e);
       const st = $("#anvil-stage");
-      if (!st || !this.motionOn() || e >= app.ENH_MAX || p.gold < cost || !p.hasAll({ [mat.id]: mat.n })) {
+      if (!st || this.reducedMotion() || e >= app.ENH_MAX || p.gold < cost || !p.hasAll({ [mat.id]: mat.n })) {
         const res = app.enhanceSlot(i);
         if (st) this.anvilEnd(res, it);
         return;
@@ -43788,7 +43952,9 @@
       this.anvilShow(it);
       this.anvilBusy = true;
       st.classList.add("busy");
-      const item = st.querySelector(".as-item"), ham = st.querySelector(".as-ham"), beat = 240, HEAT = 460, QUENCH = 420;
+      const item = st.querySelector(".as-item"), ham = st.querySelector(".as-ham"), beat = 360, HEAT = 760, QUENCH = 700;
+      this.anvilAnim = { t0: performance.now() / 1e3, heat: HEAT, beat, quench: QUENCH, id: it.id, res: null };
+      this.anvilSceneStart();
       this.anvilSteps(st, 0);
       item.classList.add("heat");
       app.sfx && app.sfx("fuse", 1, 0.6);
@@ -43812,7 +43978,11 @@
         item.classList.remove("quench");
         this.anvilSteps(st, 3);
         const j = app.player.bag.indexOf(it);
-        if (j >= 0) this.anvilEnd(app.enhanceSlot(j), it);
+        if (j >= 0) {
+          const res = app.enhanceSlot(j);
+          if (this.anvilAnim) this.anvilAnim.res = res || "fail";
+          this.anvilEnd(res, it);
+        }
       }, HEAT + 3 * beat + QUENCH);
     },
     anvilEnd(res, it) {
@@ -43845,9 +44015,9 @@
     stepRow: () => stepRow
   });
   function craftSteps(st) {
-    if (st === "work") return { n: [tr("치수를 잰다"), tr("자른다"), tr("맞춰 붙인다"), tr("다듬는다")], dur: 1.5 };
-    if (st === "forge") return { n: [tr("불을 지핀다"), tr("녹인다"), tr("틀에 붓는다"), tr("식힌다")], dur: 1.8 };
-    return { n: [tr("재료를 고른다"), tr("엮는다"), tr("다듬는다")], dur: 1 };
+    if (st === "work") return { n: [tr("치수를 잰다"), tr("자른다"), tr("맞춰 붙인다"), tr("다듬는다")], dur: 2.4 };
+    if (st === "forge") return { n: [tr("불을 지핀다"), tr("녹인다"), tr("틀에 붓는다"), tr("식힌다")], dur: 2.8 };
+    return { n: [tr("재료를 고른다"), tr("엮는다"), tr("다듬는다")], dur: 1.2 };
   }
   function machSteps(t) {
     const S = {
@@ -43932,7 +44102,7 @@
     craftProcess(i, row) {
       const r = RECIPES[i], p = app.player;
       const ok = (!r.station || app.nearStObj[r.station] && (app.nearStObj[r.station].lv || 1) >= (r.lv || 1)) && p.hasAll(r.need);
-      if (!this.motionOn() || !ok) {
+      if (this.reducedMotion() || !ok) {
         this.craftWithFx(i, row);
         return;
       }
@@ -44002,27 +44172,26 @@
       if (R && R.raf) cancelAnimationFrame(R.raf);
       this.craftRun = null;
       this.craftQ = null;
-      const cv = document.getElementById("craft-stage");
-      if (cv) cv.classList.remove("on");
+      if (this.open === "craft") this.craftIdle();
+      else {
+        const cv = document.getElementById("craft-stage");
+        if (cv) cv.classList.remove("on");
+      }
     },
-    /** 무대 — 위에 단계 줄, 아래 작업 자리. k 는 0~1(공정 전체) */
+    /** 무대 — 위에 단계 줄, 아래 시설 장면(ui/craft-scene). k 는 0~1(공정 전체) */
     craftStageDraw(k = 0) {
       const R = this.craftRun, cv = document.getElementById("craft-stage");
       if (!R || !cv) return;
-      const W = cv.clientWidth || 400, H = 112, dpr = Math.min(2, devicePixelRatio || 1);
-      if (cv.width !== Math.round(W * dpr)) {
+      const W = cv.clientWidth || 400, H = 176, dpr = Math.min(2, devicePixelRatio || 1);
+      if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
         cv.width = Math.round(W * dpr);
         cv.height = Math.round(H * dpr);
       }
       const c = cv.getContext("2d");
       c.setTransform(dpr, 0, 0, dpr, 0, 0);
       c.clearRect(0, 0, W, H);
-      c.imageSmoothingEnabled = false;
       const n = R.S.n.length, step = Math.min(n - 1, Math.floor(k * n)), sk = k * n - step;
-      stepRow(c, R.S.n, step, sk, 8, 6, W - 16);
-      const y0 = 30, cx = W / 2, cy = y0 + 44, t = performance.now() / 1e3;
-      const mats = Object.keys(R.r.need).slice(0, 4);
-      this["stage_" + R.st](c, W, cx, cy, y0, step, sk, k, t, mats, R.r.out);
+      this.craftScene(c, W, H, { st: R.st, step, sk, k, t: performance.now() / 1e3, mats: Object.keys(R.r.need).slice(0, 4), out: R.r.out, idle: false });
       const left = (this.craftQ || []).length;
       if (left) {
         const txt = tr("줄 선 것 {n}", { n: left });
@@ -44030,186 +44199,9 @@
         c.textAlign = "right";
         const tw = c.measureText(txt).width;
         c.fillStyle = "rgba(12,11,8,.85)";
-        c.fillRect(W - tw - 18, 32, tw + 12, 16);
+        c.fillRect(W - tw - 18, 30, tw + 12, 16);
         c.fillStyle = "#d8a94b";
-        c.fillText(txt, W - 12, 44);
-      }
-    },
-    /* 작업대 — 판자 위에서 재고(자) · 자르고(톱 · 톱밥) · 망치로 붙이고 · 빛이 쓸고 간다 */
-    stage_work(c, W, cx, cy, y0, step, sk, k, t, mats, out) {
-      const top = cy + 14;
-      c.fillStyle = "#5a3e22";
-      c.fillRect(16, top, W - 32, 10);
-      c.fillStyle = "#7a5630";
-      c.fillRect(16, top, W - 32, 3);
-      for (let x = 30; x < W - 30; x += 46) {
-        c.fillStyle = "#4a321a";
-        c.fillRect(x, top + 3, 1, 7);
-      }
-      c.fillStyle = "#3a2814";
-      c.fillRect(28, top + 10, 8, 18);
-      c.fillRect(W - 36, top + 10, 8, 18);
-      mats.forEach((id, i) => {
-        const sx = 40 + i * 30, tx = cx - 24 + i * 12, m = clamp(k * 2.2, 0, 1);
-        const x = sx + (tx - sx) * m, a = step >= 3 ? 1 - sk : 1;
-        c.globalAlpha = a;
-        drawIc(c, id, x, top - 24, 22);
-        c.globalAlpha = 1;
-      });
-      if (step === 0) {
-        const L = W * 0.36 * sk;
-        c.fillStyle = "#e0c060";
-        c.fillRect(cx - W * 0.18, top - 30, L, 4);
-        for (let x = 0; x < L; x += 8) c.fillRect(cx - W * 0.18 + x, top - 30, 1, x % 32 ? 3 : 6);
-      } else if (step === 1) {
-        const sx = cx + Math.sin(t * 22) * 14;
-        c.fillStyle = "#c8ccd4";
-        c.beginPath();
-        c.moveTo(sx - 26, top - 4);
-        c.lineTo(sx + 14, top - 4);
-        c.lineTo(sx + 14, top - 12);
-        c.lineTo(sx - 22, top - 10);
-        c.fill();
-        c.fillStyle = "#6a4a28";
-        c.fillRect(sx + 12, top - 16, 12, 9);
-        c.fillStyle = "#e8c890";
-        for (let i = 0; i < 6; i++) {
-          const q = (t * 3 + i / 6) % 1;
-          c.fillRect(cx - 4 + (i - 3) * 4 + q * (i - 3) * 6, top - 2 + q * 18, 2, 2);
-        }
-      } else if (step === 2) {
-        const ph = sk * 3 % 1, a = ph < 0.6 ? -0.9 + ph / 0.6 * 1.3 : 0.4 - (ph - 0.6) / 0.4 * 1.3;
-        c.save();
-        c.translate(cx + 30, top - 30);
-        c.rotate(a);
-        c.fillStyle = "#6a4a28";
-        c.fillRect(-2, -2, 26, 4);
-        c.fillStyle = "#9aa0aa";
-        c.fillRect(-6, -7, 8, 14);
-        c.restore();
-        if (ph > 0.55 && ph < 0.7) glow2(c, cx + 4, top - 8, 18, "#ffd27a", 0.6);
-      }
-      if (step >= 3) {
-        drawIc(c, out, cx - 18, top - 38, 36);
-        const gx = cx - 30 + sk * 60;
-        c.save();
-        c.globalCompositeOperation = "lighter";
-        c.globalAlpha = 0.5;
-        const g = c.createLinearGradient(gx - 10, 0, gx + 10, 0);
-        g.addColorStop(0, "rgba(255,255,255,0)");
-        g.addColorStop(0.5, "#fff6d0");
-        g.addColorStop(1, "rgba(255,255,255,0)");
-        c.fillStyle = g;
-        c.fillRect(cx - 20, top - 40, 40, 40);
-        c.restore();
-      }
-    },
-    /* 용광로 — 불 · 도가니에서 녹고 · 기울여 붓고 · 김을 뿜으며 식는다 */
-    stage_forge(c, W, cx, cy, y0, step, sk, k, t, mats, out) {
-      const base = cy + 20;
-      c.fillStyle = "#3a3438";
-      c.fillRect(cx - 70, base, 70, 16);
-      for (let x = cx - 70; x < cx; x += 10) {
-        c.fillStyle = "#4a4248";
-        c.fillRect(x, base, 9, 7);
-      }
-      const heat = clamp(k * 1.6, 0, 1), f = 0.6 + 0.4 * Math.sin(t * 17) * Math.sin(t * 7);
-      for (let i = 0; i < 6; i++) {
-        const h = (6 + heat * 12) * (0.6 + 0.4 * Math.sin(t * 13 + i * 1.7));
-        c.fillStyle = i % 2 ? "#ff9a3a" : "#ffd27a";
-        c.fillRect(cx - 62 + i * 10, base - h, 6, h);
-      }
-      glow2(c, cx - 35, base - 6, 34, "#ff8a2a", 0.25 + heat * 0.35 * f);
-      const tilt = step === 2 ? sk * 0.9 : step > 2 ? 0.9 : 0;
-      c.save();
-      c.translate(cx - 35, base - 18);
-      c.rotate(tilt);
-      c.fillStyle = "#2a2a30";
-      c.beginPath();
-      c.moveTo(-14, -12);
-      c.lineTo(14, -12);
-      c.lineTo(10, 10);
-      c.lineTo(-10, 10);
-      c.fill();
-      const lv = step === 0 ? 0 : step === 1 ? sk : step === 2 ? 1 - sk : 0;
-      if (lv > 0) {
-        c.fillStyle = "#ff9a2a";
-        c.fillRect(-11, -10 + (1 - lv) * 16, 22, lv * 16);
-        c.fillStyle = "#ffe08a";
-        c.fillRect(-11, -10 + (1 - lv) * 16, 22, 2);
-      }
-      c.restore();
-      if (step <= 1) mats.forEach((id, i) => {
-        const m = step === 0 ? 0 : sk, x = 30 + i * 28 + (cx - 46 - (30 + i * 28)) * m, y = base - 46 + m * 20;
-        c.globalAlpha = 1 - m * 0.9;
-        drawIc(c, id, x, y, 22);
-        if (step === 1) glow2(c, x + 11, y + 11, 14, "#ff6a2a", 0.5 * m);
-        c.globalAlpha = 1;
-      });
-      const mx = cx + 10;
-      c.fillStyle = "#4a4a50";
-      c.fillRect(mx, base - 4, 56, 16);
-      c.fillStyle = "#2a2a30";
-      c.fillRect(mx + 6, base - 2, 44, 8);
-      if (step === 2) {
-        c.fillStyle = "#ffb040";
-        c.fillRect(cx - 18, base - 26, 3, 24 + 4);
-        glow2(c, cx - 16, base - 6, 12, "#ff9a2a", 0.5);
-        c.fillStyle = "#ff8a2a";
-        c.fillRect(mx + 6, base + 6 - sk * 8, 44 * sk, sk * 8);
-      }
-      if (step === 3) {
-        const cool = sk;
-        c.fillStyle = `rgb(${Math.round(255 - cool * 150)},${Math.round(138 - cool * 40)},${Math.round(42 + cool * 60)})`;
-        c.fillRect(mx + 6, base - 2, 44, 8);
-        c.globalAlpha = 0.85 * cool;
-        drawIc(c, out, mx + 12, base - 34, 30);
-        c.globalAlpha = 1;
-        for (let i = 0; i < 4; i++) {
-          const q = (t * 0.9 + i / 4) % 1;
-          c.globalAlpha = (1 - q) * 0.75 * (1 - cool * 0.4);
-          c.fillStyle = "#d8dce4";
-          c.beginPath();
-          c.arc(mx + 10 + i * 12 + Math.sin(q * 6 + i) * 3, base - 6 - q * 30, 3 + q * 6, 0, TAU);
-          c.fill();
-        }
-        c.globalAlpha = 1;
-      }
-    },
-    /* 맨손 — 재료가 튀어 모이고 · 끈으로 감기고 · 반짝 */
-    stage_hand(c, W, cx, cy, y0, step, sk, k, t, mats, out) {
-      const top = cy + 16;
-      c.fillStyle = "#4a3a2a";
-      c.beginPath();
-      c.ellipse(cx, top + 6, W * 0.32, 8, 0, 0, TAU);
-      c.fill();
-      c.fillStyle = "#5e4a34";
-      c.beginPath();
-      c.ellipse(cx, top + 4, W * 0.3, 6, 0, 0, TAU);
-      c.fill();
-      mats.forEach((id, i) => {
-        const sx = cx - 70 + i * 40, m = step === 0 ? sk : 1, hop = step === 0 ? Math.abs(Math.sin(sk * Math.PI * 2 + i)) * 8 : 0;
-        const x = sx + (cx - 12 - sx) * m * 0.85, a = step === 2 ? 1 - sk : 1;
-        c.globalAlpha = a;
-        drawIc(c, id, x, top - 22 - hop, 22);
-        c.globalAlpha = 1;
-      });
-      if (step === 1) {
-        c.strokeStyle = "#d8c090";
-        c.lineWidth = 2;
-        for (let i = 0; i < 3; i++) {
-          c.beginPath();
-          c.ellipse(cx - 2, top - 12, 18, 6, 0.3 * (i - 1), 0, TAU * sk);
-          c.stroke();
-        }
-      }
-      if (step === 2) {
-        drawIc(c, out, cx - 16, top - 34, 32);
-        c.fillStyle = "#fff6d0";
-        for (let i = 0; i < 5; i++) {
-          const a = i / 5 * TAU + t * 3, d = 20 + sk * 10;
-          c.fillRect(cx + Math.cos(a) * d, top - 18 + Math.sin(a) * d * 0.6, 2, 2);
-        }
+        c.fillText(txt, W - 12, 42);
       }
     },
     /* ================= 기계 가동 과정 ================= */
@@ -45596,6 +45588,773 @@
     }
     return false;
   }
+
+  // src/game/ui/craft-scene.ts
+  var craft_scene_exports = {};
+  __export(craft_scene_exports, {
+    CraftSceneUIPart: () => CraftSceneUIPart
+  });
+  var TINT = {};
+  function tinted(id, col) {
+    const key = id + col;
+    if (TINT[key]) return TINT[key];
+    const im = new Image();
+    im.src = Art.itemUrl(id);
+    if (!im.complete || !im.naturalWidth) return null;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 32;
+    const g = cv.getContext("2d");
+    g.drawImage(im, 0, 0, 32, 32);
+    g.globalCompositeOperation = "source-atop";
+    g.fillStyle = col;
+    g.fillRect(0, 0, 32, 32);
+    return TINT[key] = cv;
+  }
+  function hotIcon(c, id, x, y, s, heat) {
+    drawIc(c, id, x, y, s);
+    if (heat <= 0.01) return;
+    const tc = tinted(id, hotCol(1 - heat, "#ff6a2a"));
+    if (tc) {
+      c.save();
+      c.globalAlpha = Math.min(0.85, heat);
+      c.drawImage(tc, x, y, s, s);
+      c.globalCompositeOperation = "lighter";
+      c.globalAlpha = heat * 0.4;
+      c.drawImage(tc, x, y, s, s);
+      c.restore();
+    }
+    glow2(c, x + s / 2, y + s / 2, s * 0.9, "#ff8a3a", heat * 0.45);
+  }
+  function bricks(c, x, y, w, h, a, b, bw = 22, bh = 10) {
+    c.fillStyle = b;
+    c.fillRect(x, y, w, h);
+    for (let r = 0, yy = y; yy < y + h; r++, yy += bh) for (let xx = x - (r % 2 ? bw / 2 : 0); xx < x + w; xx += bw) {
+      const x0 = Math.max(x, xx + 1), x1 = Math.min(x + w, xx + bw - 1);
+      if (x1 <= x0) continue;
+      c.fillStyle = hash(r * 31 + Math.floor(xx)) > 0.5 ? a : b === a ? a : shadeMix(a, 0.85);
+      c.fillRect(x0, yy + 1, x1 - x0, bh - 2);
+    }
+  }
+  function shadeMix(hex, m) {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
+    return `rgb(${Math.round(r * m)},${Math.round(g * m)},${Math.round(b * m)})`;
+  }
+  function hammer(c, px, py, a, L = 34, head = "#9aa0aa") {
+    c.save();
+    c.translate(px, py);
+    c.rotate(a);
+    c.fillStyle = "#5a3a1c";
+    c.fillRect(0, -2, L, 4);
+    c.fillStyle = "#7a5230";
+    c.fillRect(0, -2, L, 1.5);
+    c.fillStyle = shadeMix(head, 0.7);
+    c.fillRect(L - 5, -9, 11, 18);
+    c.fillStyle = head;
+    c.fillRect(L - 5, -9, 11, 5);
+    c.fillStyle = "#e8ecf2";
+    c.fillRect(L - 4, -8, 2, 15);
+    c.restore();
+  }
+  var CraftSceneUIPart = {
+    /** 공정 무대 하나 그리기 — 위 단계 줄(돌 때만) · 아래 시설 장면 */
+    craftScene(c, W, H, s) {
+      if (s.st === "work") this.sceneWork(c, W, H, s);
+      else if (s.st === "forge") this.sceneForge(c, W, H, s);
+      else this.sceneHand(c, W, H, s);
+      if (!s.idle) stepRow(c, craftSteps(s.st).n, s.step, s.sk, 8, 6, W - 16);
+    },
+    /** 창이 열려 있는 동안 쉬는 무대 — 고른 탭의 시설이 숨 쉰다(공정이 돌면 공정이 그린다) */
+    craftIdle() {
+      if (this._ciRaf) return;
+      const loop = () => {
+        this._ciRaf = 0;
+        if (this.open !== "craft") return;
+        if (!this.craftRun) {
+          const cv = this.craftStageEl();
+          cv.classList.add("on");
+          const W = cv.clientWidth || 400, H = 176, dpr = Math.min(2, devicePixelRatio || 1);
+          if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+            cv.width = Math.round(W * dpr);
+            cv.height = Math.round(H * dpr);
+          }
+          const c = cv.getContext("2d");
+          c.setTransform(dpr, 0, 0, dpr, 0, 0);
+          c.clearRect(0, 0, W, H);
+          this.craftScene(c, W, H, { st: this.craftTab || "hand", step: 0, sk: 0, k: 0, t: performance.now() / 1e3, mats: [], out: "", idle: true });
+        }
+        this._ciRaf = requestAnimationFrame(loop);
+      };
+      this._ciRaf = requestAnimationFrame(loop);
+    },
+    /* ================= 작업대 ================= */
+    sceneWork(c, W, H, s) {
+      const { step, sk, k, t, idle } = s, floor = H - 14, top = floor - 54, bx0 = 26, bx1 = W - 26;
+      const wg = c.createLinearGradient(0, 0, 0, H);
+      wg.addColorStop(0, "#2a1e14");
+      wg.addColorStop(1, "#16100a");
+      c.fillStyle = wg;
+      c.fillRect(0, 0, W, H);
+      for (let x = 0; x < W; x += 34) {
+        c.fillStyle = hash(x) > 0.5 ? "#2e2116" : "#261b11";
+        c.fillRect(x, 0, 33, top);
+        c.fillStyle = "#1a120b";
+        c.fillRect(x + 33, 0, 1, top);
+      }
+      c.fillStyle = "#3a2a1a";
+      c.fillRect(0, 30, W, 4);
+      const rack = (x, f) => {
+        c.fillStyle = "#7a6a5a";
+        c.fillRect(x - 1, 32, 2, 4);
+        f(x);
+      };
+      rack(W * 0.22, (x) => {
+        c.fillStyle = "#b8bcc4";
+        c.beginPath();
+        c.moveTo(x - 4, 36);
+        c.lineTo(x + 26, 36);
+        c.lineTo(x + 26, 44);
+        c.lineTo(x - 2, 46);
+        c.fill();
+        c.fillStyle = "#6a4a28";
+        c.fillRect(x - 12, 34, 10, 10);
+      });
+      rack(W * 0.4, (x) => {
+        c.fillStyle = "#c8b070";
+        c.fillRect(x, 36, 3, 30);
+        c.fillRect(x, 36, 18, 3);
+      });
+      rack(W * 0.58, (x) => {
+        c.fillStyle = "#5a3a1c";
+        c.fillRect(x - 1, 36, 3, 26);
+        c.fillStyle = "#8a8e98";
+        c.fillRect(x - 6, 58, 13, 7);
+      });
+      const lamp = 0.75 + 0.25 * Math.sin(t * 6.3) * Math.sin(t * 2.1);
+      c.fillStyle = "#4a3a2a";
+      c.fillRect(W - 70, 10, 2, 22);
+      c.fillStyle = "#c8a050";
+      c.fillRect(W - 76, 30, 14, 10);
+      glow2(c, W - 69, 36, 70, "#ffb050", 0.35 * lamp);
+      glow2(c, W - 69, 36, 14, "#fff0c0", 0.6 * lamp);
+      c.fillStyle = "#2a1c10";
+      c.fillRect(bx0 + 10, top + 14, 10, floor - top - 14);
+      c.fillRect(bx1 - 20, top + 14, 10, floor - top - 14);
+      c.fillStyle = "#35241a";
+      c.fillRect(bx0 + 10, floor - 18, bx1 - bx0 - 20, 5);
+      c.fillStyle = "#6a4626";
+      c.fillRect(bx0, top, bx1 - bx0, 14);
+      c.fillStyle = "#8a5e34";
+      c.fillRect(bx0, top, bx1 - bx0, 3);
+      c.strokeStyle = "#5a3a1e";
+      c.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        c.beginPath();
+        c.moveTo(bx0, top + 5 + i * 2.4);
+        for (let x = bx0; x <= bx1; x += 16) c.lineTo(x, top + 5 + i * 2.4 + Math.sin(x * 0.05 + i) * 1.2);
+        c.stroke();
+      }
+      c.fillStyle = "#4a4e56";
+      c.fillRect(bx1 - 46, top - 14, 20, 14);
+      c.fillStyle = "#6a6e78";
+      c.fillRect(bx1 - 46, top - 14, 20, 3);
+      c.fillStyle = "#8a8e98";
+      c.fillRect(bx1 - 52, top - 9, 6, 3);
+      const cx = W / 2, py = top - 12;
+      s.mats.forEach((id, i) => {
+        const used = !idle && k > (i + 1) / (s.mats.length + 1) * 0.5;
+        if (!used) drawIc(c, id, bx0 + 8 + i * 26, top - 24 - i % 2 * 3, 22);
+      });
+      if (idle) {
+        for (let i = 0; i < 14; i++) {
+          const q = (t * 0.05 + hash(i)) % 1;
+          c.globalAlpha = 0.25 + 0.25 * Math.sin(t * 2 + i);
+          c.fillStyle = "#ffe0a0";
+          c.fillRect(W - 140 + hash(i + 9) * 120 + Math.sin(t + i) * 6, 20 + q * (top - 30), 1.5, 1.5);
+        }
+        c.globalAlpha = 1;
+        c.fillStyle = "#9a7040";
+        c.fillRect(cx - 70, py, 140, 12);
+        c.fillStyle = "#b48650";
+        c.fillRect(cx - 70, py, 140, 3);
+        return;
+      }
+      const cutX = cx + 22, L0 = cx - 80, L1 = cx + 80, kerf = step === 1 ? ease(sk) : step > 1 ? 1 : 0;
+      const off = step === 1 && sk > 0.92 ? (sk - 0.92) / 0.08 : 0;
+      const plank = (x0, x1, dy, rot = 0) => {
+        c.save();
+        c.translate(x0, py + dy);
+        c.rotate(rot);
+        c.fillStyle = "#9a7040";
+        c.fillRect(0, 0, x1 - x0, 12);
+        c.fillStyle = "#b48650";
+        c.fillRect(0, 0, x1 - x0, 3);
+        c.strokeStyle = "#7a5430";
+        c.beginPath();
+        for (let i = 0; i < 2; i++) {
+          c.moveTo(0, 5 + i * 3);
+          c.bezierCurveTo((x1 - x0) * 0.3, 3 + i * 3, (x1 - x0) * 0.6, 8 + i * 3, x1 - x0, 5 + i * 3);
+        }
+        c.stroke();
+        c.restore();
+      };
+      if (step <= 1) {
+        plank(L0, cutX, 0);
+        plank(cutX, L1, off * 10, off * 0.25);
+      } else {
+        const j = step === 2 ? ease(Math.min(1, sk * 2.5)) : 1;
+        plank(L0, cutX, 0);
+        plank(cutX - 6, cutX + 6 + 50 * (1 - j), -40 * j + 0, 0);
+        if (j >= 1) {
+          c.fillStyle = "#9a7040";
+          c.fillRect(cutX - 6, py - 46, 12, 46);
+          c.fillStyle = "#b48650";
+          c.fillRect(cutX - 6, py - 46, 3, 46);
+        }
+      }
+      if (step >= 1 && kerf > 0 && step <= 1) {
+        c.fillStyle = "#2a1a0c";
+        c.fillRect(cutX - 1, py, 2, 12 * kerf);
+      }
+      if (step === 0) {
+        const sq = ease(Math.min(1, sk * 3));
+        c.fillStyle = "#c8b070";
+        c.fillRect(cutX + 2, py - 30 + (1 - sq) * -20, 4, 42);
+        c.fillRect(cutX + 2, py - 30 + (1 - sq) * -20, 30, 4);
+        const pl = seg(sk, 0.3, 0.95);
+        c.fillStyle = "#2a1a0c";
+        c.fillRect(cutX, py, 1, 12 * pl);
+        const px = cutX - 3, pyy = py + 12 * pl;
+        c.save();
+        c.translate(px, pyy);
+        c.rotate(-0.6);
+        c.fillStyle = "#e0b030";
+        c.fillRect(-3, -26, 6, 24);
+        c.fillStyle = "#f0d8a0";
+        c.beginPath();
+        c.moveTo(-3, -2);
+        c.lineTo(3, -2);
+        c.lineTo(0, 3);
+        c.fill();
+        c.restore();
+        for (let i = 0; i < 6; i++) {
+          c.fillStyle = "#4a3420";
+          c.fillRect(L0 + 10 + i * 20, py + 1, 1, i % 2 ? 3 : 5);
+        }
+      }
+      if (step === 1 && sk < 0.95) {
+        const sw = Math.sin(t * 20) * 22, dep = 12 * kerf;
+        c.save();
+        c.translate(cutX + sw, py + dep - 2);
+        c.rotate(-0.12);
+        c.fillStyle = "#c8ccd4";
+        c.beginPath();
+        c.moveTo(-46, 0);
+        c.lineTo(20, 0);
+        c.lineTo(20, -14);
+        c.lineTo(-40, -8);
+        c.closePath();
+        c.fill();
+        c.fillStyle = "#9aa0aa";
+        for (let x = -44; x < 20; x += 4) {
+          c.beginPath();
+          c.moveTo(x, 0);
+          c.lineTo(x + 2, 3);
+          c.lineTo(x + 4, 0);
+          c.fill();
+        }
+        c.fillStyle = "#e8ecf2";
+        c.fillRect(-38, -7, 56, 1);
+        c.fillStyle = "#6a4a28";
+        c.beginPath();
+        c.roundRect(18, -18, 16, 16, 4);
+        c.fill();
+        c.fillStyle = "#2a1c10";
+        c.fillRect(23, -13, 6, 6);
+        c.restore();
+        c.fillStyle = "#e8c890";
+        for (let i = 0; i < 16; i++) {
+          const q = (t * 2.4 + i / 16) % 1, a = hash(i * 7);
+          c.globalAlpha = 1 - q * 0.6;
+          c.fillRect(cutX + (a - 0.5) * 14 + q * (a - 0.5) * 20, py + 12 + q * (floor - py - 16), 2, 2);
+        }
+        c.globalAlpha = 1;
+      }
+      if (step >= 1) {
+        const pile2 = Math.min(1, step === 1 ? sk : 1);
+        c.fillStyle = "#d8b880";
+        c.beginPath();
+        c.ellipse(cutX, floor - 1, 16 * pile2 + 2, 4 * pile2 + 1, 0, Math.PI, TAU);
+        c.fill();
+      }
+      if (step === 2) {
+        const ph = sk * 3 % 1, hit = Math.floor(sk * 3), a = ph < 0.65 ? -1.6 + ease(ph / 0.65) * 1.55 : -0.05 - ease((ph - 0.65) / 0.35) * 1;
+        const nails = Math.min(3, hit + (ph > 0.62 ? 1 : 0));
+        const nx = cutX, ny = py - 34;
+        c.fillStyle = "#8a8e98";
+        for (let i = 0; i < 3; i++) {
+          const sunk = i < nails ? 1 : i === nails ? 0 : 0;
+          c.fillRect(nx - 9, ny + 4 + i * 12, 6 * (1 - sunk) + 2, 2);
+          c.fillStyle = "#6a6e78";
+          c.fillRect(nx - 9 + (1 - sunk) * 6, ny + 3 + i * 12, 2, 4);
+          c.fillStyle = "#8a8e98";
+        }
+        hammer(c, nx - 74, ny + 4 + Math.min(2, hit) * 12 + 6, a, 62);
+        if (ph > 0.6 && ph < 0.78) {
+          glow2(c, nx - 8, ny + 5 + Math.min(2, hit) * 12, 16, "#fff0c0", 0.8);
+          sparks(c, nx - 8, ny + 5 + Math.min(2, hit) * 12, floor, 6, t, 4, -0.4, 0.7);
+        }
+      }
+      if (step === 3) {
+        const pass = sk * 2.2 % 1, plx = L0 + 10 + pass * (cutX - L0 - 30);
+        if (sk < 0.6) {
+          c.fillStyle = "#7a5230";
+          c.beginPath();
+          c.roundRect(plx, py - 14, 30, 14, 3);
+          c.fill();
+          c.fillStyle = "#9a7040";
+          c.fillRect(plx, py - 14, 30, 3);
+          c.fillStyle = "#4a3420";
+          c.beginPath();
+          c.arc(plx + 22, py - 18, 5, 0, TAU);
+          c.fill();
+          c.strokeStyle = "#f0d8a0";
+          c.lineWidth = 1.5;
+          for (let i = 0; i < 4; i++) {
+            const q = (t * 1.6 + i / 4) % 1;
+            c.globalAlpha = 1 - q;
+            c.beginPath();
+            c.arc(plx - 2 - q * 18, py - 6 - q * 22, 3 + q * 3, 0, TAU * (0.6 + q * 0.3));
+            c.stroke();
+          }
+          c.globalAlpha = 1;
+        }
+        const up = seg(sk, 0.45, 1), oy = py - 30 - ease(up) * 34;
+        if (up > 0) {
+          c.globalAlpha = up;
+          glow2(c, cx, oy + 18, 46, "#ffe8a0", 0.45 * up);
+          c.save();
+          c.translate(cx, oy + 18);
+          c.rotate(t * 0.6);
+          c.fillStyle = "rgba(255,240,190,.18)";
+          for (let i = 0; i < 8; i++) {
+            c.rotate(TAU / 8);
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(48, -5);
+            c.lineTo(48, 5);
+            c.fill();
+          }
+          c.restore();
+          drawIc(c, s.out, cx - 18, oy, 36);
+          c.globalAlpha = 1;
+        }
+      }
+    },
+    /* ================= 용광로 ================= */
+    sceneForge(c, W, H, s) {
+      const { step, sk, k, t, idle } = s, floor = H - 12;
+      c.fillStyle = "#141012";
+      c.fillRect(0, 0, W, H);
+      bricks(c, 0, 0, W, floor, "#2c2426", "#221b1d", 26, 11);
+      c.fillStyle = "#1a1416";
+      c.fillRect(0, floor, W, H - floor);
+      c.fillStyle = "#2a2224";
+      c.fillRect(0, floor, W, 2);
+      const fx = 40, fw = 132, fy = floor - 74;
+      const blow = idle ? 0.35 + 0.15 * Math.sin(t * 1.4) : step === 0 ? 0.5 + 0.5 * Math.abs(Math.sin(sk * Math.PI * 3)) : 0.7;
+      c.fillStyle = "#3a3034";
+      c.beginPath();
+      c.moveTo(fx, floor);
+      c.lineTo(fx, fy + 16);
+      c.quadraticCurveTo(fx + fw / 2, fy - 22, fx + fw, fy + 16);
+      c.lineTo(fx + fw, floor);
+      c.fill();
+      bricks(c, fx + 4, fy + 14, fw - 8, floor - fy - 14, "#4a3e42", "#3a3034", 18, 9);
+      c.fillStyle = "#2a2224";
+      c.fillRect(fx + fw / 2 - 12, 0, 24, fy - 6);
+      c.fillStyle = "#3a3034";
+      c.fillRect(fx + fw / 2 - 16, fy - 10, 32, 8);
+      const mx = fx + 26, my = fy + 26, mw = fw - 52, mh = 34;
+      c.fillStyle = "#120a08";
+      c.beginPath();
+      c.roundRect(mx, my, mw, mh, [12, 12, 0, 0]);
+      c.fill();
+      const heat = idle ? 0.55 : clamp(0.55 + k * 1.2, 0, 1);
+      c.save();
+      c.beginPath();
+      c.roundRect(mx, my, mw, mh, [12, 12, 0, 0]);
+      c.clip();
+      c.fillStyle = `rgba(255,${Math.round(90 + 90 * heat * blow)},30,${0.35 + 0.3 * heat})`;
+      c.fillRect(mx, my + mh - 8, mw, 8);
+      for (let i = 0; i < 12; i++) {
+        c.fillStyle = hash(i * 3) > 0.5 ? "#ff7a2a" : "#c84a18";
+        c.beginPath();
+        c.arc(mx + 5 + i * (mw - 10) / 11, my + mh - 4 + Math.sin(i) * 1.5, 3.5, 0, TAU);
+        c.fill();
+      }
+      flames(c, mx + 4, my + mh - 6, mw - 8, 0.6 + heat * blow, t);
+      c.restore();
+      glow2(c, mx + mw / 2, my + mh - 6, 70, "#ff7a2a", 0.22 + 0.3 * heat * blow);
+      for (let i = 0; i < 4; i++) {
+        c.strokeStyle = `rgba(255,200,150,${0.05 + 0.04 * heat})`;
+        c.lineWidth = 2;
+        c.beginPath();
+        for (let y = my - 2; y > fy - 30; y -= 3) c.lineTo(mx + 10 + i * (mw - 20) / 3 + Math.sin(y * 0.3 + t * 6 + i) * 2.5, y);
+        c.stroke();
+      }
+      const bw = 14 + 10 * (idle ? 0.5 + 0.5 * Math.sin(t * 1.4) : step === 0 ? Math.abs(Math.sin(sk * Math.PI * 3)) : 0.3);
+      c.fillStyle = "#6a4626";
+      c.beginPath();
+      c.moveTo(8, floor - 30);
+      c.lineTo(8 + 34, floor - 30 - bw / 2);
+      c.lineTo(8 + 34, floor - 30 + bw / 2);
+      c.closePath();
+      c.fill();
+      c.fillStyle = "#4a2e18";
+      c.beginPath();
+      c.moveTo(8, floor - 30);
+      c.lineTo(8 + 34, floor - 30 + bw / 2);
+      c.lineTo(8 + 34, floor - 30 + bw / 2 + 4);
+      c.closePath();
+      c.fill();
+      c.fillStyle = "#5a5a62";
+      c.fillRect(fx - 4, floor - 32, 8, 4);
+      const qx = W - 74, qy = floor - 40;
+      c.fillStyle = "#4a3420";
+      c.fillRect(qx, qy, 48, 40);
+      c.fillStyle = "#5e4428";
+      for (let x = qx; x < qx + 48; x += 8) c.fillRect(x, qy, 7, 40);
+      c.fillStyle = "#3a3a40";
+      c.fillRect(qx - 2, qy + 6, 52, 3);
+      c.fillRect(qx - 2, qy + 28, 52, 3);
+      c.fillStyle = "#2a4a5a";
+      c.fillRect(qx + 3, qy + 3, 42, 6);
+      c.fillStyle = "#5a8aa0";
+      c.fillRect(qx + 3, qy + 3, 42, 1.5);
+      const tx = fx + fw + 26, ty = floor - 22;
+      c.fillStyle = "#2a2a30";
+      c.fillRect(tx, ty, 96, 22);
+      c.fillStyle = "#3a3a42";
+      c.fillRect(tx, ty, 96, 3);
+      c.fillStyle = "#4a4a52";
+      c.fillRect(tx + 8, ty - 10, 80, 10);
+      c.fillStyle = "#18181c";
+      c.fillRect(tx + 14, ty - 8, 68, 6);
+      if (idle) {
+        puffs(c, fx + fw / 2, 0 + 18, 4, t, 0.3, 16, "90,80,80", 0.35);
+        sparks(c, mx + mw / 2, my + mh - 8, floor, 4, t, 0.8, 0, 0.6);
+        return;
+      }
+      const molt = step === 0 ? 0 : step === 1 ? ease(sk) : 1;
+      let cxr = mx + mw / 2, cyr = my + mh - 14, tilt = 0;
+      if (step === 2) {
+        const lift2 = ease(seg(sk, 0, 0.3)), go = ease(seg(sk, 0.25, 0.5));
+        cxr = lerp(cxr, tx + 30, go);
+        cyr = lerp(cyr, ty - 40, lift2);
+        tilt = ease(seg(sk, 0.45, 0.65)) * 1.15;
+      } else if (step === 3) {
+        cxr = tx + 30;
+        cyr = ty - 40;
+        tilt = 1.15 * (1 - ease(seg(sk, 0, 0.25)));
+      }
+      const level = step === 2 ? 1 - seg(sk, 0.55, 1) : step === 3 ? 0 : 1;
+      if (step >= 2) {
+        c.strokeStyle = "#3a3a42";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(cxr - 30, cyr - 34);
+        c.lineTo(cxr - 12, cyr - 6);
+        c.moveTo(cxr - 22, cyr - 40);
+        c.lineTo(cxr - 6, cyr - 8);
+        c.stroke();
+      }
+      c.save();
+      c.translate(cxr, cyr);
+      c.rotate(tilt);
+      c.fillStyle = "#2e2e34";
+      c.beginPath();
+      c.moveTo(-15, -12);
+      c.lineTo(15, -12);
+      c.lineTo(11, 12);
+      c.lineTo(-11, 12);
+      c.closePath();
+      c.fill();
+      c.fillStyle = "#44444c";
+      c.fillRect(-16, -13, 32, 3);
+      if (molt > 0 && level > 0) {
+        const top = -10 + (1 - level * molt) * 20, col = hotCol(0.05 + (1 - molt) * 0.3, "#ff5a1a");
+        c.fillStyle = col;
+        c.fillRect(-12, top, 24, 21 - (top + 10));
+        c.fillStyle = "#fff0b0";
+        c.fillRect(-12, top, 24, 2);
+        for (let i = 0; i < 3; i++) {
+          const q = (t * 1.8 + i / 3) % 1;
+          c.fillStyle = "rgba(255,240,180,.8)";
+          c.beginPath();
+          c.arc(-8 + i * 8, top + 2, 1.5 + q * 1.5, Math.PI, TAU);
+          c.fill();
+        }
+      }
+      c.restore();
+      if (molt > 0 && step <= 1) glow2(c, cxr, cyr - 6, 26, "#ffb040", 0.5 * molt);
+      if (step <= 1) s.mats.forEach((id, i) => {
+        const st0 = i * 0.18, q = step === 0 ? ease(seg(sk, st0, st0 + 0.6)) : 1;
+        if (step === 1 && sk > 0.4 + i * 0.12) return;
+        const x = lerp(mx - 70 + i * 22, cxr - 10, q), y = lerp(fy - 40, cyr - 26, q) - Math.sin(q * Math.PI) * 18;
+        hotIcon(c, id, x, y, 20, step === 1 ? 0.5 + sk : q * 0.4);
+      });
+      const fill = step === 2 ? seg(sk, 0.55, 1) : step === 3 ? 1 : 0;
+      if (step === 2 && sk > 0.55) {
+        const lx = cxr + Math.cos(tilt) * 15, ly = cyr + Math.sin(tilt) * 15 - 10;
+        c.strokeStyle = "#ffb040";
+        c.lineWidth = 4;
+        c.beginPath();
+        c.moveTo(lx, ly);
+        c.quadraticCurveTo(lx + 8, ly + 10, tx + 48, ty - 6);
+        c.stroke();
+        c.strokeStyle = "#fff0b0";
+        c.lineWidth = 1.5;
+        c.stroke();
+        glow2(c, tx + 48, ty - 6, 26, "#ff9a2a", 0.6);
+        sparks(c, tx + 48, ty - 6, floor, 10, t, 3, 0, 0.9);
+      }
+      if (fill > 0) {
+        const cool = step === 3 ? ease(seg(sk, 0.1, 0.7)) : 0;
+        c.fillStyle = hotCol(cool * 0.95 + 0.05, "#7a7e88");
+        c.fillRect(tx + 14, ty - 8 + 6 * (1 - fill), 68 * Math.min(1, fill * 1.6), 6 * fill);
+        if (cool < 0.6) glow2(c, tx + 48, ty - 5, 30, "#ff8a2a", 0.5 * (1 - cool) * fill);
+      }
+      if (step === 3) {
+        const lift2 = ease(seg(sk, 0.45, 0.6)), dunk = ease(seg(sk, 0.6, 0.72)), rise = ease(seg(sk, 0.8, 1));
+        if (sk > 0.45) {
+          const ox = lerp(tx + 40, qx + 16, lift2), oy = lerp(ty - 30, qy - 30, lift2) + dunk * 26 * (1 - rise) - rise * 34;
+          hotIcon(c, s.out, ox, oy, 28, Math.max(0, 0.7 - dunk * 0.9));
+          if (dunk > 0) {
+            puffs(c, qx + 24, qy, 6, t, 0.9, 40 + 20 * (1 - rise), "220,226,236", 0.75 * (1 - rise * 0.6));
+          }
+          if (rise > 0) {
+            glow2(c, ox + 14, oy + 14, 40, "#ffe8a0", 0.4 * rise);
+          }
+        } else puffs(c, tx + 48, ty - 8, 3, t, 0.7, 20, "200,200,210", 0.5);
+      }
+      void FONT;
+      void app;
+    },
+    /* ================= 맨손 ================= */
+    sceneHand(c, W, H, s) {
+      const { step, sk, t, idle } = s, floor = H - 14, cx = W / 2;
+      const g = c.createRadialGradient(cx, floor - 20, 10, cx, floor - 20, W * 0.6);
+      g.addColorStop(0, "#2e2a1c");
+      g.addColorStop(1, "#100e08");
+      c.fillStyle = g;
+      c.fillRect(0, 0, W, H);
+      c.fillStyle = "#4a3a2a";
+      c.beginPath();
+      c.ellipse(cx, floor - 8, W * 0.34, 12, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = "#5e4a34";
+      c.beginPath();
+      c.ellipse(cx, floor - 10, W * 0.32, 9, 0, 0, TAU);
+      c.fill();
+      const fxp = W - 60;
+      c.fillStyle = "#4a3020";
+      c.fillRect(fxp - 16, floor - 6, 32, 5);
+      flames(c, fxp - 12, floor - 6, 24, 0.9, t);
+      glow2(c, fxp, floor - 14, 60, "#ff9a3a", 0.3);
+      if (idle) {
+        sparks(c, fxp, floor - 14, floor, 4, t, 0.9, 0, 0.6);
+        return;
+      }
+      s.mats.forEach((id, i) => {
+        const sx = cx - 80 + i * 44, m = step === 0 ? ease(sk) : 1, hop = step === 0 ? Math.abs(Math.sin(sk * Math.PI * 2 + i)) * 10 : 0;
+        const x = lerp(sx, cx - 12 + (i - 1) * 6, m * 0.9), a = step === 2 ? 1 - sk : 1;
+        c.globalAlpha = a;
+        drawIc(c, id, x, floor - 40 - hop, 24);
+        c.globalAlpha = 1;
+      });
+      if (step === 1) {
+        c.strokeStyle = "#d8c090";
+        c.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+          c.beginPath();
+          c.ellipse(cx, floor - 28, 22, 7, 0.3 * (i - 1) + t * 0.5, 0, TAU * ease(sk));
+          c.stroke();
+        }
+      }
+      if (step === 2) {
+        glow2(c, cx, floor - 30, 40, "#ffe8a0", 0.4 * sk);
+        drawIc(c, s.out, cx - 18, floor - 52 - sk * 10, 36);
+        c.fillStyle = "#fff6d0";
+        for (let i = 0; i < 6; i++) {
+          const a = i / 6 * TAU + t * 3, d = 22 + sk * 12;
+          c.fillRect(cx + Math.cos(a) * d, floor - 34 + Math.sin(a) * d * 0.6, 2, 2);
+        }
+      }
+    },
+    /* ================= 강화 모루 ================= */
+    /** 모루 무대 캔버스 — 왼쪽 화덕 · 가운데 모루 · 오른쪽 기름 통. A = anvilAnim(가열 → 단조 셋 → 담금질 → 결말), 없으면 쉬는 모습 */
+    anvilScene() {
+      const cv = document.querySelector("#anvil-stage .as-cv");
+      if (!cv || this.open !== "anvil") {
+        this._avRaf = 0;
+        return;
+      }
+      const W = cv.clientWidth || 230, H = cv.clientHeight || 124, dpr = Math.min(2, devicePixelRatio || 1);
+      if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(H * dpr);
+      }
+      const c = cv.getContext("2d");
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.clearRect(0, 0, W, H);
+      const t = performance.now() / 1e3, A = this.anvilAnim, floor = H - 8;
+      c.fillStyle = "#120e0c";
+      c.fillRect(0, 0, W, H);
+      bricks(c, 0, 0, W, floor, "#241c1a", "#1c1614", 20, 9);
+      c.fillStyle = "#1a1412";
+      c.fillRect(0, floor, W, H - floor);
+      const hx = 8, hw = 58, hy = floor - 30;
+      c.fillStyle = "#3a3034";
+      c.fillRect(hx, hy, hw, 30);
+      c.fillStyle = "#4a3e42";
+      c.fillRect(hx, hy, hw, 4);
+      const ph = A ? (t - A.t0) * 1e3 : -1, HEAT = A ? A.heat : 0, BEAT = A ? A.beat : 0, Q = A ? A.quench : 0;
+      const heating = A && ph < HEAT, coalHot = heating ? 1 : 0.55;
+      c.save();
+      c.beginPath();
+      c.rect(hx + 4, hy - 8, hw - 8, 12);
+      c.clip();
+      for (let i = 0; i < 9; i++) {
+        c.fillStyle = hash(i * 5) > 0.5 ? "#ff7a2a" : "#c84a18";
+        c.beginPath();
+        c.arc(hx + 8 + i * 6, hy + 2 + Math.sin(i) * 1.5, 4, 0, TAU);
+        c.fill();
+      }
+      c.restore();
+      flames(c, hx + 6, hy + 2, hw - 12, 0.5 + 0.5 * coalHot, t);
+      glow2(c, hx + hw / 2, hy, 46, "#ff7a2a", 0.25 + 0.3 * coalHot);
+      const ax = W / 2 + 6, ay = floor - 38;
+      c.fillStyle = "#3a2614";
+      c.fillRect(ax - 16, floor - 18, 32, 18);
+      c.fillStyle = "#4a321c";
+      c.fillRect(ax - 16, floor - 18, 32, 3);
+      c.fillStyle = "#2c2c33";
+      c.beginPath();
+      c.moveTo(ax - 30, ay);
+      c.lineTo(ax + 26, ay);
+      c.lineTo(ax + 22, ay + 7);
+      c.lineTo(ax + 10, ay + 9);
+      c.lineTo(ax + 13, ay + 20);
+      c.lineTo(ax - 13, ay + 20);
+      c.lineTo(ax - 10, ay + 9);
+      c.lineTo(ax - 20, ay + 7);
+      c.quadraticCurveTo(ax - 36, ay + 5, ax - 44, ay + 1);
+      c.closePath();
+      c.fill();
+      c.fillStyle = "#5b5b66";
+      c.fillRect(ax - 30, ay, 56, 3);
+      const ox = W - 44, oy = floor - 30;
+      c.fillStyle = "#4a3420";
+      c.fillRect(ox, oy, 34, 30);
+      c.fillStyle = "#3a3a40";
+      c.fillRect(ox - 1, oy + 5, 36, 2);
+      c.fillRect(ox - 1, oy + 20, 36, 2);
+      c.fillStyle = "#2a2018";
+      c.fillRect(ox + 2, oy + 2, 30, 4);
+      const id = A ? A.id : this.anvilItem;
+      if (!A) {
+        if (id) {
+          drawIc(c, id, ax - 14, ay - 26, 28);
+          hammer(c, ax + 50, ay - 30, -2.4, 30);
+        }
+        sparks(c, hx + hw / 2, hy, floor, 3, t, 0.7, 0, 0.5);
+        this._avRaf = requestAnimationFrame(() => this.anvilScene());
+        return;
+      }
+      const strikeT = (ph - HEAT) / BEAT, quenchT = (ph - HEAT - 3 * BEAT) / Q, endT = (ph - HEAT - 3 * BEAT - Q) / 900;
+      if (ph < HEAT) {
+        const u = ph / HEAT, mv = ease(seg(u, 0, 0.25));
+        hotIcon(c, id, lerp(ax - 14, hx + hw / 2 - 14, mv), lerp(ay - 26, hy - 20, mv), 28, seg(u, 0.25, 1));
+        sparks(c, hx + hw / 2, hy, floor, 8, t, 2.2, 0, 0.8);
+      } else if (strikeT < 3) {
+        const n = Math.floor(strikeT), q = strikeT - n, heat = 1 - strikeT / 4;
+        const mv = n === 0 ? ease(seg(q, 0, 0.3)) : 1;
+        const squash = q > 0.55 && q < 0.75 ? 0.82 : 1;
+        c.save();
+        c.translate(lerp(hx + hw / 2, ax, mv), lerp(hy - 6, ay - 12, mv));
+        c.scale(1 / squash * 0.98 + 0.02, squash);
+        hotIcon(c, id, -14, -14, 28, heat);
+        c.restore();
+        const a = q < 0.4 ? Math.PI + 1.1 : q < 0.55 ? Math.PI + 1.1 - ease((q - 0.4) / 0.15) * 1.1 : Math.PI + ease((q - 0.55) / 0.45) * 1.1;
+        hammer(c, ax + 46, ay - 10, a, 40);
+        if (q > 0.5 && q < 0.85) {
+          const k2 = (q - 0.5) / 0.35;
+          glow2(c, ax, ay - 6, 30, "#fff0c0", 0.8 * (1 - k2));
+          sparks(c, ax, ay - 6, floor, 14, t, 3, 0, 1.2);
+        }
+      } else if (quenchT < 1) {
+        const mv = ease(seg(quenchT, 0, 0.35)), dip = ease(seg(quenchT, 0.3, 0.5));
+        hotIcon(c, id, lerp(ax - 14, ox + 3, mv), lerp(ay - 26, oy - 26, mv) + dip * 20, 28, Math.max(0, 0.35 - dip));
+        if (dip > 0) {
+          puffs(c, ox + 17, oy, 6, t, 1.1, 40, "220,226,236", 0.8);
+          flames(c, ox + 4, oy + 2, 26, 0.5 * (1 - quenchT), t);
+        }
+      } else if (endT < 1.6) {
+        const res = A.res, u = Math.min(1, endT);
+        if (res === "ok") {
+          const y = ay - 26 - ease(u) * 14;
+          glow2(c, ax, y + 14, 46, "#ffe08a", 0.5 * (1 - u * 0.5));
+          c.save();
+          c.translate(ax, y + 14);
+          c.rotate(t);
+          c.fillStyle = "rgba(255,230,150,.2)";
+          for (let i = 0; i < 10; i++) {
+            c.rotate(TAU / 10);
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(44, -4);
+            c.lineTo(44, 4);
+            c.fill();
+          }
+          c.restore();
+          drawIc(c, id, ax - 14, y, 28);
+        } else if (res === "fail") {
+          drawIc(c, id, ax - 14 + Math.sin(endT * 60) * 2 * (1 - u), ay - 26, 28);
+          puffs(c, ax, ay - 20, 4, t, 0.8, 26, "120,120,128", 0.6);
+        } else {
+          const sp = ease(u) * 22;
+          for (const d of [-1, 1]) {
+            c.save();
+            c.beginPath();
+            if (d < 0) c.rect(0, 0, ax, H);
+            else c.rect(ax, 0, W, H);
+            c.clip();
+            c.translate(d * sp, -Math.sin(u * Math.PI) * 10 + u * 8);
+            c.rotate(d * u * 0.5);
+            drawIc(c, id, ax - 14, ay - 26, 28);
+            c.restore();
+          }
+          glow2(c, ax, ay - 12, 30, "#e0564c", 0.6 * (1 - u));
+          sparks(c, ax, ay - 12, floor, 12, t, 2, 0, 1);
+        }
+      } else {
+        this.anvilAnim = null;
+      }
+      this._avRaf = requestAnimationFrame(() => this.anvilScene());
+    },
+    /** 움직임 줄이기만 막는다 — 화질 절약(폰)에서도 공정은 보인다(만드는 과정이 곧 손맛) */
+    reducedMotion() {
+      try {
+        return matchMedia("(prefers-reduced-motion: reduce)").matches;
+      } catch (e) {
+        return false;
+      }
+    },
+    anvilSceneStart() {
+      if (!this._avRaf) this._avRaf = requestAnimationFrame(() => this.anvilScene());
+    }
+  };
+  mixin(UI5, CraftSceneUIPart);
 
   // src/game/ui/mach-view.ts
   var mach_view_exports = {};
@@ -48767,7 +49526,9 @@
       if (this.inCatacomb(tx, ty, zone)) return weather || "catacomb";
       if (weather) return weather;
       const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
-      const dark = w.lightAt(tx, ty) < 4;
+      let lit = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) lit = Math.max(lit, w.lightAt(tx + dx, ty + dy));
+      const dark = ty > w.surface[clamp(tx, 0, w.dims.WW - 1)] + 2 && lit < 4;
       if (night || dark) return "tense";
       if (zone === "glowfen" || zone === "corrupt") return "east";
       if (zone === "sea" || zone === "beach" || w.biomeAt(tx).id === "glacier") return "sea";
@@ -54014,11 +54775,11 @@
     FishDuelPart: () => FishDuelPart
   });
   var FISH_DUEL = [
-    { ar: 3.5, cs: 2.5, od: 2, hp: 2, bpm: 92, gap: 1.5, slider: 0.45, spinner: 0, repeat: 0.1, stream: 0, jump: 0.8, sv: 1, spinRps: 0.8, target: 9 },
-    { ar: 5, cs: 3.2, od: 3.5, hp: 3, bpm: 104, gap: 1.25, slider: 0.4, spinner: 0.04, repeat: 0.2, stream: 0.05, jump: 1, sv: 1.15, spinRps: 0.9, target: 11 },
-    { ar: 6.5, cs: 3.8, od: 5, hp: 4, bpm: 118, gap: 1, slider: 0.35, spinner: 0.06, repeat: 0.25, stream: 0.12, jump: 1.15, sv: 1.3, spinRps: 1.1, target: 13 },
-    { ar: 8, cs: 4.3, od: 6.5, hp: 5, bpm: 132, gap: 0.85, slider: 0.3, spinner: 0.08, repeat: 0.3, stream: 0.2, jump: 1.35, sv: 1.45, spinRps: 1.3, target: 16 },
-    { ar: 9, cs: 4.8, od: 7.5, hp: 6, bpm: 148, gap: 0.75, slider: 0.28, spinner: 0.1, repeat: 0.35, stream: 0.28, jump: 1.6, sv: 1.6, spinRps: 1.5, target: 19 }
+    { ar: 5, cs: 2.5, od: 0.5, hp: 1, bpm: 140, gap: 1, slider: 0.4, spinner: 0, repeat: 0.1, stream: 0.05, jump: 0.8, sv: 1.3, spinRps: 0.8, target: 4.5 },
+    { ar: 6.5, cs: 3, od: 1.5, hp: 2, bpm: 156, gap: 0.9, slider: 0.36, spinner: 0.04, repeat: 0.2, stream: 0.1, jump: 1, sv: 1.45, spinRps: 0.9, target: 5.5 },
+    { ar: 7.8, cs: 3.5, od: 2.8, hp: 3, bpm: 172, gap: 0.75, slider: 0.32, spinner: 0.05, repeat: 0.25, stream: 0.18, jump: 1.15, sv: 1.6, spinRps: 1.1, target: 6.5 },
+    { ar: 9, cs: 4, od: 4, hp: 4, bpm: 188, gap: 0.65, slider: 0.28, spinner: 0.06, repeat: 0.3, stream: 0.25, jump: 1.35, sv: 1.75, spinRps: 1.3, target: 7.5 },
+    { ar: 9.6, cs: 4.4, od: 5, hp: 5, bpm: 204, gap: 0.6, slider: 0.25, spinner: 0.07, repeat: 0.35, stream: 0.32, jump: 1.6, sv: 1.9, spinRps: 1.5, target: 9 }
   ];
   var DUEL_ZOOM = 1.7;
   var FishDuelPart = {
@@ -54058,15 +54819,16 @@
         seed: (this.world.seed || "s") + ":" + this.time.toFixed(3) + ":" + c.id,
         target: base.target,
         start: clamp(0.45 + (rod2.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.3, 0.7),
-        ease: flv >= 3 ? 0.02 : 0,
-        // 3레벨 '가벼운 손목' — 판정 창이 넓다
+        ease: 0.012 + (flv >= 3 ? 0.02 : 0),
+        // 기본도 조금 너그럽게 · 3레벨 '가벼운 손목'은 더
         drainMul: baited ? 0.8 : 1,
         theme: { font: FONT || "sans-serif", art: FISH_DUEL_ART, frame: false, colors: ["#4ab8d8", "#e8a840", "#6ac87a", "#d87aa0"] },
         onBeat: (i) => this.duelBeat(i),
         onJudge: (res, kind) => this.duelHitSfx(res, kind)
       });
-      this.duel = { d, c, baited, tier, wall: performance.now(), rect: { x: 0, y: 0, w: 0, h: 0 }, el: null, ctx: null, off: null, intro: 1.6 };
+      this.duel = { d, c, baited, tier, wall: performance.now(), rect: { x: 0, y: 0, w: 0, h: 0 }, el: null, ctx: null, off: null, intro: 1.6, tut: !(this.settings && this.settings.fishTut) };
       this.duelMount();
+      if (this.duel && this.duel.tut) this.duelTutorial();
     },
     /* ---------------- 화면 겹 · 입력 ---------------- */
     duelMount() {
@@ -54099,6 +54861,11 @@
         e.preventDefault();
         e.stopImmediatePropagation();
         if (e.repeat) return;
+        if (D.tut) {
+          if (e.code === "Enter" || e.code === "Space" || e.code === "KeyZ" || e.code === "KeyX") this.duelTutClose();
+          else if (e.code === "Escape") this.endDuel("quit");
+          return;
+        }
         if (e.code === "Escape") {
           this.endDuel("quit");
           return;
@@ -54124,6 +54891,10 @@
         removeEventListener("keyup", keyUp, true);
         el.remove();
         document.body.classList.remove("in-duel");
+        if (D.tutEl) {
+          D.tutEl.remove();
+          D.tutEl = null;
+        }
       };
     },
     duelLayout() {
@@ -54146,6 +54917,11 @@
         return;
       }
       D.wall = performance.now();
+      if (D.tut) {
+        this.duelFrame(dt);
+        this.duelDraw();
+        return;
+      }
       D.intro = Math.max(0, D.intro - dt);
       this.duelFrame(dt);
       D.d.update(dt);
@@ -54225,6 +55001,151 @@
       else if (kind === "spin") this.duelTone(520, 900, 0.08, 0.08, "triangle");
       else if (!res || kind === "break") this.duelTone(160, 60, 0.18, 0.25, "triangle");
       else this.duelTone(res === 300 ? 1320 : res === 100 ? 990 : 700, res === 300 ? 1760 : 880, 0.07, 0.14, "triangle");
+    },
+    /* ---------------- 처음 한 번 — 안내 ---------------- */
+    /** 처음 겨루기 때만 판 위에 띄운다 — 네 가지(고리 · 슬라이더 · 스피너 · 게이지)를 움직이는 그림으로. 설정 fishTut 로 한 번만 */
+    duelTutorial() {
+      const D = this.duel, touch = document.body.classList.contains("touch");
+      const el = document.createElement("div");
+      el.id = "fishtut";
+      const card = (k, h, t) => `<div class="ft-card"><canvas data-k="${k}" width="132" height="92"></canvas><b>${h}</b><p>${t}</p></div>`;
+      el.innerHTML = `<div class="ft-box"><h2>${tr("낚시 겨루기")}</h2>
+      <p class="ft-lead">${tr("물고기가 물었다! 박자에 맞춰 줄을 당겨 게이지를 끝까지 채우면 잡힌다.")}</p>
+      <div class="ft-row">
+        ${card("c", tr("고리"), touch ? tr("바깥 고리가 원에 닿는 순간 탭") : tr("바깥 고리가 원에 닿는 순간 클릭 · Z · X"))}
+        ${card("s", tr("슬라이더"), tr("처음에 누르고, 떼지 말고 공을 따라간다"))}
+        ${card("p", tr("스피너"), tr("누른 채 가운데를 빙빙 돌린다"))}
+        ${card("g", tr("게이지"), tr("맞히면 물고기가 끌려오고, 놓치면 달아난다"))}
+      </div>
+      <button class="ft-go">${touch ? tr("시작") : tr("시작 (Space)")}</button></div>`;
+      document.body.appendChild(el);
+      D.tutEl = el;
+      el.querySelector(".ft-go").addEventListener("click", () => this.duelTutClose());
+      const cvs = [...el.querySelectorAll("canvas")], t0 = performance.now();
+      const loop = () => {
+        if (!D.tutEl) return;
+        const t = (performance.now() - t0) / 1e3;
+        for (const cv of cvs) this.duelTutArt(cv.getContext("2d"), cv.dataset.k, t);
+        requestAnimationFrame(loop);
+      };
+      loop();
+    },
+    duelTutClose() {
+      const D = this.duel;
+      if (!D || !D.tut) return;
+      D.tut = false;
+      D.wall = performance.now();
+      if (D.tutEl) {
+        D.tutEl.remove();
+        D.tutEl = null;
+      }
+      this.settings.fishTut = 1;
+      this.saveSettings();
+    },
+    /** 안내 그림 하나 — k: c 고리 · s 슬라이더 · p 스피너 · g 게이지. 1.6초 고리로 돈다 */
+    duelTutArt(c, k, t) {
+      const W = 132, H = 92, u = t % 1.6 / 1.6, col = "#4ab8d8";
+      c.clearRect(0, 0, W, H);
+      const disc = (x, y, r) => {
+        c.fillStyle = col;
+        c.beginPath();
+        c.arc(x, y, r, 0, Math.PI * 2);
+        c.fill();
+        c.strokeStyle = "#f4fbff";
+        c.lineWidth = 2.5;
+        c.stroke();
+      };
+      const finger = (x, y, down) => {
+        c.fillStyle = down ? "#ffe8a0" : "rgba(255,232,160,.6)";
+        c.beginPath();
+        c.arc(x, y, down ? 5 : 6, 0, Math.PI * 2);
+        c.fill();
+        if (down) {
+          c.strokeStyle = "rgba(255,232,160,.5)";
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.arc(x, y, 10, 0, Math.PI * 2);
+          c.stroke();
+        }
+      };
+      if (k === "c") {
+        const r = 16, ar = r + (1 - Math.min(1, u / 0.7)) * 26;
+        if (u < 0.85) {
+          disc(66, 46, r);
+          c.strokeStyle = "#bfeaff";
+          c.lineWidth = 2;
+          c.beginPath();
+          c.arc(66, 46, ar, 0, Math.PI * 2);
+          c.stroke();
+        }
+        const hit = u >= 0.68 && u < 0.85;
+        if (u >= 0.7) {
+          c.globalAlpha = 1 - (u - 0.7) / 0.3;
+          c.fillStyle = "#ffe08a";
+          c.font = "700 15px sans-serif";
+          c.textAlign = "center";
+          c.fillText("300", 66, 22 - (u - 0.7) * 30);
+          c.globalAlpha = 1;
+        }
+        finger(84, 62, hit);
+      } else if (k === "s") {
+        const x0 = 24, x1 = 108, y = 46, v = Math.min(1, Math.max(0, (u - 0.15) / 0.65));
+        c.strokeStyle = "rgba(74,184,216,.45)";
+        c.lineWidth = 26;
+        c.lineCap = "round";
+        c.beginPath();
+        c.moveTo(x0, y);
+        c.quadraticCurveTo(66, 14, x1, y);
+        c.stroke();
+        c.strokeStyle = "#f4fbff";
+        c.lineWidth = 2;
+        c.stroke();
+        const q = (a, b, cc) => (1 - v) * (1 - v) * a + 2 * (1 - v) * v * b + v * v * cc;
+        const bx = q(x0, 66, x1), by = q(y, 14, y);
+        disc(bx, by, 11);
+        finger(bx + 6, by + 8, u > 0.12 && u < 0.85);
+      } else if (k === "p") {
+        c.strokeStyle = "rgba(244,251,255,.35)";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(66, 46, 34, 0, Math.PI * 2);
+        c.stroke();
+        c.strokeStyle = "#e8a840";
+        c.lineWidth = 4;
+        c.beginPath();
+        c.arc(66, 46, 34, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u);
+        c.stroke();
+        const a = t * 7;
+        finger(66 + Math.cos(a) * 22, 46 + Math.sin(a) * 22, true);
+        c.fillStyle = "#f4fbff";
+        c.beginPath();
+        c.arc(66, 46, 4, 0, Math.PI * 2);
+        c.fill();
+      } else {
+        const g = 0.25 + 0.6 * (u < 0.75 ? u / 0.75 : 1 - (u - 0.75) * 1.4), gx = 14, gw = 104, gy = 46;
+        c.fillStyle = "rgba(4,14,20,.8)";
+        c.beginPath();
+        c.roundRect(gx - 4, gy - 6, gw + 8, 12, 6);
+        c.fill();
+        c.fillStyle = "#2a8ab0";
+        c.beginPath();
+        c.roundRect(gx, gy - 3, gw * g, 6, 3);
+        c.fill();
+        const fx = gx + gw * g;
+        c.fillStyle = "#dff4ff";
+        c.beginPath();
+        c.ellipse(fx, gy, 8, 4, 0, 0, Math.PI * 2);
+        c.fill();
+        c.beginPath();
+        c.moveTo(fx - 6, gy);
+        c.lineTo(fx - 12, gy - 5);
+        c.lineTo(fx - 12, gy + 5);
+        c.fill();
+        c.fillStyle = u < 0.75 ? "#6ac87a" : "#ff8a7a";
+        c.font = "700 12px sans-serif";
+        c.textAlign = "center";
+        c.fillText(u < 0.75 ? "+" : "−", fx, gy - 12);
+      }
     },
     /* ---------------- 그리기 ---------------- */
     /** 둘레를 어둡게 — 낚시꾼 · 낚싯대 · 줄은 **윤곽 그대로** 도려내고(둥근 구멍이 아니라 그림째), 찌가 앉은 물가는 둘레까지 넓게 밝힌다.
@@ -68689,8 +69610,10 @@
         c.restore();
         return;
       }
+      const hand0 = this.spritesOn ? this.playerHand(key, fr, sx, sy, p.facing < 0) : null;
       if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
-        this.drawHeldWeapon(c, p, sx, sy, 0, this.playerHand(key, fr, sx, sy, p.facing < 0));
+        this.drawOffHand(c, p, sx, sy, hand0);
+        this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
         c.restore();
         return;
       }
@@ -69107,6 +70030,38 @@
       const i = this.input;
       if (!i || i.wx === void 0 || i.wy === void 0) return p.facing > 0 ? 0 : Math.PI;
       return angleTo(p.cx, p.cy, i.wx, i.wy);
+    },
+    /** 뒷손(왼손) — 핫바에서 고른 것. 앞손(drawHeldWeapon)이 이미 그것(도구 · 낚싯대)을 쥐고 있으면 빈손.
+        몸 뒤로 그리면 망토에 통째로 가려 안 보였다 — 등 쪽 가장자리에서 몸 위에 얹는다 */
+    drawOffHand(c, p, sx, sy, hand) {
+      const hi = p.held();
+      if (!hi || p.fish || p.swimming || p.channel || p.ride) return;
+      const hd = idef(hi);
+      if (!hd) return;
+      if (hd.type === "tool" || hd.type === "rod") return;
+      const eq = p.equip && p.equip.weapon;
+      if (eq && eq.id === hi.id && hd.type === "weapon") return;
+      const f = p.facing < 0 ? -1 : 1;
+      const hy = hand ? hand.pt[1] + 1 : sy + 22;
+      const x = sx + p.w / 2 - f * 9, sw = p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
+      c.save();
+      c.translate(x - sw * f, hy);
+      c.scale(f, 1);
+      c.rotate(-0.25);
+      c.globalAlpha *= 0.92;
+      Art.drawItem(c, hi.id, -9, -14, 18);
+      if (hi.id === "torch") {
+        const fl = 0.7 + 0.3 * Math.sin(this.time * 17) * Math.sin(this.time * 7.3);
+        c.globalCompositeOperation = "lighter";
+        const g = c.createRadialGradient(0, -12, 0, 0, -12, 12 * fl);
+        g.addColorStop(0, "rgba(255,200,110,.55)");
+        g.addColorStop(1, "rgba(255,140,40,0)");
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(0, -12, 12 * fl, 0, TAU);
+        c.fill();
+      }
+      c.restore();
     },
     drawHeldWeapon(c, p, sx, sy, bob, hand) {
       const hi = p.held(), hd = hi && idef(hi);
@@ -72679,7 +73634,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

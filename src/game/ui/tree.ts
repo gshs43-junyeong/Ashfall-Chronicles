@@ -14,7 +14,8 @@ export const TreeUIPart: Bag = {
      ★ 배운 칸과 이어진 칸만 드러난다 — 멀리 있는 칸은 틀도 선도 없다(미리 보이면 길을 고르는 맛이 없다, 사용자 결정 2026-10-16).
      자리는 예전 그대로 가운데 핵에서 네 쪽으로 뻗는다. 사연: docs/code-history.md#h90 · #h187 · #h191 */
   TREE_BOX: 44,
-  TREE_GX: 46, TREE_GY: 52, TREE_ROW: 86, TREE_COL: 92, TREE_SKEW: 26, TREE_H: 716, TREE_CY: 344,
+  /* 칸 사이를 넓혔다(사용자) — 판이 창보다 커서 끌거나 휠로 움직인다(_treePan) */
+  TREE_GX: 62, TREE_GY: 70, TREE_ROW: 118, TREE_COL: 124, TREE_SKEW: 34, TREE_H: 600, TREE_CY: 300,
   TREE_DIR: { blade: [-1, -1], ranger: [1, -1], arcane: [1, 1], explore: [-1, 1] } as Record<string, number[]>,
   HOLD_T: 0.42,                     // 꾹 눌러 배우는 시간(초) — 한 번 클릭으로 잘못 찍던 것을 막고 '찍는 손맛'을 준다
   _nodeXY(id: string) {
@@ -31,13 +32,21 @@ export const TreeUIPart: Bag = {
     legend.className = 'tlegend';
     legend.innerHTML = ['active', 'passive', 'unlock'].map(k => `<span class="tk" style="--bc:${NODE_KIND_COL[k]}"><i></i>${
       k === 'active' ? tr('기술') : k === 'passive' ? tr('힘') : tr('칸 열기')}</span>`).join('') +
-      `<span class="thint">${tr('꾹 눌러 배운다 · 배운 칸과 이어진 칸만 드러난다 · 우클릭으로 스킬 칸 등록')}</span>`;
+      `<span class="thint">${tr('꾹 눌러 배운다 · 끌거나 휠로 판을 옮긴다 · 우클릭으로 스킬 칸 고르기')}</span>`;
     w.appendChild(legend);
 
+    /* 판(plane)은 칸이 다 들어가는 크기, 창(grid)은 그 일부를 보여 준다 */
+    let mx = 0, my = 0;
+    for (const id in SKILLS) { const [x, y] = this._nodeXY(id); mx = Math.max(mx, Math.abs(x)); my = Math.max(my, Math.abs(y)); }
+    const PW = Math.round((mx + 80) * 2), PH = Math.round((my + 80) * 2);
     const grid = document.createElement('div');
     grid.className = 'bgrid';
-    grid.style.height = this.TREE_H + 'px';
-    grid.style.setProperty('--cy', this.TREE_CY + 'px');
+    grid.style.height = `min(${this.TREE_H}px, calc(100vh - 380px))`;   // 창 안에 다 들어오게 — 창이 스크롤되면 끌기와 겹친다
+    grid.style.setProperty('--cy', '50%');
+    const plane = document.createElement('div');
+    plane.className = 'bplane'; plane.style.width = PW + 'px'; plane.style.height = PH + 'px';
+    plane.style.setProperty('--cy', PH / 2 + 'px');
+    this._treePlane = { el: plane, grid, w: PW, h: PH };
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('class', 'blines');
     const line = (a: number[], b: number[], cls: string, c: string) => {
@@ -65,7 +74,7 @@ export const TreeUIPart: Bag = {
       const ln = line(this._nodeXY(rq), this._nodeXY(id), 'bline', NODE_KIND_COL[nodeKind(id)]);
       ln.dataset.from = rq; ln.dataset.to = id;
     }
-    grid.appendChild(svg);
+    plane.appendChild(svg);
     const core = document.createElement('div');
     core.className = 'bcore';
     core.innerHTML = '<span class="cst">✦</span><b class="cpts">0</b>';
@@ -75,7 +84,7 @@ export const TreeUIPart: Bag = {
         : tr('찍은 점수 {have} · 모든 단이 열렸다', { have })) + ' — ' + tr('모든 칸은 여기서 뻗어 나간다'), e);
     });
     core.addEventListener('mouseleave', () => this.hideTip());
-    grid.appendChild(core);
+    plane.appendChild(core);
 
     for (const id in SKILLS) {
       const sk = SKILLS[id];
@@ -91,15 +100,87 @@ export const TreeUIPart: Bag = {
       this.setIcon(n.querySelector('.nic'), Art.skillUrl(id));
       n.addEventListener('pointerdown', (e: any) => { if (e.button === 0) this.holdStart(id, n); });
       for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) n.addEventListener(ev, () => this.holdStop(n));
-      n.addEventListener('contextmenu', e => { e.preventDefault(); this.assign(id); });
+      n.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); this.slotPicker(id, e.clientX, e.clientY); });
       n.addEventListener('mouseenter', e => { this.showSkillTip(id, e); this.pathHi(id, true); });
       n.addEventListener('mousemove', e => this.placeTip(e.clientX, e.clientY));
       n.addEventListener('mouseleave', () => { this.hideTip(); this.pathHi(id, false); });
-      grid.appendChild(n);
+      plane.appendChild(n);
     }
+    grid.appendChild(plane);
     w.appendChild(grid);
+    this.bindTreePan(grid);
     this.bindSkillTabs();
   },
+
+  /** 판 옮기기 — 빈 곳을 끌거나 휠(Shift = 가로). 처음 열 때는 핵이 가운데 */
+  bindTreePan(grid: HTMLElement) {
+    const P = this._treePlane;
+    const apply = () => {
+      if (!grid.clientWidth) return;                         // 창이 닫혀 있으면 잴 수 없다 — 열 때(refreshTree) 다시
+      const vw = grid.clientWidth, vh = grid.clientHeight || this.TREE_H;
+      if (!this._treePan) this._treePan = { x: (vw - P.w) / 2, y: (vh - P.h) / 2 };
+      const t = this._treePan, pad = 60;                     // 판 끝이 창 안쪽으로 60px 넘게 들어오지 않게
+      t.x = Math.min(pad, Math.max(vw - P.w - pad, t.x)); t.y = Math.min(pad, Math.max(vh - P.h - pad, t.y));
+      if (P.w < vw) t.x = (vw - P.w) / 2;
+      if (P.h < vh) t.y = (vh - P.h) / 2;
+      P.el.style.transform = `translate(${Math.round(t.x)}px,${Math.round(t.y)}px)`;
+    };
+    this._treePanApply = apply;
+    grid.addEventListener('wheel', (e: WheelEvent) => {
+      e.preventDefault();
+      apply(); const t = this._treePan; if (!t) return;
+      if (e.shiftKey) t.x -= e.deltaY; else { t.x -= e.deltaX; t.y -= e.deltaY; }
+      apply();
+    }, { passive: false });
+    let drag: number[] | null = null;
+    grid.addEventListener('pointerdown', (e: PointerEvent) => {
+      if ((e.target as HTMLElement).closest('.node, .bcore') || e.button === 2) return;
+      apply(); const t = this._treePan; if (!t) return;
+      drag = [e.clientX, e.clientY, t.x, t.y]; grid.classList.add('dragging');
+      try { grid.setPointerCapture(e.pointerId); } catch (_) { /* 잡지 못해도 끌기는 된다 */ }
+    });
+    grid.addEventListener('pointermove', (e: PointerEvent) => {
+      if (!drag) return;
+      this._treePan.x = drag[2] + e.clientX - drag[0]; this._treePan.y = drag[3] + e.clientY - drag[1]; apply();
+    });
+    const end = () => { drag = null; grid.classList.remove('dragging'); };
+    grid.addEventListener('pointerup', end); grid.addEventListener('pointercancel', end);
+    requestAnimationFrame(apply);
+  },
+  /** 우클릭 — 어느 스킬 칸(Q · E · R · F · G · V)에 끼울지 고르는 작은 판 */
+  slotPicker(id: string, cx: number, cy: number) {
+    const p = G.player, sk = SKILLS[id];
+    this.closeSlotPicker(); this.hideTip();
+    if (sk.type !== 'active') { G.toast(tr('지니는 힘은 칸에 끼우지 않는다'), 'bad'); return; }
+    if (!(p.skills[id] > 0)) { G.toast(tr('먼저 배워야 칸에 끼울 수 있다'), 'bad'); return; }
+    const keys = ['Q', 'E', 'R', 'F', 'G', 'V'], n = skillSlotN(p);
+    const box = document.createElement('div'); box.id = 'slotpick';
+    box.innerHTML = `<div class="sp-t">${tr('{name} — 끼울 칸', { name: sk.n })}</div><div class="sp-row">` +
+      keys.slice(0, n).map((k, i) => `<button data-i="${i}" class="${p.slots[i] === id ? 'on' : ''}"><span class="ic"></span><b>${k}</b></button>`).join('') +
+      `</div>` + (p.slots.includes(id) ? `<button class="sp-off">${tr('칸에서 빼기')}</button>` : '');
+    document.body.appendChild(box);
+    box.querySelectorAll<HTMLElement>('.sp-row button').forEach(b => {
+      const i = +b.dataset.i!; this.setIcon(b.querySelector('.ic'), p.slots[i] ? Art.skillUrl(p.slots[i]) : '');
+      b.addEventListener('click', () => {
+        for (let j = 0; j < p.slots.length; j++) if (p.slots[j] === id) p.slots[j] = null;
+        p.slots[i] = id; this.closeSlotPicker();
+        this.refreshTree(); this.refreshSkillSlots(); this.refreshSkillbar();
+      });
+    });
+    const off = box.querySelector('.sp-off');
+    if (off) off.addEventListener('click', () => {
+      for (let j = 0; j < p.slots.length; j++) if (p.slots[j] === id) p.slots[j] = null;
+      this.closeSlotPicker(); this.refreshTree(); this.refreshSkillSlots(); this.refreshSkillbar();
+    });
+    const r = box.getBoundingClientRect();
+    box.style.left = Math.max(8, Math.min(innerWidth - r.width - 8, cx - r.width / 2)) + 'px';
+    box.style.top = Math.max(8, Math.min(innerHeight - r.height - 8, cy + 14)) + 'px';
+    const out = (e: Event) => { if (!box.contains(e.target as Node)) this.closeSlotPicker(); };
+    const esc = (e: KeyboardEvent) => { if (e.code === 'Escape') { e.stopPropagation(); this.closeSlotPicker(); } };
+    setTimeout(() => { addEventListener('pointerdown', out, true); addEventListener('keydown', esc, true); });
+    this._slotPickOff = () => { removeEventListener('pointerdown', out, true); removeEventListener('keydown', esc, true); box.remove(); };
+  },
+  closeSlotPicker() { if (this._slotPickOff) { this._slotPickOff(); this._slotPickOff = null; } },
 
   /** 팝업 위쪽 두 갈래 — 특성 트리 / 생활 숙련 */
   bindSkillTabs() {
@@ -164,6 +245,7 @@ export const TreeUIPart: Bag = {
   },
 
   refreshTree() {
+    if (this._treePanApply) requestAnimationFrame(this._treePanApply);
     const p = G.player;
     const vis: Bag = {}, fresh: string[] = [];
     for (const id in SKILLS) vis[id] = this.nodeVisible(id);
@@ -298,8 +380,8 @@ export const TreeUIPart: Bag = {
   },
   buildSkillSlots() {
     const box = $('#skill-slots'); box.innerHTML = '';
-    const keys = ['Q', 'E', 'R', 'F', 'G'];
-    for (let i = 0; i < 5; i++) {
+    const keys = ['Q', 'E', 'R', 'F', 'G', 'V'];
+    for (let i = 0; i < 6; i++) {                // 여섯째 칸('재빠른 손' 2랭크)도 — 다섯 칸만 짜서 V 칸이 없었다
       const d = document.createElement('div');
       d.className = 'ss'; d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span>`;
       d.addEventListener('click', () => { G.player.slots[i] = null; this.refreshSkillSlots(); this.refreshTree(); this.refreshSkillbar(); });

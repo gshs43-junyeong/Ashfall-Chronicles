@@ -14,13 +14,14 @@ import { DAY_CYCLE, Game } from '../game.js';
 import { FISH_DUEL_ART } from './fish-duel-art.js';
 import type { DuelDiff, DuelMods } from '../../engine/rhythm/duel.js';
 
-/* 등급 0~4 — 잡것 · 흔한 물고기는 느린 고리 · 큰 원 · 슬라이더 위주, 위로 갈수록 빠르고 작고 촘촘하다. target = 실수 없이 칠 때 몇 초에 잡히나 */
+/* 등급 0~4 — 잡것 · 흔한 물고기는 느린 고리 · 큰 원 · 슬라이더 위주, 위로 갈수록 빠르고 작고 촘촘하다. target = 실수 없이 칠 때 몇 초에 잡히나.
+   ★ 처음 판(bpm 92~148 · target 9~19초)은 느려서 지루했다(사용자) — 박 · 물체 밀도를 2~3배로 올리고 한 판을 4~9초로, 판정 창(od)은 넓혔다 */
 export const FISH_DUEL: (DuelDiff & { target: number })[] = [
-  { ar: 3.5, cs: 2.5, od: 2, hp: 2, bpm: 92, gap: 1.5, slider: 0.45, spinner: 0, repeat: 0.1, stream: 0, jump: 0.8, sv: 1.0, spinRps: 0.8, target: 9 },
-  { ar: 5, cs: 3.2, od: 3.5, hp: 3, bpm: 104, gap: 1.25, slider: 0.4, spinner: 0.04, repeat: 0.2, stream: 0.05, jump: 1.0, sv: 1.15, spinRps: 0.9, target: 11 },
-  { ar: 6.5, cs: 3.8, od: 5, hp: 4, bpm: 118, gap: 1, slider: 0.35, spinner: 0.06, repeat: 0.25, stream: 0.12, jump: 1.15, sv: 1.3, spinRps: 1.1, target: 13 },
-  { ar: 8, cs: 4.3, od: 6.5, hp: 5, bpm: 132, gap: 0.85, slider: 0.3, spinner: 0.08, repeat: 0.3, stream: 0.2, jump: 1.35, sv: 1.45, spinRps: 1.3, target: 16 },
-  { ar: 9, cs: 4.8, od: 7.5, hp: 6, bpm: 148, gap: 0.75, slider: 0.28, spinner: 0.1, repeat: 0.35, stream: 0.28, jump: 1.6, sv: 1.6, spinRps: 1.5, target: 19 }
+  { ar: 5, cs: 2.5, od: 0.5, hp: 1, bpm: 140, gap: 1.0, slider: 0.4, spinner: 0, repeat: 0.1, stream: 0.05, jump: 0.8, sv: 1.3, spinRps: 0.8, target: 4.5 },
+  { ar: 6.5, cs: 3.0, od: 1.5, hp: 2, bpm: 156, gap: 0.9, slider: 0.36, spinner: 0.04, repeat: 0.2, stream: 0.1, jump: 1.0, sv: 1.45, spinRps: 0.9, target: 5.5 },
+  { ar: 7.8, cs: 3.5, od: 2.8, hp: 3, bpm: 172, gap: 0.75, slider: 0.32, spinner: 0.05, repeat: 0.25, stream: 0.18, jump: 1.15, sv: 1.6, spinRps: 1.1, target: 6.5 },
+  { ar: 9, cs: 4.0, od: 4, hp: 4, bpm: 188, gap: 0.65, slider: 0.28, spinner: 0.06, repeat: 0.3, stream: 0.25, jump: 1.35, sv: 1.75, spinRps: 1.3, target: 7.5 },
+  { ar: 9.6, cs: 4.4, od: 5, hp: 5, bpm: 204, gap: 0.6, slider: 0.25, spinner: 0.07, repeat: 0.35, stream: 0.32, jump: 1.6, sv: 1.9, spinRps: 1.5, target: 9 }
 ];
 
 /* 겨루기 동안 카메라가 다가가는 배율 */
@@ -57,14 +58,15 @@ export const FishDuelPart: Bag = {
       diff: { ...base, bpm }, mods, seed: (this.world.seed || 's') + ':' + this.time.toFixed(3) + ':' + c.id,
       target: base.target,
       start: clamp(0.45 + (rod.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.3, 0.7),
-      ease: flv >= 3 ? 0.02 : 0,                                   // 3레벨 '가벼운 손목' — 판정 창이 넓다
+      ease: 0.012 + (flv >= 3 ? 0.02 : 0),                        // 기본도 조금 너그럽게 · 3레벨 '가벼운 손목'은 더
       drainMul: baited ? 0.8 : 1,
       theme: { font: FONT || 'sans-serif', art: FISH_DUEL_ART, frame: false, colors: ['#4ab8d8', '#e8a840', '#6ac87a', '#d87aa0'] },
       onBeat: (i: number) => this.duelBeat(i),
       onJudge: (res: number, kind: string) => this.duelHitSfx(res, kind)
     });
-    this.duel = { d, c, baited, tier, wall: performance.now(), rect: { x: 0, y: 0, w: 0, h: 0 }, el: null, ctx: null, off: null, intro: 1.6 };
+    this.duel = { d, c, baited, tier, wall: performance.now(), rect: { x: 0, y: 0, w: 0, h: 0 }, el: null, ctx: null, off: null, intro: 1.6, tut: !(this.settings && this.settings.fishTut) };
     this.duelMount();
+    if (this.duel && this.duel.tut) this.duelTutorial();
   },
 
   /* ---------------- 화면 겹 · 입력 ---------------- */
@@ -83,6 +85,7 @@ export const FishDuelPart: Bag = {
       if (/^F\d+$/.test(e.key)) return;
       e.preventDefault(); e.stopImmediatePropagation();          // 겨루는 동안 Z·X(유틸리티) · 이동 · 단축 칸이 게임에 안 간다
       if (e.repeat) return;
+      if (D.tut) { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyZ' || e.code === 'KeyX') this.duelTutClose(); else if (e.code === 'Escape') this.endDuel('quit'); return; }
       if (e.code === 'Escape') { this.endDuel('quit'); return; }
       if (e.code === 'KeyZ' || e.code === 'KeyX' || e.code === 'Space') D.d.press(e.code, at());
     };
@@ -98,6 +101,7 @@ export const FishDuelPart: Bag = {
     D.off = () => {
       removeEventListener('keydown', key, true); removeEventListener('keyup', keyUp, true);
       el.remove(); document.body.classList.remove('in-duel');
+      if (D.tutEl) { D.tutEl.remove(); D.tutEl = null; }
     };
   },
   duelLayout() {
@@ -117,6 +121,7 @@ export const FishDuelPart: Bag = {
     const held = p.held();
     if (p.dead || !p.fish || !held || idef(held).type !== 'rod') { this.endDuel('quit'); return; }
     D.wall = performance.now();
+    if (D.tut) { this.duelFrame(dt); this.duelDraw(); return; }   // 안내를 읽는 동안 판은 멈춘다
     D.intro = Math.max(0, D.intro - dt);
     this.duelFrame(dt);
     D.d.update(dt);
@@ -175,6 +180,79 @@ export const FishDuelPart: Bag = {
     else if (kind === 'spin') this.duelTone(520, 900, 0.08, 0.08, 'triangle');
     else if (!res || kind === 'break') this.duelTone(160, 60, 0.18, 0.25, 'triangle');
     else this.duelTone(res === 300 ? 1320 : res === 100 ? 990 : 700, res === 300 ? 1760 : 880, 0.07, 0.14, 'triangle');
+  },
+
+  /* ---------------- 처음 한 번 — 안내 ---------------- */
+  /** 처음 겨루기 때만 판 위에 띄운다 — 네 가지(고리 · 슬라이더 · 스피너 · 게이지)를 움직이는 그림으로. 설정 fishTut 로 한 번만 */
+  duelTutorial() {
+    const D = this.duel, touch = document.body.classList.contains('touch');
+    const el = document.createElement('div'); el.id = 'fishtut';
+    const card = (k: string, h: string, t: string) => `<div class="ft-card"><canvas data-k="${k}" width="132" height="92"></canvas><b>${h}</b><p>${t}</p></div>`;
+    el.innerHTML = `<div class="ft-box"><h2>${tr('낚시 겨루기')}</h2>
+      <p class="ft-lead">${tr('물고기가 물었다! 박자에 맞춰 줄을 당겨 게이지를 끝까지 채우면 잡힌다.')}</p>
+      <div class="ft-row">
+        ${card('c', tr('고리'), touch ? tr('바깥 고리가 원에 닿는 순간 탭') : tr('바깥 고리가 원에 닿는 순간 클릭 · Z · X'))}
+        ${card('s', tr('슬라이더'), tr('처음에 누르고, 떼지 말고 공을 따라간다'))}
+        ${card('p', tr('스피너'), tr('누른 채 가운데를 빙빙 돌린다'))}
+        ${card('g', tr('게이지'), tr('맞히면 물고기가 끌려오고, 놓치면 달아난다'))}
+      </div>
+      <button class="ft-go">${touch ? tr('시작') : tr('시작 (Space)')}</button></div>`;
+    document.body.appendChild(el); D.tutEl = el;
+    el.querySelector('.ft-go')!.addEventListener('click', () => this.duelTutClose());
+    const cvs = [...el.querySelectorAll('canvas')] as HTMLCanvasElement[], t0 = performance.now();
+    const loop = () => {
+      if (!D.tutEl) return;
+      const t = (performance.now() - t0) / 1000;
+      for (const cv of cvs) this.duelTutArt(cv.getContext('2d')!, cv.dataset.k!, t);
+      requestAnimationFrame(loop);
+    };
+    loop();
+  },
+  duelTutClose() {
+    const D = this.duel; if (!D || !D.tut) return;
+    D.tut = false; D.wall = performance.now();
+    if (D.tutEl) { D.tutEl.remove(); D.tutEl = null; }
+    this.settings.fishTut = 1; this.saveSettings();
+  },
+  /** 안내 그림 하나 — k: c 고리 · s 슬라이더 · p 스피너 · g 게이지. 1.6초 고리로 돈다 */
+  duelTutArt(c: CanvasRenderingContext2D, k: string, t: number) {
+    const W = 132, H = 92, u = (t % 1.6) / 1.6, col = '#4ab8d8';
+    c.clearRect(0, 0, W, H);
+    const disc = (x: number, y: number, r: number) => {
+      c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = '#f4fbff'; c.lineWidth = 2.5; c.stroke();
+    };
+    const finger = (x: number, y: number, down: boolean) => {      // 누르는 손끝 — 누르면 작아지고 물결
+      c.fillStyle = down ? '#ffe8a0' : 'rgba(255,232,160,.6)'; c.beginPath(); c.arc(x, y, down ? 5 : 6, 0, Math.PI * 2); c.fill();
+      if (down) { c.strokeStyle = 'rgba(255,232,160,.5)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, 10, 0, Math.PI * 2); c.stroke(); }
+    };
+    if (k === 'c') {
+      const r = 16, ar = r + (1 - Math.min(1, u / 0.7)) * 26;
+      if (u < 0.85) { disc(66, 46, r); c.strokeStyle = '#bfeaff'; c.lineWidth = 2; c.beginPath(); c.arc(66, 46, ar, 0, Math.PI * 2); c.stroke(); }
+      const hit = u >= 0.68 && u < 0.85;
+      if (u >= 0.7) { c.globalAlpha = 1 - (u - 0.7) / 0.3; c.fillStyle = '#ffe08a'; c.font = '700 15px sans-serif'; c.textAlign = 'center'; c.fillText('300', 66, 22 - (u - 0.7) * 30); c.globalAlpha = 1; }
+      finger(84, 62, hit);
+    } else if (k === 's') {
+      const x0 = 24, x1 = 108, y = 46, v = Math.min(1, Math.max(0, (u - 0.15) / 0.65));
+      c.strokeStyle = 'rgba(74,184,216,.45)'; c.lineWidth = 26; c.lineCap = 'round'; c.beginPath(); c.moveTo(x0, y); c.quadraticCurveTo(66, 14, x1, y); c.stroke();
+      c.strokeStyle = '#f4fbff'; c.lineWidth = 2; c.stroke();
+      const q = (a: number, b: number, cc: number) => (1 - v) * (1 - v) * a + 2 * (1 - v) * v * b + v * v * cc;
+      const bx = q(x0, 66, x1), by = q(y, 14, y);
+      disc(bx, by, 11); finger(bx + 6, by + 8, u > 0.12 && u < 0.85);
+    } else if (k === 'p') {
+      c.strokeStyle = 'rgba(244,251,255,.35)'; c.lineWidth = 2; c.beginPath(); c.arc(66, 46, 34, 0, Math.PI * 2); c.stroke();
+      c.strokeStyle = '#e8a840'; c.lineWidth = 4; c.beginPath(); c.arc(66, 46, 34, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u); c.stroke();
+      const a = t * 7; finger(66 + Math.cos(a) * 22, 46 + Math.sin(a) * 22, true);
+      c.fillStyle = '#f4fbff'; c.beginPath(); c.arc(66, 46, 4, 0, Math.PI * 2); c.fill();
+    } else {
+      const g = 0.25 + 0.6 * (u < 0.75 ? u / 0.75 : 1 - (u - 0.75) * 1.4), gx = 14, gw = 104, gy = 46;
+      c.fillStyle = 'rgba(4,14,20,.8)'; c.beginPath(); c.roundRect(gx - 4, gy - 6, gw + 8, 12, 6); c.fill();
+      c.fillStyle = '#2a8ab0'; c.beginPath(); c.roundRect(gx, gy - 3, gw * g, 6, 3); c.fill();
+      const fx = gx + gw * g; c.fillStyle = '#dff4ff'; c.beginPath(); c.ellipse(fx, gy, 8, 4, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.moveTo(fx - 6, gy); c.lineTo(fx - 12, gy - 5); c.lineTo(fx - 12, gy + 5); c.fill();
+      c.fillStyle = u < 0.75 ? '#6ac87a' : '#ff8a7a'; c.font = '700 12px sans-serif'; c.textAlign = 'center';
+      c.fillText(u < 0.75 ? '+' : '−', fx, gy - 12);
+    }
   },
 
   /* ---------------- 그리기 ---------------- */

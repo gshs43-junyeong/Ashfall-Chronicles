@@ -204,8 +204,10 @@ export const RenderActorsPart: Bag = {
     if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS)))
       drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0));
     if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) { c.restore(); return; }
+    const hand0 = this.spritesOn ? this.playerHand(key, fr, sx, sy, p.facing < 0) : null;
     if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
-      this.drawHeldWeapon(c, p, sx, sy, 0, this.playerHand(key, fr, sx, sy, p.facing < 0));
+      this.drawOffHand(c, p, sx, sy, hand0);
+      this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
       c.restore();
       return;
     }
@@ -567,6 +569,29 @@ export const RenderActorsPart: Bag = {
     return angleTo(p.cx, p.cy, i.wx, i.wy);
   },
 
+  /** 뒷손(왼손) — 핫바에서 고른 것. 앞손(drawHeldWeapon)이 이미 그것(도구 · 낚싯대)을 쥐고 있으면 빈손.
+      몸 뒤로 그리면 망토에 통째로 가려 안 보였다 — 등 쪽 가장자리에서 몸 위에 얹는다 */
+  drawOffHand(c: CanvasRenderingContext2D, p: any, sx: number, sy: number, hand: any) {
+    const hi = p.held(); if (!hi || p.fish || p.swimming || p.channel || p.ride) return;
+    const hd = idef(hi); if (!hd) return;
+    if (hd.type === 'tool' || hd.type === 'rod') return;                   // 앞손이 쥔 것과 같다
+    const eq = p.equip && p.equip.weapon;
+    if (eq && eq.id === hi.id && hd.type === 'weapon') return;            // 장착 무기를 고른 칸 — 앞손에 이미 있다
+    const f = p.facing < 0 ? -1 : 1;
+    const hy = hand ? hand.pt[1] + 1 : sy + 22;
+    const x = sx + p.w / 2 - f * 9, sw = p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
+    c.save(); c.translate(x - sw * f, hy);
+    c.scale(f, 1); c.rotate(-0.25);
+    c.globalAlpha *= 0.92;
+    Art.drawItem(c, hi.id, -9, -14, 18);
+    if (hi.id === 'torch') {                                                 // 든 횃불은 불꽃이 일렁인다
+      const fl = 0.7 + 0.3 * Math.sin(this.time * 17) * Math.sin(this.time * 7.3);
+      c.globalCompositeOperation = 'lighter';
+      const g = c.createRadialGradient(0, -12, 0, 0, -12, 12 * fl); g.addColorStop(0, 'rgba(255,200,110,.55)'); g.addColorStop(1, 'rgba(255,140,40,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(0, -12, 12 * fl, 0, TAU); c.fill();
+    }
+    c.restore();
+  },
   drawHeldWeapon(c: any, p: any, sx: any, sy: any, bob: any, hand: any) {
     /* 손에 그려지는 것은 "지금 실제로 쓰는 것"이어야 한다 — 핫바에 도구·낚싯대가 있으면 그것을, 아니면 장착 무기를. */
     const hi = p.held(), hd = hi && idef(hi);

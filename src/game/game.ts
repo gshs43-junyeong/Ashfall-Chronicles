@@ -513,7 +513,10 @@ export const GameCore: Bag = {
 
     if (weather) return weather;
     const night = this.dayT < 5 * 60 || this.dayT > 19 * 60;
-    const dark = w.lightAt(tx, ty) < 4;
+    /* 어둠 = 땅속의 어두운 굴. 지표 위 숲 그늘(정글 잎 · 몸 그늘)까지 세면 낮에 정글을 걷는 내내 긴장 곡이 울렸다 — 둘레 3×3 의 가장 밝은 칸으로 잰다 */
+    let lit = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) lit = Math.max(lit, w.lightAt(tx + dx, ty + dy));
+    const dark = ty > w.surface[clamp(tx, 0, w.dims.WW - 1)] + 2 && lit < 4;
     if (night || dark) return 'tense';
 
     // 여명 마을 동쪽 — 버섯 골짜기와 부패한 땅

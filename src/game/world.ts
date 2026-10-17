@@ -733,7 +733,7 @@ export class World extends TileMap {
           const cov = (Math.min(bx + bw, (x + 1) * TS) - Math.max(bx, x * TS)) * (Math.min(by + bh, (y + 1) * TS) - Math.max(by, y * TS)) / (TS * TS);
           if (cov > 0) cells.push((y - y0) * w + (x - x0), 1 - (1 - SUN_BODY) * Math.min(1, cov * 1.4));
         }
-      F.occlude(cells, 0.55 * sunK);
+      F.occlude(cells, 0.55 * sunK, true);
     }
   }
   /** 그늘은 땅 겉면 한 칸에만 떨어진다 — 그 밑 흙은 둘레 ±SOIL_R 칸 겉면의 평균 햇빛에서 칸마다 2.7씩 줄여 채운다.

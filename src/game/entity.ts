@@ -43,6 +43,9 @@ export const VAULT_SIZE = 60;   // 여명 마을 보관고 (가방과 별개로 
 
 /* ================= 기본 엔티티 ================= */
 /* 칸 충돌 이동은 엔진(Entity)이 하고, 물(부력·끌림·물살·폭포)과 계단 높이는 여기서 끼운다. */
+/** 보스 평타 배율 · 기술 배율(boss-moves 의 m 에 한 번 더) */
+export const BOSS_DMG = 1.3, BOSS_MOVE_DMG = 1.3;
+
 export class Ent extends Entity {
   /* 필드 — 생성자·조각이 채운다. 타입은 차례로 좁힌다 */
   declare submerged: number;
@@ -168,7 +171,7 @@ export class Player extends Ent {
       maxHp,
       maxMp,
       def: acc.def, crit: acc.crit + s.dex * 0.25, critD: acc.critD,
-      ms: 190 * (1 + acc.ms / 100), cdr: Math.min(55, acc.cdr), lifesteal: acc.lifesteal,
+      ms: 190 * (1 + acc.ms / 100), cdr: Math.min(55, acc.cdr), lifesteal: acc.lifesteal * 0.5,   // 흡혈 수치당 회복을 절반으로 — 보이는 % 도 실제 비율
       jumps: 1 + (acc.jump || 0), mpreg: maxMp / REGEN_FULL * (1 + acc.mpreg / 100), hpreg,
       dmgP: acc.dmgP, spdP: acc.spdP, magicP: acc.magicP, fire: acc.fire, frost: acc.frost, poison: acc.poison,
       dashCd: Math.max(0.5, 1.6 - acc.dashCd), dashI: 260 + acc.dashI,
@@ -462,6 +465,7 @@ export class Enemy extends Ent {
     this.dmg = d.dmg * sc * lf * md * tdm; this.armor = d.def! * sc;
     this.spd = d.spd; this.xp = Math.round(d.xp! * sc * lf); this.gold = Math.round(d.gold! * sc * lf);
     this.boss = !!d.boss;
+    if (this.boss) this.dmg *= BOSS_DMG;            // 보스 맞는 맛 — 평타가 일반 몹과 같은 결로 약했다(사용자). 기술은 boss-moves 가 한 번 더 곱한다
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;
     /* 공격 포즈를 띄워 둘 시간 — 사연: docs/code-history.md#h33 */
@@ -659,7 +663,7 @@ export class Enemy extends Ent {
         s.size * (crit ? 1.3 : 1), s.slow);
     }
     if (src instanceof Player) {
-      if (src.d.lifesteal > 0) src.heal(dmg * src.d.lifesteal / 100);
+      if (src.d.lifesteal > 0) src.heal(Math.min(dmg * src.d.lifesteal / 100, src.d.maxHp * 0.03));   // 한 번에 최대 생명의 3% — 큰 한 방이 피를 통째로 채웠다
       src.hurtCd = Math.max(src.hurtCd, 0.6);
     }
     if (kb && !this.boss) { this.vx += Math.sign(this.cx - (src ? src.cx : this.cx)) * kb * 26; this.vy = -kb * 12; }

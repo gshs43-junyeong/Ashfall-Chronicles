@@ -296,6 +296,10 @@ export const WorldVillage: Bag & ThisType<World> = {
       this.objects.push(Object.assign({ type: 'chest', tier: 6, loot: 'session2', x: tx * TS - 4, y: fy * TS - 26, w: 30, h: 26, items: null }, extra || {}));
     };
     const torch = (x: number, y: number) => { if (this.get(x, y) === T.AIR) this.set(x, y, T.TORCH); };
+    /* 지붕 — 망루 · 원탑이 같은 꼴(처마 한 칸 · 한 줄에 한 칸씩 좁아지는 뾰족 지붕). 따로 그리면 두 지붕이 서로 안 어울렸다 */
+    const roof = (xa: number, xb: number, yb: number) => {
+      for (let a = xa - 1, b = xb + 1, y = yb; a <= b && y >= 1; a++, b--, y--) box(a, y, b, y, T.ROOFTILE);
+    };
 
     /* ① 섬 — 하늘돌 덩어리, 윗면은 풀, 밑은 가운데가 깊게 늘어지고 궤도핵이 박혀 빛난다(성을 띄우는 것) */
     const ix0 = x0 - 3, ix1 = x0 + w + 3, half = (ix1 - ix0) / 2, icx = (ix0 + ix1) / 2;
@@ -324,11 +328,11 @@ export const WorldVillage: Bag & ThisType<World> = {
     torch(b0 + 3, F - 3); torch(b1 - 2, F - 3);
     chestOn(b0 + 10, F);
     /* ④ 본성 — 벽 두 칸, 1층 큰 홀(주인) · 2층 방과 봉인된 보관고 · 3층 · 옥상 · 모서리 망루 둘 */
-    const k0 = x0 + 31, k1 = x0 + 60, top = F - 21;
+    const k0 = x0 + 31, k1 = x0 + 60, top = F - 20;
     box(k0, top, k1, F, T.WALLSTONE); bg(k0, top, k1, F - 1);
     box(k0 + 2, F - 9, k1 - 2, F - 1, T.AIR);      // 1층 큰 홀
     box(k0 + 2, F - 15, k1 - 2, F - 11, T.AIR);    // 2층
-    box(k0 + 2, F - 20, k1 - 2, F - 17, T.AIR);    // 3층
+    box(k0 + 2, F - 19, k1 - 2, F - 17, T.AIR);    // 3층
     box(k0, F - 3, k0 + 1, F - 1, T.AIR);          // 뜰 → 홀 아치문
     for (let x = k0 + 2; x <= k1 - 2; x++) { this.set(x, F - 10, T.ORBITPLATE); this.set(x, F - 16, T.ORBITPLATE); }   // 층 바닥
     /* 오르는 길 — 왼쪽 망루(k0~k0+3) 밖의 계단통: 층 바닥에 구멍 · 세 칸마다 발판, 옥상까지. 망루 벽 밑으로 나면 옥상이 막힌다 */
@@ -336,13 +340,13 @@ export const WorldVillage: Bag & ThisType<World> = {
     for (let y = F - 3; y >= top; y -= 3) { this.set(sx, y, T.PLATFORM); this.set(sx + 1, y, T.PLATFORM); }
     for (const y of [F - 10, F - 16, top]) { this.set(sx, y, T.PLATFORM); this.set(sx + 1, y, T.PLATFORM); }
     parapet(k0 + 4, k1 - 4, top - 1);
-    for (const tx of [k0, k1 - 3]) {               // 모서리 망루 — 옥상 위로 솟은 속 빈 탑, 지붕은 계단형
-      box(tx, top - 5, tx + 3, top - 1, T.WALLSTONE); box(tx + 1, top - 4, tx + 2, top - 1, T.AIR); bg(tx, top - 5, tx + 3, top - 1);
+    for (const tx of [k0, k1 - 3]) {               // 모서리 망루 — 옥상 위로 솟은 속 빈 탑, 원탑과 같은 뾰족 지붕
+      box(tx, top - 4, tx + 3, top - 1, T.WALLSTONE); box(tx + 1, top - 3, tx + 2, top - 1, T.AIR); bg(tx, top - 4, tx + 3, top - 1);
       this.set(tx + 1, top, T.PLATFORM); this.set(tx + 2, top, T.PLATFORM);
-      this.set(tx + 1, top - 3, T.WINDOW);
-      for (let k = 0; k < 3; k++) box(tx - 1 + k, top - 6 - k, tx + 4 - k, top - 6 - k, T.ROOFTILE);   // 지붕 꼭대기 top-8 ≥ 1
+      this.set(tx + 1, top - 2, T.WINDOW);
+      roof(tx, tx + 3, top - 5);                   // 처마 top-5 · 꼭대기 top-7 ≥ 1
     }
-    for (const y of [F - 13, F - 19]) for (const x of [k0 + 9, k0 + 16, k1 - 9]) this.set(x, y, T.WINDOW);
+    for (const y of [F - 13, F - 18]) for (const x of [k0 + 9, k0 + 16, k1 - 9]) this.set(x, y, T.WINDOW);
     /* 큰 홀 — 제단 바닥 · 주인 · 비문 · 횃불 · 깃발 */
     for (let x = k0 + 6; x <= k1 - 4; x++) { this.set(x, F, T.ALTARSTONE); this.set(x, F + 1, T.ALTARSTONE); }
     this.objects.push({ type: 'lair', boss: 'restorer', ruin: 13, nm: tr('환원 기관'), x: (k0 + 18) * TS, y: F * TS - 60, w: 52, h: 60 });
@@ -357,14 +361,14 @@ export const WorldVillage: Bag & ThisType<World> = {
     torch(v0 + 2, F - 14); torch(k0 + 10, F - 14); torch(k0 + 18, F - 14);
     chestOn(k0 + 12, F - 10); this.putTileTrap({ x: k0 + 1, y: F - 15, w: v0 - k0, h: 5 }, F - 11, 'dart', r2);   // 양 벽(k0+1 · 보관고 벽)에 화살 구멍
     /* 3층 — 망루로 오르기 전 마지막 방 */
-    chestOn(k0 + 20, F - 16); torch(k0 + 10, F - 19); torch(k1 - 5, F - 19);
+    chestOn(k0 + 20, F - 16); torch(k0 + 10, F - 18); torch(k1 - 5, F - 18);
     /* ⑤ 안뜰 — 본성과 원탑 사이, 성벽 보행로 */
     const i0 = k1 + 1, i1 = x0 + 66;
     bg(i0, F - 7, i1, F - 1);
     for (let x = i0; x <= i1; x++) this.set(x, F - 8, T.PLATFORM);
     parapet(i0, i1, F - 9);
-    /* ⑥ 원탑 — 한 칸 벽, 여섯 칸마다 층(발판 구멍), 꼭대기는 원뿔 지붕 */
-    const t0 = x0 + 67, t1 = x0 + w - 3, ttop = F - 22;
+    /* ⑥ 원탑 — 한 칸 벽, 여섯 칸마다 층(발판 구멍), 꼭대기는 뾰족 지붕(벽 위에 바로 — 흉벽을 두면 지붕 밑 틈으로 하늘이 비쳤다) */
+    const t0 = x0 + 67, t1 = x0 + w - 3, ttop = F - 21;
     box(t0, ttop, t1, F, T.WALLSTONE); box(t0 + 1, ttop + 1, t1 - 1, F - 1, T.AIR); bg(t0, ttop, t1, F - 1);
     box(t0, F - 3, t0, F - 1, T.AIR);              // 안뜰 → 탑 문
     for (let y = F - 6; y > ttop; y -= 6) {
@@ -374,17 +378,23 @@ export const WorldVillage: Bag & ThisType<World> = {
       this.set(t0 + 2, y - 3, T.TORCH); this.set(t1, y - 3, T.WINDOW);
     }
     chestOn(t0 + 1, F - 6); chestOn(t0 + 1, F - 18);
-    crenel(t0, t1, ttop - 1);
-    for (let k = 0; k < 5; k++) if (ttop - 2 - k >= 1) box(t0 + k, ttop - 2 - k, t1 - k, ttop - 2 - k, T.ROOFTILE);
+    roof(t0, t1, ttop - 1);
 
-    /* 진입 다리 — 성문 앞 바닥 줄에서 왼쪽으로, 끝에서 가까운 하늘 섬 높이로 계단처럼 내려간다 */
-    const doorY = F - 1;
+    /* 진입 다리 — 성문 앞 바닥 줄에서 왼쪽으로. 판 밑에 돌 아치(교각 사이가 얇고 교각 쪽이 두껍다) · 교각 끝엔 떠 있게 하는 궤도핵 ·
+       난간과 가로등. 판 한 줄만 그으면 다리가 아니라 길로 보였다. 끝에서 가까운 하늘 섬 높이로 계단처럼 내려간다 */
+    const doorY = F - 1, SPAN = 10;
     let by = F, bx = ix0 - 1;
     for (let k = 0; k < 62 && bx > 6; k++, bx--) {
       this.set(bx, by, T.ORBITPLATE);
       for (let dy = -3; dy <= -1; dy++) this.set(bx, by + dy, T.AIR);
-      if (k > 14 && k % 6 === 5 && by < SKY_Y - 4) by++;   // 선착장(첫 14칸)은 평평하게 — 닻이 선다
-      if (k % 9 === 4) this.set(bx, by - 1, T.TORCH);
+      const u = (k % SPAN) / SPAN, pier = k % SPAN === 0;
+      const th = pier ? 4 : 1 + Math.round(2 * Math.pow(Math.abs(Math.cos(Math.PI * u)), 3));   // 아치 — 교각 가까이 두껍다
+      for (let d = 1; d <= th && by + d < SKY_Y - 1; d++) { this.set(bx, by + d, T.WALLSTONE); this.setWall(bx, by + d, 13); }
+      if (pier && by + th + 1 < SKY_Y - 1) this.set(bx, by + th + 1, T.ORBITCORE);
+      const nearAnchor = bx >= x0 - 12 && bx <= x0 - 8;
+      if (k % 8 === 4) this.set(bx, by - 1, T.LAMPPOST);
+      else if (!nearAnchor) this.set(bx, by - 1, T.FENCE);   // 난간(지나갈 수 있다)
+      if (k > 14 && k % 6 === 5 && by < SKY_Y - 6) by++;     // 선착장(첫 14칸)은 평평하게 — 닻이 선다
     }
     C.bridgeX = bx;
     const anchor = (i: number, kind: string, tx: number, fy: number) =>

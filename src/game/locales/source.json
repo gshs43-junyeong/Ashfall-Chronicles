@@ -327,6 +327,9 @@
   "{name|이} 쓰러졌다": [
    "game/net.netDownFx"
   ],
+  "{name} — 끼울 칸": [
+   "ui/tree.slotPicker"
+  ],
   "{nm|으로} 개조해야 만들 수 있다": [
    "game/village.craft"
   ],
@@ -750,6 +753,9 @@
   "겁을 먹었다": [
    "data/quests"
   ],
+  "게이지": [
+   "game/fish-duel.duelTutorial"
+  ],
   "게임 화면에 띄울 것을 고릅니다. 숨겨도 조작키로 여는 창은 그대로 열립니다.": [
    "index.html"
   ],
@@ -800,6 +806,9 @@
   ],
   "고른 것 없음 — 전부 앞으로": [
    "ui/machine.logicCfg"
+  ],
+  "고리": [
+   "game/fish-duel.duelTutorial"
   ],
   "고유 공격 <b>{v}</b> · 피해 <b>{dmg}</b>": [
    "ui/tip.showTip"
@@ -995,7 +1004,7 @@
   "꺼낸다": [
    "ui/process.oven"
   ],
-  "꾹 눌러 배운다 · 배운 칸과 이어진 칸만 드러난다 · 우클릭으로 스킬 칸 등록": [
+  "꾹 눌러 배운다 · 끌거나 휠로 판을 옮긴다 · 우클릭으로 스킬 칸 고르기": [
    "ui/tree.buildTree"
   ],
   "꾹 눌러 습득{v}": [
@@ -1014,6 +1023,7 @@
    "game/ruins.ruinCipher"
   ],
   "낚시 겨루기": [
+   "game/fish-duel.duelTutorial",
    "index.html"
   ],
   "낚시·농사 확인 자리 — 오른쪽이 호수(낚싯대를 든 채), 왼쪽 12칸이 갈 수 있는 풀밭 · &duel=0~4 면 그 등급 겨루기로 바로": [
@@ -1122,6 +1132,9 @@
   ],
   "누군가 타고 있다": [
    "game/rides.useMount"
+  ],
+  "누른 채 가운데를 빙빙 돌린다": [
+   "game/fish-duel.duelTutorial"
   ],
   "누른다": [
    "ui/process.press",
@@ -1453,6 +1466,9 @@
   "맞춰 붙인다": [
    "ui/process.craftSteps"
   ],
+  "맞히면 물고기가 끌려오고, 놓치면 달아난다": [
+   "game/fish-duel.duelTutorial"
+  ],
   "맡은 일에 대해 묻는다": [
    "game/talk.talkVillager"
   ],
@@ -1473,6 +1489,9 @@
   ],
   "먹일 것": [
    "data/quests"
+  ],
+  "먼저 배워야 칸에 끼울 수 있다": [
+   "ui/tree.slotPicker"
   ],
   "멀티플레이": [
    "index.html"
@@ -1589,6 +1608,9 @@
   "물건을 보여 달라": [
    "game/talk.talkExtra"
   ],
+  "물고기가 물었다! 박자에 맞춰 줄을 당겨 게이지를 끝까지 채우면 잡힌다.": [
+   "game/fish-duel.duelTutorial"
+  ],
   "물러선다": [
    "index.html"
   ],
@@ -1631,6 +1653,12 @@
    "ui.buildStatAlloc",
    "ui/tip.compareLine",
    "ui/tip.showTip"
+  ],
+  "바깥 고리가 원에 닿는 순간 클릭 · Z · X": [
+   "game/fish-duel.duelTutorial"
+  ],
+  "바깥 고리가 원에 닿는 순간 탭": [
+   "game/fish-duel.duelTutorial"
   ],
   "바늘이 가리킬 곳이 없다 — 쓰러진 자리가 남아 있지 않다": [
    "game/trinkets.recallTo"
@@ -2233,6 +2261,12 @@
   "스탯을 초기화했다. 능력 창에서 다시 분배하라": [
    "game/village.respecStats"
   ],
+  "스피너": [
+   "game/fish-duel.duelTutorial"
+  ],
+  "슬라이더": [
+   "game/fish-duel.duelTutorial"
+  ],
   "시계 · 깊이": [
    "index.html"
   ],
@@ -2246,7 +2280,11 @@
    "index.html"
   ],
   "시작": [
+   "game/fish-duel.duelTutorial",
    "game/save.showNewGameForm"
+  ],
+  "시작 (Space)": [
+   "game/fish-duel.duelTutorial"
   ],
   "시추 중": [
    "factory",
@@ -3100,6 +3138,9 @@
    "ui/tip.compareLine",
    "ui/tip.showTip"
   ],
+  "지니는 힘은 칸에 끼우지 않는다": [
+   "ui/tree.slotPicker"
+  ],
   "지도": [
    "index.html"
   ],
@@ -3199,6 +3240,9 @@
   "처음부터 우리 것인 쇠야. 이걸로 만든 건 팔지 말자.": [
    "data/quests"
   ],
+  "처음에 누르고, 떼지 말고 공을 따라간다": [
+   "game/fish-duel.duelTutorial"
+  ],
   "천장에 매달아야 한다": [
    "game/mine.rightClick"
   ],
@@ -3289,6 +3333,9 @@
   ],
   "칸에 채운다": [
    "ui/process.battery"
+  ],
+  "칸에서 빼기": [
+   "ui/tree.slotPicker"
   ],
   "캐릭터": [
    "game/save.showNewGameForm"

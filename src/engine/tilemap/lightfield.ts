@@ -20,7 +20,7 @@ export class LightField {
   declare dec: Float32Array; declare decP: Float32Array; declare sunV: Float32Array; declare trans: Float32Array;
   declare x0: number; declare y0: number; declare w: number; declare h: number; declare n: number;
   declare cache: Map<number, Patch>; declare dirty: number[]; declare frame: number; declare sunOn: boolean;
-  declare sunDir: number[]; declare sky: ((x: number, y: number) => number) | null; declare occT: Float32Array; declare occA: Float32Array; declare occB: Float32Array;
+  declare sunDir: number[]; declare sky: ((x: number, y: number) => number) | null; declare occT: Float32Array; declare occA: Float32Array; declare occB: Float32Array; declare occBase: Float32Array | null;
 
   constructor(cfg: LightFieldConfig) {
     this.cfg = cfg; this.cache = new Map(); this.dirty = []; this.frame = 0;
@@ -31,7 +31,7 @@ export class LightField {
     this.L = new Float32Array(n); this.Lp = new Float32Array(n); this.col = new Float32Array(n * 3);
     this.op = new Uint8Array(n); this.dec = new Float32Array(n); this.decP = new Float32Array(n);
     this.sunV = new Float32Array(n); this.trans = new Float32Array(n);
-    this.occT = new Float32Array(n); this.occA = new Float32Array(n); this.occB = new Float32Array(n);
+    this.occT = new Float32Array(n); this.occA = new Float32Array(n); this.occB = new Float32Array(n); this.occBase = null;
   }
 
   /** 새 창 — (x0, y0) 부터 w×h 칸. 버퍼를 비우고, 바뀐 칸 둘레의 광원 판을 버린다. 칸 번호 k = (y-y0)·w + (x-x0). */
@@ -116,15 +116,19 @@ export class LightField {
   }
 
   /** 움직이는 가림(몸 따위) — finish **뒤에** 곱한다. 한두 칸짜리 그늘은 번지기가 둘레 빛으로 메워 사라지므로,
-      같은 직사광(castSunlight)을 가림 있이 · 없이 두 번 쏘아 그 비만큼 어둡게 한다. cells = [판 칸 번호, 남는 빛(0~1), …] */
-  occlude(cells: number[], strength: number): void {
+      같은 직사광(castSunlight)을 가림 있이 · 없이 두 번 쏘아 그 비만큼 어둡게 한다. cells = [판 칸 번호, 남는 빛(0~1), …]
+      ground: 그늘을 처음 닿는 막힌 칸(땅 겉면)에만 떨군다 — 나무 그늘과 같은 꼴. 빈 칸까지 어둡게 하면 몸에서 땅까지
+      허공에 어두운 띠가 세로로 그어졌고, 해를 안 가리는 칸(하늘 섬 따위)을 뚫고 화면 끝까지 이어졌다 */
+  occlude(cells: number[], strength: number, ground = false): void {
     if (!this.sunOn || !cells.length || !this.sky) return;
-    const { n, w, h, x0, y0, L } = this, T = this.occT, A = this.occA, B = this.occB, [sx, sy] = this.sunDir;
-    T.set(this.trans.subarray(0, n));
+    const { n, w, h, x0, y0, L, op } = this, T = this.occT, A = this.occA, B = this.occB, [sx, sy] = this.sunDir;
+    let base = this.trans;
+    if (ground) { if (!this.occBase || this.occBase.length < n) this.occBase = new Float32Array(this.trans.length); base = this.occBase; for (let k = 0; k < n; k++) base[k] = op[k] ? 0 : this.trans[k]; }
+    T.set(base.subarray(0, n));
     for (let i = 0; i < cells.length; i += 2) T[cells[i]] *= cells[i + 1];
-    castSunlight(A, w, h, x0, y0, this.trans, sx, sy, this.sky);
+    castSunlight(A, w, h, x0, y0, base, sx, sy, this.sky);
     castSunlight(B, w, h, x0, y0, T, sx, sy, this.sky);
-    for (let k = 0; k < n; k++) if (A[k] > 0.01 && B[k] < A[k]) L[k] *= 1 - (1 - B[k] / A[k]) * strength;
+    for (let k = 0; k < n; k++) if ((!ground || op[k]) && A[k] > 0.01 && B[k] < A[k]) L[k] *= 1 - (1 - B[k] / A[k]) * strength;
   }
 
   /** 세계 칸의 밝기(창 밖은 0) */

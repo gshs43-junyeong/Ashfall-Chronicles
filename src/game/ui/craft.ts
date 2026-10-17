@@ -116,6 +116,7 @@ export const CraftUIPart: Bag = {
       el.addEventListener('mouseenter', (e: any) => this.showTip(makeItem(RECIPES[i].out, 1, 0), e));
       el.addEventListener('mouseleave', () => this.hideTip());
     });
+    if (!this.reducedMotion()) this.craftIdle();                       // 시설 장면(ui/craft-scene)
   },
 
   /* ---------------- 마을 회관 ---------------- */

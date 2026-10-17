@@ -320,7 +320,7 @@ export const UI: Bag = {
     if (id === 'inv') { this.refreshBag(); this.refreshEquip(); this.refreshStatSheet(); }
     if (id === 'skill') {
       this.setSkillTab(this.skillTab || 'tree'); this.refreshTree(); this.refreshSkillSlots(); this.refreshProf();
-      const core = $('#tree-wrap .bcore'); if (core && this.skillTab !== 'prof') core.scrollIntoView({ block: 'center' });   // 심장이 가운데에 오게
+      this._treePan = null;                             // 열 때마다 심장을 가운데로(판 옮기기 — ui/tree bindTreePan)
     }
     if (id === 'quest') this.refreshQuest();
     if (id === 'craft') this.refreshCraft();

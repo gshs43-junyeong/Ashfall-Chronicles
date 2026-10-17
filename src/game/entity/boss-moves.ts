@@ -4,7 +4,7 @@ import { TAU, angleTo, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { ARC_FX, BOSS_MOVES, DOWN_COL, GROUND_MOVE, XFX_OF } from '../data/bossmoves.js';
 import { TS } from '../world.js';
-import { Enemy, Part, Proj } from '../entity.js';
+import { BOSS_MOVE_DMG, Enemy, Part, Proj } from '../entity.js';
 /* 기술을 쓰는 동안은 몸놀림(boss-ai)이 쉰다 — 한꺼번에 둘이 겹치면 피할 자리가 사라진다.
    ★ 기술은 반드시 예고(tele)를 먼저 보인다: 보스 둘레에 진이 돌고 이름을 외친 뒤에야 움직인다. */
 
@@ -105,7 +105,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
 
   /** 기술 실행 — 돌려준 busy 동안 보스가 묶인다(tick 이 있으면 그 동안 움직임을 그것이 맡는다) */
   mvStart(d: Bag, p: Player, world: World, K: Bag): Run {
-    const m = d.m ?? 1, fly = this.flies(), E = this;
+    const m = (d.m ?? 1) * BOSS_MOVE_DMG, fly = this.flies(), E = this;   // 기술은 평타보다 확실히 아프게
     const xf = d.fx || XFX_OF[d.proj] || 'rock';                  // 덧붙임의 결 — 탄 갈래를 따른다(룬 탄 → 룬 기둥)
     const extra = () => {                                         // 필살기 덧붙임 — 한 기술에 다른 결을 하나 더
       if (d.march) this.mvStart({ k: 'march', cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: xf, m: 0.8 }, p, world, K);
