@@ -9,19 +9,29 @@ import { dimsOf } from './size.js';
 import { TS } from './world.js';
 
 
-/* ★ 배경음악은 저작권 문제로 전부 뺐다(파일 · 히스토리 모두) — 표가 비면 Music 은 아무것도 불러오지 않는다(404 없음).
-   다시 넣을 때는 저작권이 분명한 곡만, 상황 키(title · normal · tense · rain · boss · village · east · catacomb · sky · sea · seadeep ·
-   lastnote · finale — game.ts pickBgm)에 'assets/audio/<파일>' 로 적는다. */
+/* 배경음악 — 파일은 play/assets/bgm/<상황 키>.<확장자>(같은 키에 여럿이면 <키>_1 · <키>_2 … 중 하나를 틀 때마다 고른다).
+   목록은 tools/sync-bgm.mjs 가 폴더를 훑어 assets/bgm-manifest.js(window.BGM_MANIFEST)에 적는다 — 적힌 곡만 부르므로
+   빈 칸은 404 없이 대체 곡(BGM_FALLBACK)으로 내려간다. 상황 키를 고르는 곳은 game.ts pickBgm.
+   ★ 키를 더하면 BGM_KEYS 에도 — sync-bgm 이 이 줄을 읽어 모르는 파일 이름을 막는다. */
+export const BGM_KEYS = ['title', 'normal', 'tense', 'rain', 'boss', 'village', 'east', 'catacomb', 'sky', 'sea', 'seadeep', 'lastnote', 'finale'];
 export const BGM: Record<string, string | string[]> = {};
+{
+  const man = (typeof window !== 'undefined' && window.BGM_MANIFEST) || {};
+  for (const k of BGM_KEYS) { const v = man[k]; if (v && v.length) BGM[k] = v.length === 1 ? v[0] : v.slice(); }
+}
 
 /* 파일이 아직 없는 곡은 여기 적힌 곡으로 대신한다. */
 export const BGM_FALLBACK = { east: 'normal', catacomb: 'tense', sky: 'normal', rain: 'tense',
   /* 바다 곡이 없으면 평상시 곡, 심해 곡이 없으면 바다 곡 → 결국 평상시 곡으로 내려간다. */
   sea: 'normal', seadeep: 'sea',
   // 종장 두 곡이 없으면 보스 곡, 마지막 음이 없으면 긴장 곡으로 내려간다
-  finale: 'boss', lastnote: 'tense' };
+  finale: 'boss', lastnote: 'tense',
+  // 곡이 몇 개만 있어도 어디서든 무엇인가 흐르게 — 결국 평상시 곡으로 모인다
+  title: 'normal', village: 'normal', boss: 'tense', tense: 'normal' };
 
 export const Music = createMusic({ tracks: BGM, fallback: BGM_FALLBACK });
+/* 목록에 없는 키는 처음부터 '없는 파일'로 — resolve 가 대체 곡 사슬을 따라간다(안 하면 곧장 normal 로 떨어졌다) */
+for (const k of BGM_KEYS) if (!BGM[k]) Music.missing[k] = true;
 
 /* ===== Sfx: 짧은 효과음 ===== */
 

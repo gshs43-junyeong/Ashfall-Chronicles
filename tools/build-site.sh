@@ -47,6 +47,11 @@ else
   warn "node·python3 이 없습니다 — sprites-manifest.js 는 커밋된 것을 그대로 씁니다"
 fi
 
+# 배경음악 목록(assets/bgm/ → bgm-manifest.js) — node 만 쓴다
+if command -v node >/dev/null 2>&1; then
+  node "$ROOT/tools/sync-bgm.mjs" || warn "배경음악 목록 동기화 실패 — 커밋된 파일을 그대로 씁니다"
+fi
+
 # ---- 게임 코드 번들 -------------------------------------------------------------
 # src/game/ 가 원본이고 play/js/ashfall.js 는 산출물(커밋돼 있다). 여기서 다시 만들어
 # 소스만 고치고 번들을 안 올린 커밋도 배포판에는 반영되게 한다. 실패하면 커밋된 번들을 쓴다.

@@ -123,7 +123,7 @@ interface FactoryCtx {
 
 /** 창구에 싣는 부팅 표식(테스트가 읽는다) · 옛 사파리 오디오. */
 interface Window {
-  __acBooting?: number; __acDeadline?: number; __acBooted?: number; SPRITE_MANIFEST?: any; webkitAudioContext?: typeof AudioContext;
+  __acBooting?: number; __acDeadline?: number; __acBooted?: number; SPRITE_MANIFEST?: any; BGM_MANIFEST?: Record<string, string[]>; webkitAudioContext?: typeof AudioContext;
 }
 
 /* 클래스 타입 — 인자에 타입을 달 때 import 없이 쓴다(타입만 · 값으로 쓰려면 그 모듈을 import 할 것). */

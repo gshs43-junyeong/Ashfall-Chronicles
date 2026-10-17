@@ -8,7 +8,7 @@ name: Cloudflare Pages
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'play/**', 'tools/build-site.sh', 'tools/sync-manifest.py', '.github/workflows/pages-cf.yml']
+    paths: ['site/**', 'play/**', 'tools/build-site.sh', 'tools/sync-manifest.py', 'tools/sync-bgm.mjs', '.github/workflows/pages-cf.yml']
   workflow_dispatch:
 
 concurrency:

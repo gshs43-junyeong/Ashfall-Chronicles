@@ -197,6 +197,8 @@ sync → (필요하면) 코드에서 그 키를 부르기, 셋이 다 있어야 
 Object.keys(Sprites.img).filter(k => !Sprites.img[k].width)   // 실패한 것
 ```
 
+배경음악은 `assets/bgm/<상황 키>.<확장자>`(여럿이면 `<키>_1` …) — `node tools/sync-bgm.mjs` 가 폴더를 훑어
+`assets/bgm-manifest.js` 를 쓴다(내용 해시 `?h=` · 이름이 키가 아니면 멈춤 · `--check` 는 test:manifest). 키 · 대체 곡은 music.ts `BGM_KEYS` · `BGM_FALLBACK`, 안내는 `assets/bgm/README.md`.
 효과음(`assets/sound_effects/*.mp3`)은 매니페스트를
 타지 않고 `music.js`가 경로를 직접 안다. 효과음 파일은 **1.0초**이고 `SfxLoop`이
 0.9초에 겹쳐 이어 붙인다(끊김 방지).
@@ -301,7 +303,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   다운로드 페이지는 `site/download` 의 '여는 방법' 단추로 고르고, 앱 판을 처음 릴리스하면 그 스크립트의 `APP_VERSION` · `APP_HASHES` 를 채운다
   (null 이면 단추가 잠기고 "다음 릴리스부터" 안내). 아이콘은 `python3 tools/mkappicon.py`(파비콘 512 → desktop/icon.*, `mklogo.py` 가 끝에 같이 돌린다).
 
-- **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **5곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257 · v1.1.3 = 258). zip 을 낼 때
+- **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **6곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 배경음악 목록 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257 · v1.1.3 = 258). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
 - **웹에서 `/play/assets/*` 그림은 1년 immutable 캐시다**(vercel.json · `_headers`) — index.html 이 부르는 그림(로고 · 파비콘)과 사이트 HTML 의 `../play/assets/` 그림(마을 사람 초상 따위 · 사이트 스크립트는 제 `?v=` 를 물려준다)에는 반드시 `?v=` 를 단다(배포 때 커밋 해시로 찍힌다). 빠뜨리면 그림을 바꿔도 브라우저가 옛것을 계속 쓴다(타이틀 로고가 그랬다). CSS 의 `url()` 그림은 내용 해시 `?v=<md5 앞 8자>` — 그림을 바꾸면 같이 고칠 것.
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
@@ -333,7 +335,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   발자국을 줄이면 지형·난수가 밀려 유적이 끊긴다(d3 석판 유적 1 이 방 3/16). 광장·출발점은 x0+50.
 - **ITEMS 키는 두 번 적지 말 것** — 객체 리터럴은 뒤엣것이 조용히 덮는다(세션 1 낚시가 세션 3 삼지창을 줬다). 물건값(`ITEM_VAL`)은
   제작법이 여럿이면 가장 싼 것으로 매긴다.
-- **배경음악 없음**(2026-10-17 저작권 문제로 전부 삭제 · 히스토리에서도 지움 · `play/assets/audio/` 는 .gitignore). music.ts `BGM` 은 빈 표 — 곡을 다시 넣으려면 저작권이 분명한 파일로 키별로 적는다(상황 키는 game.ts `pickBgm`).
+- **배경음악**: 옛 곡은 2026-10-17 저작권 문제로 전부 지웠다(히스토리에서도 · `play/assets/audio/` 는 .gitignore — 다시 쓰지 말 것). 새 곡은 Google Flow Music 으로 만들어 `play/assets/bgm/` 에 넣는다(MIT 그대로 — NOTICE 예외 없음) → `node tools/sync-bgm.mjs` → 커밋. 빈 키는 `BGM_FALLBACK` 사슬로 내려가 결국 normal, 그것도 없으면 무음.
 - 유적 입구는 **벽돌로 두른 복도**다(`_buildPassage` — 계단·복도·층계참·계단실). 피라미드는
   삼각형(plan `'tri'`)이고 빗면에 문이 난다. 유적을 건드렸으면 `tools/ruindiag.py`
   (걸어서 오가는가)와 `tools/entdiag.py`(입구 발판이 어디서 왔나)를 여러 씨앗으로 돌릴 것.

@@ -47373,6 +47373,7 @@
     Ambient: () => Ambient,
     BGM: () => BGM,
     BGM_FALLBACK: () => BGM_FALLBACK,
+    BGM_KEYS: () => BGM_KEYS,
     Music: () => Music,
     SFX_DIR: () => SFX_DIR,
     SFX_FAM: () => SFX_FAM,
@@ -47425,7 +47426,15 @@
   }
 
   // src/game/music.ts
+  var BGM_KEYS = ["title", "normal", "tense", "rain", "boss", "village", "east", "catacomb", "sky", "sea", "seadeep", "lastnote", "finale"];
   var BGM = {};
+  {
+    const man = typeof window !== "undefined" && window.BGM_MANIFEST || {};
+    for (const k of BGM_KEYS) {
+      const v = man[k];
+      if (v && v.length) BGM[k] = v.length === 1 ? v[0] : v.slice();
+    }
+  }
   var BGM_FALLBACK = {
     east: "normal",
     catacomb: "tense",
@@ -47436,9 +47445,15 @@
     seadeep: "sea",
     // 종장 두 곡이 없으면 보스 곡, 마지막 음이 없으면 긴장 곡으로 내려간다
     finale: "boss",
-    lastnote: "tense"
+    lastnote: "tense",
+    // 곡이 몇 개만 있어도 어디서든 무엇인가 흐르게 — 결국 평상시 곡으로 모인다
+    title: "normal",
+    village: "normal",
+    boss: "tense",
+    tense: "normal"
   };
   var Music = createMusic({ tracks: BGM, fallback: BGM_FALLBACK });
+  for (const k of BGM_KEYS) if (!BGM[k]) Music.missing[k] = true;
   var SFX_DIR = "assets/sound_effects/";
   var SFX_FILES = {
     swing: "swing",

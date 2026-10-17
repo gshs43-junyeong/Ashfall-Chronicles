@@ -32,6 +32,7 @@ ARG BUILD=docker
 COPY . .
 RUN node tools/bundle.mjs \
  && node tools/sync-manifest.mjs \
+ && node tools/sync-bgm.mjs \
  && CI=1 GITHUB_SHA="$BUILD" bash tools/build-site.sh \
  # 체크아웃의 파일 권한(600 따위)이 이미지에 따라오면 nginx 가 403 을 낸다 — 누구나 읽게
  && chmod -R a+rX play site
