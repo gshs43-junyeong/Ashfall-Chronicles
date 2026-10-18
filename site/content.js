@@ -49,17 +49,15 @@
     [17, '세션 3 · 제 2 장', '가라앉은 종',             '물이 대신 대답한다',                    'chapter_17_bell']
   ];
 
-  /* [파일, 이름, 등장하는 장, 체력, 프레임폭, 프레임높이]
-   *
-   * 보스 PNG는 6~7프레임짜리 가로 스프라이트 시트다. 프레임 사이 여백이 보스마다
-   * 다르고(king_slime 4px, hepha 0px) 계산으로 맞추면 어긋나므로, 항상 x=0 에 있는
-   * 첫 프레임만 잘라 쓴다. 폭·높이는 assets/manifest.json 의 값에 scale 4 를 곱한 것.
-   *
-   * ★ 이 폭·높이는 **manifest.json 을 다시 보고 옮겨 적어야 한다.** 여기 적힌 값이
-   *   시트보다 작으면 잘린 보스가 카드에 뜬다 — tools/padframe.py 가 칸 가장자리에
-   *   닿은 시트에 여백을 주면서 열두 마리가 전부 한두 칸씩 커졌는데, 그때 이 표가
-   *   안 따라와서 슬라임 왕이 82×62(실제 86×64)로 잘려 있었다. */
-  var BOSS_SCALE = 4;
+  /* 칸 크기 · 배율은 게임 매니페스트(play/assets/sprites-manifest.js)에서 읽는다.
+   ★ 여기에 손으로 적지 말 것 — 보스를 키워 다시 그리며(배율 1 · 칸 2~3배) 손으로 적은 표가 어긋나
+   보스 카드가 잘려 있었다. 아래 [폭, 높이] 는 매니페스트가 안 실렸을 때만 쓴다(옛 4배 시트 기준). */
+  var BOSS_SHEETS = ((window.SPRITE_MANIFEST || {}).bosses || {});
+  function bossSheet(id, fw, fh) {
+    var sh = (BOSS_SHEETS.sheets || {})[id];
+    if (sh) return { w: sh.frameW, h: sh.frameH, k: sh.scale != null ? sh.scale : (BOSS_SHEETS.scale || 4) };
+    return { w: fw, h: fh, k: 4 };
+  }
   var BOSSES = [
     ['king_slime',    '슬라임 왕',                   '제 1 장',           900,  86,  64],
     ['bone_lord',     '뼈의 군주',                   '제 2 장',          2000,  60,  76],
@@ -109,11 +107,12 @@
   /* ---- 보스 ---- */
   var BOX_H = 78;   /* 카드 안 그림 높이(px). 원본 비율을 지키며 이 높이에 맞춘다. */
 
-  function drawFirstFrame(canvas, file, fw, fh, silhouette) {
+  function drawFirstFrame(canvas, file, fw0, fh0, silhouette) {
+    var sh = bossSheet(file, fw0, fh0), fw = sh.w * sh.k, fh = sh.h * sh.k;   // 시트 위 한 칸(픽셀)
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var ratio = Math.min(BOX_H / (fh * BOSS_SCALE), 1);
-    var w = Math.round(fw * BOSS_SCALE * ratio);
-    var h = Math.round(fh * BOSS_SCALE * ratio);
+    var ratio = Math.min(BOX_H / fh, 1);
+    var w = Math.round(fw * ratio);
+    var h = Math.round(fh * ratio);
 
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
@@ -125,8 +124,7 @@
 
     var img = new Image();
     img.onload = function () {
-      ctx.drawImage(img, 0, 0, fw * BOSS_SCALE, fh * BOSS_SCALE,
-                    0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, fw, fh, 0, 0, canvas.width, canvas.height);
 
       /* 아직 만나지 않은 보스는 형체만 남긴다. source-atop 이라 이미 그린 픽셀
        * 위에만 칠해지고 투명한 배경은 건드리지 않는다 — 윤곽이 그대로 남는다. */

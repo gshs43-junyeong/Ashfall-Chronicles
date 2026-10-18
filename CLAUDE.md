@@ -164,7 +164,7 @@ const SHIFT = 800;   // size.js — data.js·world.js 둘 다 쓰므로 둘보�
 
 ## 3. 애셋 파이프라인
 
-> **그림의 일관성 · 잘림 규칙은 [`DESIGN.md`](DESIGN.md)** — 새 애셋(특히 초상 · 캐릭터 시트)을 넣기 전에 읽을 것. 마을 NPC · 상인 초상은 `python3 tools/mkportrait.py`.
+> **그림의 일관성 · 잘림 규칙은 [`DESIGN.md`](DESIGN.md)** — 새 애셋(특히 초상 · 캐릭터 시트)을 넣기 전에 읽을 것. 마을 NPC · 상인 초상은 `python3 tools/mknpc.py portrait`.
 
 ```
 assets/<폴더>/*.png  +  assets/manifest.json      ← 사람이 고치는 곳
@@ -301,9 +301,9 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **여는 방법 둘**: 브라우저로 여는 판(`build.sh` — 런처가 index.html 을 기본 브라우저로)과 앱으로 여는 판(`desktop/` — Electron 껍데기가
   **같은 play/ 를 그대로** 연다, 처음 한 번 `cd desktop && npm ci`). 앱은 노드를 게임에 들이지 않는다(문맥 분리 · 샌드박스) — 게임 코드는 둘 다 같다.
   다운로드 페이지는 `site/download` 의 '여는 방법' 단추로 고르고, 앱 판을 처음 릴리스하면 그 스크립트의 `APP_VERSION` · `APP_HASHES` 를 채운다
-  (null 이면 단추가 잠기고 "다음 릴리스부터" 안내). 아이콘은 `python3 tools/mkappicon.py`(파비콘 512 → desktop/icon.*, `mklogo.py` 가 끝에 같이 돌린다).
+  (null 이면 단추가 잠기고 "다음 릴리스부터" 안내). 아이콘은 `python3 tools/mklogo.py appicon`(파비콘 512 → desktop/icon.*, `mklogo.py` 가 끝에 같이 돌린다).
 
-- **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **6곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 배경음악 목록 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257 · v1.1.3 = 258). zip 을 낼 때
+- **캐시 무효화**: `play/index.html`의 `?v=NNN`이 **6곳**에 있다(css · `locales/list.js` · 로케일 `document.write` · 매니페스트 · 배경음악 목록 · 번들, v1.1.0 = 255 · v1.1.1 = 256 · v1.1.2 = 257 · v1.1.3 = 258 · v1.1.4 = 259). zip 을 낼 때
   한 번에 전부 올린다. 개발 중에는 올리지 않는다. 웹 배포는 `build-site.sh` 가 커밋 해시로 찍는다(docs/deploy-cache.md).
 - **웹에서 `/play/assets/*` 그림은 1년 immutable 캐시다**(vercel.json · `_headers`) — index.html 이 부르는 그림(로고 · 파비콘)과 사이트 HTML 의 `../play/assets/` 그림(마을 사람 초상 따위 · 사이트 스크립트는 제 `?v=` 를 물려준다)에는 반드시 `?v=` 를 단다(배포 때 커밋 해시로 찍힌다). 빠뜨리면 그림을 바꿔도 브라우저가 옛것을 계속 쓴다(타이틀 로고가 그랬다). CSS 의 `url()` 그림은 내용 해시 `?v=<md5 앞 8자>` — 그림을 바꾸면 같이 고칠 것.
 - **zip 은 file:// 로 열린다** — 크롬은 PNG 를 다른 출처로 보고 캔버스를 더럽혀 `getImageData` 가 SecurityError 를 던진다.
@@ -338,12 +338,12 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **배경음악**: 옛 곡은 2026-10-17 저작권 문제로 전부 지웠다(히스토리에서도 · `play/assets/audio/` 는 .gitignore — 다시 쓰지 말 것). 새 곡은 Google Flow Music 으로 만들어 `play/assets/bgm/` 에 넣는다(MIT 그대로 — NOTICE 예외 없음) → `node tools/sync-bgm.mjs` → 커밋. 빈 키는 `BGM_FALLBACK` 사슬로 내려가 결국 normal, 그것도 없으면 무음.
 - 유적 입구는 **벽돌로 두른 복도**다(`_buildPassage` — 계단·복도·층계참·계단실). 피라미드는
   삼각형(plan `'tri'`)이고 빗면에 문이 난다. 유적을 건드렸으면 `tools/ruindiag.py`
-  (걸어서 오가는가)와 `tools/entdiag.py`(입구 발판이 어디서 왔나)를 여러 씨앗으로 돌릴 것.
+  (걸어서 오가는가)와 `tools/ruindiag.py ent`(입구 발판이 어디서 왔나)를 여러 씨앗으로 돌릴 것.
 - 바이옴 유적 여섯에는 **맥박 · 탐사 기록 · 메아리 시련**이 있다(game.js '유적의 맥박' 절,
   data.js `PULSE` · `SURVEY_W` · `ECHO`). 맥박 값은 저장하지 않고 기록(`survey`)만 저장한다.
   유적 상자 **등급**은 맥박으로 올리지 않는다 — `rollChest`가 유적 상자를 4등급으로 묶는 이유를 따른다.
   **맥박 사건은 유적마다 제 것 둘**(`PULSE_EVENTS[].ruin` · game/ruin-events.ts — 18개, 사건마다 하는 일이 다르다; 공용 사건을 다시 만들지 말 것)이고,
-  유적마다 싸우는 법이 다른 몬스터가 하나씩 있다(`ENEMIES[].trait` · entity/enemy-traits.ts · 그림 `tools/mkruinmobs3.py` — 부위 명암 붓 `tools/pxfig.py`). 사건이 세계에 놓은 것(깜빡이는 발판 ·
+  유적마다 싸우는 법이 다른 몬스터가 하나씩 있다(`ENEMIES[].trait` · entity/enemy-traits.ts · 그림 `tools/mkruinmobs.py` — 부위 명암 붓 `tools/mkruinmobs.py`). 사건이 세계에 놓은 것(깜빡이는 발판 ·
   꺼진 바닥)은 `evCleanup` 이 되돌린다 — 새 사건도 바꾼 칸을 기억해 둘 것. 사연: docs/code-history.md#h169
 - **봉인 방**(game/ruin-puzzle.ts · data/ruins.ts `PUZZLE`): 유적마다 봉인 방 셋(석판 둘) — 들어서면 출입구를 `T.SEALSTONE` 으로 막고 퍼즐을 풀면 연다. 방은 해시로 고른다(생성 난수 안 뽑음). ★ 봉인은 저장하지 않는다 — `saveData` 의 `withoutSeal`. 여럿이면 호스트 판정(`puz` · `puzc`). 사연: docs/code-history.md#h171
 - **깊은 곳**(game/ruin-deep.ts · data/ruins.ts `DEEP_LEVELS`): 봉인 방을 다 풀면 가장 깊은 방 바닥이 열려 아래층(홀 + 곁방)이 **그때** 파이고, 홀 봉인을 풀면 다음 단계. 단계 수와 단계마다 고유 열쇠(횃불 · 시각 · 바치기 · 처치 · 암호 · 방 밟기 · 석판 · 격노)는 `DEEP_KEYS` — 같은 열쇠를 여러 유적에 되풀이하지 말 것(사연 #h175). ★ 미리 파지 말 것(몰래 캐서 들어간다 · 생성 해시). 단계 자리는 `ruinSites[].deep[]`(세이브 v14). 사연: docs/code-history.md#h172
@@ -463,10 +463,10 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **문**: 닫힌 문 = 옆모습(경첩 쪽 얇은 판, world.js `doorEdge` — 판정도 그 판만), 열린 문 = 칸을 채운 앞면(안 막음).
   그림(`drawDoor`)과 판정이 같은 `doorEdge` 를 쓴다 — 한쪽만 고치지 말 것. 사연: docs/code-history.md#h66
 - 효과음 `step`(걷기 박자마다)·`jump`·`jump2`(공중)·`door_open`·`door_shut` — 파일 앞 무음은 music.js `SFX_START` 로 건너뛴다.
-- **굽는 그림 셋**(원본은 `tools/art/`, 게임 폴더 시트를 다시 먹이지 말 것): `mkfountain.py`(분수대 8장 — 물줄기 길은 고정, 물방울이 길을 따라 흐른다 ·
-  game.js 는 가로세로 비로 장 수를 잰다) · `mknpc.py`(상인 셋을 다른 NPC 몸 틀 `npc_template.png` 로 · 윤슬은 윤곽선만) · `mkanvil.py`(강화 모루).
+- **굽는 그림 셋**(원본은 `tools/art/`, 게임 폴더 시트를 다시 먹이지 말 것): `mkprops.py fountain`(분수대 8장 — 물줄기 길은 고정, 물방울이 길을 따라 흐른다 ·
+  game.js 는 가로세로 비로 장 수를 잰다) · `mknpc.py sheet`(상인 셋을 다른 NPC 몸 틀 `npc_template.png` 로 · 윤슬은 윤곽선만) · `mkprops.py anvil`(강화 모루).
 - 하늘 섬 고유 재료 둘(쓰임은 다음 판): `storm_amber` 폭풍 호박(큰 섬 굴·신전 상자 bonus) · `cloud_pearl` 구름 진주(지킴이 상자 bonus · 구름 해파리 4%).
-  그림은 `tools/mkskyitems.py`. PNG 만 있는 아이템도 itemart 가 자리 칸을 만들어 준다(없으면 가방에 빈 칸이었다).
+  그림은 `tools/mkprops.py skyitems`. PNG 만 있는 아이템도 itemart 가 자리 칸을 만들어 준다(없으면 가방에 빈 칸이었다).
 - **채취탑**(잿빛 숲 대형 기계 그림): 자리는 world.js `placeRigs` 가 골라 object(type `'rig'`, 저장됨)로 세운다 — 발자국(data.js `RIG`)엔
   나무가 안 나고(생성·`regrow` 둘 다) 플레이어도 아무것도 못 놓는다(`world.inRig` — **그린 칸만**: 다리·몸통 3×6 + 굴뚝 2×8, 우클릭 상자는 `fitRig`).
   세션 3(ch15) 부터 우클릭으로 해체 → `RIG.parts`.
@@ -502,14 +502,14 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
 - **드래곤**(data/pets.ts `dragon_*` · `DRAGON_*` · game/pets.ts `feedDragon` · entity.ts `addPetXp`): 윤슬이 알 넷(불·흙·전기·암흑)을 판다 — 깨면 그 드래곤(1레벨).
   30레벨까지(`petXpNext(lv, id)` 는 드래곤만 완만한 곡선), 10·20·30 레벨로 오를 때는 경험치가 가득 찬 채 멈추고(`it.hungry`) 그 단계 먹이
   (`DRAGON_FOOD` — 용의 첫 먹이 · 폭풍 호박 심장 · 별똥 심장, 폭풍 호박·구름 진주·운석·별빛 수정이 재료)를 먹어야 넘는다. 단계 `dragonStage` 0~3(새끼·어린 용·성룡·고룡).
-  그림은 `python3 tools/mkdragons.py` 가 굽는다(`char/pet_dragon_<속성>_s<단계>.png` — 날갯짓 6장 + 숨결 1장, 매니페스트 `flap`) → sync. 날개는 몸통 축을 도는
+  그림은 `python3 tools/mkpets.py dragons` 가 굽는다(`char/pet_dragon_<속성>_s<단계>.png` — 날갯짓 6장 + 숨결 1장, 매니페스트 `flap`) → sync. 날개는 몸통 축을 도는
   막이라 위아래 길이만 sin(각)으로 바뀐다(수평이면 날을 본다) · 가까운 날개는 따로 한 겹이라 몸 위에서 가장자리 선이 그어진다 · **칸 크기는 모든 장의 그림
   범위 + 여백 2칸으로 잰다**(`layout`) · `check` 가 테두리에 칠한 칸이 있으면 멈춘다(잘림 방지). `drawPet` 은 단계 시트를 골라 초당 9장으로 날갯짓한다.
   단계마다 한눈에 달라진다(`STAGE` — 목 길이 `neck` · 성룡: 배 비늘판 · 날개 속막 · 두 번째 뿔 / 고룡(k 1.72): 뿔 왕관 · 목덜미 지느러미 · 속성 빛 무늬 ·
   날개 끝 빛줄 · 가슴의 빛 · 몸을 도는 기운(윤곽 없는 한 칸 점, 장마다 돈다)). 먹이로 단계를 넘는 순간 `feedDragon` 이 겹 고리 · 빛 파편 · 흔들림을 터뜨린다.
 - **펫 몸짓**(data/pets.ts `PET_MOTION`): 두 장짜리 떠 있기의 차이가 적은 펫 — 먼지참새 · 잿불 새끼용 · 별조각 정령은
   `drawPet` 이 장 넘김 빠르기 · 위아래 · 기울기 · 크기 숨을 더한다. 뇌운 매 · 유리날개 나방 · 공허의 유생은 그림째 기울이면 이상해서
-  **사이 장을 구웠다**(`python3 tools/mkpetidle.py` — 원본 `tools/art/pets/`, 날개 열을 축에서 먼 만큼 오르내리고 · 유생은 몸이 솟고 다리가 모인다 →
+  **사이 장을 구웠다**(`python3 tools/mkpets.py idle` — 원본 `tools/art/pets/`, 날개 열을 축에서 먼 만큼 오르내리고 · 유생은 몸이 솟고 다리가 모인다 →
   시트 5장, 매니페스트 `idle: 4` 면 drawPet 이 넷을 돌고 공격은 5번째). 공격 순간 근접 펫은 과녁 쪽으로 달려들고(맞는 자리에 `hit_blunt`),
   쏘는 펫은 반동. 별조각 정령은 제 투사체 `pstar`(별 조각 시트 `proj_starfrag` · 맞으면 `stargain`).
 - **하늘 섬**(world.js `buildSkyIslands` → `buildSkyTemple` · `buildSkyExtras`): 원래 섬 서른둘(섬마다 상자)에 더해 **제 난수**(`seed+'_sky'`)로
@@ -565,9 +565,11 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   안 열리면 localStorage 로 떨어진다. 세이브를 읽고 쓰는 곳은 **전부 `SaveStore.put/get/remove/list`** 를 거친다 —
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
+- **v1.1.4 출시**(2026-10-18, 태그 `v1.1.4` — 탈 것 · 낚시 겨루기 · 보스의 틈 · 유적 개편 · 부유 성채 · 깊이층 · 특성 그물 · 새 배경음악, `docs/update/v1.1.4-changelog.md` · `.ko.md`). 표시 `v1.1.4` · `?v=259`.
+  **v1.1.5 할 일(사용자 결정 2026-10-18)**: 효과음 새로 넣기(의뢰서 `docs/audio/sfx-elevenlabs-prompts.md` — H 짐승 포효(`sk_shout` 는 사람 목소리라 짐승 몹은 갈래별 `roar_*`) · I 손맛) · 몬스터 그림 업스케일링. 웹에 먼저 올릴 때 표시는 `v1.1.5-dev`.
 - **v1.1.3 출시**(2026-10-04, 태그 `v1.1.3` — 결 그림 스킬 연출 · 불붙는 몹 · 떠 있는 몸 연출 · 깡충 토끼 · 캠프·마을 위 하늘 섬 정리, `docs/update/v1.1.3-changelog.md` · `.ko.md`). 표시 `v1.1.3` · `?v=258`.
 - **v1.1.2 출시**(2026-10-04, 태그 `v1.1.2` — 멀티플레이 · 앱으로 여는 판 · 몬스터 스킬 · 글꼴 Ashfall, 변경은 `docs/update/v1.1.2-changelog.md`(영어 · 릴리스 본문) · `.ko.md`).
-  웹과 내려받는 판이 같은 판이다. 다음 개발판을 웹에 먼저 올릴 때는 표시를 `v1.1.4-dev` 로 — 해시가 안 찍힌 판(로컬 · zip)은 `-dev` 일 때만 '개발판'이 붙는다.
+  웹과 내려받는 판이 같은 판이다. 다음 개발판을 웹에 먼저 올릴 때는 표시를 `v1.1.5-dev` 로 — 해시가 안 찍힌 판(로컬 · zip)은 `-dev` 일 때만 '개발판'이 붙는다.
   릴리스 워크플로는 macOS 앱을 macOS 러너에서 임시 서명(ad-hoc)한다 — 서명 없는 macOS 앱은 "손상됨 → 휴지통"으로 강제로 버려졌다(`tools/build-desktop.sh` 머리말). 앱 해시(`APP_HASHES`)는 릴리스의 `SHA256SUMS-App.txt` 에서.
 - **로고**(`tools/mklogo.py`): Cinzel Black(ASHFALL — 첫 A · 끝 L 을 1.22배 `BIG`) · Bold(CHRONICLES) 윤곽을 굽는다(글꼴 원본·OFL 전문 `tools/art/fonts/`) —
   사용자가 고른 글꼴(2026-09-30): 아래로 민 두께(`DEPTH`) · 검은 윤곽 · 양옆 마름모 금줄로 제목답게. 게임 = 잔불빛 글자 PNG(`ui/logo.png` 2배 · `logo_small.png`) · 타이틀 화면은 둘레 장식(양옆 금빛 덩굴과 그 위 별자리 · 아래 늘어진 마름모 — `ornament`, 하늘 아치는 부피가 커서 뺐다)을 더한 `logo_title.png`,
@@ -575,7 +577,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   탭 아이콘(파비콘)은 휘어 내려온 빛 꼬리를 끄는 별 하나(`favicon`). 로고 윤곽은 pathops 로 합쳐 칠한다(겹친 윤곽을 XOR 하면 획 안에 실금이 그어졌다). 로고를 고치면 `mkkeyart.py` 도 다시.
   사이트 상단 메뉴는 홈·다운로드 둘뿐이다(바로 플레이 링크 · 내려받기 네모 단추는 뺐다).
 - **v1.2 방향**(확정 2026-10-16): [`docs/update/v1.2-direction.md`](docs/update/v1.2-direction.md) — 링크로 처음 공유되는 판 · 옛 세이브 호환 전부 끊음 · 파밍 → 세계 변화 → 새 발견의 순환과 **시스템 간 상호작용**이 최우선 기준. 구체 설계는 v1.1.4 출시 뒤.
-- **v1.1.4 할 일(아직 안 함 — 착수 전 사용자 확인)**: [`docs/update/v1.1.4-plan.md`](docs/update/v1.1.4-plan.md) — ① 눈 지역 유적 거리 띄우기 ② 탈 것(말 · 보트 · 광산열차) ③ **메인** 제작대 · 강화 모루 · 공장 탭 UI 역동화 ④ **메인** 보스 공략 틈(미스 · 반동 디버프 · 방어 자세) ⑤ 낚시를 osu! 식 겨루기로(히트 서클 · 슬라이더 · 스피너 · HP 게이지 · 등급별 AR/CS/OD/HP · 판 회전 따위 변주) ⑥ **메인** 유적 개편(유적마다 고유 사건 · 갇힌 방 퍼즐 · 체류 15분 — 기능을 더 얹지 말고 바꾼다) ⑦ 고도 체계(하늘 섬 더 높이 · 그림자 없게 · 지형 최저 고도 0m · 표기 "고도 ±xm").
+- **v1.1.4 할 일(끝 — v1.1.4 에 들어감)**: [`docs/update/v1.1.4-plan.md`](docs/update/v1.1.4-plan.md) — ① 눈 지역 유적 거리 띄우기 ② 탈 것(말 · 보트 · 광산열차) ③ **메인** 제작대 · 강화 모루 · 공장 탭 UI 역동화 ④ **메인** 보스 공략 틈(미스 · 반동 디버프 · 방어 자세) ⑤ 낚시를 osu! 식 겨루기로(히트 서클 · 슬라이더 · 스피너 · HP 게이지 · 등급별 AR/CS/OD/HP · 판 회전 따위 변주) ⑥ **메인** 유적 개편(유적마다 고유 사건 · 갇힌 방 퍼즐 · 체류 15분 — 기능을 더 얹지 말고 바꾼다) ⑦ 고도 체계(하늘 섬 더 높이 · 그림자 없게 · 지형 최저 고도 0m · 표기 "고도 ±xm").
 - **다음 판(착수 전 사용자 확인 필요)**: v1.1.1 엔진화·모듈 분리·TS·다국어·모바일·Docker — 계획과 단계별 프롬프트는
   [`docs/update/v1.1.1-engine-plan.md`](docs/update/v1.1.1-engine-plan.md)(§8 결정 확정 — **v1.1 출시 다음 착수**, 산출물 커밋 · `src/` · 같은 저장소 ·
   `World extends TileMap` · 번역 Claude/검수 Grok · 폰 가로+태블릿) / v1.1.1 뒤 몰아서 할 수정(계획서 §9-1 — 해·비·세이브 삭제 팝업·사이트 재구성·영어 화면 다시 찍기) /
