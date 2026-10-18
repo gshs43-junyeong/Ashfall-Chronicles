@@ -14,14 +14,16 @@ import { DAY_CYCLE, Game } from '../game.js';
 import { FISH_DUEL_ART } from './fish-duel-art.js';
 import type { DuelDiff, DuelMods } from '../../engine/rhythm/duel.js';
 
-/* 등급 0~4 — 잡것 · 흔한 물고기는 느린 고리 · 큰 원 · 슬라이더 위주, 위로 갈수록 빠르고 작고 촘촘하다. target = 실수 없이 칠 때 몇 초에 잡히나.
-   ★ 처음 판(bpm 92~148 · target 9~19초)은 느려서 지루했다(사용자) — 박 · 물체 밀도를 2~3배로 올리고 한 판을 4~9초로, 판정 창(od)은 넓혔다 */
+/* 등급 0~4 — 잡것 · 흔한 물고기는 느린 큰 원 · 슬라이더 위주, 위로 갈수록 조금씩 빠르고 촘촘하다. target = 실수 없이 칠 때 몇 초에 잡히나.
+   ★ 맨 위 등급도 osu! 로 치면 Normal~Hard(2~3★) 까지만 — 그 위(204bpm · 초당 5.7개 · AR9.6)는 처음 하는 사람이 거의 못 잡았다.
+   흉내 낸 손(반응 시간 · 피츠 법칙 이동 · 박자 오차)으로 맞췄다: 처음 하는 사람이 등급 3 은 대개 · 4 는 셋에 하나쯤.
+   사연: docs/code-history.md#h203 */
 export const FISH_DUEL: (DuelDiff & { target: number })[] = [
-  { ar: 5, cs: 2.5, od: 0.5, hp: 1, bpm: 140, gap: 1.0, slider: 0.4, spinner: 0, repeat: 0.1, stream: 0.05, jump: 0.8, sv: 1.3, spinRps: 0.8, target: 4.5 },
-  { ar: 6.5, cs: 3.0, od: 1.5, hp: 2, bpm: 156, gap: 0.9, slider: 0.36, spinner: 0.04, repeat: 0.2, stream: 0.1, jump: 1.0, sv: 1.45, spinRps: 0.9, target: 5.5 },
-  { ar: 7.8, cs: 3.5, od: 2.8, hp: 3, bpm: 172, gap: 0.75, slider: 0.32, spinner: 0.05, repeat: 0.25, stream: 0.18, jump: 1.15, sv: 1.6, spinRps: 1.1, target: 6.5 },
-  { ar: 9, cs: 4.0, od: 4, hp: 4, bpm: 188, gap: 0.65, slider: 0.28, spinner: 0.06, repeat: 0.3, stream: 0.25, jump: 1.35, sv: 1.75, spinRps: 1.3, target: 7.5 },
-  { ar: 9.6, cs: 4.4, od: 5, hp: 5, bpm: 204, gap: 0.6, slider: 0.25, spinner: 0.07, repeat: 0.35, stream: 0.32, jump: 1.6, sv: 1.9, spinRps: 1.5, target: 9 }
+  { ar: 3, cs: 2.0, od: 0, hp: 0, bpm: 110, gap: 1.0, slider: 0.35, spinner: 0, repeat: 0, stream: 0, jump: 0.6, sv: 1.0, spinRps: 0.6, target: 4.5 },
+  { ar: 4, cs: 2.3, od: 0.5, hp: 0.5, bpm: 120, gap: 1.0, slider: 0.32, spinner: 0.03, repeat: 0.1, stream: 0, jump: 0.7, sv: 1.1, spinRps: 0.7, target: 5 },
+  { ar: 5.5, cs: 2.8, od: 1.2, hp: 1, bpm: 136, gap: 0.85, slider: 0.3, spinner: 0.04, repeat: 0.15, stream: 0.04, jump: 0.9, sv: 1.2, spinRps: 0.8, target: 6 },
+  { ar: 7, cs: 3.3, od: 2.2, hp: 2, bpm: 150, gap: 0.8, slider: 0.28, spinner: 0.05, repeat: 0.2, stream: 0.08, jump: 1.05, sv: 1.35, spinRps: 0.95, target: 7 },
+  { ar: 7.5, cs: 3.6, od: 2.8, hp: 2.5, bpm: 160, gap: 0.75, slider: 0.25, spinner: 0.05, repeat: 0.25, stream: 0.12, jump: 1.2, sv: 1.5, spinRps: 1.1, target: 8 }
 ];
 
 /* 겨루기 동안 카메라가 다가가는 배율 */
@@ -48,16 +50,16 @@ export const FishDuelPart: Bag = {
     const base = FISH_DUEL[tier];
     /* 물 · 밤 · 날씨마다 빠르기가 조금씩 — 바다는 빠르고 밤은 느리다 */
     const sea = this.world.get(f.tx, f.ty) === T.SEAWATER;
-    const bpm = Math.round(base.bpm + (sea ? 4 : 0) + (DAY_CYCLE.isNight(this.dayT) ? -8 : 0) + (this.rainT > 0.5 ? 6 : 0));
+    const bpm = Math.round(base.bpm + (sea ? 3 : 0) + (DAY_CYCLE.isNight(this.dayT) ? -6 : 0) + (this.rainT > 0.5 ? 4 : 0));
+    /* 변주는 물고기 몸짓만 — 원이 꿈틀(몸부림) · 손이 물로 끌림(당김). 숨김 · 판 돌기는 osu! 고수용이라 뺐다 */
     const R = this.rng, mods: DuelMods = {};
-    if (tier >= 2 && R.chance(0.3 + (tier - 2) * 0.15)) mods.wiggle = 4 + tier * 1.5;
-    if (tier >= 3 && R.chance(0.35)) mods.roll = (R.chance(0.5) ? 1 : -1) * (0.12 + (tier - 3) * 0.08);
-    if (tier >= 3 && R.chance(0.25)) mods.hidden = true;
-    if (tier >= 4 && R.chance(0.5)) mods.pull = 0.45;
+    if (tier >= 3 && R.chance(0.25 + (tier - 3) * 0.15)) mods.wiggle = 3 + tier;
+    if (tier >= 4 && R.chance(0.35)) mods.pull = 0.3;
     const d = new RhythmDuel({
       diff: { ...base, bpm }, mods, seed: (this.world.seed || 's') + ':' + this.time.toFixed(3) + ':' + c.id,
-      target: base.target,
-      start: clamp(0.45 + (rod.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.3, 0.7),
+      target: base.target, lead: 2.0, hitPad: 1.15,
+      tire: 2.0 + base.target * 1.8,                              // 반쯤 맞히며 늘어지면 점점 빨리 샌다 — 한 판이 15초 남짓에서 끝난다
+      start: clamp(0.5 + (rod.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.35, 0.75),
       ease: 0.012 + (flv >= 3 ? 0.02 : 0),                        // 기본도 조금 너그럽게 · 3레벨 '가벼운 손목'은 더
       drainMul: baited ? 0.8 : 1,
       theme: { font: FONT || 'sans-serif', art: FISH_DUEL_ART, frame: false, colors: ['#d8a94b', '#c8743a', '#9aae5a', '#b88ab0'], gauge: '#d8a94b', gaugeLow: '#c8433c', ink: '#e8e3d4',

@@ -36,6 +36,10 @@ export interface DuelOpts {
   diff: DuelDiff; mods?: DuelMods; seed: string | number;
   /** 게이지 시작값 · 실수 없이 치면 몇 초에 차는가 · 첫 물체까지 · 판정 창 넓힘(초) · 게이지 새는 빠르기 배율 */
   start?: number; target?: number; lead?: number; ease?: number; drainMul?: number;
+  /** 누름 판정 원 배율(1 = 그린 원 그대로) — 처음 하는 사람에게 원 가장자리를 조금 봐준다 */
+  hitPad?: number;
+  /** 이 시각(초) 뒤로는 게이지가 점점 빨리 샌다 — 반쯤 맞히며 버티는 겨루기가 끝없이 늘어지지 않게 */
+  tire?: number;
   theme?: Partial<DuelTheme>;
   onBeat?: (i: number) => void;
   onJudge?: (res: number, kind: 'c' | 's' | 'p' | 'tick' | 'break' | 'spin') => void;
@@ -199,9 +203,10 @@ export class RhythmDuel {
       if (o.t - at > this.pre) break;
       if (o.done || o.k === 'p' || o.head) continue;
       const dt = at - o.t;
-      if (dt < -this.w50) { if (dt > -this.w50 - 0.25 && this.near(o, this.r)) this.shake = 0.25; return; }   // 너무 일찍 — 흔들기만
+      const hr = this.r * (this.o.hitPad || 1);
+      if (dt < -this.w50) { if (dt > -this.w50 - 0.25 && this.near(o, hr)) this.shake = 0.25; return; }   // 너무 일찍 — 흔들기만
       if (dt > this.w50) continue;
-      if (!this.near(o, this.r)) return;
+      if (!this.near(o, hr)) return;
       const a = Math.abs(dt), res = a <= this.w300 ? 300 : a <= this.w100 ? 100 : 50;
       if (o.k === 'c') { o.done = true; o.res = res; this.judge(res, o.x, o.y, 'c'); }
       else { o.head = true; o.headT = at; o.track = true; this.score(res === 300 ? 0.5 : 0.25, 'tick'); this.combo++; this.best = Math.max(this.best, this.combo); }
@@ -241,7 +246,8 @@ export class RhythmDuel {
     const bi = Math.floor(t / B);
     if (bi !== this.beatI) { this.beatI = bi; this.o.onBeat && this.o.onBeat(bi); }
     if (t > this.mapEnd - 8) this.gen(this.mapEnd + 30);
-    if (this.objs.length && t > this.objs[0].t - 0.2) this.gauge -= this.drain * dt;   // 첫 물체 전에는 안 샌다
+    const tire = this.o.tire && t > this.o.tire ? 1 + (t - this.o.tire) * 0.35 : 1;
+    if (this.objs.length && t > this.objs[0].t - 0.2) this.gauge -= this.drain * tire * dt;   // 첫 물체 전에는 안 샌다
     const [cx, cy] = this.cursor();
     this.trail.push(cx, cy); if (this.trail.length > 16) this.trail.splice(0, 2);
     for (let i = this.head; i < this.objs.length; i++) {
