@@ -2130,12 +2130,13 @@
         if (o.t - at > this.pre) break;
         if (o.done || o.k === "p" || o.head) continue;
         const dt = at - o.t;
+        const hr = this.r * (this.o.hitPad || 1);
         if (dt < -this.w50) {
-          if (dt > -this.w50 - 0.25 && this.near(o, this.r)) this.shake = 0.25;
+          if (dt > -this.w50 - 0.25 && this.near(o, hr)) this.shake = 0.25;
           return;
         }
         if (dt > this.w50) continue;
-        if (!this.near(o, this.r)) return;
+        if (!this.near(o, hr)) return;
         const a = Math.abs(dt), res = a <= this.w300 ? 300 : a <= this.w100 ? 100 : 50;
         if (o.k === "c") {
           o.done = true;
@@ -2197,7 +2198,8 @@
         this.o.onBeat && this.o.onBeat(bi);
       }
       if (t > this.mapEnd - 8) this.gen(this.mapEnd + 30);
-      if (this.objs.length && t > this.objs[0].t - 0.2) this.gauge -= this.drain * dt;
+      const tire = this.o.tire && t > this.o.tire ? 1 + (t - this.o.tire) * 0.35 : 1;
+      if (this.objs.length && t > this.objs[0].t - 0.2) this.gauge -= this.drain * tire * dt;
       const [cx, cy] = this.cursor();
       this.trail.push(cx, cy);
       if (this.trail.length > 16) this.trail.splice(0, 2);
@@ -55089,11 +55091,11 @@
     FishDuelPart: () => FishDuelPart
   });
   var FISH_DUEL = [
-    { ar: 5, cs: 2.5, od: 0.5, hp: 1, bpm: 140, gap: 1, slider: 0.4, spinner: 0, repeat: 0.1, stream: 0.05, jump: 0.8, sv: 1.3, spinRps: 0.8, target: 4.5 },
-    { ar: 6.5, cs: 3, od: 1.5, hp: 2, bpm: 156, gap: 0.9, slider: 0.36, spinner: 0.04, repeat: 0.2, stream: 0.1, jump: 1, sv: 1.45, spinRps: 0.9, target: 5.5 },
-    { ar: 7.8, cs: 3.5, od: 2.8, hp: 3, bpm: 172, gap: 0.75, slider: 0.32, spinner: 0.05, repeat: 0.25, stream: 0.18, jump: 1.15, sv: 1.6, spinRps: 1.1, target: 6.5 },
-    { ar: 9, cs: 4, od: 4, hp: 4, bpm: 188, gap: 0.65, slider: 0.28, spinner: 0.06, repeat: 0.3, stream: 0.25, jump: 1.35, sv: 1.75, spinRps: 1.3, target: 7.5 },
-    { ar: 9.6, cs: 4.4, od: 5, hp: 5, bpm: 204, gap: 0.6, slider: 0.25, spinner: 0.07, repeat: 0.35, stream: 0.32, jump: 1.6, sv: 1.9, spinRps: 1.5, target: 9 }
+    { ar: 3, cs: 2, od: 0, hp: 0, bpm: 110, gap: 1, slider: 0.35, spinner: 0, repeat: 0, stream: 0, jump: 0.6, sv: 1, spinRps: 0.6, target: 4.5 },
+    { ar: 4, cs: 2.3, od: 0.5, hp: 0.5, bpm: 120, gap: 1, slider: 0.32, spinner: 0.03, repeat: 0.1, stream: 0, jump: 0.7, sv: 1.1, spinRps: 0.7, target: 5 },
+    { ar: 5.5, cs: 2.8, od: 1.2, hp: 1, bpm: 136, gap: 0.85, slider: 0.3, spinner: 0.04, repeat: 0.15, stream: 0.04, jump: 0.9, sv: 1.2, spinRps: 0.8, target: 6 },
+    { ar: 7, cs: 3.3, od: 2.2, hp: 2, bpm: 150, gap: 0.8, slider: 0.28, spinner: 0.05, repeat: 0.2, stream: 0.08, jump: 1.05, sv: 1.35, spinRps: 0.95, target: 7 },
+    { ar: 7.5, cs: 3.6, od: 2.8, hp: 2.5, bpm: 160, gap: 0.75, slider: 0.25, spinner: 0.05, repeat: 0.25, stream: 0.12, jump: 1.2, sv: 1.5, spinRps: 1.1, target: 8 }
   ];
   var DUEL_ZOOM = 1.7;
   var FishDuelPart = {
@@ -55121,18 +55123,20 @@
       const tier = tierOverride === void 0 ? c.tier : clamp(tierOverride | 0, 0, 4);
       const base = FISH_DUEL[tier];
       const sea = this.world.get(f.tx, f.ty) === T.SEAWATER;
-      const bpm = Math.round(base.bpm + (sea ? 4 : 0) + (DAY_CYCLE.isNight(this.dayT) ? -8 : 0) + (this.rainT > 0.5 ? 6 : 0));
+      const bpm = Math.round(base.bpm + (sea ? 3 : 0) + (DAY_CYCLE.isNight(this.dayT) ? -6 : 0) + (this.rainT > 0.5 ? 4 : 0));
       const R = this.rng, mods = {};
-      if (tier >= 2 && R.chance(0.3 + (tier - 2) * 0.15)) mods.wiggle = 4 + tier * 1.5;
-      if (tier >= 3 && R.chance(0.35)) mods.roll = (R.chance(0.5) ? 1 : -1) * (0.12 + (tier - 3) * 0.08);
-      if (tier >= 3 && R.chance(0.25)) mods.hidden = true;
-      if (tier >= 4 && R.chance(0.5)) mods.pull = 0.45;
+      if (tier >= 3 && R.chance(0.25 + (tier - 3) * 0.15)) mods.wiggle = 3 + tier;
+      if (tier >= 4 && R.chance(0.35)) mods.pull = 0.3;
       const d = new RhythmDuel({
         diff: { ...base, bpm },
         mods,
         seed: (this.world.seed || "s") + ":" + this.time.toFixed(3) + ":" + c.id,
         target: base.target,
-        start: clamp(0.45 + (rod2.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.3, 0.7),
+        lead: 2,
+        hitPad: 1.15,
+        tire: 2 + base.target * 1.8,
+        // 반쯤 맞히며 늘어지면 점점 빨리 샌다 — 한 판이 15초 남짓에서 끝난다
+        start: clamp(0.5 + (rod2.fishBonus || 0) * 0.5 + (flv - 1) * 0.01, 0.35, 0.75),
         ease: 0.012 + (flv >= 3 ? 0.02 : 0),
         // 기본도 조금 너그럽게 · 3레벨 '가벼운 손목'은 더
         drainMul: baited ? 0.8 : 1,
@@ -70817,7 +70821,37 @@
         }
       }
       this.scans = (this.scans || []).filter((s) => s.kind !== kind);
-      this.scans.push({ kind, t0: this.time + this.SCAN_LIFT, lift: this.time, x: p.cx, y: p.cy, hits, n: 0, id: it && it.id });
+      const sc = { kind, t0: this.time + this.SCAN_LIFT, lift: this.time, x: p.cx, y: p.cy, hits, n: 0, id: it && it.id };
+      if (kind === "ore") {
+        sc.cracks = [];
+        for (let i = 0; i < 9; i++) {
+          let a = i / 9 * TAU + Math.random() * 0.5, x = 0, y = 0;
+          const pts = [0, 0];
+          for (let k = 0; k < 9; k++) {
+            a += (Math.random() - 0.5) * 0.9;
+            const l = 14 + Math.random() * 22;
+            x += Math.cos(a) * l;
+            y += Math.sin(a) * l;
+            pts.push(x, y);
+          }
+          sc.cracks.push(pts);
+        }
+        sc.links = [];
+        const H = hits.slice(0, 400);
+        for (let i = 0; i < H.length; i++) {
+          let best = -1, bd = 17;
+          for (let j = 0; j < H.length; j++) {
+            if (i === j || H[j].c !== H[i].c) continue;
+            const d2 = (H[i].x - H[j].x) ** 2 + (H[i].y - H[j].y) ** 2;
+            if (d2 < bd && d2 > 1.5) {
+              bd = d2;
+              best = j;
+            }
+          }
+          if (best >= 0 && !(best < i && sc.links.some((l) => l[0] === H[best] && l[1] === H[i]))) sc.links.push([H[i], H[best]]);
+        }
+      }
+      this.scans.push(sc);
       this.scanReady[kind] = this.time + this.SCAN_CD;
       this.sfx("detector");
       this.toast(kind === "ore" ? tr("탐지 파동 — 광맥 {n}칸", { n: hits.length }) : tr("탐지 파동 — 움직이는 것 {n}", { n: hits.length }), "info");
@@ -70865,93 +70899,297 @@
       }
       c.restore();
     },
-    /** 렌더 단계(fx) — 조명 뒤라 어둠 속에서도 보인다 */
+    /** 렌더 단계(fx) — 조명 뒤라 어둠 속에서도 보인다. 갈래마다 제 연출: 광맥 = 땅울림(금 · 벌집 물결 · 빛기둥 · 맥 이음) ·
+        몬스터 = 심장 소리(맥박 치는 고리 · 겨눔 · 끈 · 화면 밖 화살) */
     rUtil(f) {
-      const { WW: WW2 } = dimsOf(this.world);
       if (!this.scans || !this.scans.length) return;
-      const { c, camX, camY } = f, R = this.DET_R * TS, w = this.world;
+      const { c, camX, camY } = f;
       this.scans = this.scans.filter((s) => this.time - s.t0 < this.SCAN_T);
-      const pulse = 0.65 + 0.35 * Math.sin(this.time * 6);
       for (const s of this.scans) {
         this.drawDetector(c, s, camX, camY);
-        const age = this.time - s.t0, col = s.kind === "ore" ? "111,227,255" : "255,107,107";
+        const age = this.time - s.t0;
         if (age < 0) continue;
-        const front = Math.min(1, age / this.SCAN_GROW) * R;
-        const fade = Math.min(1, (this.SCAN_T - age) / 2);
-        const ox = s.x - camX, oy = s.y - camY;
         c.save();
-        const ringA = 1 - age / (this.SCAN_GROW + 0.4);
-        if (ringA > 0) {
-          const sw = age / this.SCAN_GROW * TAU * 1.5;
-          const g = c.createRadialGradient(ox, oy, 0, ox, oy, Math.max(6, front));
-          g.addColorStop(0, `rgba(${col},0)`);
-          g.addColorStop(1, `rgba(${col},${0.22 * ringA})`);
-          c.fillStyle = g;
+        if (s.kind === "ore") this.drawOreScan(c, s, age, camX, camY);
+        else this.drawMobScan(c, s, age, camX, camY);
+        c.restore();
+      }
+    },
+    /** 화면 가장자리 물듦 — 파동이 터지는 순간만(화면 효과 배율을 따른다) */
+    scanFlash(c, col, age) {
+      const k = Math.max(0, 1 - age / 0.55) * (this.fxScale ? this.fxScale() : 1);
+      if (k <= 0) return;
+      const W = this.W, H = this.H, g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
+      g.addColorStop(0, `rgba(${col},0)`);
+      g.addColorStop(1, `rgba(${col},${0.22 * k})`);
+      c.fillStyle = g;
+      c.fillRect(0, 0, W, H);
+    },
+    drawOreScan(c, s, age, camX, camY) {
+      const { WW: WW2 } = dimsOf(this.world);
+      const R = this.DET_R * TS, col = "111,227,255", w = this.world;
+      const grow = Math.min(1, age / this.SCAN_GROW), front = grow * R, fade = Math.min(1, (this.SCAN_T - age) / 2);
+      const ox = s.x - camX, oy = s.y - camY, pulse = 0.65 + 0.35 * Math.sin(this.time * 6);
+      this.scanFlash(c, col, age);
+      const ringA = 1 - age / (this.SCAN_GROW + 0.5);
+      if (ringA > 0) {
+        c.lineCap = "round";
+        for (const pts of s.cracks) {
           c.beginPath();
           c.moveTo(ox, oy);
-          c.arc(ox, oy, Math.max(6, front), sw - 0.55, sw);
+          for (let i = 2; i < pts.length; i += 2) {
+            const d = Math.hypot(pts[i], pts[i + 1]);
+            if (d > front * 0.55) break;
+            c.lineTo(ox + pts[i], oy + pts[i + 1]);
+          }
+          c.strokeStyle = `rgba(${col},${0.18 * ringA})`;
+          c.lineWidth = 5;
+          c.stroke();
+          c.strokeStyle = `rgba(220,250,255,${0.75 * ringA})`;
+          c.lineWidth = 1.4;
+          c.stroke();
+        }
+        const hs4 = 15, hw = hs4 * Math.sqrt(3), band = 56;
+        c.lineWidth = 1;
+        const x0 = Math.floor(-front / hw) - 1, x1 = Math.ceil(front / hw) + 1, y0 = Math.floor(-front / (hs4 * 1.5)) - 1, y1 = Math.ceil(front / (hs4 * 1.5)) + 1;
+        if (front > 10) for (let gy = y0; gy <= y1; gy++) for (let gx = x0; gx <= x1; gx++) {
+          const cx = gx * hw + (gy & 1 ? hw / 2 : 0), cy = gy * hs4 * 1.5, d = Math.hypot(cx, cy);
+          if (d > front || d < front - band) continue;
+          const a = (1 - (front - d) / band) * ringA * 0.5;
+          const X = ox + cx, Y = oy + cy;
+          if (X < -hs4 || Y < -hs4 || X > this.W + hs4 || Y > this.H + hs4) continue;
+          c.strokeStyle = `rgba(${col},${a})`;
+          c.beginPath();
+          for (let k = 0; k < 6; k++) {
+            const an = Math.PI / 6 + k * Math.PI / 3;
+            const px = X + Math.cos(an) * hs4 * 0.92, py = Y + Math.sin(an) * hs4 * 0.92;
+            k ? c.lineTo(px, py) : c.moveTo(px, py);
+          }
+          c.closePath();
+          c.stroke();
+        }
+        for (const [off, al, lw] of [[0, 0.75, 2.5], [-14, 0.3, 1.2]]) {
+          const rr = Math.max(4, front + off);
+          c.beginPath();
+          for (let k = 0; k <= 72; k++) {
+            const an = k / 72 * TAU, wob = Math.sin(an * 9 + this.time * 7) * 3 + Math.sin(an * 4 - this.time * 3) * 2;
+            const px = ox + Math.cos(an) * (rr + wob), py = oy + Math.sin(an) * (rr + wob);
+            k ? c.lineTo(px, py) : c.moveTo(px, py);
+          }
+          c.strokeStyle = `rgba(${col},${al * ringA})`;
+          c.lineWidth = lw;
+          c.stroke();
+        }
+        c.beginPath();
+        c.arc(ox, oy, Math.max(4, front), 0, TAU);
+        c.strokeStyle = `rgba(${col},${0.12 * ringA})`;
+        c.lineWidth = 16;
+        c.stroke();
+      }
+      for (const [a, b] of s.links || []) {
+        if (a.ping === void 0 || b.ping === void 0) continue;
+        if (!TILE_DEF[w.tiles[a.y * WW2 + a.x]].ore || !TILE_DEF[w.tiles[b.y * WW2 + b.x]].ore) continue;
+        const ax = (a.x + 0.5) * TS - camX, ay = (a.y + 0.5) * TS - camY, bx = (b.x + 0.5) * TS - camX, by = (b.y + 0.5) * TS - camY;
+        if (Math.max(ax, bx) < -TS || Math.min(ax, bx) > this.W + TS || Math.max(ay, by) < -TS || Math.min(ay, by) > this.H + TS) continue;
+        c.globalAlpha = 0.45 * fade;
+        c.strokeStyle = a.c;
+        c.lineWidth = 1.2;
+        c.setLineDash([3, 4]);
+        c.beginPath();
+        c.moveTo(ax, ay);
+        c.lineTo(bx, by);
+        c.stroke();
+        c.setLineDash([]);
+        const u = (this.time * 0.8 + a.x * 0.13) % 1;
+        c.globalAlpha = 0.9 * fade;
+        c.fillStyle = "#eafcff";
+        c.beginPath();
+        c.arc(ax + (bx - ax) * u, ay + (by - ay) * u, 1.6, 0, TAU);
+        c.fill();
+      }
+      c.globalAlpha = 1;
+      for (const h of s.hits) {
+        if (h.r * TS > front) continue;
+        if (h.ping === void 0) {
+          h.ping = this.time;
+          this.scanBlip(s);
+          this.oreBurst(s, h);
+        }
+        const x = h.x * TS - camX, y = h.y * TS - camY;
+        if (x < -TS * 2 || y < -TS * 4 || x > this.W + TS || y > this.H + TS) continue;
+        if (!TILE_DEF[w.tiles[h.y * WW2 + h.x]].ore) continue;
+        const pa = this.time - h.ping;
+        if (pa < 0.7) {
+          const k = 1 - pa / 0.7, g = c.createLinearGradient(0, y + TS, 0, y - 46 * k);
+          g.addColorStop(0, h.c);
+          g.addColorStop(1, "rgba(255,255,255,0)");
+          c.globalAlpha = 0.6 * k;
+          c.fillStyle = g;
+          c.fillRect(x + TS * 0.25, y - 46 * k, TS * 0.5, TS + 46 * k);
+          c.globalAlpha = k;
+          c.strokeStyle = "#eafcff";
+          c.lineWidth = 1.5;
+          c.strokeRect(x - 3 * k, y - 3 * k, TS + 6 * k, TS + 6 * k);
+        }
+        c.globalAlpha = 0.28 * fade * pulse;
+        c.fillStyle = h.c;
+        c.fillRect(x, y, TS, TS);
+        c.globalAlpha = 0.9 * fade * pulse;
+        c.strokeStyle = h.c;
+        c.lineWidth = 1.5;
+        c.strokeRect(x + 1, y + 1, TS - 2, TS - 2);
+        const tw = (this.time * 1.7 + h.x * 0.37 + h.y * 0.61) % 1;
+        if (tw < 0.25) {
+          const k = Math.sin(tw / 0.25 * Math.PI), sx = x + TS / 2, sy = y + TS / 2;
+          c.globalAlpha = k * fade;
+          c.fillStyle = "#ffffff";
+          c.beginPath();
+          c.moveTo(sx, sy - 5 * k);
+          c.lineTo(sx + 1.4, sy);
+          c.lineTo(sx, sy + 5 * k);
+          c.lineTo(sx - 1.4, sy);
           c.closePath();
           c.fill();
           c.beginPath();
-          c.arc(ox, oy, Math.max(4, front), 0, TAU);
-          c.strokeStyle = `rgba(${col},${0.16 * ringA})`;
-          c.lineWidth = 14;
-          c.stroke();
-          c.strokeStyle = `rgba(${col},${0.6 * ringA})`;
-          c.lineWidth = 2.5;
-          c.stroke();
-          c.strokeStyle = `rgba(${col},${0.25 * ringA})`;
-          c.lineWidth = 1;
-          for (const q of [0.33, 0.66]) if (front > R * q) {
-            c.beginPath();
-            c.arc(ox, oy, R * q, 0, TAU);
-            c.stroke();
-          }
+          c.moveTo(sx - 5 * k, sy);
+          c.lineTo(sx, sy + 1.4);
+          c.lineTo(sx + 5 * k, sy);
+          c.lineTo(sx, sy - 1.4);
+          c.closePath();
+          c.fill();
         }
-        for (const h of s.hits) {
-          if (h.r * TS > front) continue;
-          if (h.ping === void 0) {
-            h.ping = this.time;
-            this.scanBlip(s);
-          }
-          const pa = this.time - h.ping;
-          if (pa < 0.5) {
-            const hx = h.e ? h.e.cx - camX : (h.x + 0.5) * TS - camX, hy = h.e ? h.e.cy - camY : (h.y + 0.5) * TS - camY;
-            c.strokeStyle = `rgba(${col},${1 - pa * 2})`;
-            c.lineWidth = 1.5;
-            c.beginPath();
-            c.arc(hx, hy, 3 + pa * 26, 0, TAU);
-            c.stroke();
-          }
-          if (h.e) {
-            const e = h.e;
-            if (e.dead) continue;
-            const x = e.x - camX, y = e.y - camY, ew = e.w, eh = e.h, k = 6;
-            if (x + ew < -20 || y + eh < -20 || x > this.W + 20 || y > this.H + 20) continue;
-            c.strokeStyle = `rgba(${col},${0.95 * fade * pulse})`;
-            c.lineWidth = 2;
-            c.beginPath();
-            for (const [ax, ay, sx, sy] of [[x - 3, y - 3, 1, 1], [x + ew + 3, y - 3, -1, 1], [x - 3, y + eh + 3, 1, -1], [x + ew + 3, y + eh + 3, -1, -1]]) {
-              c.moveTo(ax, ay + sy * k);
-              c.lineTo(ax, ay);
-              c.lineTo(ax + sx * k, ay);
-            }
-            c.stroke();
-          } else {
-            const x = h.x * TS - camX, y = h.y * TS - camY;
-            if (x < -TS || y < -TS || x > this.W || y > this.H) continue;
-            if (!TILE_DEF[w.tiles[h.y * WW2 + h.x]].ore) continue;
-            c.globalAlpha = 0.3 * fade * pulse;
-            c.fillStyle = h.c;
-            c.fillRect(x, y, TS, TS);
-            c.globalAlpha = 0.9 * fade * pulse;
-            c.strokeStyle = h.c;
-            c.lineWidth = 1.5;
-            c.strokeRect(x + 1, y + 1, TS - 2, TS - 2);
-            c.globalAlpha = 1;
-          }
+        c.globalAlpha = 1;
+      }
+    },
+    /** 광맥에 닿은 순간 — 광석 색 조각이 튄다(화면 안 · 앞의 40칸만) */
+    oreBurst(s, h) {
+      s.bursts = (s.bursts || 0) + 1;
+      if (s.bursts > 40) return;
+      const x = (h.x + 0.5) * TS, y = (h.y + 0.5) * TS;
+      for (let i = 0; i < 4; i++) this.parts.push(new Part(x, y, i ? h.c : "#eafcff", -60, 0.4, { g: 0.6, r: 0.8, spd: 0.6, glow: 1 }));
+    },
+    drawMobScan(c, s, age, camX, camY) {
+      const R = this.DET_R * TS, col = "255,107,107";
+      const grow = Math.min(1, age / this.SCAN_GROW), front = grow * R, fade = Math.min(1, (this.SCAN_T - age) / 2);
+      const ox = s.x - camX, oy = s.y - camY;
+      const ph = this.time % 1, beat = Math.max(Math.exp(-((ph - 0.05) ** 2) / 2e-3), 0.7 * Math.exp(-((ph - 0.25) ** 2) / 2e-3));
+      this.scanFlash(c, col, age);
+      const ringA = 1 - age / (this.SCAN_GROW + 0.5);
+      if (ringA > 0) {
+        const sw = age / this.SCAN_GROW * TAU * 1.5;
+        const g = c.createRadialGradient(ox, oy, 0, ox, oy, Math.max(6, front));
+        g.addColorStop(0, `rgba(${col},0)`);
+        g.addColorStop(1, `rgba(${col},${0.24 * ringA})`);
+        c.fillStyle = g;
+        c.beginPath();
+        c.moveTo(ox, oy);
+        c.arc(ox, oy, Math.max(6, front), sw - 0.6, sw);
+        c.closePath();
+        c.fill();
+        const rr = Math.max(4, front);
+        c.beginPath();
+        for (let k = 0; k <= 120; k++) {
+          const an = k / 120 * TAU;
+          let d = an - sw;
+          d = (d % TAU + TAU) % TAU;
+          if (d > Math.PI) d -= TAU;
+          const spike = Math.abs(d) < 0.25 ? Math.sin(d / 0.25 * Math.PI * 2) * 14 * (1 - Math.abs(d) / 0.25) : 0;
+          const px = ox + Math.cos(an) * (rr + spike), py = oy + Math.sin(an) * (rr + spike);
+          k ? c.lineTo(px, py) : c.moveTo(px, py);
+        }
+        c.strokeStyle = `rgba(${col},${0.8 * ringA})`;
+        c.lineWidth = 2.2;
+        c.stroke();
+        for (const q of [0.92, 0.84]) {
+          c.beginPath();
+          c.arc(ox, oy, rr * q, 0, TAU);
+          c.strokeStyle = `rgba(${col},${0.25 * ringA * q})`;
+          c.lineWidth = 1;
+          c.stroke();
+        }
+      }
+      for (const h of s.hits) {
+        if (h.r * TS > front) continue;
+        if (h.ping === void 0) {
+          h.ping = this.time;
+          this.scanBlip(s);
+        }
+        const e = h.e;
+        if (e.dead) continue;
+        const pa = this.time - h.ping, ex = e.cx - camX, ey = e.cy - camY;
+        const off = ex < -10 || ey < -10 || ex > this.W + 10 || ey > this.H + 10;
+        if (off) {
+          const a = Math.atan2(ey - this.H / 2, ex - this.W / 2), m = 26;
+          const kx = (this.W / 2 - m) / Math.max(1e-3, Math.abs(Math.cos(a))), ky = (this.H / 2 - m) / Math.max(1e-3, Math.abs(Math.sin(a)));
+          const rr = Math.min(kx, ky), ax = this.W / 2 + Math.cos(a) * rr, ay = this.H / 2 + Math.sin(a) * rr, sz = 7 + beat * 3;
+          c.save();
+          c.translate(ax, ay);
+          c.rotate(a);
+          c.globalAlpha = 0.85 * fade;
+          c.fillStyle = `rgba(${col},1)`;
+          c.beginPath();
+          c.moveTo(sz, 0);
+          c.lineTo(-sz * 0.7, sz * 0.7);
+          c.lineTo(-sz * 0.35, 0);
+          c.lineTo(-sz * 0.7, -sz * 0.7);
+          c.closePath();
+          c.fill();
+          c.restore();
+          continue;
+        }
+        if (pa < 1.6) {
+          const k2 = 1 - pa / 1.6;
+          c.globalAlpha = 0.4 * k2;
+          c.strokeStyle = `rgba(${col},1)`;
+          c.lineWidth = 1;
+          c.setLineDash([2, 5]);
+          c.lineDashOffset = -this.time * 30;
+          c.beginPath();
+          c.moveTo(this.player.cx - camX, this.player.cy - camY);
+          c.lineTo(ex, ey);
+          c.stroke();
+          c.setLineDash([]);
+        }
+        const lock = Math.min(1, pa / 0.35), ease3 = 1 - Math.pow(1 - lock, 3);
+        const pad = 3 + (1 - ease3) * 22 + beat * 2.5, rot = (1 - ease3) * 1.6;
+        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease3) * 4;
+        c.save();
+        c.translate(x + ew / 2, y + eh / 2);
+        c.rotate(rot);
+        c.translate(-(x + ew / 2), -(y + eh / 2));
+        c.globalAlpha = (0.55 + 0.45 * beat) * fade * (0.4 + 0.6 * lock);
+        c.strokeStyle = `rgba(${col},1)`;
+        c.lineWidth = 2;
+        c.beginPath();
+        for (const [ax, ay, sx, sy] of [[x, y, 1, 1], [x + ew, y, -1, 1], [x, y + eh, 1, -1], [x + ew, y + eh, -1, -1]]) {
+          c.moveTo(ax, ay + sy * k);
+          c.lineTo(ax, ay);
+          c.lineTo(ax + sx * k, ay);
+        }
+        c.stroke();
+        if (lock >= 1) {
+          c.lineWidth = 1.2;
+          c.beginPath();
+          c.moveTo(x + ew / 2, y - 3);
+          c.lineTo(x + ew / 2, y + 3);
+          c.moveTo(x + ew / 2, y + eh - 3);
+          c.lineTo(x + ew / 2, y + eh + 3);
+          c.moveTo(x - 3, y + eh / 2);
+          c.lineTo(x + 3, y + eh / 2);
+          c.moveTo(x + ew - 3, y + eh / 2);
+          c.lineTo(x + ew + 3, y + eh / 2);
+          c.stroke();
         }
         c.restore();
+        if (pa < 0.45) {
+          c.globalAlpha = 1 - pa / 0.45;
+          c.strokeStyle = `rgba(${col},1)`;
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.arc(ex, ey, 4 + pa * 60, 0, TAU);
+          c.stroke();
+        }
+        c.globalAlpha = 1;
       }
     }
   };
