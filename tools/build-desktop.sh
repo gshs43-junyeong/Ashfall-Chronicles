@@ -30,6 +30,9 @@ cp "$ROOT/desktop/main.js" "$ROOT/desktop/icon.png" "$STAGE/"
 # package.json 은 판 번호만 바꿔 싣는다(의존성은 앱에 넣지 않는다 — Electron 은 packager 가 붙인다)
 node -e "const p=require('$ROOT/desktop/package.json'); p.version='$VERSION'; delete p.devDependencies; delete p.scripts; require('fs').writeFileSync('$STAGE/package.json', JSON.stringify(p, null, 2))"
 cp -R "$ROOT/play" "$STAGE/game"
+# ★ git 이 무시하는 파일은 싣지 않는다(로컬에 남은 옛 배경음악 따위 — build.sh 와 같다)
+git -C "$ROOT" ls-files -o -i --exclude-standard -z -- play 2>/dev/null \
+  | while IFS= read -r -d '' f; do rm -f "$STAGE/game/${f#play/}"; done
 
 EV="$(node -p "require('$ROOT/desktop/node_modules/electron/package.json').version")"
 PK="$ROOT/desktop/node_modules/.bin/electron-packager"
