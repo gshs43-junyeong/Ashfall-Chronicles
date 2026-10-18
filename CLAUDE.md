@@ -566,7 +566,7 @@ bash tools/build-desktop.sh 1.1.2  # 앱으로 여는 판(Electron · 서명 없
   localStorage 를 직접 만지면 IndexedDB 쪽과 어긋난다(설정 `SET_KEY` 만 localStorage). 저장은 비동기라 `saveGame()` 은
   끝나면 true 를 돌려준다. 옛 localStorage 기록은 `SaveStore.migrate` 가 옮기고 다시 읽어 같을 때만 지운다.
 - **v1.1.4 출시**(2026-10-18, 태그 `v1.1.4` — 탈 것 · 낚시 겨루기 · 보스의 틈 · 유적 개편 · 부유 성채 · 깊이층 · 특성 그물 · 새 배경음악, `docs/update/v1.1.4-changelog.md` · `.ko.md`). 표시 `v1.1.4` · `?v=259`.
-  **v1.1.5 할 일(사용자 결정 2026-10-18)**: 효과음 새로 넣기(의뢰서 `docs/audio/sfx-elevenlabs-prompts.md` — H 짐승 포효(`sk_shout` 는 사람 목소리라 짐승 몹은 갈래별 `roar_*`) · I 손맛) · 몬스터 그림 업스케일링. 웹에 먼저 올릴 때 표시는 `v1.1.5-dev`.
+  **v1.1.5 할 일(아직 안 함 — 착수 전 사용자 확인)**: [`docs/update/v1.1.5-plan.md`](docs/update/v1.1.5-plan.md) — ① 움직이는 NPC 초상 + 플레이어 초상(대화 손맛) ② 멀티플레이 진행 · 호환 수정 ③ 축하 효과음을 상황별로 나누기 + 효과음 의뢰서(`docs/audio/sfx-elevenlabs-prompts.md` A~I) ④ 몬스터 · 보스 업스케일링(모든 보스 + 작지 않은 몹, 최근 다시 그린 유적 몹 제외). 웹에 먼저 올릴 때 표시는 `v1.1.5-dev`.
 - **v1.1.3 출시**(2026-10-04, 태그 `v1.1.3` — 결 그림 스킬 연출 · 불붙는 몹 · 떠 있는 몸 연출 · 깡충 토끼 · 캠프·마을 위 하늘 섬 정리, `docs/update/v1.1.3-changelog.md` · `.ko.md`). 표시 `v1.1.3` · `?v=258`.
 - **v1.1.2 출시**(2026-10-04, 태그 `v1.1.2` — 멀티플레이 · 앱으로 여는 판 · 몬스터 스킬 · 글꼴 Ashfall, 변경은 `docs/update/v1.1.2-changelog.md`(영어 · 릴리스 본문) · `.ko.md`).
   웹과 내려받는 판이 같은 판이다. 다음 개발판을 웹에 먼저 올릴 때는 표시를 `v1.1.5-dev` 로 — 해시가 안 찍힌 판(로컬 · zip)은 `-dev` 일 때만 '개발판'이 붙는다.
