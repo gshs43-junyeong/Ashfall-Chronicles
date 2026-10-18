@@ -39,6 +39,10 @@ for PLATFORM in Windows macOS; do
   mkdir -p "$STAGE"
 
   cp -R "$ROOT/play/." "$STAGE/"
+  # ★ git 이 무시하는 파일은 싣지 않는다 — 로컬에 남은 옛 배경음악(play/assets/audio, 저작권으로 지움)이 zip 에 섞여 들어갔다.
+  #   CI 는 깨끗한 체크아웃이라 상관없지만 로컬 빌드는 해시 · 크기가 달라졌다.
+  git -C "$ROOT" ls-files -o -i --exclude-standard -z -- play 2>/dev/null \
+    | while IFS= read -r -d '' f; do rm -f "$STAGE/${f#play/}"; done
   cp -R "$LAUNCHER_DIR/." "$STAGE/"
 
   rm -f "$DIST/$NAME-$PLATFORM.zip"
