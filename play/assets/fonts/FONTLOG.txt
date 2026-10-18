@@ -27,7 +27,7 @@ How it is made
 Version 2.201 (2026-10-16)
 - Jamo no longer touch: each syllable is checked for the gap between initial,
   medial and final, and the branch, initial floor, stem end or final top is
-  moved until the gap is at least half a stroke (tools/fontdiag.py checks all).
+  moved until the gap is at least half a stroke (tools/mkfont.py diag checks all).
 - Stacked horizontals (ㄹ ㄷ ㅌ ㅂ ㅋ in small boxes) thin only the horizontal
   strokes so the counters stay open, especially in Bold; diagonal legs of ㅅ ㅈ ㅊ
   in double consonants thin the same way.

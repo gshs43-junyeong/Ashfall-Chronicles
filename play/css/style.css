@@ -724,7 +724,7 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 
 /* ================= 대화 ================= */
 /* ★ 말풍선 — 네모 상자는 딱딱해 픽셀 그림과 따로 놀았다(사용자 지적 2026-10-15). 초상은 상자 밖 왼쪽 아래에 서서 말하고,
-   양피지 말풍선(돌 판 = 비석 · 석판 · 장 이야기)의 꼬리가 초상 쪽으로 휜다. 틀 그림은 tools/mkbubble.py — 9조각 16px(8칸 × 2) */
+   양피지 말풍선(돌 판 = 비석 · 석판 · 장 이야기)의 꼬리가 초상 쪽으로 휜다. 틀 그림은 tools/mkprops.py bubble — 9조각 16px(8칸 × 2) */
 #dialogue{position:absolute;left:0;right:0;bottom:0;display:none;justify-content:center;padding:0 0 14px;pointer-events:auto}
 #dialogue.open{display:flex}
 .dlg-box{width:min(900px,94vw);display:flex;align-items:flex-end;gap:26px}

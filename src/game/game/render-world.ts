@@ -552,7 +552,7 @@ export const RenderWorldPart: Bag = {
       /* 손그림은 1프레임(정지)과 2프레임(움직임) 둘 다 받는다. */
       const im = this.spritesOn && Sprites.img.obj_fountain;
       if (im && im.width) {
-        // 장 수는 가로세로 비로 잰다 — tools/mkfountain.py 는 물방울이 길 따라 흐르는 8장(12fps)을 굽는다
+        // 장 수는 가로세로 비로 잰다 — tools/mkprops.py fountain 는 물방울이 길 따라 흐르는 8장(12fps)을 굽는다
         const want = o.w / o.h, n = Math.max(1, Math.round(im.width / im.height / want));
         const frames = Math.abs(im.width / n / im.height - want) < 0.03 ? n : 0;
         if (frames) {
