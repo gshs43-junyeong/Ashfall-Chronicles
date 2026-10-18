@@ -1,4 +1,4 @@
-# 효과음 의뢰서 — ElevenLabs Sound Effects (2026-10-16)
+# 효과음 의뢰서 — ElevenLabs Sound Effects (2026-10-16 · H · I 는 v1.1.5, 2026-10-18)
 
 > v1.1.4 에서 새로 생긴 자리(스킬 · 보스 · 몬스터 기술 · 대사 · 줍기 · 버리기 · 공장)에 넣을 효과음 프롬프트.
 > 옛 `talk` 효과음은 지웠다 — 말하는 쪽마다 넷으로 나뉜다(아래 B).
@@ -114,6 +114,55 @@
 | `machine_break` | ⏳ | 기계 고장(드문 사건) | 1.0 · 0.6 | `a machine breaking down, grinding gears seizing, sputtering motor and a spring popping` |
 | `wrench_fix` | ⏳ | 렌치로 고칠 때 | 0.8 · 0.65 | `a wrench tightening bolts on a machine, ratchet clicks then the motor restarting` |
 | `factory_amb` 🔁 | ⏳ | 공장 둘레 환경음(기계가 여럿 돌 때 낮게) | 1.0 · 0.45 · loop | `a distant busy workshop ambience, layered soft machinery hum and faint clanks, seamless loop, low and unobtrusive` |
+
+## H. 짐승 포효 — v1.1.5 (지금 `sk_shout` 하나를 사람 · 짐승이 같이 쓴다)
+
+`sk_shout` 는 사람 함성이라 늑대 · 원숭이 · 괴물이 동료를 북돋을 때도 사람 목소리가 났다(사용자 2026-10-18).
+`sk_shout` 는 **플레이어 전투 함성 · 사람 몹(작업반장 · 유적 경비)** 에만 남기고, 짐승은 아래 갈래로 나눈다.
+같은 갈래 안에서 **둘씩** 만들어(`_1` · `_2`) 번갈아 튼다 — 무리가 한꺼번에 울 때 똑같은 소리가 겹치지 않게.
+
+| 파일 | 상태 | 쓰는 곳 | 길이 · 영향 | 프롬프트 |
+|---|---|---|---|---|
+| `roar_wolf_1` · `_2` | ⏳ | 얼음 늑대 · 붉은 울음꾼 북돋우기 · 늑대 무리 부르기(`pack`) | 1.0 · 0.6 | `a wolf pack leader snarling then letting out a short rallying howl, raw animal throat, aggressive, no human voice` |
+| `roar_ape_1` · `_2` | ⏳ | 수관 원숭이 북돋우기 | 0.9 · 0.65 | `a large ape hooting and chest-beating, rapid aggressive hoots rising into a shriek, primate, no human voice` |
+| `roar_beast_1` · `_2` | ⏳ | 덩치 큰 짐승(곰 · 멧돼지 · 뿔짐승)의 위협 | 1.0 · 0.6 | `a huge bear-like beast roaring, deep guttural chest roar with spit and breath, close, no human voice` |
+| `roar_reptile_1` · `_2` | ⏳ | 도마뱀 · 뱀 · 전갈 · 사막 짐승 | 0.9 · 0.65 | `a giant lizard hissing then bellowing, dry raspy reptile throat rattle, no human voice` |
+| `roar_insect_1` · `_2` | ⏳ | 거미 · 벌레 · 포자 짐승 · 증식체 무리 | 0.8 · 0.7 | `a swarm-like giant insect screech, clicking mandibles and buzzing chitin shriek, no human voice` |
+| `roar_bird_1` · `_2` | ⏳ | 까마귀 · 매 · 하늘 짐승 | 0.8 · 0.7 | `a large bird of prey screeching, sharp piercing raptor cry with wing flaps, no human voice` |
+| `roar_deep_1` · `_2` | ⏳ | 심해 · 바다 괴물 | 1.0 · 0.6 | `a sea monster groaning underwater, deep muffled whale-like moan with bubbles, no human voice` |
+| `roar_void_1` · `_2` | ⏳ | 공허 · 망령 · 유적 괴물 | 1.0 · 0.6 | `an otherworldly creature wailing, distorted hollow howl with ghostly echo layers, inhuman` |
+| `roar_slime` | ⏳ | 슬라임 무리 | 0.6 · 0.7 | `a big slime gurgling angrily, wet bubbling blorp rising in pitch, cartoonish but heavy` |
+| `boss_roar_beast` | ⏳ | 짐승 보스가 막을 넘길 때(울부짖으며 다음 막) | 1.0 · 0.55 | `a colossal monster roaring in rage, earth-shaking low roar with layered growls and debris rattling, no human voice` |
+| `boss_roar_machine` | ⏳ | 기계 보스 막 넘김(관리자 · 헤파 · 원형 …) | 1.0 · 0.55 | `a giant war machine overloading, metal groan, hydraulic scream and a deep engine roar` |
+| `boss_roar_spirit` | ⏳ | 정령 · 공허 보스 막 넘김(마녀 · 공허의 왕 · 쫓아온 것 …) | 1.0 · 0.55 | `a vast spirit entity shrieking, choir-like distorted wail swelling with a low rumble, inhuman` |
+
+**연결 계획**: 몹마다 목소리 갈래 `voice`(data/enemies.ts — 표에 한 칸)를 달고, `sk_shout` 를 부르던 자리(mobskills `empower` · enemy-kits `pack`)가
+`roar_<voice>_<1|2>` 를 고른다(없으면 `sk_shout`). 보스 막 넘김은 boss-forms 의 막 바뀜에서 `boss_roar_<갈래>`.
+
+## I. 손맛 — v1.1.5 (때리고 · 캐고 · 얻는 순간을 더 또렷하게)
+
+지금 비어 있거나 합성 톤인 자리 중 **매번 손에 닿는 것**부터. 맞히는 소리는 짧고 단단하게(0.3~0.5초), 앞 0.02초 안에 정점.
+
+| 파일 | 상태 | 쓰는 곳 | 길이 · 영향 | 프롬프트 |
+|---|---|---|---|---|
+| `hit_heavy` | ⏳ | 묵직한 무기(망치 · 도끼 · 대검)가 몹에 맞을 때 — 지금은 `hit_blunt` 하나 | 0.4 · 0.75 | `a heavy weapon smashing into a creature, deep meaty thump with a bone crack, punchy` |
+| `kill_pop` | ⏳ | 몹이 쓰러지는 마지막 한 방(경험치 구슬이 튀는 순간) | 0.5 · 0.7 | `a satisfying final hit, short punchy impact with a bright rising sparkle burst` |
+| `block_clang` | ⏳ | 방패 · 방어 자세로 막을 때 · 보스 방어 자세에 맞을 때 | 0.4 · 0.75 | `a sword hitting a raised steel shield, sharp metallic clang with a short ring` |
+| `stagger_crack` | ⏳ | 보스 틈이 열릴 때(비틀거림 · 균열) | 0.7 · 0.65 | `armor plates cracking and a giant creature staggering, heavy crunch and a dull thud` |
+| `miss_whiff` | ⏳ | 보스 헛손질(아무도 못 맞힘) | 0.6 · 0.7 | `a giant weapon swinging through empty air, huge heavy whoosh with no impact` |
+| `land_heavy` | ⏳ | 높은 데서 떨어져 착지(낙하 피해 직전 높이부터) | 0.4 · 0.75 | `a person landing hard on stone from a height, boots thud and a grunt-free body impact, gravel scatter` |
+| `step_grass` · `step_stone` · `step_sand` · `step_snow` · `step_wood` | ⏳ | 발밑 재질마다 걸음(지금은 `step` 하나) | 0.25 · 0.8 | `a single footstep on <grass/stone/sand/snow/wooden planks>, soft leather boot, close` |
+| `ore_ping` | ⏳ | 광석 칸을 곡괭이로 칠 때 — 돌과 다른 맑은 쇳소리(`ore_hit` 위에 얹는다) | 0.3 · 0.75 | `a pickaxe striking a metal ore vein, bright metallic ping with rock chips` |
+| `chest_open` | ⏳ | 상자 열기(지금 `open` 은 문과 같다) · 유적 상자는 낮게 | 0.8 · 0.65 | `a wooden treasure chest creaking open, latch click and a soft magical shimmer` |
+| `loot_rare` | ⏳ | 희귀 이상 장비가 떨어질 때 · 손에 들어올 때 | 0.8 · 0.6 | `a rare item dropping, crystalline chime rising with a glittering sparkle tail` |
+| `enhance_hit` | ⏳ | 모루 망치 세 박자 한 번 | 0.4 · 0.75 | `a blacksmith hammer striking glowing steel on an anvil, bright clang with sparks` |
+| `enhance_ok` · `enhance_fail` · `enhance_break` | ⏳ | 강화 성공 · 실패 · 파괴 | 0.9 · 0.6 | 성공 `a triumphant metallic ring with a magical shine rising` · 실패 `a dull clank and a fizzling hiss of cooling steel` · 파괴 `a blade shattering into metal shards, harsh crack and scattering pieces` |
+| `reel_tick` 🔁 | ⏳ | 낚시 겨루기 동안 릴 감기(게이지가 찰 때 빨라진다) | 1.0 · 0.5 · loop | `a fishing reel clicking as line is wound in, steady ratchet ticks, seamless loop` |
+| `fish_bite` · `fish_land` | ⏳ | 입질(찌가 잠길 때) · 잡아 올렸을 때 | 0.5 · 0.7 | 입질 `a fishing float plunging underwater, quick plop and line tug` · 잡음 `a fish splashing out of water and flopping onto ground, wet slap` |
+| `horse_gallop` 🔁 · `horse_neigh` | ⏳ | 말 달리기 · 탈 때 · 길들일 때 | 1.0 · 0.5 · loop / 0.9 · 0.6 | `horse hooves galloping on dirt, steady rhythm, seamless loop` · `a horse neighing briefly, friendly` |
+| `cart_rail` 🔁 · `boat_paddle` | ⏳ | 광산 수레 레일 · 조각배 노 젓기 | 1.0 · 0.5 · loop / 0.6 · 0.7 | `a mine cart rolling on iron rails, rhythmic clacking, seamless loop` · `a wooden paddle dipping into water, gentle splash` |
+| `jet_burn` 🔁 | ⏳ | 제트팩 분사 | 1.0 · 0.5 · loop | `a small jetpack thruster burning, steady roaring hiss, seamless loop` |
+| `low_hp_beat` 🔁 | ⏳ | 체력 30% 아래 심장 박동(화면 붉어질 때 같이) | 1.0 · 0.5 · loop | `a slow heavy heartbeat, muffled and tense, seamless loop` |
 
 ---
 

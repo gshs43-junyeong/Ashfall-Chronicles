@@ -18,26 +18,30 @@
 
 ## 세계 진단
 
-`sizediag.py`(크기별 구조물 겹침·세계 밖) · `ruindiag.py`(유적 통행) · `entdiag.py`(입구 발판 출처).
+`sizediag.py`(크기별 구조물 겹침·세계 밖) · `ruindiag.py`(유적 통행 · `ruindiag.py ent` 입구 발판 출처).
 
 ## 그림 굽기 — 원본이 바뀌면 다시 돌리고 `sync-manifest.py`
 
 | 도구 | 산출물 |
 |---|---|
 | `mkplayer.py` | 주인공 시트 다섯(원본 `art/player_*.png`) — ★ 사용자 허락 없이 고치지 말 것 |
-| `mknpc.py` · `mkanvil.py` · `mkfountain.py` | 상인 NPC · 강화 모루 · 분수대 |
-| `mkdragons.py` | 드래곤 펫 4속성 × 4단계 |
-| `mkpetidle.py` | 매 · 나방 · 공허의 유생 떠 있기 사이 장(원본 `art/pets/`) |
-| `mkruinmobs.py` · `mkarchetype.py` | 유적 고유 몹 · 원형 |
-| `mkdrills.py` · `mkflotsam.py` · `mkskyitems.py` | 드릴 셋(천공기 · 점보 · 시추탑) · 바다 부유물 · 하늘 섬 재료 |
-| `mksky.py` · `mkclouds.py` · `mkparallax.py` · `mksmoke.py` | 해·운석 · 먹구름 · 잿빛 숲(네 장)·울림 정글 원경 · 굴뚝 연기 |
-| `mkhitfx.py` · `mkhitphys.py` · `mkstarfx.py` | 마법 · 물리 타격 · 별 조각 효과 |
-| `mklogo.py` · `mkkeyart.py` + `keyart-capture.mjs` | 로고(글꼴 윤곽 `art/fonts/` → 게임 PNG · 사이트 SVG)·파비콘 · 대표 그림(장면 찍기) |
+| `mknpc.py` `sheet` · `portrait` | 상인 걷는 시트 · 마을 NPC · 상인 초상(DESIGN.md '초상') |
+| `mkpets.py` `dragons` · `idle` | 드래곤 펫 4속성 × 4단계 · 매 · 나방 · 공허의 유생 떠 있기 사이 장(원본 `art/pets/`) |
+| `mkruinmobs.py` | 유적 고유 몹 열다섯 + 덩굴채찍(부위 명암 붓이 같은 파일에) |
+| `mkbossart.py` | 키운 보스 열둘 · 모든 보스의 기술 자세 시트 |
+| `mkdrills.py` · `mkflotsam.py` · `mkrides.py` | 드릴 셋 · 바다 부유물 · 탈 것 |
+| `mkprops.py` `anvil` · `skyitems` · `clouds` · `fountain` · `glowcap` · `bubble` | 강화 모루 · 하늘 섬 재료 · 먹구름 · 분수대 · 발광 버섯 · 말풍선 |
+| `mksky.py` · `mkparallax.py` | 해·운석 · 원경 전부(잿빛 숲 네 장 · 울림 정글 · 바이옴들) |
+| `mkfx.py` `hit` · `phys` · `smoke` · `star` | 마법 · 물리 타격 · 굴뚝 연기 · 별 조각 효과 |
+| `mkvfx.py` | 스킬 연출 결 그림 |
+| `mkfont.py` (`diag` 한글 짜임 진단) | 게임 글꼴 Ashfall |
+| `mklogo.py` (`appicon` 앱 아이콘만) · `mkkeyart.py` + `keyart-capture.mjs` | 로고 · 파비콘 · 앱 아이콘 · 대표 그림(장면 찍기) |
 | `shots-capture.mjs` | 사이트 스크린샷 `site/shots/*.jpg` |
 
-## 그림 점검 · 손질 — 한 번 쓰고 끝난 것도 다시 쓸 일이 있어 둔다
+## 그림 점검 · 손질
 
-점검: `animcheck.py`(프레임이 움직이나) · `framediff.py`(프레임 차이) · `clipcheck.py`(칸에 잘린 그림) ·
-`straycheck.py`(떨어진 덩어리) · `orphan.py`(게임이 안 그리는 시트 → 매니페스트 `unused`).
-손질: `unclipmob.py`(잘린 몹·보스에 여백 — 손대기 전 원본은 `art/boss/`) · `padframe.py` · `outline.py` ·
-`stray.py` · `pixfix.py`(몇 픽셀 손으로).
+`sprcheck.py` 하나에 하위 명령으로: `anim`(프레임이 정말 움직이나) · `clip`(칸 가장자리에 잘린 그림) · `stray`(몸에서 떨어진 덩어리) ·
+`pad`(칸 벽에 닿은 그림에 좌우 여백). 찾기만 하고, 고치는 것은 `--write`.
+
+여러 그림 도구를 묶은 파일(`mkfx` · `mkprops` · `mkpets` · `mknpc` · `sprcheck`)은 하위 명령 없이 돌리면 전부(`all`)를 돈다(`sprcheck` 는 하나를 고를 것).
+하위 명령 본문은 예전 파일 그대로라, 묶은 뒤 다시 구운 그림이 바이트 단위로 같았다(2026-10-18).

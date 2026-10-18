@@ -359,6 +359,18 @@ def favicon(n):
     return im.resize((n, n), Image.LANCZOS)
 
 
+
+def appicon():
+    """앱으로 여는 판(desktop/)의 아이콘 — 파비콘 512 에서 icon.png(창 · 리눅스) · icon.ico(Windows, 16~256) · icon.icns(macOS).
+    python3 tools/mklogo.py appicon 으로 이것만 다시 굽는다."""
+    SRC = os.path.join(ROOT, 'play', 'assets', 'ui', 'favicon_512.png')
+    OUT = os.path.join(ROOT, 'desktop')
+    im = Image.open(SRC).convert('RGBA')
+    im.save(os.path.join(OUT, 'icon.png'))
+    im.save(os.path.join(OUT, 'icon.ico'), sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    im.resize((1024, 1024), Image.LANCZOS).save(os.path.join(OUT, 'icon.icns'))
+    print('desktop/icon.png · icon.ico · icon.icns')
+
 def main():
     os.makedirs(UI, exist_ok=True)
     big = logo(1112); big.save(os.path.join(UI, 'logo.png'))          # 2배로 구워 556px 로 보인다
@@ -373,7 +385,7 @@ def main():
     ico.save(os.path.join(ROOT, 'site', 'favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
     print('logo', big.size, 'small', small.size)
     # 앱 아이콘(desktop/icon.*)도 같은 파비콘에서 — 따로 돌리는 걸 잊어 v1.1.2 앱이 옛 아이콘으로 나갔다
-    subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'mkappicon.py')], check=True)
+    appicon()
     if '--preview' in sys.argv:
         bg = Image.new('RGBA', (big.width + 80, big.height + 80), (14, 12, 18, 255)); bg.alpha_composite(big, (40, 40))
         bg.save('/tmp/logo_preview.png')
@@ -383,4 +395,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if sys.argv[1:2] == ['appicon']: appicon()
+    else: main()
