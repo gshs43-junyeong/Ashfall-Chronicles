@@ -217,7 +217,7 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 | 무엇 | 어디 | 라이선스 또는 출처 조건 |
 |---|---|---|
 | 배경음악 | `play/assets/bgm/*.mp3` | 원본 메타데이터와 해당 공급자 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
-| 효과음 92개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
+| 효과음 91개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
 | 게임 글꼴 Ashfall | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1, MIT 적용 제외 |
 | 로고 글꼴 원본 Cinzel | `tools/art/fonts/` | SIL Open Font License 1.1, MIT 적용 제외 |
 
