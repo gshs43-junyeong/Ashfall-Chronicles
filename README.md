@@ -199,14 +199,16 @@ The code and artwork created for this repository are covered by the **[MIT licen
 
 **AI training is prohibited:** MIT-covered material in this repository may not be used to train, fine-tune, evaluate, or otherwise develop AI/ML models, or to create datasets for those purposes.
 
-**The sound effects and fonts are exceptions to MIT.**
+**Background music, sound effects, and fonts are exceptions to MIT.**
 
-| What | Where | Made with |
+| What | Where | License or source terms |
 |---|---|---|
-| 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| Background music | `play/assets/bgm/*.mp3` | Original source metadata and the applicable provider terms; see [`NOTICE.md`](NOTICE.md) |
+| 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) terms; see [`NOTICE.md`](NOTICE.md) |
+| Ashfall game font | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1; excluded from MIT |
+| Cinzel logo font source | `tools/art/fonts/` | SIL Open Font License 1.1; excluded from MIT |
 
-These were made with an outside service, so this repository has no right to re-license them under MIT. Playing the game is unrestricted, but **if you want to reuse the sound files on their own**, check that service's terms yourself. Details are in [`NOTICE.md`](NOTICE.md).
-The **Ashfall game font** (`play/assets/fonts/ashfall-*.woff2`) is explicitly excluded from MIT and is licensed under the **SIL Open Font License 1.1**. The logo font source in `tools/art/fonts/` (Cinzel) also follows SIL OFL 1.1. Keep `OFL.txt` · `FONTLOG.txt` with the font files, don't sell the font files on their own, and rename any modified version. Details are in [`NOTICE.md`](NOTICE.md).
+The sound files were made with outside services, so this repository has no right to re-license them under MIT. Playing the game is unaffected; before reusing or redistributing the audio files on their own, check the applicable terms. The Ashfall font's license and file locations are recorded in [`NOTICE.md`](NOTICE.md). Keep `OFL.txt` · `FONTLOG.txt` with the font files, don't sell font files on their own, and rename any modified version.
 
 Apart from those, **every image was made in this repository** — nothing was bought or downloaded: hand-drawn sheets, plus what
 `tileart` and `itemart` paint procedurally at runtime.
