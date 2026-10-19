@@ -195,19 +195,18 @@ npm run check     # the full regression suite (syntax, types, modules, translati
 
 ## License
 
-**[MIT](LICENSE)**. Use, change and redistribute the code and the art freely — just keep the copyright notice. Copyright belongs to `gshs43-junyeong`.
+The code and artwork created for this repository are covered by the **[MIT license](LICENSE)**, subject to the additional restriction below. Copyright belongs to `gshs43-junyeong`.
 
-**The sound effects folder and the fonts are exceptions.**
+**AI training is prohibited:** MIT-covered material in this repository may not be used to train, fine-tune, evaluate, or otherwise develop AI/ML models, or to create datasets for those purposes.
+
+**The sound effects and fonts are exceptions to MIT.**
 
 | What | Where | Made with |
 |---|---|---|
 | 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 
-These were made with an outside service, so this repository has no right to re-license them under MIT. Playing the game is unrestricted,
-but **if you want to reuse the sound files on their own**, check that service's terms yourself. Details are in [`NOTICE.md`](NOTICE.md).
-The fonts are **not MIT**: the game font **Ashfall** (an original font drawn from stroke skeletons by `tools/mkfont.py`, `play/assets/fonts/`) and the
-logo font source in `tools/art/fonts/` (Cinzel) are under the **SIL Open Font License 1.1** — keep `OFL.txt` · `FONTLOG.txt` with them, don't sell the font files on their own,
-and rename any modified version. Details are in [`NOTICE.md`](NOTICE.md).
+These were made with an outside service, so this repository has no right to re-license them under MIT. Playing the game is unrestricted, but **if you want to reuse the sound files on their own**, check that service's terms yourself. Details are in [`NOTICE.md`](NOTICE.md).
+The **Ashfall game font** (`play/assets/fonts/ashfall-*.woff2`) is explicitly excluded from MIT and is licensed under the **SIL Open Font License 1.1**. The logo font source in `tools/art/fonts/` (Cinzel) also follows SIL OFL 1.1. Keep `OFL.txt` · `FONTLOG.txt` with the font files, don't sell the font files on their own, and rename any modified version. Details are in [`NOTICE.md`](NOTICE.md).
 
 Apart from those, **every image was made in this repository** — nothing was bought or downloaded: hand-drawn sheets, plus what
 `tileart` and `itemart` paint procedurally at runtime.
