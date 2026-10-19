@@ -1,11 +1,8 @@
 # NOTICE — 무엇이 MIT 이고 무엇이 아닌가
 
-`LICENSE` 의 MIT 는 **이 저장소에서 만든 것 전부**에 걸립니다. 예외는 셋입니다 — **음악 · 효과음**
-(바깥 서비스로 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다)과 **글꼴**(SIL Open Font License 1.1 —
-OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT 로 바꿀 수 없습니다).
+`LICENSE` 의 MIT 허락은 이 저장소에서 만든 자료에 적용되며, AI/기계학습 모델의 훈련·미세 조정·평가 또는 개발과 그 목적의 학습 데이터 제작에는 사용할 수 없습니다. 예외는 **음악 · 효과음 · 글꼴**입니다. 음악과 효과음은 외부 서비스의 약관을 따르며, 글꼴은 SIL Open Font License 1.1 을 따릅니다.
 
-`LICENSE` 파일은 표준 MIT 문구를 그대로 둡니다. 조항에 손을 대면 자동 검사기가
-"고친 MIT"로 읽기 때문에, 무엇이 예외인지는 이 문서에 따로 적습니다.
+`LICENSE` 에는 표준 MIT 허락에 더해 AI 학습 금지 제한이 명시되어 있습니다. 따라서 이 저장소의 MIT 적용 자료를 이용할 때는 그 제한도 따라야 합니다.
 
 ---
 
@@ -28,7 +25,7 @@ OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT �
 | 무엇 | 어디 | 어떻게 만들었나 |
 |---|---|---|
 | 효과음 92개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
-| 게임 글꼴 Ashfall | `play/assets/fonts/` | 이 프로젝트가 획 뼈대에서 직접 만든 글꼴(SIL OFL 1.1) — 아래 '글꼴' |
+| 게임 글꼴 Ashfall | `play/assets/fonts/ashfall-*.woff2` | MIT 제외. SIL Open Font License 1.1 — 아래 '글꼴' |
 | 글꼴 원본 | `tools/art/fonts/` | 로고에 쓰는 Cinzel 원본과 OFL 전문(`OFL-Cinzel.txt`) |
 
 효과음 폴더의 파일은 **그 서비스의 이용 약관을 따르고**, 글꼴 두 폴더는 **SIL OFL 1.1** 을 따릅니다(아래 '글꼴').
@@ -68,13 +65,9 @@ OFL 은 글꼴을 고쳐 내어도 OFL 그대로 두라고 요구하므로 MIT �
 
 # NOTICE (English)
 
-The MIT license in `LICENSE` covers **everything created in this repository**.
-There are three exceptions: the **music and sound-effect folders**, which were generated
-with external services and therefore cannot be relicensed here, and the **fonts**, which are under the
-SIL Open Font License 1.1 — the OFL requires modified fonts to stay under the OFL, so they cannot become MIT.
+The MIT grant in `LICENSE` covers material created for this repository, with an additional restriction: it may not be used to train, fine-tune, evaluate, or otherwise develop AI/ML models, or to create datasets for those purposes. The **music and sound-effect folders** follow the terms of their external services. The **fonts** are excluded from MIT and licensed under the SIL Open Font License 1.1 (OFL), which requires modified fonts to remain under the OFL.
 
-`LICENSE` keeps the standard MIT text unchanged so that license scanners read it as
-plain MIT; the exceptions are documented here instead.
+`LICENSE` states the additional AI-training restriction alongside the MIT terms. The exclusions and separate font licenses are detailed here.
 
 ## Covered by MIT — copyright gshs43-junyeong
 
@@ -92,7 +85,7 @@ purchased or taken from elsewhere.
 | What | Where | Made with |
 |---|---|---|
 | 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
-| Game font Ashfall | `play/assets/fonts/` | Original font drawn by this project from stroke skeletons (SIL OFL 1.1) — see 'Fonts' |
+| Game font Ashfall | `play/assets/fonts/ashfall-*.woff2` | Excluded from MIT; SIL Open Font License 1.1 — see 'Fonts' |
 | Font sources | `tools/art/fonts/` | Cinzel (used by the logo) with its OFL text (`OFL-Cinzel.txt`) |
 
 The sound effect files are governed by the terms of that service; the two font folders are governed by the SIL OFL 1.1 (see *Fonts*).
