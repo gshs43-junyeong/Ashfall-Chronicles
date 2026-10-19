@@ -204,7 +204,7 @@ The code and artwork created for this repository are covered by the **[MIT licen
 | What | Where | License or source terms |
 |---|---|---|
 | Background music | `play/assets/bgm/*.mp3` | Original source metadata and the applicable provider terms; see [`NOTICE.md`](NOTICE.md) |
-| 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) terms; see [`NOTICE.md`](NOTICE.md) |
+| 91 sound-effect files | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) terms; see [`NOTICE.md`](NOTICE.md) |
 | Ashfall game font | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1; excluded from MIT |
 | Cinzel logo font source | `tools/art/fonts/` | SIL Open Font License 1.1; excluded from MIT |
 
