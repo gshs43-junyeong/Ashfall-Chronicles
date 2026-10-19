@@ -1,0 +1,11 @@
+# Schema for Codex project configuration
+#:schema https://developers.openai.com/codex/config-schema.json
+
+# Ask before running commands that require approval.
+approval_policy = "on-request"
+
+# Keep command execution within the workspace by default.
+sandbox_mode = "workspace-write"
+
+# Use cached web search results by default.
+web_search = "cached"
