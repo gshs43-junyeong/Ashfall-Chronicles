@@ -201,12 +201,12 @@ The code and artwork created for this repository are covered by the **[MIT licen
 
 **Background music, sound effects, and fonts are exceptions to MIT.**
 
-| What | Where | License or source terms |
-|---|---|---|
-| Background music | `play/assets/bgm/*.mp3` | Original source metadata and the applicable provider terms; see [`NOTICE.md`](NOTICE.md) |
-| 91 sound-effect files | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) terms; see [`NOTICE.md`](NOTICE.md) |
-| Ashfall game font | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1; excluded from MIT |
-| Cinzel logo font source | `tools/art/fonts/` | SIL Open Font License 1.1; excluded from MIT |
+| What                    | Where                               | License or source terms                                                                  |
+| ----------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| Background music        | `play/assets/bgm/*.mp3`             | Original source metadata and the applicable provider terms; see [`NOTICE.md`](NOTICE.md) |
+| 91 sound-effect files   | `play/assets/sound_effects/*.mp3`   | [ElevenLabs](https://elevenlabs.io) terms; see [`NOTICE.md`](NOTICE.md)                  |
+| Ashfall game font       | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1; excluded from MIT                                             |
+| Cinzel logo font source | `tools/art/fonts/`                  | SIL Open Font License 1.1; excluded from MIT                                             |
 
 The sound files were made with outside services, so this repository has no right to re-license them under MIT. Playing the game is unaffected; before reusing or redistributing the audio files on their own, check the applicable terms. The Ashfall font's license and file locations are recorded in [`NOTICE.md`](NOTICE.md). Keep `OFL.txt` · `FONTLOG.txt` with the font files, don't sell font files on their own, and rename any modified version.
 
