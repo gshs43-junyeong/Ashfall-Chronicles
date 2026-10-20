@@ -22,8 +22,16 @@ SOFTWARE.
 
 Scope exclusions
 
-The background music files in `play/assets/bgm/` and sound-effect files in `play/assets/sound_effects/` are not covered by this license; their separate source and service terms apply as described in `NOTICE.md`. The Ashfall font files (`play/assets/fonts/ashfall-*.woff2`) are excluded and licensed separately under the SIL Open Font License 1.1. The Cinzel font files in `tools/art/fonts/` are also excluded and remain under their separate license.
+The background music files in `play/assets/bgm/` and sound-effect files in 
+`play/assets/sound_effects/` are not covered by this license; their separate 
+source and service terms apply as described in `NOTICE.md`. The Ashfall font 
+files (`play/assets/fonts/ashfall-*.woff2`) are excluded and licensed separately 
+under the SIL Open Font License 1.1. The Cinzel font files in `tools/art/fonts/` 
+are also excluded and remain under their separate license.
 
 Additional restriction
 
-Notwithstanding the permission above, no permission is granted to use the Software or any other material covered by this repository's MIT grant to train, fine-tune, evaluate, or otherwise develop artificial intelligence or machine-learning models, or to create datasets for those purposes.
+Notwithstanding the permission above, no permission is granted to use the 
+Software or any other material covered by this repository's MIT grant to train, 
+fine-tune, evaluate, or otherwise develop artificial intelligence or 
+machine-learning models, or to create datasets for those purposes.
