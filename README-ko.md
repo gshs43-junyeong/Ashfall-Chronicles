@@ -212,15 +212,16 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 **AI 학습 금지:** MIT 적용 대상 자료를 AI/기계학습 모델의 훈련·미세 조정·평가 또는 그 밖의 개발에 사용하거나, 그러한 목적의 학습 데이터를 만드는 데 사용할 수 없습니다.
 
-**효과음과 글꼴은 MIT 예외입니다.**
+**배경음악·효과음·글꼴은 MIT 예외입니다.**
 
-| 무엇 | 어디 | 어디서 왔나 |
+| 무엇 | 어디 | 라이선스 또는 출처 조건 |
 |---|---|---|
-| 효과음 92개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 배경음악 | `play/assets/bgm/*.mp3` | 원본 메타데이터와 해당 공급자 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
+| 효과음 91개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
+| 게임 글꼴 Ashfall | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1, MIT 적용 제외 |
+| 로고 글꼴 원본 Cinzel | `tools/art/fonts/` | SIL Open Font License 1.1, MIT 적용 제외 |
 
-효과음은 바깥 서비스에서 만든 것이라 여기서 MIT 로 다시 내어 줄 권한이 없습니다. 게임을 받아 즐기는 데에는 아무 제한이 없지만, **소리 파일만 따로 떼어다 쓰려면** 해당 서비스의 약관을 직접 확인하세요. 자세한 것은 [`NOTICE.md`](NOTICE.md) 에 적어 두었습니다.
-
-게임 글꼴 **Ashfall**(`play/assets/fonts/ashfall-*.woff2`)은 MIT 적용 대상에서 명시적으로 제외하며 **SIL Open Font License 1.1** 을 따릅니다. `tools/art/fonts/` 의 로고 글꼴 원본(Cinzel)도 SIL OFL 1.1 을 따릅니다. 글꼴 파일과 함께 `OFL.txt` · `FONTLOG.txt` 를 두고, 글꼴 파일만 따로 팔지 말며, 고친 글꼴은 이름을 바꿔 주세요. 자세한 것은 [`NOTICE.md`](NOTICE.md) 에 적어 두었습니다.
+음원은 외부 서비스의 조건을 따르므로 여기서 MIT 로 다시 허락할 권한이 없습니다. 게임에서 재생하는 데에는 영향이 없지만, 음원 파일을 따로 사용하거나 재배포하기 전에 해당 조건을 확인하세요. Ashfall 글꼴의 라이선스와 파일 경로는 [`NOTICE.md`](NOTICE.md) 에도 적혀 있습니다. 글꼴 파일과 함께 `OFL.txt` · `FONTLOG.txt` 를 두고, 글꼴 파일만 따로 팔지 말며, 고친 글꼴은 이름을 바꿔 주세요.
 
 그 밖의 **그림은 모두 이 저장소 안에서 만들었습니다.** 사 오거나 다른 곳에서 받아 온 것은 없습니다 — 손으로 그린 시트와 `tileart` · `itemart` 가 실행 중 그려 내는 그림입니다.
 

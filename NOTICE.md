@@ -24,7 +24,8 @@
 
 | 무엇 | 어디 | 어떻게 만들었나 |
 |---|---|---|
-| 효과음 92개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| 배경음악 | `play/assets/bgm/*.mp3` | 원본 메타데이터와 각 음원 공급자의 이용 조건 |
+| 효과음 91개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 | 게임 글꼴 Ashfall | `play/assets/fonts/ashfall-*.woff2` | MIT 제외. SIL Open Font License 1.1 — 아래 '글꼴' |
 | 글꼴 원본 | `tools/art/fonts/` | 로고에 쓰는 Cinzel 원본과 OFL 전문(`OFL-Cinzel.txt`) |
 
@@ -84,7 +85,8 @@ purchased or taken from elsewhere.
 
 | What | Where | Made with |
 |---|---|---|
-| 92 sound effects | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
+| Background music | `play/assets/bgm/*.mp3` | Original metadata and the applicable provider terms |
+| 91 sound-effect files | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) |
 | Game font Ashfall | `play/assets/fonts/ashfall-*.woff2` | Excluded from MIT; SIL Open Font License 1.1 — see 'Fonts' |
 | Font sources | `tools/art/fonts/` | Cinzel (used by the logo) with its OFL text (`OFL-Cinzel.txt`) |
 
