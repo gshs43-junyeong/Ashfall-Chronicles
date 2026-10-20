@@ -214,12 +214,12 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 **배경음악·효과음·글꼴은 MIT 예외입니다.**
 
-| 무엇 | 어디 | 라이선스 또는 출처 조건 |
-|---|---|---|
-| 배경음악 | `play/assets/bgm/*.mp3` | 원본 메타데이터와 해당 공급자 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
-| 효과음 91개 | `play/assets/sound_effects/*.mp3` | [ElevenLabs](https://elevenlabs.io) 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
-| 게임 글꼴 Ashfall | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1, MIT 적용 제외 |
-| 로고 글꼴 원본 Cinzel | `tools/art/fonts/` | SIL Open Font License 1.1, MIT 적용 제외 |
+| 무엇              | 어디                                  | 라이선스 또는 출처 조건                                                           |
+| --------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| 배경음악            | `play/assets/bgm/*.mp3`             | 원본 메타데이터와 해당 공급자 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고                    |
+| 효과음 91개         | `play/assets/sound_effects/*.mp3`   | [ElevenLabs](https://elevenlabs.io) 이용 조건 — [`NOTICE.md`](NOTICE.md) 참고 |
+| 게임 글꼴 Ashfall   | `play/assets/fonts/ashfall-*.woff2` | SIL Open Font License 1.1, MIT 적용 제외                                    |
+| 로고 글꼴 원본 Cinzel | `tools/art/fonts/`                  | SIL Open Font License 1.1, MIT 적용 제외                                    |
 
 음원은 외부 서비스의 조건을 따르므로 여기서 MIT 로 다시 허락할 권한이 없습니다. 게임에서 재생하는 데에는 영향이 없지만, 음원 파일을 따로 사용하거나 재배포하기 전에 해당 조건을 확인하세요. Ashfall 글꼴의 라이선스와 파일 경로는 [`NOTICE.md`](NOTICE.md) 에도 적혀 있습니다. 글꼴 파일과 함께 `OFL.txt` · `FONTLOG.txt` 를 두고, 글꼴 파일만 따로 팔지 말며, 고친 글꼴은 이름을 바꿔 주세요.
 
