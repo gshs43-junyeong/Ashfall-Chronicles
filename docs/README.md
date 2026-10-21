@@ -13,13 +13,15 @@
 | [v1.1 한눈에](update/v1.1-changelog.md#한눈에) | 플레이어·QA | v1.1 에 들어간 것을 여섯 줄로 |
 | [세션과 이야기 공용 규약](story-and-sessions.md) | 콘텐츠 제작자 | 장·세션을 늘릴 때 반드시 확인할 표와 세이브·애셋 규칙 |
 | [v1.1 변경 사항](update/v1.1-changelog.md) | QA·릴리스 | 개발 중인 웹 빌드에 들어간 변경 기록 |
-| [update/](update/) | 플레이어·QA·릴리스 | **판마다의 변경 기록과 계획** — `v<판>-changelog.md`(영어, 릴리스 본문) · `.ko.md` · `v1.1.1-engine-plan.md` · `v1.1.2-multiplayer-plan.md` |
+| [update/](update/) | 플레이어·QA·릴리스 | **판마다의 변경 기록과 계획** — `v<판>-changelog.md`(영어, 릴리스 본문) · `.ko.md` · v1.2 방향·통합 계획·이야기·상호작용 문서 |
 
 ## 운영 문서
 
 - [system-requirements.md](system-requirements.md): 실행 환경과 기술적 전제
 - [deploy-cache.md](deploy-cache.md): 배포와 캐시 무효화 절차
-- [update/v1.1.4-plan.md](update/v1.1.4-plan.md): **다음 판 v1.1.4 할 일**(착수 전) — 눈 지역 유적 거리 · 탈 것 · 탭 UI 역동화 · 보스 공략 틈 · osu! 식 낚시 · 유적 개편
+- [update/v1.2-direction.md](update/v1.2-direction.md) · [v1.2-plan.md](update/v1.2-plan.md): **v1.2의 우선 결정과 구현 계획** — 탐험 지형 재구성 · 건축/실내 · 원정과 귀환 · 경제 · 계절 · 몬스터 습격 대응
+- [update/v1.2-story-flow.md](update/v1.2-story-flow.md) · [v1.2-ideas.md](update/v1.2-ideas.md) · [v1.2-interaction-spec.md](update/v1.2-interaction-spec.md): 이야기 흐름, 기획 아이디어, 상호작용 목록 (미확정 설정·후보는 확정 결정과 구분)
+- [update/v1.1.4-plan.md](update/v1.1.4-plan.md): v1.1.4 기능 계획과 구현 기록 — 눈 지역 유적 거리 · 탈 것 · 탭 UI 역동화 · 보스 공략 틈 · osu! 식 낚시 · 유적 개편
 - [update/v1.1.1-engine-plan.md](update/v1.1.1-engine-plan.md): v1.1.1 엔진화·모듈 분리·TypeScript·다국어(6개)·모바일·Docker 계획과 단계별 작업 프롬프트
 - [engine.md](engine.md): 엔진(`src/engine`) 공개 API · 원칙 · 엔진만으로 도는 예제 게임(`examples/sample`)
 - [debug-urls.md](debug-urls.md): 구역·기능 앞에서 바로 시작하는 디버그 주소(`?debug=village` · `factory` · `sea` …)와 옵션
