@@ -48216,6 +48216,7 @@
     MAP_REVEAL_LIGHT: () => MAP_REVEAL_LIGHT,
     PATH_BUDGET: () => PATH_BUDGET,
     QUALITY: () => QUALITY,
+    SOFT_RENDER: () => SOFT_RENDER,
     TOUCH: () => TOUCH
   });
 
@@ -49512,7 +49513,20 @@
   var DAY_CYCLE = new DayCycle({ rise: 330, set: 1110, dawn: [240, 420], dusk: [1020, 1200] });
   var AUTOSAVE_SEC = 300;
   var PATH_BUDGET = 3;
-  var QUALITY = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
+  var QUALITY = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 240, px: 1024 * 576 } };
+  var SOFT_RENDER = (() => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.webdriver) return false;
+      const gl = document.createElement("canvas").getContext("webgl");
+      if (!gl) return true;
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      const name = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name);
+    } catch (e) {
+      return false;
+    }
+  })();
   var TOUCH = (() => {
     const q = new URLSearchParams(location.search).get("touch");
     if (q === "1" || q === "0") return q === "1";
@@ -49733,6 +49747,7 @@
     quality() {
       const q = this.settings && this.settings.quality || "auto";
       if (QUALITY[q]) return q;
+      if (SOFT_RENDER) return "low";
       return !TOUCH ? "high" : Math.min(screen.width, screen.height) <= 540 ? "low" : "mid";
     },
     /** 설정의 시야 배율. */
@@ -49745,7 +49760,9 @@
     },
     // 낚시 겨루기 동안 다가간다(game/fish-duel)
     resize() {
-      const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), QUALITY[this.quality()].dpr);
+      const Q = QUALITY[this.quality()];
+      const dpr = Q.px ? Math.max(0.5, Math.min(Q.dpr, Math.sqrt(Q.px / Math.max(1, innerWidth * innerHeight)))) : Q.dpr;
+      const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), dpr);
       this.W = v.W;
       this.H = v.H;
     },
@@ -70647,7 +70664,7 @@
       const body = (bc) => this.drawRider(bc, p, W / 2 - p.w / 2, H - p.h - 2);
       this.shadowPass = 1;
       try {
-        S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1 });
+        S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: this.quality() === "low" ? 0 : 1 });
       } finally {
         this.shadowPass = 0;
       }

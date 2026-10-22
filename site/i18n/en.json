@@ -1,10 +1,7 @@
 {
  "\"Windows의 PC 보호\" 창이 뜨면 <strong>추가 정보 → 실행</strong>. 다음부터는 묻지 않습니다.": "If “Windows protected your PC” appears, click <strong>More info → Run anyway</strong>. It won’t ask again.",
  "1층 용광로에서 녹인 주괴를 벨트 기둥으로 올려 보내면, 2층 가압기가 강철판을 찍고 3층 조립기가 전선을 감아. 옆 건물은 지하 탄광이 캔 석탄으로 제 발전기를 먹이고, 모자란 전기는 옥상 풍차가 채워. 네가 자는 동안에도 공장은 돌아가 — 막히는 곳만 찾아서 고치면 돼.": "Ingots melted in the first-floor furnaces ride a belt column up; the second-floor press stamps steel plates and the third-floor assembler winds wire. Next door, the underground coal mine feeds its own generator, and the rooftop windmill covers what's missing. The factory keeps running while you sleep — you just find where it jams and fix it.",
- "2D 가속을 지원하는 GPU (Intel HD 4000 급)": "GPU with 2D acceleration (Intel HD 4000 class)",
- "2코어 2.0 GHz (Core i3-4130 급)": "2 cores, 2.0 GHz (Core i3-4130 class)",
  "4 GB — 게임 탭 하나가 약 400 MB 를 씁니다": "4 GB — one game tab uses about 400 MB",
- "4코어 2.5 GHz (Core i5-8250U · Ryzen 3 3200G 급)": "4 cores, 2.5 GHz (Core i5-8250U · Ryzen 3 3200G class)",
  "7장 봉인실을 여명 마을 지하로 옮겼습니다.": "Moved the Chapter 7 seal chamber beneath Dawnhold.",
  "<a class=\"btn btn-primary btn-lg\" href=\"#play\">지금 바로 플레이</a> <a class=\"btn btn-lg\" href=\"../download\">내려받기</a>": "<a class=\"btn btn-primary btn-lg\" href=\"#play\">Play now</a> <a class=\"btn btn-lg\" href=\"../download\">Download</a>",
  "<a class=\"btn btn-primary btn-lg\" href=\"../download\">다운로드</a> <a class=\"btn btn-lg\" href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles\">저장소 보기</a>": "<a class=\"btn btn-primary btn-lg\" href=\"../download\">Download</a> <a class=\"btn btn-lg\" href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles\">View repository</a>",
@@ -325,7 +322,6 @@
  "진행 상황은 이 브라우저 안에 저장됩니다 · <a href=\"../download#save\">저장에 대해 자세히</a>": "Progress is saved in this browser · <a href=\"../download#save\">More about saving</a>",
  "창을 건너뛰고 바로 열려면": "To skip the dialog entirely",
  "채굴 · 건설": "Mining · Building",
- "최근 7년 안의 내장 그래픽 이상": "Integrated graphics from the last seven years or better",
  "최소": "Minimum",
  "최초의 유적": "The First Ruins",
  "최초의 파수꾼": "First Keeper",
@@ -390,7 +386,6 @@
  "<span class=\"k\">크기</span> 224.2 MiB": "<span class=\"k\">Size</span> 224.2 MiB",
  "<span class=\"k\">크기</span> 73.6 MiB": "<span class=\"k\">Size</span> 73.6 MiB",
  "브라우저로 여는 판 <span class=\"mono\">73.6 MiB</span> · Windows · macOS<br>앱으로 여는 판 <span class=\"mono\">191 ~ 224 MiB</span> · Windows · macOS · Linux": "Browser edition <span class=\"mono\">73.6 MiB</span> · Windows · macOS<br>App edition <span class=\"mono\">191 – 224 MiB</span> · Windows · macOS · Linux",
- "2코어 1.1 GHz (Celeron N4500 급 — 실제 기기에서 타이틀까지 확인)": "Dual-core 1.1 GHz (Celeron N4500 class — confirmed up to the title screen on a real device)",
  "4 GB — 앱이 플레이 중 약 540 MB, 보스전에서 약 680 MB 를 따로 씁니다": "4 GB — the app uses about 540 MB of its own while playing and about 680 MB in a boss fight",
  "500 MB (앱 191~224 MiB를 풀면 그보다 조금 큽니다)": "500 MB (the 191–224 MiB app is a little larger once unpacked)",
  "Windows 10 64비트 · macOS 12 · Ubuntu 22.04": "Windows 10 64-bit · macOS 12 · Ubuntu 22.04",
@@ -400,6 +395,11 @@
  "앱으로 여는 판": "App edition",
  "저장 공간": "Storage",
  "키보드와 마우스, 휴대폰·태블릿은 터치. 게임패드는 지원하지 않습니다": "Keyboard and mouse; touch on phones and tablets. Gamepads are not supported",
- "하드웨어 가속 2D (Intel UHD Graphics 급)": "Hardware-accelerated 2D (Intel UHD Graphics class)",
- "혼자 할 때는 필요 없습니다. 멀티플레이만 연결이 필요합니다": "Not needed for single-player. Only multiplayer needs a connection"
+ "혼자 할 때는 필요 없습니다. 멀티플레이만 연결이 필요합니다": "Not needed for single-player. Only multiplayer needs a connection",
+ "2D 가속을 지원하는 GPU (Intel UHD Graphics 620 급)": "GPU with 2D acceleration (Intel UHD Graphics 620 class)",
+ "4코어 1.6 GHz (Core i5-8250U · Ryzen 5 3500U 급) — 절약 화질": "Quad-core 1.6 GHz (Core i5-8250U · Ryzen 5 3500U class) — Low quality",
+ "4코어 1.6 GHz (Core i5-8250U · Ryzen 5 3500U 급) — 절약 화질. Celeron N4500 같은 2코어 저전력 칩은 가장 낮은 화질에서도 몇 프레임밖에 안 나와 지원하지 않습니다": "Quad-core 1.6 GHz (Core i5-8250U · Ryzen 5 3500U class) — Low quality. Dual-core low-power chips such as the Celeron N4500 only reach a few frames per second even at the lowest quality and are not supported",
+ "4코어 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U 급)": "Quad-core 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U class)",
+ "Intel Iris Xe · Radeon Vega 7 급 이상": "Intel Iris Xe · Radeon Vega 7 class or better",
+ "하드웨어 가속 2D (Intel UHD Graphics 620 급)": "Hardware-accelerated 2D (Intel UHD Graphics 620 class)"
 }

@@ -315,7 +315,7 @@ export const RenderActorsPart: Bag = {
     this.shadowPass = 1;
     try {
       /* 길게 눕는 그늘은 조명 판이 진다(world.computeLight bodies — 나무 그늘과 같은 엔진). 여기서는 발끝 접지만 */
-      S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: 1 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
+      S.draw(c, W, H, body, p.cx - camX, gy * TS - camY + 4, sun, { alpha: 0.3 * fade, squash: 0.2, blur: this.quality() === 'low' ? 0 : 1 });   // 땅 윗면(풀 띠)에 눕게 4px 내린다
     } finally { this.shadowPass = 0; }
   },
   drawEnemy(c: any, e: any, sx: any, sy: any) {

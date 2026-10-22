@@ -32,9 +32,9 @@
 | | 최소 | 권장 |
 |---|---|---|
 | **운영체제** | Windows 10 · macOS 11 · Ubuntu 20.04 · ChromeOS | Windows 11 · macOS 13 이상 |
-| **프로세서** | 2코어 2.0 GHz (Core i3-4130 급) | 4코어 2.5 GHz (Core i5-8250U · Ryzen 3 3200G 급) |
+| **프로세서** | 4코어 1.6 GHz (Core i5-8250U · Ryzen 5 3500U 급) — 절약 화질 | 4코어 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U 급) |
 | **메모리** | **4 GB** (게임 탭 하나가 약 400 MB 를 씁니다) | 8 GB |
-| **그래픽** | 2D 가속을 지원하는 GPU (Intel HD 4000 급) | 최근 7년 안의 내장 그래픽 이상 |
+| **그래픽** | 2D 가속을 지원하는 GPU (Intel UHD Graphics 620 급) | Intel Iris Xe · Radeon Vega 7 급 이상 |
 | **해상도** | 1280×720 | 1920×1080 |
 | **입력** | 키보드 + 마우스 또는 지원 기기의 터치 | 〃 |
 
@@ -112,9 +112,9 @@
 최소 사양 (브라우저)
   브라우저: Chrome/Edge 99 · Firefox 97 · Safari 16 이상, 그래픽 가속 켜짐
   운영체제: Windows 10 · macOS 11 · Ubuntu 20.04 · ChromeOS
-  프로세서: 2코어 2.0 GHz (Intel Core i3-4130 급)
+  프로세서: 4코어 1.6 GHz (Intel Core i5-8250U / AMD Ryzen 5 3500U 급), 절약 화질
   메모리: 4 GB RAM
-  그래픽: 2D 가속을 지원하는 GPU (Intel HD Graphics 4000 급)
+  그래픽: 2D 가속을 지원하는 GPU (Intel UHD Graphics 620 급)
   해상도: 1280×720
   네트워크: 첫 방문 7.5 MB (재방문은 캐시로 약 1초)
   저장 공간: 브라우저 저장소 약 6 MB (세이브 슬롯 셋)
@@ -122,9 +122,9 @@
 
 권장 사양 (브라우저)
   브라우저: Chrome/Edge 111 · Firefox 113 · Safari 16.2 이상
-  프로세서: 4코어 2.5 GHz (Intel Core i5-8250U / AMD Ryzen 3 3200G 급)
+  프로세서: 4코어 2.4 GHz (Intel Core i5-1135G7 / AMD Ryzen 5 5500U 급)
   메모리: 8 GB RAM
-  그래픽: 최근 7년 안의 내장 그래픽 이상
+  그래픽: Intel Iris Xe · Radeon Vega 7 급 이상
   해상도: 1920×1080 60fps
   네트워크: 25 Mbps 이상 (첫 방문 5초)
 ```
@@ -133,9 +133,9 @@
 MINIMUM (in-browser)
   Browser: Chrome/Edge 99, Firefox 97, or Safari 16+, with hardware acceleration enabled
   OS: Windows 10 / macOS 11 / Ubuntu 20.04 / ChromeOS
-  Processor: Dual-core 2.0 GHz (Intel Core i3-4130 class)
+  Processor: Quad-core 1.6 GHz (Intel Core i5-8250U / AMD Ryzen 5 3500U class), Low quality
   Memory: 4 GB RAM
-  Graphics: GPU with hardware-accelerated 2D canvas (Intel HD Graphics 4000 class)
+  Graphics: GPU with hardware-accelerated 2D canvas (Intel UHD Graphics 620 class)
   Display: 1280x720
   Network: 7.5 MB on first visit (about 1 second on return, from cache)
   Storage: ~6 MB of browser storage for three save slots
@@ -143,9 +143,9 @@ MINIMUM (in-browser)
 
 RECOMMENDED (in-browser)
   Browser: Chrome/Edge 111, Firefox 113, or Safari 16.2+
-  Processor: Quad-core 2.5 GHz (Intel Core i5-8250U / AMD Ryzen 3 3200G class)
+  Processor: Quad-core 2.4 GHz (Intel Core i5-1135G7 / AMD Ryzen 5 5500U class)
   Memory: 8 GB RAM
-  Graphics: Integrated graphics from the last 7 years or better
+  Graphics: Intel Iris Xe / Radeon Vega 7 class or better
   Display: 1920x1080, targets 60 fps
   Network: 25 Mbps or better (5 seconds on first visit)
 ```
@@ -191,14 +191,22 @@ Electron 앱판은 `play/`를 Chromium과 함께 포장해 별도 창에서 실�
 
 이 측정은 실제 저사양 장치의 포장 앱 실행값이지 여러 기기에서 확인한 인증 최소선은 아닙니다. 앱은 타이틀/저장 슬롯까지 열렸지만 첫 로드가 느렸고, 월드 진입 후 안정적인 게임 플레이 FPS는 확인하지 못했습니다. 따라서 아래 최소선은 **앱을 열 수 있었던 실측 하한**이고, 전체 플레이 성능의 최소선은 추가 기기 시험 전까지 잠정값입니다.
 
+### 최소선을 올린 까닭 — Celeron N4500 에서 2fps (2026-10-22 사용자 실측)
+
+같은 기기(위 표의 Celeron N4500)에서 월드에 들어가면 **가장 낮은 화질에서도 약 2fps** 였다. 헤드리스로 단계를 끄며 재 보니 JS 는 한 프레임 6 ms 남짓이고
+나머지는 **화면 칠하기**였다(1920×1080 · 소프트웨어 칠하기: 11.4fps, 몸 그리기 · 빛 판 · 타일 · 하늘이 고르게 나눠 먹음). 그래서 v1.1.5 의 절약 화질은
+화소 수 상한(1024×576 상당)을 둔다 — 같은 조건 11.4 → **35.8fps**(3.1배) · 1366×768 은 46fps. 자동 화질은 GPU 없이 칠하는 환경(WebGL 렌더러가 SwiftShader 따위)을 알아보면 절약으로 떨어진다.
+N4500 은 이 기기 비율(11.4 : 2 ≈ 5.7배 느림)로 치면 고친 뒤에도 약 6fps 라 최소선 밖으로 둔다. 새 최소선(i5-8250U · 4코어 8스레드)은
+N4500 보다 단일 코어 약 1.5배 · 다중 코어 약 3배라 절약 화질 1080p 에서 30fps 안팎을 노린다 — **추정**이고, 그 급 기기에서 다시 재면 이 줄을 실측으로 바꾼다.
+
 ### Electron 앱 요구 사양
 
 | | 최소 | 권장 |
 |---|---|---|
 | **운영체제** | Windows 10 64-bit (1809+) · macOS 12 · Ubuntu 22.04 / SteamOS 3 | Windows 11 · macOS 13+ · Ubuntu 22.04 |
-| **프로세서** | 2코어 1.1 GHz (Intel Celeron N4500 급, 타이틀 진입 실측) | 4코어 2.5 GHz (Core i5-8250U · Ryzen 3 3200G 급) |
+| **프로세서** | 4코어 1.6 GHz (Core i5-8250U · Ryzen 5 3500U 급) — 절약 화질 | 4코어 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U 급) |
 | **메모리** | **4 GB RAM** (앱이 플레이 중 약 540 MB · 보스전 약 680 MB 를 따로 쓴다 — v1.1.5) | **8 GB RAM** |
-| **그래픽** | 하드웨어 가속 Canvas 2D · Intel UHD Graphics 급, DirectX 11 호환 | 최근 7년 안의 내장 그래픽 이상 |
+| **그래픽** | 하드웨어 가속 Canvas 2D · Intel UHD Graphics 620 급, DirectX 11 호환 | Intel Iris Xe · Radeon Vega 7 급 이상 |
 | **해상도** | 1280×720 | 1920×1080 · 60fps 목표 |
 | **저장 공간** | **500 MB** (실제 설치 ≈ 콘텐츠 61 MB + 런타임 190 MB) | 500 MB |
 | **네트워크** | 싱글플레이 오프라인 가능 | 멀티플레이에는 연결 필요 |

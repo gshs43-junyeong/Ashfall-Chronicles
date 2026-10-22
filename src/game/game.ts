@@ -50,7 +50,22 @@ export const DAY_CYCLE = new DayCycle({ rise: 330, set: 1110, dawn: [240, 420], 
 export const AUTOSAVE_SEC = 300;
 /** 한 프레임에 찾는 몹 길의 수(entity/enemy-ai walkPath) */
 export const PATH_BUDGET = 3;
-export const QUALITY: Bag = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 300 } };
+/* ★ 절약은 화소 수 상한(px)도 둔다 — 막히는 곳이 화면 칠하기라 1080p 를 그대로 칠하면 약한 기계에서 몇 프레임 안 나온다.
+   헤드리스 1920×1080 실측: 밀도 1 → 11.4fps · 0.75 → 17 · 0.5 → 30. 사연: docs/code-history.md#h209 */
+export const QUALITY: Bag = { high: { dpr: 2, parts: PART_CAP }, mid: { dpr: 1.5, parts: 600 }, low: { dpr: 1, parts: 240, px: 1024 * 576 } };
+/** 화면을 GPU 없이 칠하는가(드라이버 막힘 · 가상 머신) — WebGL 렌더러 이름으로 본다. 자동 화질이면 절약으로 떨어진다.
+    자동 검사(webdriver)는 늘 소프트웨어라 건너뛴다 — 안 그러면 스크린샷 기준이 절약 화질로 바뀐다 */
+export const SOFT_RENDER = (() => {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.webdriver) return false;
+    const gl = document.createElement('canvas').getContext('webgl') as WebGLRenderingContext | null;
+    if (!gl) return true;
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name);
+  } catch (e) { return false; }
+})();
 
 /** 터치 기기인가 — ?touch=1 / 0 이 먼저, 아니면 손가락이 주 포인터인 기기(폰 · 태블릿) */
 export const TOUCH = (() => {
@@ -203,6 +218,7 @@ export const GameCore: Bag = {
   quality() {
     const q = (this.settings && this.settings.quality) || 'auto';
     if (QUALITY[q]) return q;
+    if (SOFT_RENDER) return 'low';
     return !TOUCH ? 'high' : Math.min(screen.width, screen.height) <= 540 ? 'low' : 'mid';
   },
   /** 설정의 시야 배율. */
@@ -212,7 +228,9 @@ export const GameCore: Bag = {
 
   resize() {
     /* W·H 는 화면 픽셀이 아니라 **월드 좌표계로 본 시야 크기**다. */
-    const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), QUALITY[this.quality()].dpr);
+    const Q = QUALITY[this.quality()];
+    const dpr = Q.px ? Math.max(0.5, Math.min(Q.dpr, Math.sqrt(Q.px / Math.max(1, innerWidth * innerHeight)))) : Q.dpr;
+    const v = fitCanvas(this.cv, this.ctx, this.viewZoom(), dpr);
     this.W = v.W; this.H = v.H;
   },
   /** 이 액션에 걸린 키 목록. */

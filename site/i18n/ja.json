@@ -1,10 +1,7 @@
 {
  "\"Windows의 PC 보호\" 창이 뜨면 <strong>추가 정보 → 실행</strong>. 다음부터는 묻지 않습니다.": "「Windows によって PC が保護されました」が出たら<strong>詳細情報 → 実行</strong>。次からは聞かれません。",
  "1층 용광로에서 녹인 주괴를 벨트 기둥으로 올려 보내면, 2층 가압기가 강철판을 찍고 3층 조립기가 전선을 감아. 옆 건물은 지하 탄광이 캔 석탄으로 제 발전기를 먹이고, 모자란 전기는 옥상 풍차가 채워. 네가 자는 동안에도 공장은 돌아가 — 막히는 곳만 찾아서 고치면 돼.": "1階の溶鉱炉で溶かしたインゴットをベルトの柱で上げれば、2階の加圧機が鋼板を打ち、3階の組立機が電線を巻く。隣の建物は地下炭鉱の石炭で自分の発電機を回して、足りない電気は屋上の風車が補う。君が寝てる間も工場は回る——詰まる所を見つけて直すだけさ。",
- "2D 가속을 지원하는 GPU (Intel HD 4000 급)": "2D アクセラレーション対応 GPU（Intel HD 4000 クラス）",
- "2코어 2.0 GHz (Core i3-4130 급)": "2 コア 2.0 GHz（Core i3-4130 クラス）",
  "4 GB — 게임 탭 하나가 약 400 MB 를 씁니다": "4 GB — ゲームのタブ 1 つで約 400 MB を使います",
- "4코어 2.5 GHz (Core i5-8250U · Ryzen 3 3200G 급)": "4 コア 2.5 GHz（Core i5-8250U · Ryzen 3 3200G クラス）",
  "7장 봉인실을 여명 마을 지하로 옮겼습니다.": "7 章の封印室を暁の村の地下に移しました。",
  "<a class=\"btn btn-primary btn-lg\" href=\"#play\">지금 바로 플레이</a> <a class=\"btn btn-lg\" href=\"../download\">내려받기</a>": "<a class=\"btn btn-primary btn-lg\" href=\"#play\">今すぐプレイ</a> <a class=\"btn btn-lg\" href=\"../download\">ダウンロード</a>",
  "<a class=\"btn btn-primary btn-lg\" href=\"../download\">다운로드</a> <a class=\"btn btn-lg\" href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles\">저장소 보기</a>": "<a class=\"btn btn-primary btn-lg\" href=\"../download\">ダウンロード</a> <a class=\"btn btn-lg\" href=\"https://github.com/gshs43-junyeong/Ashfall-Chronicles\">リポジトリを見る</a>",
@@ -325,7 +322,6 @@
  "진행 상황은 이 브라우저 안에 저장됩니다 · <a href=\"../download#save\">저장에 대해 자세히</a>": "進行状況はこのブラウザの中に保存されます · <a href=\"../download#save\">保存について詳しく</a>",
  "창을 건너뛰고 바로 열려면": "画面を飛ばしてすぐ開くには",
  "채굴 · 건설": "採掘 · 建築",
- "최근 7년 안의 내장 그래픽 이상": "直近 7 年以内の内蔵グラフィック以上",
  "최소": "最低",
  "최초의 유적": "最初の遺跡",
  "최초의 파수꾼": "最初の番人",
@@ -390,7 +386,6 @@
  "<span class=\"k\">크기</span> 224.2 MiB": "<span class=\"k\">サイズ</span> 224.2 MiB",
  "<span class=\"k\">크기</span> 73.6 MiB": "<span class=\"k\">サイズ</span> 73.6 MiB",
  "브라우저로 여는 판 <span class=\"mono\">73.6 MiB</span> · Windows · macOS<br>앱으로 여는 판 <span class=\"mono\">191 ~ 224 MiB</span> · Windows · macOS · Linux": "ブラウザで開く版 <span class=\"mono\">73.6 MiB</span> · Windows · macOS<br>アプリで開く版 <span class=\"mono\">191 ~ 224 MiB</span> · Windows · macOS · Linux",
- "2코어 1.1 GHz (Celeron N4500 급 — 실제 기기에서 타이틀까지 확인)": "2コア 1.1 GHz（Celeron N4500 クラス — 実機でタイトルまで確認）",
  "4 GB — 앱이 플레이 중 약 540 MB, 보스전에서 약 680 MB 를 따로 씁니다": "4 GB — プレイ中はアプリ単体で約 540 MB、ボス戦で約 680 MB を使います",
  "500 MB (앱 191~224 MiB를 풀면 그보다 조금 큽니다)": "500 MB（191〜224 MiB のアプリを展開すると少し大きくなります）",
  "Windows 10 64비트 · macOS 12 · Ubuntu 22.04": "Windows 10 64ビット · macOS 12 · Ubuntu 22.04",
@@ -400,6 +395,11 @@
  "앱으로 여는 판": "アプリで開く版",
  "저장 공간": "保存容量",
  "키보드와 마우스, 휴대폰·태블릿은 터치. 게임패드는 지원하지 않습니다": "キーボードとマウス、スマートフォン・タブレットはタッチ。ゲームパッドには対応していません",
- "하드웨어 가속 2D (Intel UHD Graphics 급)": "ハードウェアアクセラレーション対応 2D（Intel UHD Graphics クラス）",
- "혼자 할 때는 필요 없습니다. 멀티플레이만 연결이 필요합니다": "ひとりで遊ぶときは不要です。マルチプレイだけ接続が必要です"
+ "혼자 할 때는 필요 없습니다. 멀티플레이만 연결이 필요합니다": "ひとりで遊ぶときは不要です。マルチプレイだけ接続が必要です",
+ "2D 가속을 지원하는 GPU (Intel UHD Graphics 620 급)": "2D アクセラレーション対応 GPU（Intel UHD Graphics 620 クラス）",
+ "4코어 1.6 GHz (Core i5-8250U · Ryzen 5 3500U 급) — 절약 화질": "4コア 1.6 GHz（Core i5-8250U · Ryzen 5 3500U クラス）— 省電力画質",
+ "4코어 1.6 GHz (Core i5-8250U · Ryzen 5 3500U 급) — 절약 화질. Celeron N4500 같은 2코어 저전력 칩은 가장 낮은 화질에서도 몇 프레임밖에 안 나와 지원하지 않습니다": "4コア 1.6 GHz（Core i5-8250U · Ryzen 5 3500U クラス）— 省電力画質。Celeron N4500 のような2コア省電力チップは最低画質でも数フレームしか出ないため対象外です",
+ "4코어 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U 급)": "4コア 2.4 GHz（Core i5-1135G7 · Ryzen 5 5500U クラス）",
+ "Intel Iris Xe · Radeon Vega 7 급 이상": "Intel Iris Xe · Radeon Vega 7 クラス以上",
+ "하드웨어 가속 2D (Intel UHD Graphics 620 급)": "ハードウェアアクセラレーション 2D（Intel UHD Graphics 620 クラス）"
 }
