@@ -1633,6 +1633,12 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .ps-cfg label{display:flex;align-items:center;gap:7px;cursor:pointer}
 .ps-cfg input{accent-color:var(--gold);flex:0 0 auto}
 .ps-cfg input:disabled+*,.ps-cfg label:has(input:disabled){cursor:default;opacity:.75}
+.ps-save p{margin:0 0 4px;font-size:11.5px;line-height:1.5;color:var(--muted,#b9ad94)}
+.ps-save .ps-save-st{color:#e9dcbc}
+.ps-save .ps-save-st.ok::before{content:'●';color:#7fd08a;margin-right:5px}
+.ps-save .ps-save-st.wait::before{content:'●';color:#e0b050;margin-right:5px}
+.ps-save .ps-save-st.warn{color:#e8b070}
+.ps-save .ps-save-note{font-size:10.5px;opacity:.8}
 .ps-cfg-note{font-size:10.5px;color:#6f6b5c;margin-top:6px}
 .ps-inner .ps-side button:not(.mini-btn){width:100%;margin:12px 0 0}
 @media (max-width:640px),(max-height:440px){.ps-cols{gap:14px}.ps-side{flex-basis:250px;padding:9px 11px}}

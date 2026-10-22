@@ -412,7 +412,7 @@
         <p id="mp-code-hint" class="mp-hint">영문과 숫자를 섞어 5~6자 — 예: 7K2QM</p>
         <label for="mp-name">이름</label><input id="mp-name" maxlength="12" placeholder="이름 없는 모험가">
         <label for="mp-class">직업</label><select id="mp-class"></select>
-        <p class="mp-note mp-wide-note">참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.</p>
+        <p class="mp-note mp-wide-note">참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다. 진행은 15초마다 · 나갈 때 호스트의 저장에 맡겨진다(일시정지 → 저장 칸에서 확인).</p>
       </div>
       <p id="mp-msg" class="code-msg"></p>
       <div class="code-btns"><button id="btn-mp-join">참가</button><button id="btn-mp-close">닫기</button></div>
@@ -500,6 +500,8 @@
         <div class="ps-side-sec">방 설정</div>
         <div id="ps-cfg" class="ps-cfg"><label><input type="checkbox" id="mp-pvp">플레이어끼리 싸움(PvP)</label><label><input type="checkbox" id="mp-chat">채팅</label></div>
         <p id="ps-cfg-note" class="ps-cfg-note" hidden>방 설정은 호스트가 바꾼다.</p>
+        <div class="ps-side-sec">저장</div>
+        <div id="ps-save" class="ps-save"></div>
         <button id="btn-room-close" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방 닫기</button>
         <button id="btn-room-leave" hidden><span class="ui-ic" data-ui-icon="u_leave"></span>방에서 나가기</button>
       </div>

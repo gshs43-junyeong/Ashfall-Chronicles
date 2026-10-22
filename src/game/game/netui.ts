@@ -105,10 +105,11 @@ export const NetUiPart: Bag = {
       const seq = this._saveSeq;
       try {
         const d = await this.netReadSlot(slot);
-        if (!d) return this.currentSlot === slot ? this.saveGame(true) : false;
+        if (!d) return this.currentSlot === slot ? this.saveGame(true) : false;   // 전체 저장도 손님 기록을 담는다(saveGame 이 시각을 적는다)
         if (this._saving || this._saveSeq !== seq) return false;
         d.mpGuests = guests;
         await SaveStore.put(slot, JSON.stringify(d), saveHead(d));
+        this._guestSavedAt = performance.now();
         return true;
       } catch (e) { console.error(e); return false; }
     };
@@ -120,6 +121,7 @@ export const NetUiPart: Bag = {
   netCharOut(n: any, save = false) {
     if (!n || n.role !== 'guest' || !n.t || n.id <= 0) return false;
     this.netSend(n.t, 'rel', { k: 'csave', char: this.packChar(n.char), s: save ? 1 : 0 });
+    n.csSent = performance.now();
     return true;
   },
   /** 참가 창이 열려 있으면 거기에, 아니면 알림으로. */
@@ -182,13 +184,32 @@ export const NetUiPart: Bag = {
     box.hidden = false;
   },
 
+  /** 일시정지 창 오른쪽 열의 '저장' 칸 — 멀티플레이에서 무엇이 어디에 남는지와 마지막으로 남긴 때. 사연: docs/code-history.md#h212 */
+  refreshPauseSave(n: Bag) {
+    const box = $('#ps-save'); if (!box) return;
+    const ago = (t: number) => t ? tr('{s}초 전', { s: Math.max(0, Math.round((performance.now() - t) / 1000)) }) : tr('아직 없음');
+    if (n.role === 'guest') {
+      const ok = n.csAck && (!n.csSent || n.csAck >= n.csSent - 50);
+      box.innerHTML = `<p>${tr('내 캐릭터(레벨 · 가방 · 금화)는 이 세계를 연 호스트의 저장에 맡겨진다. 내 싱글플레이 슬롯은 그대로다.')}</p>
+        <p class="ps-save-st ${ok ? 'ok' : 'wait'}">${tr('마지막으로 맡김: {t}', { t: ago(n.csAck || 0) })}${ok ? '' : ' · ' + tr('호스트 답을 기다리는 중')}</p>
+        ${n.csAck && !n.csAckSlot ? `<p class="ps-save-st warn">${tr('호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다')}</p>` : ''}
+        <p class="ps-save-note">${tr('15초마다 · 나갈 때 저절로 맡긴다. 다음에 같은 호스트 세계에 오면 이어 간다.')}</p>`;
+    } else {
+      const g = Object.keys(this.mpGuests || {}).length;
+      box.innerHTML = `<p>${tr('세계와 함께 손님 캐릭터 {n}명을 이 슬롯에 저장한다. 손님이 나가거나 방을 닫을 때도 손님 캐릭터를 바로 적는다.', { n: g })}</p>
+        <p class="ps-save-st ok">${tr('손님 기록을 마지막으로 적음: {t}', { t: ago(this._guestSavedAt || 0) })}</p>`;
+    }
+  },
   /** 일시정지 창 — 혼자면 왼쪽 메뉴에 '방 열기'만, 멀티플레이면 오른쪽 열(방 코드 · 함께하는 사람 · 방 설정 · 닫기/나가기). */
   refreshPauseMp() {
     const n = this.net, host = !!n && n.role === 'host', guest = !!n && n.role === 'guest';
     $('#ps-side').hidden = !n;
     $('#btn-room-open').hidden = !!n || !this.world;
     $('#btn-save-export').hidden = guest;        // 참가자는 캐릭터만 저장한다
+    /* 저장하기 단추가 무엇을 하는지 이름으로 — 손님은 제 캐릭터를 호스트 세계에 맡기고, 호스트는 세계와 손님 캐릭터를 같이 쓴다 */
+    $('#btn-save').lastChild.textContent = guest ? tr('캐릭터 맡기기') : tr('저장하기');
     if (!n) return;
+    this.refreshPauseSave(n);
     $('#ps-room').hidden = !n.room;
     $('#ps-room-code').textContent = n.room || '';
     $('#btn-room-close').hidden = !host;

@@ -104,6 +104,7 @@ export const SavePart: Bag = {
       if (data.world.delta) SaveStore.pruneSides(slot, 'base:' + data.world.delta.base).catch(e => console.error(e));
       if (!quiet) this.toast(tr('저장했다'), 'good');
       if (this.autosave) this.autosave.reset();
+      if (this.net && this.net.role === 'host') this._guestSavedAt = performance.now();   // 손님 기록도 같이 담겼다(일시정지 '저장' 칸)
       return true;
     } catch (e) {
       this.toast(e && (e as Error).name === 'QuotaExceededError' ? tr('저장 실패: 용량 초과') : tr('저장 실패'), 'bad'); console.error(e);
@@ -360,7 +361,7 @@ export const SavePart: Bag = {
       return `<div class="slot-card filled${s.bad ? ' tampered' : ''}" data-slot="${i}">
         <div class="slot-info">
           <div class="slot-name">${escHtml(s.name === NONAME ? tr(NONAME) : s.name)}</div>
-          <div class="slot-meta">${s.bad ? tr('저장한 뒤에 바뀐 기록 — 열 수 없다') : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
+          <div class="slot-meta">${s.bad ? tr('저장한 뒤에 바뀐 기록 — 열 수 없다') : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}${s.guests ? ' · ' + tr('손님 캐릭터 {n}', { n: s.guests }) : ''}`}</div>
         </div>
         <div class="slot-actions">
           <button class="slot-load-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_start"></span>${tr('이어하기')}</button>

@@ -48234,7 +48234,8 @@
       level: d.p ? d.p.level : 1,
       chapter: d.chapter,
       size: d.world && d.world.size || "s",
-      savedAt: d.savedAt
+      savedAt: d.savedAt,
+      guests: d.mpGuests ? Object.keys(d.mpGuests).length : 0
     };
   }
   var SaveStore = createSaveStore({
@@ -51066,6 +51067,7 @@
         if (data.world.delta) SaveStore.pruneSides(slot, "base:" + data.world.delta.base).catch((e) => console.error(e));
         if (!quiet) this.toast(tr("저장했다"), "good");
         if (this.autosave) this.autosave.reset();
+        if (this.net && this.net.role === "host") this._guestSavedAt = performance.now();
         return true;
       } catch (e) {
         this.toast(e && e.name === "QuotaExceededError" ? tr("저장 실패: 용량 초과") : tr("저장 실패"), "bad");
@@ -51473,7 +51475,7 @@
         return `<div class="slot-card filled${s.bad ? " tampered" : ""}" data-slot="${i}">
         <div class="slot-info">
           <div class="slot-name">${escHtml(s.name === NONAME ? tr(NONAME) : s.name)}</div>
-          <div class="slot-meta">${s.bad ? tr("저장한 뒤에 바뀐 기록 — 열 수 없다") : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}`}</div>
+          <div class="slot-meta">${s.bad ? tr("저장한 뒤에 바뀐 기록 — 열 수 없다") : `Lv.${s.level} · ${(WORLD_SIZES[s.size] || WORLD_SIZES.s).n} · ${when}${s.guests ? " · " + tr("손님 캐릭터 {n}", { n: s.guests }) : ""}`}</div>
         </div>
         <div class="slot-actions">
           <button class="slot-load-btn" data-slot="${i}"><span class="ui-ic" data-ui-icon="ng_start"></span>${tr("이어하기")}</button>
@@ -73799,6 +73801,7 @@
       } else if (m.k === "csave" && peer.rp) {
         this.netGuestKeep(peer, m.char);
         if (m.s) this.netGuestPersist();
+        this.netSend(peer.t, "rel", { k: "csack", s: m.s ? 1 : 0, slot: this.currentSlot !== null && this.currentSlot !== void 0 ? 1 : 0 });
       } else if (m.k === "st" && peer.rp) {
         peer.rp.netBuf.push(now(), m.s);
         this.netApply(peer.rp, m.s);
@@ -73930,6 +73933,12 @@
       const n = this.net;
       if (m.k === "close") {
         this.netLost(tr("호스트가 방을 닫았다"));
+        return;
+      }
+      if (m.k === "csack") {
+        n.csAck = performance.now();
+        n.csAckSlot = !!m.slot;
+        if (this.paused) this.refreshPauseMp();
         return;
       }
       if (m.k === "kick") {
@@ -74323,6 +74332,7 @@
           if (this._saving || this._saveSeq !== seq) return false;
           d.mpGuests = guests;
           await SaveStore.put(slot, JSON.stringify(d), saveHead(d));
+          this._guestSavedAt = performance.now();
           return true;
         } catch (e) {
           console.error(e);
@@ -74337,6 +74347,7 @@
     netCharOut(n, save = false) {
       if (!n || n.role !== "guest" || !n.t || n.id <= 0) return false;
       this.netSend(n.t, "rel", { k: "csave", char: this.packChar(n.char), s: save ? 1 : 0 });
+      n.csSent = performance.now();
       return true;
     },
     /** 참가 창이 열려 있으면 거기에, 아니면 알림으로. */
@@ -74418,13 +74429,32 @@
       box.innerHTML = head + rows;
       box.hidden = false;
     },
+    /** 일시정지 창 오른쪽 열의 '저장' 칸 — 멀티플레이에서 무엇이 어디에 남는지와 마지막으로 남긴 때. 사연: docs/code-history.md#h212 */
+    refreshPauseSave(n) {
+      const box = $("#ps-save");
+      if (!box) return;
+      const ago = (t) => t ? tr("{s}초 전", { s: Math.max(0, Math.round((performance.now() - t) / 1e3)) }) : tr("아직 없음");
+      if (n.role === "guest") {
+        const ok = n.csAck && (!n.csSent || n.csAck >= n.csSent - 50);
+        box.innerHTML = `<p>${tr("내 캐릭터(레벨 · 가방 · 금화)는 이 세계를 연 호스트의 저장에 맡겨진다. 내 싱글플레이 슬롯은 그대로다.")}</p>
+        <p class="ps-save-st ${ok ? "ok" : "wait"}">${tr("마지막으로 맡김: {t}", { t: ago(n.csAck || 0) })}${ok ? "" : " · " + tr("호스트 답을 기다리는 중")}</p>
+        ${n.csAck && !n.csAckSlot ? `<p class="ps-save-st warn">${tr("호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다")}</p>` : ""}
+        <p class="ps-save-note">${tr("15초마다 · 나갈 때 저절로 맡긴다. 다음에 같은 호스트 세계에 오면 이어 간다.")}</p>`;
+      } else {
+        const g = Object.keys(this.mpGuests || {}).length;
+        box.innerHTML = `<p>${tr("세계와 함께 손님 캐릭터 {n}명을 이 슬롯에 저장한다. 손님이 나가거나 방을 닫을 때도 손님 캐릭터를 바로 적는다.", { n: g })}</p>
+        <p class="ps-save-st ok">${tr("손님 기록을 마지막으로 적음: {t}", { t: ago(this._guestSavedAt || 0) })}</p>`;
+      }
+    },
     /** 일시정지 창 — 혼자면 왼쪽 메뉴에 '방 열기'만, 멀티플레이면 오른쪽 열(방 코드 · 함께하는 사람 · 방 설정 · 닫기/나가기). */
     refreshPauseMp() {
       const n = this.net, host = !!n && n.role === "host", guest = !!n && n.role === "guest";
       $("#ps-side").hidden = !n;
       $("#btn-room-open").hidden = !!n || !this.world;
       $("#btn-save-export").hidden = guest;
+      $("#btn-save").lastChild.textContent = guest ? tr("캐릭터 맡기기") : tr("저장하기");
       if (!n) return;
+      this.refreshPauseSave(n);
       $("#ps-room").hidden = !n.room;
       $("#ps-room-code").textContent = n.room || "";
       $("#btn-room-close").hidden = !host;

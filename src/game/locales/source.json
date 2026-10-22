@@ -105,6 +105,9 @@
   "+{slots} 가방 칸": [
    "ui/tip.showTip"
   ],
+  "15초마다 · 나갈 때 저절로 맡긴다. 다음에 같은 호스트 세계에 오면 이어 간다.": [
+   "game/netui.refreshPauseSave"
+  ],
   "<b>{i}단계 · {v}</b>": [
    "ui/craft.refreshTownhall"
   ],
@@ -408,6 +411,9 @@
   ],
   "{stationName} 앞에서만 만들 수 있다": [
    "game/village.craft"
+  ],
+  "{s}초 전": [
+   "game/netui.ago"
   ],
   "{tileDef|을} {n}번 깨 와. 주워 온 것 말고 네가 깬 걸로.": [
    "data/quests"
@@ -1066,6 +1072,9 @@
   "낱장이 넘어간다 — {n}/4": [
    "game/ruin-events.evTick"
   ],
+  "내 캐릭터(레벨 · 가방 · 금화)는 이 세계를 연 호스트의 저장에 맡겨진다. 내 싱글플레이 슬롯은 그대로다.": [
+   "game/netui.refreshPauseSave"
+  ],
   "내가 정련법을 가르쳐줄 테니, {item} {n}개를 직접 만들어 와 봐.": [
    "data/quests"
   ],
@@ -1422,6 +1431,9 @@
   ],
   "마지막 한 걸음": [
    "game/ruins.ruinCipher"
+  ],
+  "마지막으로 맡김: {t}": [
+   "game/netui.refreshPauseSave"
   ],
   "막혔다": [
    "entity.hurt"
@@ -2193,6 +2205,9 @@
   "세계를 빚는 중…": [
    "game.newGame"
   ],
+  "세계와 함께 손님 캐릭터 {n}명을 이 슬롯에 저장한다. 손님이 나가거나 방을 닫을 때도 손님 캐릭터를 바로 적는다.": [
+   "game/netui.refreshPauseSave"
+  ],
   "세션 3 확인 자리 — 왼쪽이 바다, 오른쪽이 빙하. 산소통 세 종류 지급": [
    "game/debug-start.debugStart"
   ],
@@ -2226,6 +2241,12 @@
   ],
   "손끝이 흔들린다!": [
    "game/fishing.updateFishing"
+  ],
+  "손님 기록을 마지막으로 적음: {t}": [
+   "game/netui.refreshPauseSave"
+  ],
+  "손님 캐릭터 {n}": [
+   "game/save.renderSlotScreen"
   ],
   "수레는 레일 위에 놓는다": [
    "game/rides.placeMount",
@@ -2368,6 +2389,9 @@
   ],
   "아직 발을 들이지 않은 유적": [
    "ui/quest.renderRuins"
+  ],
+  "아직 없음": [
+   "game/netui.ago"
   ],
   "아직 열리지 않은 장이 남아 있다. 그때까지 이 세계는 당신 것이다.": [
    "game/progress.completeChapter"
@@ -2932,6 +2956,9 @@
   "저울이 수평을 이뤘다 — 올린 금화가 두 배로 돌아왔다": [
    "game/ruin-events.fn"
   ],
+  "저장": [
+   "index.html"
+  ],
   "저장 내보내기": [
    "index.html"
   ],
@@ -2958,6 +2985,7 @@
    "index.html"
   ],
   "저장하기": [
+   "game/netui.refreshPauseMp",
    "index.html"
   ],
   "저장하는 중이다": [
@@ -3199,7 +3227,7 @@
   "참가": [
    "index.html"
   ],
-  "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다.": [
+  "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다. 진행은 15초마다 · 나갈 때 호스트의 저장에 맡겨진다(일시정지 → 저장 칸에서 확인).": [
    "index.html"
   ],
   "참가하기": [
@@ -3350,6 +3378,9 @@
   ],
   "캐릭터": [
    "game/save.showNewGameForm"
+  ],
+  "캐릭터 맡기기": [
+   "game/netui.refreshPauseMp"
   ],
   "캐릭터를 이 세계에 맡겼다": [
    "game/netui.netSaveChar"
@@ -3598,11 +3629,17 @@
    "game/netui.refreshParty",
    "game/netui.refreshPauseMp"
   ],
+  "호스트 답을 기다리는 중": [
+   "game/netui.refreshPauseSave"
+  ],
   "호스트가 방에서 내보냈다": [
    "game/net.netOnGuest"
   ],
   "호스트가 방을 닫았다": [
    "game/net.netOnGuest"
+  ],
+  "호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다": [
+   "game/netui.refreshPauseSave"
   ],
   "호스트가 지금 참가를 받고 있지 않다": [
    "game/net.mpJoin"

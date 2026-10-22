@@ -467,6 +467,7 @@ export const NetPart: Bag = {
     } else if (m.k === 'csave' && peer.rp) {
       this.netGuestKeep(peer, m.char);
       if (m.s) this.netGuestPersist();
+      this.netSend(peer.t, 'rel', { k: 'csack', s: m.s ? 1 : 0, slot: this.currentSlot !== null && this.currentSlot !== undefined ? 1 : 0 });
     } else if (m.k === 'st' && peer.rp) {
       peer.rp.netBuf.push(now(), m.s); this.netApply(peer.rp, m.s); peer.last = m.s; peer.heard = now();
     } else if (m.k === 'prog') {
@@ -570,6 +571,7 @@ export const NetPart: Bag = {
   netOnGuest(m: any) {
     const n = this.net;
     if (m.k === 'close') { this.netLost(tr('호스트가 방을 닫았다')); return; }
+    if (m.k === 'csack') { n.csAck = performance.now(); n.csAckSlot = !!m.slot; if (this.paused) this.refreshPauseMp(); return; }
     if (m.k === 'kick') { this.netLost(tr('호스트가 방에서 내보냈다')); return; }
     if (m.k === 'world') {
       this.currentSlot = null;                      // ★ 남의 세계다 — 참가자 슬롯에 저장하지 않는다

@@ -90,7 +90,7 @@ export function saveSealOk(raw: any, d: any, sig: any) {
 /** 슬롯 목록에 띄울 요약 — 본문을 열지 않고 목록을 그리려고 따로 적는다 */
 export function saveHead(d: any) {
   return { name: d.name || NONAME, level: d.p ? d.p.level : 1, chapter: d.chapter,
-    size: (d.world && d.world.size) || 's', savedAt: d.savedAt };
+    size: (d.world && d.world.size) || 's', savedAt: d.savedAt, guests: d.mpGuests ? Object.keys(d.mpGuests).length : 0 };
 }
 
 /* ================= 저장소 ================= */
