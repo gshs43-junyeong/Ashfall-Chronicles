@@ -74023,7 +74023,7 @@
       const n = this.net;
       if (!n || n.role !== "host") return;
       for (const q of n.peers.values()) this.netGuestKeep(q);
-      this.netGuestPersist();
+      this.netGuestPersist(true);
       for (const q of n.peers.values()) this.netSend(q.t, "rel", { k: "close" });
       this.netEnd(n, 300);
       this.toast(tr("방을 닫았다"), "info");
@@ -74254,23 +74254,32 @@
       if (char && typeof char === "object" && JSON.stringify(char).length < 6e4) rec.char = char;
     },
     /** 호스트 — 손님 기록만 제 슬롯에 바로 적는다(세계는 마지막 저장 그대로). 호스트가 저장을 잊어도 손님 캐릭터는 남게 —
-        나갈 때 · 손님이 저장할 때만(15초마다 슬롯 전체를 쓰면 무겁다). */
-    netGuestPersist() {
+        나갈 때 · 손님이 저장할 때만(15초마다 슬롯 전체를 쓰면 무겁다). now 면 미루지 않는다(방을 닫을 때).
+        ★ 슬롯을 부를 때 잡아 둔다 — 미룬 사이 타이틀로 나가면 currentSlot 이 비어 손님 기록을 버렸다.
+        한 번도 저장 안 한 세계면 적을 본문이 없다 — 그때는 통째로 저장한다. 사연: docs/code-history.md#h210 */
+    netGuestPersist(now2 = false) {
       const n = this.net, slot = this.currentSlot;
-      if (!n || n.role !== "host" || slot === null || slot === void 0) return;
+      if (!n || n.role !== "host" || slot === null || slot === void 0) return Promise.resolve(false);
       clearTimeout(n.persistT);
-      n.persistT = setTimeout(async () => {
-        if (this._saving) return;
+      const guests = JSON.parse(JSON.stringify(this.mpGuests || {}));
+      const run = async () => {
+        if (this._saving) return false;
         const seq = this._saveSeq;
         try {
           const d = await this.netReadSlot(slot);
-          if (!d || this.currentSlot !== slot || this._saving || this._saveSeq !== seq) return;
-          d.mpGuests = JSON.parse(JSON.stringify(this.mpGuests || {}));
+          if (!d) return this.currentSlot === slot ? this.saveGame(true) : false;
+          if (this._saving || this._saveSeq !== seq) return false;
+          d.mpGuests = guests;
           await SaveStore.put(slot, JSON.stringify(d), saveHead(d));
+          return true;
         } catch (e) {
           console.error(e);
+          return false;
         }
-      }, 1500);
+      };
+      if (now2) return run();
+      n.persistT = setTimeout(run, 1500);
+      return Promise.resolve(true);
     },
     /** 참가자 — 캐릭터는 호스트 세계에 맡긴다(15초마다 · 나갈 때 · 저장할 때). */
     netCharOut(n, save = false) {

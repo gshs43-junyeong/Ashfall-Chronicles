@@ -688,7 +688,7 @@ export const NetPart: Bag = {
     const n = this.net;
     if (!n || n.role !== 'host') return;
     for (const q of n.peers.values()) this.netGuestKeep(q);
-    this.netGuestPersist();
+    this.netGuestPersist(true);
     for (const q of n.peers.values()) this.netSend(q.t, 'rel', { k: 'close' });
     this.netEnd(n, 300);
     this.toast(tr('방을 닫았다'), 'info');
