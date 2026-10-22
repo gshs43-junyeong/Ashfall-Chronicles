@@ -1,14 +1,15 @@
 /* ===== ui/portrait.ts — 움직이는 대화 초상(눈 깜빡임 · 입 · 표정) ===== */
-/* 표정 장은 tools/mknpc.py portrait 가 구운 8장 띠(npc/anim_<id>.png)다 — file:// 에서는 그림 픽셀을 읽을 수 없어 여기서 만들지 않는다.
+/* 표정 장은 tools/mknpc.py portrait 가 구운 9장 띠(npc/anim_<id>.png)다 — file:// 에서는 그림 픽셀을 읽을 수 없어 여기서 만들지 않는다.
    그리기는 CSS 배경 위치만 옮긴다(캔버스 없음). 창이 닫히면 돌림을 멈춘다 — 남겨 두면 보이지 않는 초상이 계속 돈다. */
 
 /** 장 순서 — mknpc.py FRAMES 와 같아야 한다 */
-export const PFRAME: Record<string, number> = { base: 0, half: 1, shut: 2, talk1: 3, talk2: 4, happy: 5, wow: 6, sad: 7 };
-const NF = 8;
+export const PFRAME: Record<string, number> = { base: 0, half: 1, shut: 2, talk1: 3, talk2: 4, happy: 5, wow: 6, sad: 7, cry: 8 };
+export const NF = 9;
 
 /** 대사 끝의 문장부호 · 웃음으로 쉬는 표정을 고른다 — 원문이 어느 언어든 부호는 같다 */
 export function moodOf(text: string): string | null {
   const t = (text || '').trim();
+  if (/(흑흑|ㅠ|훌쩍|눈물|울었|울고|\*sob|sniff|tears|泣|涙|哭|泪|Träne|schluchz|lágrima|sollozo|llor)/i.test(t)) return 'cry';
   if (/(하하|후후|헤헤|ㅎㅎ|♪|haha|hehe|jaja|ふふ|はは|哈哈)/i.test(t)) return 'happy';
   if (/(…|\.\.\.)\s*$/.test(t)) return 'sad';
   if (/[!！]\s*$/.test(t)) return 'wow';
@@ -55,6 +56,7 @@ export class Face {
       f = ['base', 'talk1', 'talk2'][this.mouth];
       if (f === 'base' && this.mood === 'happy') f = 'happy';
     } else if (this.mood) f = this.mood;
+    if (this.talk && this.mood === 'cry' && this.mouth === 0) f = 'cry';   // 우는 채로 말한다 — 입이 닫히는 박자마다 우는 얼굴
     if (eye && (f === 'base' || f === 'talk1' || f === 'talk2' || f === 'wow')) f = eye;   // 웃는 눈 · 처진 눈은 이미 감겨 있다
     this.draw(PFRAME[f]);
   }

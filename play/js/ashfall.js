@@ -43476,13 +43476,15 @@
   var portrait_exports = {};
   __export(portrait_exports, {
     Face: () => Face,
+    NF: () => NF,
     PFRAME: () => PFRAME,
     moodOf: () => moodOf
   });
-  var PFRAME = { base: 0, half: 1, shut: 2, talk1: 3, talk2: 4, happy: 5, wow: 6, sad: 7 };
-  var NF = 8;
+  var PFRAME = { base: 0, half: 1, shut: 2, talk1: 3, talk2: 4, happy: 5, wow: 6, sad: 7, cry: 8 };
+  var NF = 9;
   function moodOf(text) {
     const t = (text || "").trim();
+    if (/(흑흑|ㅠ|훌쩍|눈물|울었|울고|\*sob|sniff|tears|泣|涙|哭|泪|Träne|schluchz|lágrima|sollozo|llor)/i.test(t)) return "cry";
     if (/(하하|후후|헤헤|ㅎㅎ|♪|haha|hehe|jaja|ふふ|はは|哈哈)/i.test(t)) return "happy";
     if (/(…|\.\.\.)\s*$/.test(t)) return "sad";
     if (/[!！]\s*$/.test(t)) return "wow";
@@ -43554,6 +43556,7 @@
         f = ["base", "talk1", "talk2"][this.mouth];
         if (f === "base" && this.mood === "happy") f = "happy";
       } else if (this.mood) f = this.mood;
+      if (this.talk && this.mood === "cry" && this.mouth === 0) f = "cry";
       if (eye && (f === "base" || f === "talk1" || f === "talk2" || f === "wow")) f = eye;
       this.draw(PFRAME[f]);
     }
@@ -43701,19 +43704,31 @@
     },
     /** 대사 한 줄의 몸짓 — 물음은 고개를 갸웃, 외침은 한 번 튀어 오른다. 쉬는 표정은 줄이 다 흐른 뒤에 */
     gesture(text) {
-      const p = $("#dlg-portrait"), t = (text || "").trim();
+      const p = $("#dlg-portrait"), t = (text || "").trim(), m = moodOf(t);
       p.classList.toggle("ask", /[?？]\s*$/.test(t));
       p.classList.remove("hop");
-      if (/[!！]/.test(t)) {
+      if (/[!！]/.test(t) && m !== "cry") {
         void p.offsetWidth;
         p.classList.add("hop");
       }
-      if (this.faceN) this.faceN.setMood(null);
+      if (this.faceN) this.faceN.setMood(m === "cry" ? "cry" : null);
+      this.bodyMood(m === "cry" ? "cry" : null);
     },
     restMood(text) {
       if (!this.faceN) return;
       const m = moodOf(text);
       this.faceN.setMood(m, m === "wow" ? 900 : 0);
+      this.bodyMood(m);
+    },
+    /** 몸짓 — 감싼 칸(.dlg-pwrap)이 맡는다: 웃음 = 두 번 들썩 · 처짐 = 고개가 내려앉음 · 울음 = 어깨가 떨린다 */
+    bodyMood(m) {
+      const w = $("#dlg-portrait").parentElement;
+      if (!w) return;
+      w.classList.remove("m-happy", "m-sad", "m-cry");
+      if (m === "happy" || m === "sad" || m === "cry") {
+        void w.offsetWidth;
+        w.classList.add("m-" + m);
+      }
     },
     /** 내가 하는 말 — 내 초상이 말하고, 말풍선 꼬리가 내 쪽으로 돈다. 짧게 보인 뒤 원래 할 일(fn)을 한다 */
     sayLine(c) {
@@ -43891,6 +43906,7 @@
       }
       $("#dlg-mewrap").classList.remove("on");
       $("#dlg-portrait").classList.remove("ask", "hop");
+      this.bodyMood(null);
       $("#dlg-portrait").textContent = "";
       this.setIcon($("#dlg-portrait"), Art.itemUrl("rune_frag"));
       $("#dlg-name").textContent = name;

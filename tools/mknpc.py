@@ -614,7 +614,7 @@ def _portrait(argv):
     # ---------------------------------------------------------------- 움직이는 초상 — 표정 8장
     # ★ file:// 에서는 그림 픽셀을 읽을 수 없어 게임이 표정을 만들 수 없다 — 여기서 굽는다. 얼굴 짜임이 같아(눈 22~27·36~41 × 28~31줄)
     #   완성한 초상에서 눈 · 입 칸만 바꾼다. 장 순서는 dialogue.ts PFRAME 과 같다.
-    FRAMES = ['base', 'half', 'shut', 'talk1', 'talk2', 'happy', 'wow', 'sad']
+    FRAMES = ['base', 'half', 'shut', 'talk1', 'talk2', 'happy', 'wow', 'sad', 'cry']
     EYES = (22, 36)
 
     def animate(im):
@@ -648,6 +648,12 @@ def _portrait(argv):
                 eyes_skin(p); lashes(p, 30, arc=True)
             elif f == 'sad':
                 eyes_skin(p, (28,)); lashes(p, 28)
+            elif f == 'cry':                              # 질끈 감은 눈 + 눈물 줄기(볼을 타고 두 칸 · 맺힌 방울)
+                eyes_skin(p); lashes(p, 30)
+                for ex in EYES:
+                    for (x, y) in ((ex + 1, 31), (ex + 1, 32), (ex + 2, 33), (ex + 1, 34)):
+                        p[x, y] = (150, 206, 255, 255)
+                    p[ex + 1, 31] = (226, 244, 255, 255)
             if f in ('talk1', 'talk2', 'happy'):
                 rows = 1 if f == 'talk1' else 2
                 for x in range(30, 34):
@@ -666,7 +672,9 @@ def _portrait(argv):
                 p[31, my + 1] = cav; p[32, my + 1] = cav
                 for x in (29, 34):
                     p[x, my] = skin
-            elif f == 'sad':
+            elif f in ('sad', 'cry'):
+                if f == 'cry':                            # 일그러진 입 — 가운데가 벌어진다
+                    p[31, my + 1] = cav; p[32, my + 1] = cav
                 for x in (29, 34):
                     p[x, my + 1] = mcol
                 for (x, y) in ((28, my - 1), (35, my - 1)):

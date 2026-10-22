@@ -2449,7 +2449,7 @@
       "pc_adept": "npc/anim_pc_adept.png",
       "pc_stray": "npc/anim_pc_stray.png"
     },
-    "note": "전부 128×128(64칸 2배 · 배경 투명 · 흉상). rika~kade · pedlar·oreman·armsman·yunseul 9장은 tools/mknpc.py portrait 가 엘라라 짜임으로 굽는다 — 규칙은 DESIGN.md '초상'. anim 은 표정 8장 띠(base·half·shut·talk1·talk2·happy·wow·sad — 1024×128)로 같은 도구가 완성한 초상에서 굽는다 · 미리 싣지 않고 대화창이 CSS 배경으로 부른다. pc_* 는 플레이어 초상(새 그림 — 주인공 시트는 건드리지 않는다)."
+    "note": "전부 128×128(64칸 2배 · 배경 투명 · 흉상). rika~kade · pedlar·oreman·armsman·yunseul 9장은 tools/mknpc.py portrait 가 엘라라 짜임으로 굽는다 — 규칙은 DESIGN.md '초상'. anim 은 표정 9장 띠(base·half·shut·talk1·talk2·happy·wow·sad·cry — 1152×128)로 같은 도구가 완성한 초상에서 굽는다 · 미리 싣지 않고 대화창이 CSS 배경으로 부른다. pc_* 는 플레이어 초상(새 그림 — 주인공 시트는 건드리지 않는다)."
   },
   "ui": {
     "cursors": {

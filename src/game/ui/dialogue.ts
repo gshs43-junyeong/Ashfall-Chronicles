@@ -69,16 +69,26 @@ export const DialogueUIPart: Bag = {
   speaker(me: boolean) { $('#dialogue').classList.toggle('who-me', me); },
   /** 대사 한 줄의 몸짓 — 물음은 고개를 갸웃, 외침은 한 번 튀어 오른다. 쉬는 표정은 줄이 다 흐른 뒤에 */
   gesture(text: string) {
-    const p = $('#dlg-portrait'), t = (text || '').trim();
+    const p = $('#dlg-portrait'), t = (text || '').trim(), m = moodOf(t);
     p.classList.toggle('ask', /[?？]\s*$/.test(t));
     p.classList.remove('hop');
-    if (/[!！]/.test(t)) { void p.offsetWidth; p.classList.add('hop'); }
-    if (this.faceN) this.faceN.setMood(null);
+    if (/[!！]/.test(t) && m !== 'cry') { void p.offsetWidth; p.classList.add('hop'); }
+    /* 우는 줄은 말하는 동안에도 운다 — 나머지 표정은 줄이 다 흐른 뒤에 */
+    if (this.faceN) this.faceN.setMood(m === 'cry' ? 'cry' : null);
+    this.bodyMood(m === 'cry' ? 'cry' : null);
   },
   restMood(text: string) {
     if (!this.faceN) return;
     const m = moodOf(text);
     this.faceN.setMood(m, m === 'wow' ? 900 : 0);
+    this.bodyMood(m);
+  },
+  /** 몸짓 — 감싼 칸(.dlg-pwrap)이 맡는다: 웃음 = 두 번 들썩 · 처짐 = 고개가 내려앉음 · 울음 = 어깨가 떨린다 */
+  bodyMood(m: string | null) {
+    const w = $('#dlg-portrait').parentElement;
+    if (!w) return;
+    w.classList.remove('m-happy', 'm-sad', 'm-cry');
+    if (m === 'happy' || m === 'sad' || m === 'cry') { void w.offsetWidth; w.classList.add('m-' + m); }
   },
   /** 내가 하는 말 — 내 초상이 말하고, 말풍선 꼬리가 내 쪽으로 돈다. 짧게 보인 뒤 원래 할 일(fn)을 한다 */
   sayLine(c: any) {
@@ -204,6 +214,7 @@ export const DialogueUIPart: Bag = {
     if (this.faceN) { this.faceN.set(null); this.faceM.set(null); }
     $('#dlg-mewrap').classList.remove('on');
     $('#dlg-portrait').classList.remove('ask', 'hop');
+    this.bodyMood(null);
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), Art.itemUrl('rune_frag'));
     $('#dlg-name').textContent = name;

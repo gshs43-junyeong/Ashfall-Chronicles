@@ -737,7 +737,7 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .dlg-portrait.talk{animation:dlgTalk .26s steps(2,end) infinite}
 @keyframes dlgTalk{50%{transform:translateY(-2px)}}
 /* 움직이는 초상(ui/portrait.ts) — 표정 8장 띠를 배경 위치로 넘긴다. 숨 · 갸웃 · 튀어 오름은 감싼 칸이 맡는다(초상의 talk 들썩임과 겹치지 않게) */
-.dlg-portrait.anim{background-size:800% 100%!important;background-repeat:no-repeat;image-rendering:pixelated}
+.dlg-portrait.anim{background-size:900% 100%!important;background-repeat:no-repeat;image-rendering:pixelated}
 .dlg-pwrap{transition:filter .18s,scale .18s;transform-origin:50% 100%}
 #dialogue.open .dlg-pwrap{animation:dlgBreath 3.2s ease-in-out infinite}
 @keyframes dlgBreath{50%{transform:translateY(-1px) scaleY(1.012)}}
@@ -745,6 +745,12 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 .dlg-portrait.ask{rotate:-5deg}
 .dlg-portrait.hop{animation:dlgHop .32s cubic-bezier(.2,1.6,.4,1)}
 @keyframes dlgHop{35%{transform:translateY(-9px)}70%{transform:translateY(1px)}}
+/* 몸짓 — 웃음은 두 번 들썩 · 처짐은 고개가 내려앉고 · 울음은 어깨가 떨린다(숨쉬기 대신) */
+#dialogue.open .dlg-pwrap.m-happy{animation:dlgLaugh .5s ease-out 2}
+@keyframes dlgLaugh{30%{transform:translateY(-5px) rotate(-1.5deg)}60%{transform:translateY(0)}80%{transform:translateY(-2px) rotate(1deg)}}
+#dialogue.open .dlg-pwrap.m-sad{animation:none;transform:translateY(4px) rotate(2deg);transition:transform .6s ease-out}
+#dialogue.open .dlg-pwrap.m-cry{animation:dlgSob .42s steps(2,end) infinite;transform-origin:50% 100%}
+@keyframes dlgSob{0%{transform:translate(-1px,3px)}50%{transform:translate(1px,2px) scaleY(.985)}}
 /* 내 초상 — 말풍선 오른쪽, 나를 보도록 좌우를 뒤집는다. 듣는 쪽은 흐리게 */
 .dlg-me{display:none}
 .dlg-me.on{display:block}
@@ -819,7 +825,7 @@ body:has(#dialogue.open) #tabbar{visibility:hidden}
   #dialogue.lore .dlg-pwrap{flex-basis:56px;height:56px}#dialogue.lore .dlg-portrait{width:56px;height:56px}}
 @media (max-width:700px){.dlg-me.on{display:none}}
 body.q-low .dlg-main,body.q-low .dlg-portrait.talk,body.q-low #dialogue.open .dlg-pwrap{animation:none}
-@media (prefers-reduced-motion:reduce){.dlg-main,.dlg-portrait.talk,.dlg-portrait.hop,#dialogue.open .dlg-pwrap{animation:none}}
+@media (prefers-reduced-motion:reduce){.dlg-main,.dlg-portrait.talk,.dlg-portrait.hop,#dialogue.open .dlg-pwrap,#dialogue.open .dlg-pwrap.m-happy,#dialogue.open .dlg-pwrap.m-cry{animation:none}}
 
 /* ================= 연출 ================= */
 #chapter-card{position:absolute;left:0;right:0;top:26%;text-align:center;opacity:0;pointer-events:none;transition:opacity .8s}
