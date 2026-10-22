@@ -8,6 +8,7 @@ import { NPCS } from '../data/npcs.js';
 import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
 import { $, UI } from '../ui.js';
+import { Face, moodOf } from './portrait.js';
 /* ui.js 의 UI 에서 나눈 조각 — 읽히는 순간 UI 에 붙는다(main.js 가 ui.js 다음에 읽는다). */
 
 export const DialogueUIPart: Bag = {
@@ -30,6 +31,12 @@ export const DialogueUIPart: Bag = {
     this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs, voice: 'talk_npc' };
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), this.npcPortrait(npcId));
+    this.faces();
+    this.faceN.set(this.faceUrl(this.npcArt && this.npcArt[npcId]));
+    const me = G.spritesOn && G.player ? this.faceUrl('pc_' + (G.player.charId || 'wanderer')) : null;
+    $('#dlg-mewrap').classList.toggle('on', !!me);
+    this.faceM.set(me);
+    this.speaker(false);
     $('#dlg-name').textContent = `${d.n} · ${d.role}`;
     this.popBubble(false);
     G.uiOpen = true;
@@ -45,7 +52,59 @@ export const DialogueUIPart: Bag = {
   /** 대사가 흐르는 동안 초상이 들썩인다(말하는 중) — 돌 판은 말하지 않는다 */
   setTalk(on: boolean) {
     const p = $('#dlg-portrait');
-    if (p) p.classList.toggle('talk', on && !!this.dlg && !!this.dlg.npcId);
+    const npc = on && !!this.dlg && !!this.dlg.npcId;
+    if (p) p.classList.toggle('talk', npc);
+    if (this.faceN) this.faceN.setTalk(npc);
+  },
+  /* ---- 움직이는 초상(ui/portrait.ts) — 표정 띠는 매니페스트 npc.anim 에 있는 것만 ---- */
+  faceN: null, faceM: null, saying: null,
+  faces() {
+    if (!this.faceN) { this.faceN = new Face($('#dlg-portrait')); this.faceM = new Face($('#dlg-me')); }
+  },
+  faceUrl(key: string | null) {
+    const a = key && Sprites.meta && Sprites.meta.npc && Sprites.meta.npc.anim;
+    return a && a[key!] ? Sprites.url('assets/' + a[key!]) : null;
+  },
+  /** 말하는 쪽만 밝게 — 듣는 쪽 초상은 흐려지고 조금 물러난다 */
+  speaker(me: boolean) { $('#dialogue').classList.toggle('who-me', me); },
+  /** 대사 한 줄의 몸짓 — 물음은 고개를 갸웃, 외침은 한 번 튀어 오른다. 쉬는 표정은 줄이 다 흐른 뒤에 */
+  gesture(text: string) {
+    const p = $('#dlg-portrait'), t = (text || '').trim();
+    p.classList.toggle('ask', /[?？]\s*$/.test(t));
+    p.classList.remove('hop');
+    if (/[!！]/.test(t)) { void p.offsetWidth; p.classList.add('hop'); }
+    if (this.faceN) this.faceN.setMood(null);
+  },
+  restMood(text: string) {
+    if (!this.faceN) return;
+    const m = moodOf(text);
+    this.faceN.setMood(m, m === 'wow' ? 900 : 0);
+  },
+  /** 내가 하는 말 — 내 초상이 말하고, 말풍선 꼬리가 내 쪽으로 돈다. 짧게 보인 뒤 원래 할 일(fn)을 한다 */
+  sayLine(c: any) {
+    if (!this.faceM || !this.faceM.on || !$('#dlg-mewrap').classList.contains('on')) return false;
+    this.endSay(false);
+    this.speaker(true);
+    $('#dlg-choices').innerHTML = '';
+    this.stopType();
+    $('#dlg-text').textContent = `“${c.t}”`;
+    this.faceM.setTalk(true);
+    if (this.faceN) this.faceN.setMood(null);
+    const t = setTimeout(() => this.endSay(true), Math.min(1300, 420 + c.t.length * 28));
+    const nm = $('#dlg-name'), was = nm.textContent;
+    if (G.player && G.player.name) nm.textContent = G.player.name;
+    this.saying = { t, fn: c.fn, was };
+    return true;
+  },
+  /** run 이면 미뤄 둔 일을 한다 — 대사창을 누르면 기다리지 않고 바로 */
+  endSay(run: boolean) {
+    const s = this.saying;
+    if (!s) return;
+    clearTimeout(s.t); this.saying = null;
+    if (this.faceM) this.faceM.setTalk(false);
+    this.speaker(false);
+    $('#dlg-name').textContent = s.was;
+    if (run) s.fn();
   },
   /* ---- 한 글자씩 흘러나오는 대사 ---- */
   TYPE_MS: 34, TYPE_MIN: 300, TYPE_MAX: 1100,
@@ -70,6 +129,7 @@ export const DialogueUIPart: Bag = {
   },
 
   nextLine(first: boolean) {
+    if (this.saying) { this.endSay(true); return; }
     if (!this.dlg) return;
     const prevI = this.dlg.i;
     if (!first) this.dlg.i++;
@@ -79,8 +139,11 @@ export const DialogueUIPart: Bag = {
     if (this.dlg.i !== prevI || first) G.sfx(this.dlg.voice || 'talk_npc');   // 말하는 쪽마다 다른 소리 — NPC · 이야기 · 비문
     if (!first) { const m = $('.dlg-main'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); }
     const at = this.dlg.i;
+    this.speaker(false);
+    if (this.dlg.npcId) this.gesture(this.dlg.lines[at]);
     this.typeLine(this.dlg.lines[at], () => {
       if (!this.dlg || this.dlg.i !== at) return;      // 그 사이 창이 바뀌었으면 버린다
+      if (this.dlg.npcId) this.restMood(this.dlg.lines[at]);
       if (last) this.showChoices();
       else $('#dlg-choices').innerHTML = `<div class="dlg-next"><span class="dlg-next-ic"></span>${tr('클릭하여 계속')}</div>`;
     });
@@ -98,7 +161,7 @@ export const DialogueUIPart: Bag = {
         ev.stopPropagation();
         if (c.back) { this.showChoices(); return; }
         if (c.sub) { this.showChoices(c.sub.concat([{ t: tr('(돌아간다)'), back: 1 }])); return; }
-        if (c.say) G.sfx('talk_player');   // 내가 하는 말
+        if (c.say) { G.sfx('talk_player'); if (this.sayLine(c)) return; }   // 내가 하는 말
         c.fn();
       });
       box.appendChild(b);
@@ -110,6 +173,8 @@ export const DialogueUIPart: Bag = {
     box.appendChild(b);
   },
   closeDialogue() { this.stopType(); $('#dialogue').classList.remove('open'); this.dlg = null; G.uiOpen = false;
+    this.endSay(false);
+    if (this.faceN) { this.faceN.stop(); this.faceM.stop(); }
     /* ★ 이야기 삽화는 대사창과 함께 걷는다 — 마지막 단추 말고 다른 길로 닫히면 반투명 삽화가 남아 땅속에 그림자처럼 비쳤다 */
     const art = $('#cc-art'); if (art.classList.contains('story')) art.classList.remove('show', 'story');
   },
@@ -135,6 +200,10 @@ export const DialogueUIPart: Bag = {
   openLore(name: string, lines: any, choices: any, voice = 'talk_lore') {
     this.setReplay(null);
     this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices, voice };   // 비문 · 석판 · 문(이야기 장면은 talk_story)
+    this.endSay(false);
+    if (this.faceN) { this.faceN.set(null); this.faceM.set(null); }
+    $('#dlg-mewrap').classList.remove('on');
+    $('#dlg-portrait').classList.remove('ask', 'hop');
     $('#dlg-portrait').textContent = '';
     this.setIcon($('#dlg-portrait'), Art.itemUrl('rune_frag'));
     $('#dlg-name').textContent = name;

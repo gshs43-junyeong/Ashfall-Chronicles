@@ -43472,6 +43472,98 @@
   };
   mixin(UI5, TipUIPart);
 
+  // src/game/ui/portrait.ts
+  var portrait_exports = {};
+  __export(portrait_exports, {
+    Face: () => Face,
+    PFRAME: () => PFRAME,
+    moodOf: () => moodOf
+  });
+  var PFRAME = { base: 0, half: 1, shut: 2, talk1: 3, talk2: 4, happy: 5, wow: 6, sad: 7 };
+  var NF = 8;
+  function moodOf(text) {
+    const t = (text || "").trim();
+    if (/(하하|후후|헤헤|ㅎㅎ|♪|haha|hehe|jaja|ふふ|はは|哈哈)/i.test(t)) return "happy";
+    if (/(…|\.\.\.)\s*$/.test(t)) return "sad";
+    if (/[!！]\s*$/.test(t)) return "wow";
+    return null;
+  }
+  var Face = class {
+    constructor(el) {
+      this.el = el;
+      this.on = false;
+      this.talk = false;
+      this.mood = null;
+      this.moodEnd = 0;
+      this.blinkAt = 0;
+      this.mouthAt = 0;
+      this.mouth = 0;
+      this.f = -1;
+      this.raf = 0;
+    }
+    /** url 이 있으면 표정 띠로, 없으면 정지 그림(부르는 쪽이 setIcon) */
+    set(url) {
+      this.stop();
+      this.el.classList.toggle("anim", !!url);
+      if (!url) return;
+      this.el.style.backgroundImage = `url(${url})`;
+      this.f = -1;
+      this.mood = null;
+      this.talk = false;
+      this.blinkAt = performance.now() + 900 + Math.random() * 1600;
+      this.on = true;
+      this.draw(0);
+      const loop = (now2) => {
+        if (!this.on) return;
+        this.tick(now2);
+        this.raf = requestAnimationFrame(loop);
+      };
+      this.raf = requestAnimationFrame(loop);
+    }
+    stop() {
+      this.on = false;
+      if (this.raf) cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    }
+    /** 쉬는 표정 — ms 가 있으면 그만큼만 */
+    setMood(m, ms = 0) {
+      this.mood = m;
+      this.moodEnd = ms ? performance.now() + ms : 0;
+    }
+    setTalk(on) {
+      this.talk = on;
+      if (on) this.mouthAt = 0;
+    }
+    tick(now2) {
+      if (this.moodEnd && now2 > this.moodEnd) {
+        this.mood = null;
+        this.moodEnd = 0;
+      }
+      let eye = "";
+      const b = now2 - this.blinkAt;
+      if (b >= 0) {
+        eye = b < 60 ? "half" : b < 140 ? "shut" : b < 210 ? "half" : "";
+        if (b >= 210) this.blinkAt = now2 + (Math.random() < 0.15 ? 120 : 2400 + Math.random() * 2600);
+      }
+      let f = "base";
+      if (this.talk) {
+        if (now2 > this.mouthAt) {
+          this.mouth = (this.mouth + 1 + (Math.random() * 2 | 0)) % 3;
+          this.mouthAt = now2 + 70 + Math.random() * 80;
+        }
+        f = ["base", "talk1", "talk2"][this.mouth];
+        if (f === "base" && this.mood === "happy") f = "happy";
+      } else if (this.mood) f = this.mood;
+      if (eye && (f === "base" || f === "talk1" || f === "talk2" || f === "wow")) f = eye;
+      this.draw(PFRAME[f]);
+    }
+    draw(i) {
+      if (i === this.f) return;
+      this.f = i;
+      this.el.style.backgroundPosition = `${i * 100 / (NF - 1)}% 0`;
+    }
+  };
+
   // src/game/ui/dialogue.ts
   var dialogue_exports = {};
   __export(dialogue_exports, {
@@ -43561,6 +43653,12 @@
       this.dlg = { npcId, lines: lines.slice(), i: 0, choices: cs, voice: "talk_npc" };
       $("#dlg-portrait").textContent = "";
       this.setIcon($("#dlg-portrait"), this.npcPortrait(npcId));
+      this.faces();
+      this.faceN.set(this.faceUrl(this.npcArt && this.npcArt[npcId]));
+      const me = app.spritesOn && app.player ? this.faceUrl("pc_" + (app.player.charId || "wanderer")) : null;
+      $("#dlg-mewrap").classList.toggle("on", !!me);
+      this.faceM.set(me);
+      this.speaker(false);
       $("#dlg-name").textContent = `${d.n} · ${d.role}`;
       this.popBubble(false);
       app.uiOpen = true;
@@ -43579,7 +43677,70 @@
     /** 대사가 흐르는 동안 초상이 들썩인다(말하는 중) — 돌 판은 말하지 않는다 */
     setTalk(on) {
       const p = $("#dlg-portrait");
-      if (p) p.classList.toggle("talk", on && !!this.dlg && !!this.dlg.npcId);
+      const npc = on && !!this.dlg && !!this.dlg.npcId;
+      if (p) p.classList.toggle("talk", npc);
+      if (this.faceN) this.faceN.setTalk(npc);
+    },
+    /* ---- 움직이는 초상(ui/portrait.ts) — 표정 띠는 매니페스트 npc.anim 에 있는 것만 ---- */
+    faceN: null,
+    faceM: null,
+    saying: null,
+    faces() {
+      if (!this.faceN) {
+        this.faceN = new Face($("#dlg-portrait"));
+        this.faceM = new Face($("#dlg-me"));
+      }
+    },
+    faceUrl(key) {
+      const a = key && Sprites.meta && Sprites.meta.npc && Sprites.meta.npc.anim;
+      return a && a[key] ? Sprites.url("assets/" + a[key]) : null;
+    },
+    /** 말하는 쪽만 밝게 — 듣는 쪽 초상은 흐려지고 조금 물러난다 */
+    speaker(me) {
+      $("#dialogue").classList.toggle("who-me", me);
+    },
+    /** 대사 한 줄의 몸짓 — 물음은 고개를 갸웃, 외침은 한 번 튀어 오른다. 쉬는 표정은 줄이 다 흐른 뒤에 */
+    gesture(text) {
+      const p = $("#dlg-portrait"), t = (text || "").trim();
+      p.classList.toggle("ask", /[?？]\s*$/.test(t));
+      p.classList.remove("hop");
+      if (/[!！]/.test(t)) {
+        void p.offsetWidth;
+        p.classList.add("hop");
+      }
+      if (this.faceN) this.faceN.setMood(null);
+    },
+    restMood(text) {
+      if (!this.faceN) return;
+      const m = moodOf(text);
+      this.faceN.setMood(m, m === "wow" ? 900 : 0);
+    },
+    /** 내가 하는 말 — 내 초상이 말하고, 말풍선 꼬리가 내 쪽으로 돈다. 짧게 보인 뒤 원래 할 일(fn)을 한다 */
+    sayLine(c) {
+      if (!this.faceM || !this.faceM.on || !$("#dlg-mewrap").classList.contains("on")) return false;
+      this.endSay(false);
+      this.speaker(true);
+      $("#dlg-choices").innerHTML = "";
+      this.stopType();
+      $("#dlg-text").textContent = `“${c.t}”`;
+      this.faceM.setTalk(true);
+      if (this.faceN) this.faceN.setMood(null);
+      const t = setTimeout(() => this.endSay(true), Math.min(1300, 420 + c.t.length * 28));
+      const nm = $("#dlg-name"), was = nm.textContent;
+      if (app.player && app.player.name) nm.textContent = app.player.name;
+      this.saying = { t, fn: c.fn, was };
+      return true;
+    },
+    /** run 이면 미뤄 둔 일을 한다 — 대사창을 누르면 기다리지 않고 바로 */
+    endSay(run) {
+      const s = this.saying;
+      if (!s) return;
+      clearTimeout(s.t);
+      this.saying = null;
+      if (this.faceM) this.faceM.setTalk(false);
+      this.speaker(false);
+      $("#dlg-name").textContent = s.was;
+      if (run) s.fn();
     },
     /* ---- 한 글자씩 흘러나오는 대사 ---- */
     TYPE_MS: 34,
@@ -43612,6 +43773,10 @@
       return this.typing.finish();
     },
     nextLine(first) {
+      if (this.saying) {
+        this.endSay(true);
+        return;
+      }
       if (!this.dlg) return;
       const prevI = this.dlg.i;
       if (!first) this.dlg.i++;
@@ -43630,8 +43795,11 @@
         m.classList.add("bump");
       }
       const at = this.dlg.i;
+      this.speaker(false);
+      if (this.dlg.npcId) this.gesture(this.dlg.lines[at]);
       this.typeLine(this.dlg.lines[at], () => {
         if (!this.dlg || this.dlg.i !== at) return;
+        if (this.dlg.npcId) this.restMood(this.dlg.lines[at]);
         if (last) this.showChoices();
         else $("#dlg-choices").innerHTML = `<div class="dlg-next"><span class="dlg-next-ic"></span>${tr("클릭하여 계속")}</div>`;
       });
@@ -43655,7 +43823,10 @@
             this.showChoices(c.sub.concat([{ t: tr("(돌아간다)"), back: 1 }]));
             return;
           }
-          if (c.say) app.sfx("talk_player");
+          if (c.say) {
+            app.sfx("talk_player");
+            if (this.sayLine(c)) return;
+          }
           c.fn();
         });
         box.appendChild(b2);
@@ -43675,6 +43846,11 @@
       $("#dialogue").classList.remove("open");
       this.dlg = null;
       app.uiOpen = false;
+      this.endSay(false);
+      if (this.faceN) {
+        this.faceN.stop();
+        this.faceM.stop();
+      }
       const art = $("#cc-art");
       if (art.classList.contains("story")) art.classList.remove("show", "story");
     },
@@ -43708,6 +43884,13 @@
     openLore(name, lines, choices, voice = "talk_lore") {
       this.setReplay(null);
       this.dlg = { npcId: null, lines: lines.slice(), i: 0, choices, voice };
+      this.endSay(false);
+      if (this.faceN) {
+        this.faceN.set(null);
+        this.faceM.set(null);
+      }
+      $("#dlg-mewrap").classList.remove("on");
+      $("#dlg-portrait").classList.remove("ask", "hop");
       $("#dlg-portrait").textContent = "";
       this.setIcon($("#dlg-portrait"), Art.itemUrl("rune_frag"));
       $("#dlg-name").textContent = name;
@@ -74643,7 +74826,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

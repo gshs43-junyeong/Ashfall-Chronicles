@@ -541,6 +541,143 @@ def _portrait(argv):
         paint_hair(c, lambda x, y: long_hair(x, y) and y <= 40, hair, strands=3)
         c.outline(); return c
 
+    # ---------------------------------------------------------------- 플레이어 초상(새 그림 — 시트 tools/art/player_* 는 건드리지 않는다, 색만 따 왔다)
+    def P_pc_wanderer():
+        c = Canvas(); skin = (226, 184, 148); hair = (54, 64, 96)
+        body(c, (112, 108, 104), skin, collar=(84, 80, 78))
+        for i in range(14):                                         # 가죽 어깨끈
+            c.put(22 + i, 50 + i, (98, 66, 40)); c.put(23 + i, 50 + i, (82, 54, 34))
+        scarf = (170, 52, 46)
+        c.region(cells(lambda x, y: 45 <= y <= 49 and abs(x - CX) <= 11 - (y - 45) * 0.3), scarf, light=1.1, dark=0.7, edge=0.82)
+        for y in range(49, 55):
+            c.put(37, y, sh(scarf, 0.8)); c.put(38, y, sh(scarf, 0.9))   # 늘어진 목도리 끝
+        face(c, skin, (84, 104, 150), brow=sh(hair, 0.8))
+        paint_hair(c, hair_dome(top=8, wid=15, side_bot=33, fringe=25), hair, strands=3, jag=2)
+        c.outline(); return c
+
+    def P_pc_digger():
+        c = Canvas(); skin = (222, 176, 136); hair = (96, 64, 40)
+        body(c, (176, 138, 78), skin, collar=(120, 90, 52))
+        for x in range(int(CX) - 6, int(CX) + 8):
+            c.put(x, 56, (110, 80, 44))                              # 앞섶 이음
+        face(c, skin, (110, 80, 52), brow=sh(hair, 0.8))
+        paint_hair(c, hair_dome(top=13, wid=14, side_bot=31, fringe=22), hair, jag=3)
+        hat = (138, 94, 54)
+        c.region(cells(lambda x, y: 7 <= y <= 18 and abs(x - CX) <= 13 - max(0, 10 - y) * 0.8), hat, light=1.12, dark=0.7, edge=0.82, top=2)
+        c.region(cells(lambda x, y: 18 <= y <= 21 and abs(x - CX) <= 22 - (21 - y) * 0.5), sh(hat, 0.92), light=1.1, dark=0.7, edge=0.8)
+        for x in range(20, 44):
+            c.put(x, 16, (74, 52, 32))                               # 모자 띠
+        for (x, y) in cells(lambda x, y: (x - 38.5) ** 2 + (y - 12.5) ** 2 <= 7):
+            c.put(x, y, (246, 206, 92))                              # 모자 등불
+        c.put(38, 11, (255, 250, 220)); c.put(39, 12, (255, 250, 220))
+        c.outline(); return c
+
+    def P_pc_ranger():
+        c = Canvas(); skin = (224, 182, 146); hair = (70, 54, 36); hood = (76, 110, 58)
+        body(c, (92, 126, 70), skin, collar=sh(hood, 0.8))
+        c.region(cells(lambda x, y: y <= 47 and ((x - CX) / 18.5) ** 2 + ((y - 26) / 20.5) ** 2 <= 1 and not (in_face(x, y) and y >= 25)),
+                 hood, light=1.12, dark=0.66, edge=0.8, top=2)
+        for x in range(17, 47):
+            if c.get(x, 24) is not None:
+                c.put(x, 24, sh(hood, 0.62))                         # 두건 앞단 그늘
+        face(c, skin, (96, 132, 80), brow=sh(hair, 0.8))
+        for x in range(26, 35):
+            c.put(x, 25, sh(hair, 1.1 if x < 30 else 0.9))      # 두건 밑 앞머리 한 줌
+        for x in range(27, 31):
+            c.put(x, 26, hair)
+        for (x, y) in ((44, 52), (45, 53), (46, 54), (45, 51)):
+            c.put(x, y, (176, 150, 96))                              # 활 끝(어깨 너머)
+        c.outline(); return c
+
+    def P_pc_adept():
+        c = Canvas(); skin = (232, 196, 166); hair = (208, 208, 224)
+        long_hair = hair_dome(top=8, wid=16, side_bot=40, fringe=24, long=14)
+        paint_hair(c, lambda x, y: long_hair(x, y) and y > 30, hair)
+        body(c, (96, 82, 162), skin, collar=(140, 124, 206))
+        for (x, y) in cells(lambda x, y: (x - 31.5) ** 2 + (y - 54) ** 2 <= 4):
+            c.put(x, y, (232, 186, 82))                              # 금 걸쇠
+        face(c, skin, (150, 110, 196), brow=sh(hair, 0.75))
+        paint_hair(c, lambda x, y: long_hair(x, y) and y <= 40, hair, strands=3)
+        c.outline(); return c
+
+    def P_pc_stray():
+        c = Canvas(); skin = (220, 180, 146); hair = (204, 198, 182)
+        body(c, (92, 86, 80), skin, collar=(70, 66, 62))
+        for x in range(int(CX) - 10, int(CX) + 12, 3):
+            c.put(x, 47, (70, 66, 62))                               # 해진 옷깃
+        face(c, skin, (120, 112, 96), brow=sh(hair, 0.7), smile=0)
+        paint_hair(c, hair_dome(top=8, wid=15, side_bot=34, fringe=25), hair, strands=2, jag=2)
+        c.outline(); return c
+
+    PLAYERS = {'wanderer': P_pc_wanderer, 'digger': P_pc_digger, 'ranger': P_pc_ranger, 'adept': P_pc_adept, 'stray': P_pc_stray}
+
+    # ---------------------------------------------------------------- 움직이는 초상 — 표정 8장
+    # ★ file:// 에서는 그림 픽셀을 읽을 수 없어 게임이 표정을 만들 수 없다 — 여기서 굽는다. 얼굴 짜임이 같아(눈 22~27·36~41 × 28~31줄)
+    #   완성한 초상에서 눈 · 입 칸만 바꾼다. 장 순서는 dialogue.ts PFRAME 과 같다.
+    FRAMES = ['base', 'half', 'shut', 'talk1', 'talk2', 'happy', 'wow', 'sad']
+    EYES = (22, 36)
+
+    def animate(im):
+        s = im.convert('RGBA').resize((N, N), Image.NEAREST)
+        px0 = s.load()
+        skin = px0[27, 36]
+        lid, lash = sh(skin, 0.8), sh(skin, 0.42)
+        # 입 줄 — 37~42줄에서 29~34칸이 가장 어두운 줄
+        my = min(range(37, 43), key=lambda y: sum(_lum(px0[x, y]) for x in range(29, 35)))
+        mcol = min((px0[x, my] for x in range(29, 35)), key=_lum)
+        cav, tongue, teeth = sh(mcol, 0.55), (176, 82, 82, 255), (236, 228, 214, 255)
+        def eyes_skin(p, rows=(28, 29, 30, 31)):
+            for ex in EYES:
+                for y in rows:
+                    for x in range(ex, ex + 6):
+                        p[x, y] = skin
+        def lashes(p, y, arc=False):
+            for ex in EYES:
+                for x in range(ex + 1, ex + 5):
+                    p[x, y - (1 if arc and ex + 1 < x < ex + 4 else 0)] = lash
+                if not arc:
+                    p[ex, y] = lid; p[ex + 5, y] = lid
+        out = []
+        for f in FRAMES:
+            t = s.copy(); p = t.load()
+            if f == 'half':
+                eyes_skin(p, (28, 29)); lashes(p, 29)
+            elif f == 'shut':
+                eyes_skin(p); lashes(p, 30)
+            elif f == 'happy':
+                eyes_skin(p); lashes(p, 30, arc=True)
+            elif f == 'sad':
+                eyes_skin(p, (28,)); lashes(p, 28)
+            if f in ('talk1', 'talk2', 'happy'):
+                rows = 1 if f == 'talk1' else 2
+                for x in range(30, 34):
+                    for k in range(rows + 1):
+                        p[x, my + k] = cav
+                for k in range(1, rows + 1):
+                    p[29, my + k - 1] = mcol; p[34, my + k - 1] = mcol
+                if f == 'happy':
+                    for x in range(30, 34):
+                        p[x, my] = teeth
+                if rows == 2:
+                    p[31, my + 2] = tongue; p[32, my + 2] = tongue
+            elif f == 'wow':
+                for (x, y) in ((31, my), (32, my), (30, my + 1), (33, my + 1), (31, my + 2), (32, my + 2)):
+                    p[x, y] = mcol
+                p[31, my + 1] = cav; p[32, my + 1] = cav
+                for x in (29, 34):
+                    p[x, my] = skin
+            elif f == 'sad':
+                for x in (29, 34):
+                    p[x, my + 1] = mcol
+                for (x, y) in ((28, my - 1), (35, my - 1)):
+                    if _lum(p[x, y]) < _lum(skin) * 0.9 and abs(p[x, y][0] - skin[0]) < 60:
+                        p[x, y] = skin
+            out.append(t.resize((N * 2, N * 2), Image.NEAREST))
+        sheet = Image.new('RGBA', (N * 2 * len(out), N * 2), (0, 0, 0, 0))
+        for i, t in enumerate(out):
+            sheet.paste(t, (i * N * 2, 0))
+        return sheet
+
     PEOPLE = {'rika': P_rika, 'garn': P_garn, 'haran': P_haran, 'seira': P_seira, 'kade': P_kade,
               'pedlar': P_pedlar, 'oreman': P_oreman, 'armsman': P_armsman, 'yunseul': P_yunseul}
 
@@ -629,7 +766,21 @@ def _portrait(argv):
             im.save(os.path.join(NPC, f'portrait_{k}.png'))
             out[k] = im
         for k in REFS:
-            soften(Image.open(os.path.join(SRC, f'{k}.png'))).save(os.path.join(NPC, f'portrait_{k}.png'))
+            im = soften(Image.open(os.path.join(SRC, f'{k}.png')))
+            im.save(os.path.join(NPC, f'portrait_{k}.png'))
+            out[k] = im
+        for k, fn in PLAYERS.items():
+            im = soften(fn().image())
+            im.save(os.path.join(NPC, f'portrait_pc_{k}.png'))
+            out['pc_' + k] = im
+        for k, im in out.items():
+            animate(im).save(os.path.join(NPC, f'anim_{k}.png'))
+        # 표정 대조표 — 사람마다 한 줄
+        an = Image.new('RGBA', (N * 2 * len(FRAMES), N * 2 * len(out)), (46, 44, 52, 255))
+        for i, k in enumerate(out):
+            an.alpha_composite(Image.open(os.path.join(NPC, f'anim_{k}.png')), (0, i * N * 2))
+        os.makedirs(os.path.join(ROOT, 'tests', 'out'), exist_ok=True)
+        an.save(os.path.join(ROOT, 'tests', 'out', 'portraits-anim.png'))
         # 기준 4장과 나란히 — 눈높이 · 크기 · 윤곽이 맞는지 한눈에
         refs = ['elara', 'borin', 'mira', 'elder']
         S = 160

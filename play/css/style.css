@@ -736,6 +736,29 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 #dlg-portrait{background-size:100%}
 .dlg-portrait.talk{animation:dlgTalk .26s steps(2,end) infinite}
 @keyframes dlgTalk{50%{transform:translateY(-2px)}}
+/* 움직이는 초상(ui/portrait.ts) — 표정 8장 띠를 배경 위치로 넘긴다. 숨 · 갸웃 · 튀어 오름은 감싼 칸이 맡는다(초상의 talk 들썩임과 겹치지 않게) */
+.dlg-portrait.anim{background-size:800% 100%!important;background-repeat:no-repeat;image-rendering:pixelated}
+.dlg-pwrap{transition:filter .18s,scale .18s;transform-origin:50% 100%}
+#dialogue.open .dlg-pwrap{animation:dlgBreath 3.2s ease-in-out infinite}
+@keyframes dlgBreath{50%{transform:translateY(-1px) scaleY(1.012)}}
+.dlg-portrait{transition:rotate .25s cubic-bezier(.3,1.6,.5,1)}
+.dlg-portrait.ask{rotate:-5deg}
+.dlg-portrait.hop{animation:dlgHop .32s cubic-bezier(.2,1.6,.4,1)}
+@keyframes dlgHop{35%{transform:translateY(-9px)}70%{transform:translateY(1px)}}
+/* 내 초상 — 말풍선 오른쪽, 나를 보도록 좌우를 뒤집는다. 듣는 쪽은 흐리게 */
+.dlg-me{display:none}
+.dlg-me.on{display:block}
+.dlg-me .dlg-portrait{transform:scaleX(-1)}
+#dialogue:not(.lore) .dlg-me.on{filter:brightness(.55) saturate(.7);scale:.92}
+#dialogue.who-me .dlg-pwrap:not(.dlg-me){filter:brightness(.55) saturate(.7);scale:.92}
+#dialogue.who-me .dlg-me.on{filter:none;scale:1}
+#dialogue.who-me .dlg-main::before{left:auto;right:-42px;transform:scaleX(-1)}
+#dialogue.who-me .dlg-text{color:#3c4064;font-style:italic}
+#dialogue.who-me .dlg-head{flex-direction:row-reverse}
+#dialogue.who-me .dlg-name{transform:rotate(1.5deg);border-radius:4px 4px 0 4px;transform-origin:100% 100%}
+#dialogue.lore .dlg-me{display:none}
+/* 대화 중에는 탭 단추를 걷는다 — 내 초상과 겹친다 */
+body:has(#dialogue.open) #tabbar{visibility:hidden}
 .dlg-main{position:relative;flex:1;min-width:0;margin-bottom:22px;padding:4px 10px 6px;color:#33281b;
   border:16px solid transparent;border-image:url(../assets/ui/bubble.png?v=a39091d9) 16 fill / 16px stretch;image-rendering:pixelated;
   transform-origin:0 100%;animation:dlgPop .34s cubic-bezier(.2,1.45,.45,1)}
@@ -794,8 +817,9 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 #dialogue.lore .dchoice:hover:not(.no)::before{background:#6ed6c4}
 @media (max-width:700px){.dlg-pwrap{flex-basis:84px;height:84px}.dlg-portrait{width:84px;height:84px}.dlg-box{gap:18px}
   #dialogue.lore .dlg-pwrap{flex-basis:56px;height:56px}#dialogue.lore .dlg-portrait{width:56px;height:56px}}
-body.q-low .dlg-main,body.q-low .dlg-portrait.talk{animation:none}
-@media (prefers-reduced-motion:reduce){.dlg-main,.dlg-portrait.talk{animation:none}}
+@media (max-width:700px){.dlg-me.on{display:none}}
+body.q-low .dlg-main,body.q-low .dlg-portrait.talk,body.q-low #dialogue.open .dlg-pwrap{animation:none}
+@media (prefers-reduced-motion:reduce){.dlg-main,.dlg-portrait.talk,.dlg-portrait.hop,#dialogue.open .dlg-pwrap{animation:none}}
 
 /* ================= 연출 ================= */
 #chapter-card{position:absolute;left:0;right:0;top:26%;text-align:center;opacity:0;pointer-events:none;transition:opacity .8s}
