@@ -236,11 +236,12 @@ export const RenderActorsPart: Bag = {
 
 
   /** 시트에 적힌 이 프레임의 무기 손 — { pt:[x,y] 화면 좌표(손 가운데), box:[x,y,w,h], key, fr, flip } 또는 null. */
-  playerHand(key: string, fr: any, sx: number, sy: number, flip: boolean) {
+  playerHand(key: string, fr: any, sx: number, sy: number, flip: boolean, back = false) {
     const m = Sprites.meta && Sprites.meta.characters.sheets[key];
-    if (!m || !m.hand || !m.hand[fr]) return null;
+    const H = m && (back ? m.hand2 : m.hand), HB = m && (back ? m.hand2Box : m.handBox);
+    if (!H || !H[fr] || !HB || !HB[fr]) return null;
     const X0 = Math.round(sx) + m.ox, Y0 = Math.round(sy) + m.oy;
-    const [hx, hy] = m.hand[fr], [bx0, by0, bx1, by1] = m.handBox[fr];
+    const [hx, hy] = H[fr], [bx0, by0, bx1, by1] = HB[fr];
     const px = flip ? X0 + m.frameW - (hx + 0.5) : X0 + hx + 0.5;
     const bx = flip ? X0 + m.frameW - bx1 - 1 : X0 + bx0;
     return { pt: [px, Y0 + hy + 0.5], box: [bx, Y0 + by0, bx1 - bx0 + 1, by1 - by0 + 1], key, fr, flip };
@@ -578,12 +579,14 @@ export const RenderActorsPart: Bag = {
     const eq = p.equip && p.equip.weapon;
     if (eq && eq.id === hi.id && hd.type === 'weapon') return;            // 장착 무기를 고른 칸 — 앞손에 이미 있다
     const f = p.facing < 0 ? -1 : 1;
-    const hy = hand ? hand.pt[1] + 1 : sy + 22;
-    const x = sx + p.w / 2 - f * 9, sw = p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
-    c.save(); c.translate(x - sw * f, hy);
-    c.scale(f, 1); c.rotate(-0.25);
-    c.globalAlpha *= 0.92;
-    Art.drawItem(c, hi.id, -9, -14, 18);
+    /* ★ 뒷손 자리(매니페스트 hand2 — 원본 그늘 살색 칸)에 쥐인다. 몸 옆 어림 자리에 두면 손과 자루가 따로 놀았다(사용자 지적 · 횃불).
+       뒷손이 안 보이는 장(뛰기 · 떨어지기 · 대시)만 어림 자리. 사연: docs/code-history.md#h211 */
+    const key = 'player_' + CHAR_OF(p.charId).id, back = this.spritesOn ? this.playerHand(key, this.playerFrame(p), sx, sy, f < 0, true) : null;
+    const sw = !back && p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
+    const gx = back ? back.pt[0] : sx + p.w / 2 - f * 9 - sw * f, gy = back ? back.pt[1] : (hand ? hand.pt[1] + 1 : sy + 22);
+    c.save(); c.translate(gx, gy);
+    c.scale(f, 1); c.rotate(-0.2);
+    Art.drawItem(c, hi.id, -9, -14, 18);       // 그림 아래쪽 가운데(자루 끝 근처)가 손에 온다
     if (hi.id === 'torch') {                                                 // 든 횃불은 불꽃이 일렁인다
       const fl = 0.7 + 0.3 * Math.sin(this.time * 17) * Math.sin(this.time * 7.3);
       c.globalCompositeOperation = 'lighter';
@@ -591,6 +594,11 @@ export const RenderActorsPart: Bag = {
       c.fillStyle = g; c.beginPath(); c.arc(0, -12, 12 * fl, 0, TAU); c.fill();
     }
     c.restore();
+    if (back) {                                   // 손가락이 자루를 감싸게 — 손 칸만 다시
+      c.save(); c.beginPath(); c.rect(back.box[0], back.box[1], back.box[2], back.box[3]); c.clip();
+      Sprites.draw(c, back.key, back.fr, sx, sy, back.flip);
+      c.restore();
+    }
   },
   drawHeldWeapon(c: any, p: any, sx: any, sy: any, bob: any, hand: any) {
     /* 손에 그려지는 것은 "지금 실제로 쓰는 것"이어야 한다 — 핫바에 도구·낚싯대가 있으면 그것을, 아니면 장착 무기를. */

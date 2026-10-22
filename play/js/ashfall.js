@@ -70599,11 +70599,12 @@
       c.restore();
     },
     /** 시트에 적힌 이 프레임의 무기 손 — { pt:[x,y] 화면 좌표(손 가운데), box:[x,y,w,h], key, fr, flip } 또는 null. */
-    playerHand(key, fr, sx, sy, flip) {
+    playerHand(key, fr, sx, sy, flip, back = false) {
       const m = Sprites.meta && Sprites.meta.characters.sheets[key];
-      if (!m || !m.hand || !m.hand[fr]) return null;
+      const H = m && (back ? m.hand2 : m.hand), HB = m && (back ? m.hand2Box : m.handBox);
+      if (!H || !H[fr] || !HB || !HB[fr]) return null;
       const X0 = Math.round(sx) + m.ox, Y0 = Math.round(sy) + m.oy;
-      const [hx, hy] = m.hand[fr], [bx0, by0, bx1, by1] = m.handBox[fr];
+      const [hx, hy] = H[fr], [bx0, by0, bx1, by1] = HB[fr];
       const px = flip ? X0 + m.frameW - (hx + 0.5) : X0 + hx + 0.5;
       const bx = flip ? X0 + m.frameW - bx1 - 1 : X0 + bx0;
       return { pt: [px, Y0 + hy + 0.5], box: [bx, Y0 + by0, bx1 - bx0 + 1, by1 - by0 + 1], key, fr, flip };
@@ -71000,13 +71001,13 @@
       const eq = p.equip && p.equip.weapon;
       if (eq && eq.id === hi.id && hd.type === "weapon") return;
       const f = p.facing < 0 ? -1 : 1;
-      const hy = hand ? hand.pt[1] + 1 : sy + 22;
-      const x = sx + p.w / 2 - f * 9, sw = p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
+      const key = "player_" + CHAR_OF(p.charId).id, back = this.spritesOn ? this.playerHand(key, this.playerFrame(p), sx, sy, f < 0, true) : null;
+      const sw = !back && p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
+      const gx = back ? back.pt[0] : sx + p.w / 2 - f * 9 - sw * f, gy = back ? back.pt[1] : hand ? hand.pt[1] + 1 : sy + 22;
       c.save();
-      c.translate(x - sw * f, hy);
+      c.translate(gx, gy);
       c.scale(f, 1);
-      c.rotate(-0.25);
-      c.globalAlpha *= 0.92;
+      c.rotate(-0.2);
       Art.drawItem(c, hi.id, -9, -14, 18);
       if (hi.id === "torch") {
         const fl = 0.7 + 0.3 * Math.sin(this.time * 17) * Math.sin(this.time * 7.3);
@@ -71020,6 +71021,14 @@
         c.fill();
       }
       c.restore();
+      if (back) {
+        c.save();
+        c.beginPath();
+        c.rect(back.box[0], back.box[1], back.box[2], back.box[3]);
+        c.clip();
+        Sprites.draw(c, back.key, back.fr, sx, sy, back.flip);
+        c.restore();
+      }
     },
     drawHeldWeapon(c, p, sx, sy, bob, hand) {
       const hi = p.held(), hd = hi && idef(hi);

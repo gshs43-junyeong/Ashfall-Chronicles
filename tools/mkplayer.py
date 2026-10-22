@@ -667,6 +667,20 @@ def fix_feet(c, f, cid):
     return c
 
 
+def back_hands(w):
+    """뒷손 — 원본이 그늘 살색(#a78864)으로 칠한 칸의 상자(새 프레임 좌표). 뛰기 · 떨어지기 · 대시처럼 뒷손이 안 보이는 장은 None.
+    핫바 물건(횃불 따위)은 이 손에 쥐인다(game/render-actors drawOffHand) — 사연: docs/code-history.md#h211"""
+    out = []
+    for f in range(N):
+        pts = [(x, y) for y in range(18, OH) for x in range(OW) if w[f][y][x][3] and hx(w[f][y][x]) == 'a78864']
+        if not pts:
+            out.append(None); continue
+        x0, y0 = min(p[0] for p in pts) + PX, min(p[1] for p in pts) + PY
+        x1, y1 = max(p[0] for p in pts) + PX, max(p[1] for p in pts) + PY
+        out.append([[round((x0 + x1) / 2, 1), round((y0 + y1) / 2 + 0.5, 1)], [x0, y0, x1, y1]])
+    return out
+
+
 def main():
     man_p = os.path.join(ROOT, 'manifest.json')
     man = json.load(open(man_p, encoding='utf-8'))
@@ -693,6 +707,8 @@ def main():
         m = sheets[key]
         m.update({'file': 'char/%s.png' % key, 'frameW': FW, 'frameH': FH, 'ox': -1 - PX, 'oy': -1 - PY, 'count': N,
                   'hand': [h[0] for h in hands], 'handBox': [h[1] for h in hands]})
+        bh = back_hands(wsrc)
+        m.update({'hand2': [h and h[0] for h in bh], 'hand2Box': [h and h[1] for h in bh]})
         print('wrote', key)
     # 리그 시절 산출물(팔·망토를 코드로 그리던 몸 시트 · 누운 헤엄 시트)은 이제 안 쓴다
     for cid in IDS:
