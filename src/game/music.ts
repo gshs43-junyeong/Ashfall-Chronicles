@@ -111,27 +111,28 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   efire_phys:  ['bow', .82, .5],
   efire_magic: ['magic', .80, .5],
   /* ★ 축하 · 알림 갈래 — 예전엔 열몇 자리가 chapter 하나를 같이 울려 무엇이 일어났는지 귀로 가를 수 없었다. 자리마다 제 키를 부르고,
-     파일이 오기 전에는 chapter · level 을 음높이 · 크기만 바꿔 빌린다(파일이 오면 SFX_FILES 에 적고 여기서 지운다 — 의뢰서 J). 사연: docs/code-history.md#h208 */
-  ach: ['chapter', 1, .7],          // 업적
-  ach_big: ['chapter', .9, .9],     // 어려운 업적(품 7 이상)
-  story: ['chapter', 1, .7],        // 장(이야기) 완료
-  ch_start: ['chapter', .84, .8],   // 새 장 카드
-  village_up: ['chapter', 1.06, .9],
-  discover: ['chapter', 1.18, .65], // 숨은 굴 · 유적 자리 · 기억 조각 — 밝고 가볍게
-  rare_get: ['chapter', 1.26, .6],  // 귀한 것을 손에 넣음
-  unseal: ['chapter', .94, .8],     // 봉인 · 퍼즐 · 닻이 풀림
-  deep_open: ['chapter', .76, 1],   // 깊은 층이 열림
-  seal_shut: ['chapter', .66, .85], // 봉인 방이 닫힘 — 낮고 무겁게
-  danger: ['chapter', .6, .9],      // 맥박 · 격노 · 유적 사건 — 가장 낮게
-  ev_clear: ['chapter', 1.1, .7],   // 유적 사건을 해냄
-  travel: ['chapter', 1.34, .5],    // 비석 · 구슬로 옮겨짐
-  timestop: ['chapter', .5, .7],
-  recover: ['chapter', 1.12, .55],  // 쓰러진 자리에서 물건을 되찾음
-  pet_up: ['level', 1.18, .55],
-  pet_evolve: ['level', .86, .9],   // 드래곤 단계
-  prof_perk: ['level', 1.08, .8],   // 숙련 특전
-  tame: ['level', 1.14, .65],
-  rest: ['level', .8, .5]
+     키는 파일 일곱(cele_*, 의뢰서 J)을 음높이로 나눠 쓴다. 파일이 오기 전에는 chapter · level 을 빌린다 —
+     오면 SFX_FILES 에 cele_* 를 적고 아래 첫 칸을 그 파일로 바꾼다(음높이 · 크기는 그대로). 사연: docs/code-history.md#h208 */
+  ach: ['chapter', 1, .7],          // → cele_ach 1
+  ach_big: ['chapter', .9, .9],     // → cele_ach 0.9 — 어려운 업적(품 7 이상)
+  prof_perk: ['level', 1.08, .8],   // → cele_ach 1.08 — 숙련 특전
+  story: ['chapter', 1, .7],        // → cele_story 1 — 장 완료
+  ch_start: ['chapter', .84, .8],   // → cele_story 0.84 — 새 장 카드
+  village_up: ['chapter', 1.06, .9],// → cele_story 1.06
+  discover: ['chapter', 1.18, .65], // → cele_find 1 — 숨은 굴 · 유적 자리 · 기억 조각
+  travel: ['chapter', 1.34, .5],    // → cele_find 1.15 — 비석 · 구슬로 옮겨짐
+  recover: ['chapter', 1.12, .55],  // → cele_find 0.95 — 쓰러진 자리에서 되찾음
+  rare_get: ['chapter', 1.26, .6],  // → cele_treasure 1 — 귀한 것
+  ev_clear: ['chapter', 1.1, .7],   // → cele_treasure 0.9 — 유적 사건을 해냄
+  unseal: ['chapter', .94, .8],     // → cele_unseal 1 — 봉인 · 퍼즐 · 닻
+  deep_open: ['chapter', .76, 1],   // → cele_unseal 0.8 — 깊은 층
+  danger: ['chapter', .6, .9],      // → cele_warn 1 — 맥박 · 격노 · 유적 사건
+  seal_shut: ['chapter', .66, .85], // → cele_warn 1.1 — 봉인 방이 닫힘
+  timestop: ['chapter', .5, .7],    // → cele_warn 0.8
+  pet_up: ['level', 1.18, .55],     // → cele_grow 1.1
+  pet_evolve: ['level', .86, .9],   // → cele_grow 0.85 — 드래곤 단계
+  tame: ['level', 1.14, .65],       // → cele_grow 1
+  rest: ['level', .8, .5]           // → cele_grow 0.8 — 여관에서 잠
 };
 
 /* 키별 최소 간격(초). */
