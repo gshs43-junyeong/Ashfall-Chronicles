@@ -1598,6 +1598,7 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 
 /* 참가 창 — 이름 한 열(max-content) · 입력 한 열. 새 캐릭터 줄도 같은 두 열(subgrid)이라 어느 언어든 입력 칸 끝이 맞는다 */
 .mp-form{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 12px;align-items:center}
+.mp-form [hidden]{display:none!important}
 .mp-form>label,.mp-new>label{font-size:11px;color:#8d8774;white-space:nowrap}
 .mp-form input,.mp-form select{width:100%;min-width:0;padding:7px 9px;border-radius:3px;background:#0c0b08;
   border:1px solid var(--frame);color:var(--ink);font-family:inherit;font-size:12.5px}

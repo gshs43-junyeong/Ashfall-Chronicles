@@ -108,6 +108,9 @@
   "15초마다 · 나갈 때 저절로 맡긴다. 다음에 같은 호스트 세계에 오면 이어 간다.": [
    "game/netui.refreshPauseSave"
   ],
+  "1분마다 · 나갈 때 · 저장하기를 누를 때 저장한다.": [
+   "game/netui.refreshPauseSave"
+  ],
   "<b>{i}단계 · {v}</b>": [
    "ui/craft.refreshTownhall"
   ],
@@ -901,6 +904,9 @@
   "그 뒤": [
    "ui/quest.refreshQuest"
   ],
+  "그 슬롯을 읽지 못했다": [
+   "game/netui.mpJoinFromTitle"
+  ],
   "그 자리에는 놓을 수 없다": [
    "game/mine.rightClick",
    "game/mine.placeStation",
@@ -1072,8 +1078,23 @@
   "낱장이 넘어간다 — {n}/4": [
    "game/ruin-events.evTick"
   ],
+  "내 슬롯에 마지막으로 저장: {t}": [
+   "game/netui.refreshPauseSave"
+  ],
+  "내 슬롯에 캐릭터를 저장했다": [
+   "game/netui.netSaveChar"
+  ],
+  "내 슬롯의 캐릭터로 가면 진행(레벨 · 가방 · 금화)이 그 슬롯에 저장되고, 지형은 호스트 세계를 따른다 — 그 슬롯을 혼자 열면 내 세계 지형 그대로다. 새 손님 캐릭터는 그 세계가 기억해 두었다가 다시 오면 이어 간다(일시정지 → 저장 칸에서 확인).": [
+   "index.html"
+  ],
+  "내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.": [
+   "game/netui.refreshPauseSave"
+  ],
   "내 캐릭터(레벨 · 가방 · 금화)는 이 세계를 연 호스트의 저장에 맡겨진다. 내 싱글플레이 슬롯은 그대로다.": [
    "game/netui.refreshPauseSave"
+  ],
+  "내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다": [
+   "game/net.netOnGuest"
   ],
   "내가 정련법을 가르쳐줄 테니, {item} {n}개를 직접 만들어 와 봐.": [
    "data/quests"
@@ -2120,6 +2141,9 @@
   "샅샅이 뒤졌다 — {item}": [
    "game/ruin-pulse.checkSurvey"
   ],
+  "새 손님 캐릭터": [
+   "game/netui.openMpScreen"
+  ],
   "새긴 것을 뒤에서부터 읽어라. 마지막 자리가 첫 자리다.": [
    "game/ruins.ruinCipher"
   ],
@@ -2291,6 +2315,9 @@
   ],
   "슬라이더": [
    "game/fish-duel.duelTutorial"
+  ],
+  "슬롯 {n} · {name} Lv.{lv}": [
+   "game/netui.openMpScreen"
   ],
   "시계 · 깊이": [
    "index.html"
@@ -3227,9 +3254,6 @@
   "참가": [
    "index.html"
   ],
-  "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다. 진행은 15초마다 · 나갈 때 호스트의 저장에 맡겨진다(일시정지 → 저장 칸에서 확인).": [
-   "index.html"
-  ],
   "참가하기": [
    "index.html"
   ],
@@ -3377,7 +3401,8 @@
    "ui/tree.slotPicker"
   ],
   "캐릭터": [
-   "game/save.showNewGameForm"
+   "game/save.showNewGameForm",
+   "index.html"
   ],
   "캐릭터 맡기기": [
    "game/netui.refreshPauseMp"

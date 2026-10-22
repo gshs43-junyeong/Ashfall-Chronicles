@@ -1174,10 +1174,18 @@
   "손님 캐릭터 {n}": "{n} guest characters",
   "아직 없음": "not yet",
   "저장": "Saving",
-  "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다. 진행은 15초마다 · 나갈 때 호스트의 저장에 맡겨진다(일시정지 → 저장 칸에서 확인).": "A guest character is separate from single-player. In a world you visit for the first time it is created with this name and class; the world remembers it so you can continue next time. Progress is stored in the host's save every 15 seconds and when you leave (check it under Pause → Saving).",
   "캐릭터 맡기기": "Store character",
   "호스트 답을 기다리는 중": "Waiting for the host to reply",
-  "호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다": "The host has not saved this world to a slot yet — it will be kept when they save or close the room"
+  "호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다": "The host has not saved this world to a slot yet — it will be kept when they save or close the room",
+  "1분마다 · 나갈 때 · 저장하기를 누를 때 저장한다.": "Saved every minute, when you leave, and when you press Save.",
+  "그 슬롯을 읽지 못했다": "Could not read that slot",
+  "내 슬롯에 마지막으로 저장: {t}": "Last saved to my slot: {t}",
+  "내 슬롯에 캐릭터를 저장했다": "Character saved to my slot",
+  "내 슬롯의 캐릭터로 가면 진행(레벨 · 가방 · 금화)이 그 슬롯에 저장되고, 지형은 호스트 세계를 따른다 — 그 슬롯을 혼자 열면 내 세계 지형 그대로다. 새 손님 캐릭터는 그 세계가 기억해 두었다가 다시 오면 이어 간다(일시정지 → 저장 칸에서 확인).": "Join with a character from one of your slots and its progress (level, bag, gold) is saved to that slot while the terrain follows the host's world — open the slot alone and your own world's terrain is unchanged. A new guest character is remembered by that world for next time (check under Pause → Saving).",
+  "내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.": "Your character (level, bag, gold) is saved to your single-player slot {n}. The terrain follows the host's world; opening that slot alone keeps your own world's terrain.",
+  "내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다": "Joined the host's world with your character — progress is saved to your slot",
+  "새 손님 캐릭터": "New guest character",
+  "슬롯 {n} · {name} Lv.{lv}": "Slot {n} · {name} Lv.{lv}"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

@@ -410,9 +410,10 @@
         <!-- 글자마다 네모 한 칸 — 실제 입력은 위에 겹친 투명한 칸 하나(붙여넣기·입력기·폰 자판) · 여섯째 칸은 점선(있을 때만) -->
         <div class="mp-code-box"><div id="mp-cells" class="mp-cells" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i class="opt"></i></div><input id="mp-code" class="mp-code" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-describedby="mp-code-hint"></div>
         <p id="mp-code-hint" class="mp-hint">영문과 숫자를 섞어 5~6자 — 예: 7K2QM</p>
-        <label for="mp-name">이름</label><input id="mp-name" maxlength="12" placeholder="이름 없는 모험가">
-        <label for="mp-class">직업</label><select id="mp-class"></select>
-        <p class="mp-note mp-wide-note">참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다. 진행은 15초마다 · 나갈 때 호스트의 저장에 맡겨진다(일시정지 → 저장 칸에서 확인).</p>
+        <label for="mp-char">캐릭터</label><select id="mp-char"></select>
+        <label for="mp-name" class="mp-new">이름</label><input id="mp-name" class="mp-new" maxlength="12" placeholder="이름 없는 모험가">
+        <label for="mp-class" class="mp-new">직업</label><select id="mp-class" class="mp-new"></select>
+        <p class="mp-note mp-wide-note">내 슬롯의 캐릭터로 가면 진행(레벨 · 가방 · 금화)이 그 슬롯에 저장되고, 지형은 호스트 세계를 따른다 — 그 슬롯을 혼자 열면 내 세계 지형 그대로다. 새 손님 캐릭터는 그 세계가 기억해 두었다가 다시 오면 이어 간다(일시정지 → 저장 칸에서 확인).</p>
       </div>
       <p id="mp-msg" class="code-msg"></p>
       <div class="code-btns"><button id="btn-mp-join">참가</button><button id="btn-mp-close">닫기</button></div>

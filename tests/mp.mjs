@@ -293,18 +293,18 @@ await g2.fill('#mp-code', 'xy7k9q2z');
 const codeB = await cells();
 check(codeA[0] === 'ABC1' && codeA[1] && codeA[2] === 'ABC1__' && codeB[0] === 'XY7K9Q' && !codeB[1] && codeB[2] === 'XY7K9Q',
   `방 코드 네모 6칸: 'ab-c 1한!' → ${codeA[2]}(참가 잠김) · 'xy7k9q2z' → ${codeB[2]}(6자까지 · 열림)`);
-const noSlotPick = await g2.evaluate(() => !document.querySelector('#mp-char'));
+const noSlotPick = await g2.evaluate(() => document.querySelector('#mp-char').value === '');   // 기본은 새 손님 캐릭터
 await g2.fill('#mp-code', room.toLowerCase());
 await g2.fill('#mp-name', 'Visitor');
 await g2.click('#btn-mp-join');
 await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
 const joined = await g2.evaluate(() => [G.me.name, G.me.level, G.world.seed, document.querySelector('#mp-screen').classList.contains('open')]);
-check(noSlotPick && joined[0] === 'Visitor' && joined[1] === 1 && joined[2] !== 'd2' && !joined[3], `창으로 참가: 싱글 캐릭터를 고르지 않고 새 손님 캐릭터(${joined[0]} Lv.${joined[1]})로 호스트 세계(${joined[2]})에`);
+check(noSlotPick && joined[0] === 'Visitor' && joined[1] === 1 && joined[2] !== 'd2' && !joined[3], `창으로 참가: 기본(새 손님 캐릭터 ${joined[0]} Lv.${joined[1]})로 호스트 세계(${joined[2]})에`);
 await g2.evaluate(() => { G.me.gold = 12345; G.setPause(true); document.querySelector('#btn-room-leave').click(); });
 await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 });
 await g2.waitForTimeout(500);
 const sAfter = await g2.evaluate(async () => (await SaveStore.get(2)).raw);
-check(sAfter === sBefore, '나가도 손님의 싱글플레이 슬롯은 그대로(멀티 캐릭터와 따로)');
+check(sAfter === sBefore, '새 손님 캐릭터로 나가면 손님의 싱글플레이 슬롯은 그대로');
 await host.waitForTimeout(1500);
 await g2.evaluate(code => { document.querySelector('#btn-multi').click(); const c = document.querySelector('#mp-code'); c.value = code; c.dispatchEvent(new Event('input')); }, room);
 await g2.waitForTimeout(300);
@@ -342,6 +342,19 @@ await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null
 const back2 = await g2.evaluate(() => [G.me.gold, Math.round(G.me.x)]);
 check(rec2 && rec2[0] === 777 && rec2[2] && back2[0] === 777 && Math.abs(back2[1] - left2[1]) < 3 * 22,
   `다시 온 손님: 호스트 세계가 캐릭터·자리를 기억(금화 ${rec2 && rec2[0]}) → 다시 들어오면 그대로(금화 ${back2[0]} · x ${left2[1]}→${back2[1]}) · 호스트가 다시 저장하지 않아도 호스트 슬롯에 남는다`);
+/* 제 슬롯 캐릭터로 참가 — 진행(금화)은 그 슬롯에 캐릭터만 다시 적히고, 슬롯의 세계(씨앗 · 그 세계 안의 자리)는 그대로 */
+await g2.evaluate(() => { G.setPause(true); document.querySelector('#btn-room-leave').click(); });
+await g2.waitForFunction(() => !G.net && G.state === 'title', null, { timeout: 5000 });
+const own0 = await g2.evaluate(async () => { const d = JSON.parse((await SaveStore.get(2)).raw); return [d.p.x, d.p.y, d.world.seed, d.p.gold]; });
+await g2.evaluate(code => { document.querySelector('#btn-multi').click(); const c = document.querySelector('#mp-code'); c.value = code; c.dispatchEvent(new Event('input')); }, room);
+await g2.waitForFunction(() => [...document.querySelectorAll('#mp-char option')].some(o => o.value === '2'), null, { timeout: 5000 });
+await g2.evaluate(() => { const s = document.querySelector('#mp-char'); s.value = '2'; s.onchange(); document.querySelector('#btn-mp-join').click(); });
+await g2.waitForFunction(() => G.net && G.net.id > 0 && G.state === 'play', null, { timeout: 60000 });
+const ownIn = await g2.evaluate(() => [G.me.name, G.me.level, G.world.seed]);
+await g2.evaluate(async () => { G.me.gold = 4242; await G.saveGame(); });
+const own1 = await g2.evaluate(async () => { const d = JSON.parse((await SaveStore.get(2)).raw); return [d.p.x, d.p.y, d.world.seed, d.p.gold, d.p.level]; });
+check(ownIn[0] === 'Saver' && ownIn[1] === 7 && ownIn[2] !== 'd2' && own1[3] === 4242 && own1[4] === 7 && own1[2] === 'd2' && own1[0] === own0[0] && own1[1] === own0[1],
+  `내 슬롯 캐릭터로 참가: ${ownIn[0]} Lv.${ownIn[1]} 로 호스트 세계(${ownIn[2]}) · 저장하면 슬롯에 금화 ${own0[3]}→${own1[3]} · 슬롯 세계(${own1[2]}) · 자리 그대로`);
 /* 봉인 방 — 호스트가 닫고 판정하고, 참가자는 상태를 받아 그리며 누른 것을 보낸다 */
 const pzHost = await host.evaluate(() => {
   const site = G.evSite('ice'), ri = G.puzzleRooms(site)[0], r = site.rooms[ri];

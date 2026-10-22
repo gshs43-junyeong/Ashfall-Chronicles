@@ -1174,10 +1174,18 @@
   "손님 캐릭터 {n}": "{n} personajes invitados",
   "아직 없음": "todavía no",
   "저장": "Guardado",
-  "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다. 진행은 15초마다 · 나갈 때 호스트의 저장에 맡겨진다(일시정지 → 저장 칸에서 확인).": "Un personaje invitado es independiente del modo de un jugador. En un mundo que visitas por primera vez se crea con este nombre y clase; el mundo lo recuerda para que puedas continuar la próxima vez. El progreso se guarda en la partida del anfitrión cada 15 segundos y al salir (compruébalo en Pausa → Guardado).",
   "캐릭터 맡기기": "Guardar personaje",
   "호스트 답을 기다리는 중": "Esperando la respuesta del anfitrión",
-  "호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다": "El anfitrión aún no ha guardado este mundo en una ranura — se conservará cuando guarde o cierre la sala"
+  "호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다": "El anfitrión aún no ha guardado este mundo en una ranura — se conservará cuando guarde o cierre la sala",
+  "1분마다 · 나갈 때 · 저장하기를 누를 때 저장한다.": "Se guarda cada minuto, al salir y al pulsar Guardar.",
+  "그 슬롯을 읽지 못했다": "No se pudo leer esa ranura",
+  "내 슬롯에 마지막으로 저장: {t}": "Último guardado en mi ranura: {t}",
+  "내 슬롯에 캐릭터를 저장했다": "Personaje guardado en mi ranura",
+  "내 슬롯의 캐릭터로 가면 진행(레벨 · 가방 · 금화)이 그 슬롯에 저장되고, 지형은 호스트 세계를 따른다 — 그 슬롯을 혼자 열면 내 세계 지형 그대로다. 새 손님 캐릭터는 그 세계가 기억해 두었다가 다시 오면 이어 간다(일시정지 → 저장 칸에서 확인).": "Si te unes con un personaje de una de tus ranuras, su progreso (nivel, bolsa, oro) se guarda en esa ranura mientras el terreno sigue el mundo del anfitrión — si abres la ranura en solitario, el terreno de tu propio mundo no cambia. Un personaje invitado nuevo lo recuerda ese mundo para la próxima vez (compruébalo en Pausa → Guardado).",
+  "내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.": "Tu personaje (nivel, bolsa, oro) se guarda en tu ranura de un jugador {n}. El terreno sigue el mundo del anfitrión; si abres esa ranura en solitario, se conserva el terreno de tu propio mundo.",
+  "내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다": "Has entrado en el mundo del anfitrión con tu personaje — el progreso se guarda en tu ranura",
+  "새 손님 캐릭터": "Nuevo personaje invitado",
+  "슬롯 {n} · {name} Lv.{lv}": "Ranura {n} · {name} Nv.{lv}"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

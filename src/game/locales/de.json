@@ -1174,10 +1174,18 @@
   "손님 캐릭터 {n}": "{n} Gastfiguren",
   "아직 없음": "noch nicht",
   "저장": "Speichern",
-  "참가 캐릭터는 싱글플레이와 따로다. 처음 가는 세계에서는 이 이름·직업으로 새로 만들고, 그 세계가 기억해 두었다가 다시 오면 이어 간다. 진행은 15초마다 · 나갈 때 호스트의 저장에 맡겨진다(일시정지 → 저장 칸에서 확인).": "Eine Gastfigur ist vom Einzelspieler getrennt. In einer Welt, die du zum ersten Mal besuchst, wird sie mit diesem Namen und dieser Klasse erstellt; die Welt merkt sie sich, damit du beim nächsten Mal weiterspielen kannst. Der Fortschritt wird alle 15 Sekunden und beim Verlassen im Spielstand des Hosts hinterlegt (siehe Pause → Speichern).",
   "캐릭터 맡기기": "Figur hinterlegen",
   "호스트 답을 기다리는 중": "Warte auf Antwort des Hosts",
-  "호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다": "Der Host hat diese Welt noch nicht in einem Platz gespeichert — sie bleibt erhalten, wenn er speichert oder den Raum schließt"
+  "호스트가 아직 이 세계를 슬롯에 저장하지 않았다 — 방을 닫거나 저장할 때 같이 남는다": "Der Host hat diese Welt noch nicht in einem Platz gespeichert — sie bleibt erhalten, wenn er speichert oder den Raum schließt",
+  "1분마다 · 나갈 때 · 저장하기를 누를 때 저장한다.": "Gespeichert jede Minute, beim Verlassen und beim Drücken von Speichern.",
+  "그 슬롯을 읽지 못했다": "Dieser Platz konnte nicht gelesen werden",
+  "내 슬롯에 마지막으로 저장: {t}": "Zuletzt in meinem Platz gespeichert: {t}",
+  "내 슬롯에 캐릭터를 저장했다": "Figur in meinem Platz gespeichert",
+  "내 슬롯의 캐릭터로 가면 진행(레벨 · 가방 · 금화)이 그 슬롯에 저장되고, 지형은 호스트 세계를 따른다 — 그 슬롯을 혼자 열면 내 세계 지형 그대로다. 새 손님 캐릭터는 그 세계가 기억해 두었다가 다시 오면 이어 간다(일시정지 → 저장 칸에서 확인).": "Trittst du mit einer Figur aus einem deiner Plätze bei, wird ihr Fortschritt (Stufe, Tasche, Gold) in diesem Platz gespeichert, während das Gelände der Welt des Hosts folgt — öffnest du den Platz allein, bleibt das Gelände deiner eigenen Welt unverändert. Eine neue Gastfigur merkt sich die Welt für das nächste Mal (siehe Pause → Speichern).",
+  "내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.": "Deine Figur (Stufe, Tasche, Gold) wird in deinem Einzelspieler-Platz {n} gespeichert. Das Gelände folgt der Welt des Hosts; öffnest du den Platz allein, bleibt das Gelände deiner eigenen Welt.",
+  "내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다": "Mit deiner Figur der Welt des Hosts beigetreten — der Fortschritt wird in deinem Platz gespeichert",
+  "새 손님 캐릭터": "Neue Gastfigur",
+  "슬롯 {n} · {name} Lv.{lv}": "Platz {n} · {name} St. {lv}"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

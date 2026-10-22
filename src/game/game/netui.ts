@@ -52,6 +52,19 @@ export const NetUiPart: Bag = {
   openMpScreen() {
     this.mpWant = null;
     $('#mp-class').innerHTML = CHARACTERS.map(c => `<option value="${c.id}">${escHtml(c.n)}</option>`).join('');
+    /* 캐릭터 — 내 싱글플레이 슬롯의 캐릭터(진행이 그 슬롯에 저장된다) 또는 새 손님 캐릭터(그 세계가 기억한다) */
+    const sel = $('#mp-char');
+    sel.innerHTML = `<option value="">${escHtml(tr('새 손님 캐릭터'))}</option>`;
+    sel.onchange = () => { const neu = !sel.value; $$('#mp-screen .mp-new').forEach((e: any) => { e.hidden = !neu; }); };
+    sel.onchange();
+    SaveStore.list().then((slots: any[]) => {
+      slots.forEach((s: any, i: number) => {
+        if (!s || s.bad) return;
+        const o = document.createElement('option'); o.value = String(i);
+        o.textContent = tr('슬롯 {n} · {name} Lv.{lv}', { n: i + 1, name: s.name, lv: s.level });
+        sel.appendChild(o);
+      });
+    }).catch((e: any) => console.error(e));
     this.mpCodeCells();
     this.netSay('');
     this.openModal('#mp-screen');
@@ -70,6 +83,16 @@ export const NetUiPart: Bag = {
     if (this.net) return;                        // 이미 방을 찾는 중
     const code = String($('#mp-code').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!ROOM_CODE_RE.test(code)) { this.netSay(tr('방 코드는 영문·숫자 5~6자다')); return; }
+    const pick = $('#mp-char').value;
+    if (pick !== '') {
+      const slot = +pick;
+      this.netSay(tr('방을 찾는 중…'), true);
+      this.netReadSlot(slot).then((d: any) => {
+        if (!d || !d.p) { this.netSay(tr('그 슬롯을 읽지 못했다')); return; }
+        this.mpJoin(code, this.unpackChar(d.p, d.name, d.chapter), slot);
+      });
+      return;
+    }
     const char = this.freshPlayer(0, 0, $('#mp-name').value, $('#mp-class').value);
     this.netSay(tr('방을 찾는 중…'), true);
     this.mpJoin(code, char);
@@ -89,7 +112,7 @@ export const NetUiPart: Bag = {
     /* ★ 아바타(peer.rp)는 보간으로 조금 뒤처져 그린 자리다 — 받은 마지막 상태(peer.last)가 손님의 진짜 자리(나가기 직전에 움직이면 몇 칸 어긋났다) */
     const at = peer.last || peer.rp;
     Object.assign(rec, { x: Math.round(at.x), y: Math.round(at.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
-    if (char && typeof char === 'object' && JSON.stringify(char).length < 60000) rec.char = char;
+    if (char && typeof char === 'object' && !peer.own && JSON.stringify(char).length < 60000) rec.char = char;   // 제 슬롯 캐릭터는 그쪽 슬롯이 원본 — 자리만 기억한다
   },
   /** 호스트 — 손님 기록만 제 슬롯에 바로 적는다(세계는 마지막 저장 그대로). 호스트가 저장을 잊어도 손님 캐릭터는 남게 —
       나갈 때 · 손님이 저장할 때만(15초마다 슬롯 전체를 쓰면 무겁다). now 면 미루지 않는다(방을 닫을 때).
@@ -141,13 +164,30 @@ export const NetUiPart: Bag = {
     upgradeSave(d);
     return d;
   },
-  /** 참가자의 저장 — 제 슬롯에 쓰지 않고 호스트 세계에 맡긴다(그쪽 슬롯에 손님 기록으로 남는다). */
-  netSaveChar(room: string | null = null, loud = false) {
+  /** 참가자의 저장 — 호스트 세계에도 맡기고(자리 · 새 손님 캐릭터), 제 슬롯 캐릭터로 들어왔으면 그 슬롯에 캐릭터를 다시 적는다. */
+  async netSaveChar(room: string | null = null, loud = false) {
     const n = room || this.net;
     if (!n || n.role !== 'guest' || !n.char) return false;
-    const ok = this.netCharOut(n, true);
-    if (loud) this.toast(ok ? tr('캐릭터를 이 세계에 맡겼다') : tr('저장 실패'), ok ? 'good' : 'bad');
+    let ok = this.netCharOut(n, true);
+    if (n.charSlot !== null && n.charSlot !== undefined) ok = (await this.netSaveOwnSlot(n)) && ok;
+    if (loud) this.toast(!ok ? tr('저장 실패') : n.charSlot !== null && n.charSlot !== undefined ? tr('내 슬롯에 캐릭터를 저장했다') : tr('캐릭터를 이 세계에 맡겼다'), ok ? 'good' : 'bad');
     return ok;
+  },
+  /** 손님 — 제 싱글플레이 슬롯에 **캐릭터만** 다시 적는다. 세계(지형 · 상자 · 진행)와 그 세계 안의 자리는 슬롯의 것 그대로 —
+      ★ 호스트 세계의 좌표를 적으면 혼자 열 때 제 세계의 엉뚱한 자리(땅속)에 선다. 사연: docs/code-history.md#h212 */
+  async netSaveOwnSlot(n: Bag) {
+    const slot = n && n.charSlot;
+    if (slot === null || slot === undefined || !n.char) return false;
+    try {
+      const d = await this.netReadSlot(slot);
+      if (!d || !d.p) return false;
+      const pc = this.packChar(n.char);
+      pc.x = d.p.x; pc.y = d.p.y;
+      d.p = pc; d.savedAt = Date.now(); d.sealed = 1;
+      await SaveStore.put(slot, JSON.stringify(d), saveHead(d));
+      n.ownSavedAt = performance.now();
+      return true;
+    } catch (e) { console.error(e); return false; }
   },
 
   /* ---- 파티 목록(HUD — 보기만) · 내보내기는 일시정지 창에서 ---- */
@@ -158,7 +198,10 @@ export const NetUiPart: Bag = {
     n.partyT = 0.25;
     this.refreshParty(); this.refreshChat();
     n.csaveT = (n.csaveT || 0) - 0.25;
-    if (n.csaveT <= 0) { n.csaveT = 15; this.netCharOut(n); }   // 15초마다 — 갑자기 끊겨도 잃는 것이 적게
+    if (n.csaveT <= 0) {                               // 15초마다 — 갑자기 끊겨도 잃는 것이 적게(제 슬롯은 넷에 한 번)
+      n.csaveT = 15; this.netCharOut(n);
+      if (n.role === 'guest' && n.charSlot !== null && n.charSlot !== undefined && (n.ownN = (n.ownN || 0) + 1) % 4 === 0) this.netSaveOwnSlot(n);
+    }
   },
   /** 그 플레이어의 왕복 시간(ms) — 호스트 자신은 없다. */
   netPing(id: string) {
@@ -188,7 +231,11 @@ export const NetUiPart: Bag = {
   refreshPauseSave(n: Bag) {
     const box = $('#ps-save'); if (!box) return;
     const ago = (t: number) => t ? tr('{s}초 전', { s: Math.max(0, Math.round((performance.now() - t) / 1000)) }) : tr('아직 없음');
-    if (n.role === 'guest') {
+    if (n.role === 'guest' && n.charSlot !== null && n.charSlot !== undefined) {
+      box.innerHTML = `<p>${tr('내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.', { n: n.charSlot + 1 })}</p>
+        <p class="ps-save-st ok">${tr('내 슬롯에 마지막으로 저장: {t}', { t: ago(n.ownSavedAt || 0) })}</p>
+        <p class="ps-save-note">${tr('1분마다 · 나갈 때 · 저장하기를 누를 때 저장한다.')}</p>`;
+    } else if (n.role === 'guest') {
       const ok = n.csAck && (!n.csSent || n.csAck >= n.csSent - 50);
       box.innerHTML = `<p>${tr('내 캐릭터(레벨 · 가방 · 금화)는 이 세계를 연 호스트의 저장에 맡겨진다. 내 싱글플레이 슬롯은 그대로다.')}</p>
         <p class="ps-save-st ${ok ? 'ok' : 'wait'}">${tr('마지막으로 맡김: {t}', { t: ago(n.csAck || 0) })}${ok ? '' : ' · ' + tr('호스트 답을 기다리는 중')}</p>
@@ -207,7 +254,7 @@ export const NetUiPart: Bag = {
     $('#btn-room-open').hidden = !!n || !this.world;
     $('#btn-save-export').hidden = guest;        // 참가자는 캐릭터만 저장한다
     /* 저장하기 단추가 무엇을 하는지 이름으로 — 손님은 제 캐릭터를 호스트 세계에 맡기고, 호스트는 세계와 손님 캐릭터를 같이 쓴다 */
-    $('#btn-save').lastChild.textContent = guest ? tr('캐릭터 맡기기') : tr('저장하기');
+    $('#btn-save').lastChild.textContent = guest && (n.charSlot === null || n.charSlot === undefined) ? tr('캐릭터 맡기기') : tr('저장하기');
     if (!n) return;
     this.refreshPauseSave(n);
     $('#ps-room').hidden = !n.room;

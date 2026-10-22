@@ -449,10 +449,11 @@ export const NetPart: Bag = {
     const n = this.net;
     if (m.k === 'hello') {
       /* 다시 온 손님이면(아이디 · 이 세계의 mpGuests) 지난 자리와 이 세계에서 쓰던 캐릭터를 돌려준다 */
-      peer.pid = typeof m.pid === 'string' ? m.pid.slice(0, 24) : null;
+      peer.pid = typeof m.pid === 'string' ? m.pid.slice(0, 24) : null; peer.own = !!m.own;
       const me = this.me, rec = this.netGuestRec(peer.pid);
       const spot = rec ? this.netFreeSpot(rec.x, rec.y, me.w, me.h) : null, back = !!spot;
-      const char = rec && rec.char ? rec.char : null, name = char && rec.n ? rec.n : m.n;
+      /* 제 슬롯 캐릭터를 데려온 손님(own)은 이 세계 기록의 캐릭터 대신 제 것을 쓴다 — 자리만 이어 준다 */
+      const char = rec && rec.char && !m.own ? rec.char : null, name = char && rec.n ? rec.n : m.n;
       const s = Object.assign(this.netState(me), back ? spot : { x: me.x + 24 }, { n: name, c: char ? char.charId : m.c });
       peer.rp = this.netAvatar(peer.id, s);
       const roster = [[0, this.netState(me)]];
@@ -525,7 +526,8 @@ export const NetPart: Bag = {
 
   /* ================= 참가자 ================= */
   /** 방에 붙는다 — char 는 처음 가는 세계에서 쓸 새 캐릭터(Player). 호스트가 기억하는 캐릭터가 있으면 그것으로 바뀐다. */
-  mpJoin(room: any, char: any) {
+  /** slot — 그 싱글플레이 슬롯의 캐릭터로 들어간다(진행은 그 슬롯에 캐릭터만 다시 적는다 · 지형은 호스트 것). 없으면 새 손님 캐릭터 */
+  mpJoin(room: any, char: any, slot: number | null = null) {
     if (this.net) return;
     const sigs = this.netSignals(), me = Math.random().toString(36).slice(2, 8);
     room = String(room || '').trim().toUpperCase();
@@ -537,7 +539,7 @@ export const NetPart: Bag = {
       this.netSay(String(e && e.message).includes('unreachable') ? tr('중개 서버에 닿지 않는다') : tr('그런 방이 없다'));
     };
     const n: Bag = { role: 'guest', room, sig, t: null, joiner: createJoiner(), sendT: 0, chunkId: 0, id: -1, others: new Map(), ghosts: new Map(), gproj: new Map(), watch: new Map(), mwatch: new Map(), objJ: new WeakMap() };
-    n.char = char;
+    n.char = char; n.charSlot = slot;
     this.net = n;
     sig.onmessage = async m => {
       if (m.to !== me || n.t) return;
@@ -555,7 +557,7 @@ export const NetPart: Bag = {
         this.netOnGuest(JSON.parse(d));
       };
       t.onclose = () => this.netLost();
-      this.netSend(t, 'rel', { k: 'hello', n: n.char.name, c: n.char.charId, pid: this.mpPlayerId() });
+      this.netSend(t, 'rel', { k: 'hello', n: n.char.name, c: n.char.charId, pid: this.mpPlayerId(), own: n.charSlot !== null ? 1 : 0 });
       /* 탭을 닫으면 데이터 통로가 끊겼다는 소식이 늦게(수십 초) 간다 — 나간다고 먼저 알린다. */
       addEventListener('pagehide', () => { if (this.net === n && n.t) { this.netCharOut(n, true); n.t.send('rel', JSON.stringify({ k: 'bye' })); } });
     };
@@ -577,7 +579,7 @@ export const NetPart: Bag = {
       this.currentSlot = null;                      // ★ 남의 세계다 — 참가자 슬롯에 저장하지 않는다
       this._loadGame(JSON.stringify(m.save));
       /* 이 세계에서 쓰던 캐릭터가 호스트에 남아 있었다 — 그것으로 돌아간다 */
-      if (m.char && typeof m.char === 'object') n.char = this.unpackChar(m.char, m.name || n.char.name, this.chapter);
+      if (m.char && typeof m.char === 'object' && n.charSlot === null) n.char = this.unpackChar(m.char, m.name || n.char.name, this.chapter);
       const me = n.char;
       me.x = m.x; me.y = m.y; me.netId = n.id = m.id;
       this.player = me;
@@ -586,7 +588,8 @@ export const NetPart: Bag = {
       this.cam.x = me.cx - this.W / 2; this.cam.y = me.cy - this.H / 2;
       this.petEnts = []; this.syncPets();
       UI.refreshBag(); UI.refreshEquip(); UI.refreshSkillbar(); UI.refreshStatAlloc(); UI.refreshSkillSlots();
-      if (m.char) this.toast(tr('이 세계에서 쓰던 캐릭터로 돌아왔다'), 'good');
+      if (n.charSlot !== null) this.toast(tr('내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다'), 'good');
+      else if (m.char) this.toast(tr('이 세계에서 쓰던 캐릭터로 돌아왔다'), 'good');
       else if (m.back) this.toast(tr('이 세계에 다시 왔다 — 지난 자리에서 이어 간다'), 'good');
     } else if (m.k === 'ps') {
       const t = now();
@@ -708,8 +711,9 @@ export const NetPart: Bag = {
     const n = this.net;
     if (!n || n.role !== 'guest') return;
     if (n.t) { this.netCharOut(n, true); n.t.send('rel', JSON.stringify({ k: 'bye' })); }
+    const own = this.netSaveOwnSlot(n);            // 제 슬롯 캐릭터면 나가기 전에 슬롯에 적는다
     this.netEnd();
-    this.toTitle();
+    own.finally(() => this.toTitle());
   },
 
   /* ================= 매 프레임 ================= */
