@@ -20,6 +20,7 @@ import { SESSIONS, sessionOf } from './data/story.js';
 import { SIG_FX, idef } from './data/values.js';
 import { PROJ_INFLICT } from './data/mobskills.js';
 import { TS } from './world.js';
+import { Sprites } from './sprites.js';
 import { STACK_RULES, enhMul, equipReqLv, itemStats, makeItem, rollGear } from './items.js';
 import type { Senses } from '../engine/entity/sense.js';
 import type { LootRow } from '../engine/core/loot.js';
@@ -465,6 +466,7 @@ export class Enemy extends Ent {
     this.dmg = d.dmg * sc * lf * md * tdm; this.armor = d.def! * sc;
     this.spd = d.spd; this.xp = Math.round(d.xp! * sc * lf); this.gold = Math.round(d.gold! * sc * lf);
     this.boss = !!d.boss;
+    if (this.boss && Sprites.meta) { Sprites.want(type); Sprites.want(type + '_pose'); }   // 보스 시트는 늦게 읽는다 — 깨우는 순간 읽기 시작
     if (this.boss) this.dmg *= BOSS_DMG;            // 보스 맞는 맛 — 평타가 일반 몹과 같은 결로 약했다(사용자). 기술은 boss-moves 가 한 번 더 곱한다
     this.aggro = d.aggro || 460;   // 인지 사정거리(px) — 이 밖에서는 추격하지 않는다
     this.flash = 0; this.atkCd = 0; this.jumpCd = 0; this.think = 0;

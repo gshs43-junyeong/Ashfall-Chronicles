@@ -32155,6 +32155,11 @@
     meta: null,
     loaded: 0,
     total: 0,
+    lazy: {},
+    loading: {},
+    failed: {},
+    used: {},
+    baseOf: {},
     _ver: ASSET_VER,
     /** CSS·DOM 에서 그림을 부를 때도 같은 ?v= 를 붙인다 — 배포는 /play/assets/*.png 를 1년 immutable 로 캐시해서,
         ?v= 없는 주소는 시트를 다시 구워도 옛 그림이 나온다(옛 32칸 시트가 36칸 자리로 늘어나 뚱뚱해 보였다). */
@@ -32172,7 +32177,7 @@
       }));
       const C = this.meta.characters.sheets, B = this.meta.bosses.sheets;
       for (const k in C) add(k, C[k].file);
-      for (const k in B) add(k, B[k].file);
+      for (const k in B) this.lazy[k] = B[k].file;
       for (const k in this.meta.fx.projectiles.files) add("proj_" + k, this.meta.fx.projectiles.files[k]);
       for (const k in this.meta.fx.bursts.files) add("burst_" + k, this.meta.fx.bursts.files[k]);
       if (this.meta.fx.smoke) for (const k in this.meta.fx.smoke.files) add("smoke_" + k, this.meta.fx.smoke.files[k]);
@@ -32180,7 +32185,6 @@
       for (const k in this.meta.npc.files) add("npc_" + k, this.meta.npc.files[k]);
       this.meta.backgrounds.parallax.files.forEach((f) => add(f.split("/")[1].replace(".png", ""), f));
       add("title", this.meta.backgrounds.title.file);
-      this.meta.backgrounds.chapters.files.forEach((f) => add(f.split("/")[1].replace(".png", ""), f));
       if (this.meta.backgrounds.clouds)
         this.meta.backgrounds.clouds.files.forEach((f) => add(f.split("/")[1].replace(".png", ""), f));
       if (this.meta.backgrounds.sky)
@@ -32198,19 +32202,65 @@
       this.sideInset = {};
       for (const k in { ...this.meta.characters.sheets, ...this.meta.bosses.sheets }) {
         const m = this.meta.characters.sheets[k] || this.meta.bosses.sheets[k];
-        const im = this.img[k];
-        if (!im || !im.width) continue;
-        try {
-          const pad = this._measurePad(im, m);
-          this.footInset[k] = pad.foot;
-          this.sideInset[k] = pad.side;
-        } catch (e) {
-          this.footInset[k] = m.foot || 0;
-          this.sideInset[k] = m.side || 0;
-          this.tainted = 1;
-        }
+        this.footInset[k] = m.foot || 0;
+        this.sideInset[k] = m.side || 0;
+        this._pad(k, m);
       }
       return this;
+    },
+    _pad(k, m) {
+      const im = this.img[k];
+      if (!im || !im.width) return;
+      try {
+        const pad = this._measurePad(im, m);
+        this.footInset[k] = pad.foot;
+        this.sideInset[k] = pad.side;
+      } catch (e) {
+        this.footInset[k] = m.foot || 0;
+        this.sideInset[k] = m.side || 0;
+        this.tainted = 1;
+      }
+    },
+    /** 늦게 읽는 시트(보스)를 지금 쓰겠다 — 없으면 읽기 시작한다. 그림이 준비됐으면 돌려준다. */
+    want(key) {
+      const im = this.img[key];
+      if (this.lazy[key]) {
+        this.used[key] = performance.now();
+        if (!im && !this.loading[key] && !this.failed[key]) {
+          this.loading[key] = 1;
+          imageJob(this.base + this.lazy[key] + (this._ver ? "?" + this._ver : ""), (got) => {
+            got.addEventListener("load", () => {
+              delete this.loading[key];
+              this.img[key] = got;
+              this._pad(key, this.meta.bosses.sheets[key]);
+              this.used[key] = performance.now();
+            }, { once: true });
+            got.addEventListener("error", () => {
+              delete this.loading[key];
+              this.failed[key] = 1;
+            }, { once: true });
+          });
+        }
+      }
+      return im && im.width ? im : null;
+    },
+    /** 2분 넘게 안 그린 늦은 시트와 그 사본(불 · 서리 · 색)을 놓는다 — 다시 필요하면 want() 가 또 읽는다. */
+    gc(now2 = performance.now(), idle = 12e4) {
+      for (const k in this.lazy) {
+        if (!this.img[k] || now2 - (this.used[k] || 0) < idle) continue;
+        delete this.img[k];
+        for (const dk in this.baseOf) if (this.baseOf[dk] === k) {
+          delete this.img[dk];
+          delete this.meta.characters.sheets[dk];
+          delete this.baseOf[dk];
+        }
+      }
+    },
+    /** 사본을 만들 원본 — 늦은 시트가 아직 없으면 null 을 **기억하지 않는다**(읽히면 다시 만든다). */
+    _src(key, dk) {
+      const im = this.lazy[key] ? this.want(key) : this.img[key];
+      if (im && this.lazy[key]) this.baseOf[dk] = key;
+      return im;
     },
     /** 시트 프레임 0의 알파 채널을 한 번 훑어 두 가지를 잰다(engine/assets/image.js). */
     _measurePad(im, m) {
@@ -32261,9 +32311,9 @@
     frostSheet(key) {
       const fk = "frost_" + key, have = this.img[fk];
       if (have !== void 0) return have;
-      const im = this.img[key];
+      const im = this._src(key, fk);
       const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
-      if (!im || !im.width || !m) return this.img[fk] = null;
+      if (!im || !im.width || !m) return this.lazy[key] ? null : this.img[fk] = null;
       const cv = document.createElement("canvas");
       cv.width = im.naturalWidth || im.width;
       cv.height = im.naturalHeight || im.height;
@@ -32313,9 +32363,9 @@
     burnSheet(key) {
       const bk = "burn_" + key, have = this.img[bk];
       if (have !== void 0) return have;
-      const im = this.img[key];
+      const im = this._src(key, bk);
       const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
-      if (!im || !im.width || !m) return this.img[bk] = null;
+      if (!im || !im.width || !m) return this.lazy[key] ? null : this.img[bk] = null;
       const cv = document.createElement("canvas");
       cv.width = im.naturalWidth || im.width;
       cv.height = im.naturalHeight || im.height;
@@ -32342,10 +32392,10 @@
     tintSheet(key, col) {
       const tk = "tint" + col + "_" + key, have = this.img[tk];
       if (have !== void 0) return have ? tk : null;
-      const im = this.img[key];
+      const im = this._src(key, tk);
       const m = this.meta && (this.meta.characters.sheets[key] || this.meta.bosses.sheets[key]);
       if (!im || !im.width || !m) {
-        this.img[tk] = null;
+        if (!this.lazy[key]) this.img[tk] = null;
         return null;
       }
       const cv = document.createElement("canvas");
@@ -32364,6 +32414,14 @@
     },
     /* 시트 한 프레임을 캔버스 좌표(x,y)에 게임 픽셀 크기로 그린다. */
     draw(c, key, frame, x, y, flip) {
+      const base = this.baseOf[key] || key;
+      if (this.lazy[base]) {
+        this.used[base] = performance.now();
+        if (!this.img[key]) {
+          if (key === base) this.want(key);
+          return !this.failed[base];
+        }
+      }
       const im = this.img[key];
       if (!im || !im.width) return false;
       const m = this.meta.characters.sheets[key] || this.meta.bosses.sheets[key];
@@ -33626,6 +33684,10 @@
       this.xp = Math.round(d.xp * sc * lf);
       this.gold = Math.round(d.gold * sc * lf);
       this.boss = !!d.boss;
+      if (this.boss && Sprites.meta) {
+        Sprites.want(type);
+        Sprites.want(type + "_pose");
+      }
       if (this.boss) this.dmg *= BOSS_DMG;
       this.aggro = d.aggro || 460;
       this.flash = 0;
@@ -49908,6 +49970,10 @@
       }
       if (this.autosave && !this.net) this.autosave.tick(dt);
       this.time += dt;
+      if ((this._gcT = (this._gcT || 0) + dt) > 10) {
+        this._gcT = 0;
+        Sprites.gc();
+      }
       if (this.state === "play" && !this.paused) {
         this.tally = this.tally || {};
         const before = this.tally.play || 0;
@@ -70074,7 +70140,7 @@
       e._poseFr = -1;
       if (!e.boss || !this.spritesOn || !Sprites.meta) return null;
       const code = this.bossPose(e), pk = e.type + "_pose", m = Sprites.meta.bosses.sheets[pk];
-      if (code < 0 || !m || !Sprites.img[pk] || !Sprites.img[pk].width) return null;
+      if (code < 0 || !m || !Sprites.want(pk)) return null;
       const rows = Math.max(1, Math.floor(m.count / 9));
       const row = Math.min(rows - 1, Math.round((e.pf || 0) * (rows - 1)));
       e._poseFr = row * 9 + 1 + code;

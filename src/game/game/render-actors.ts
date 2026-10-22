@@ -70,7 +70,7 @@ export const RenderActorsPart: Bag = {
     e._poseFr = -1;
     if (!e.boss || !this.spritesOn || !Sprites.meta) return null;
     const code = this.bossPose(e), pk = e.type + '_pose', m = Sprites.meta.bosses.sheets[pk];
-    if (code < 0 || !m || !Sprites.img[pk] || !Sprites.img[pk].width) return null;
+    if (code < 0 || !m || !Sprites.want(pk)) return null;
     const rows = Math.max(1, Math.floor(m.count / 9));
     const row = Math.min(rows - 1, Math.round((e.pf || 0) * (rows - 1)));   // 마디 — 시트의 줄(enemyFrame 과 같은 비율)
     e._poseFr = row * 9 + 1 + code;

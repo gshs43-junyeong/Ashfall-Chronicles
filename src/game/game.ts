@@ -543,6 +543,7 @@ export const GameCore: Bag = {
     if (this.duel && !this.net) { this.updateFishing(dt); return; }
     if (this.autosave && !this.net) this.autosave.tick(dt);
     this.time += dt;
+    if ((this._gcT = (this._gcT || 0) + dt) > 10) { this._gcT = 0; Sprites.gc(); }   // 오래 안 그린 보스 시트를 놓는다
     /* 플레이 시간(초). */
     if (this.state === 'play' && !this.paused) {
       this.tally = this.tally || {};
