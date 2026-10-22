@@ -120,6 +120,8 @@ e.keepIn(x0, x1, yMax)                 // 세계 안에 가둔다
 | 이름 | 쓰임 |
 |---|---|
 | `createSaveStore({ dbName, slots, slotKey, sigKey, sign, head, sealOk })` → `start()` · `put(slot, text, head, sig?)` · `get(slot)` → `{ raw, sig }` · `remove` · `list` · `migrate` | IndexedDB(gzip + 서명), 안 열리면 localStorage. ★ 세이브를 읽고 쓰는 곳은 전부 이것을 거친다 |
+| 위 저장소의 곁 기록 `putSide(slot, name, text)` · `getSide(slot, name)` · `pruneSides(slot, keep?)` · `hasSides()` | 슬롯에 딸린 큰 덩어리(세계 바탕 따위) — IndexedDB 에서만. `remove(slot)` 이 같이 지운다 |
+| `chunkGrid(w, h, cs = 64)` · `chunkHashes(arr, g)` · `diffChunks(arr, g, baseHashes)` → `{ 청크: RLE }` · `applyChunks(arr, g, chunks)` | 큰 칸 배열을 바탕 + 바뀐 청크로 — 바탕은 해시만 들고 있는다(Ashfall 소형 세이브 본문 634 KB → 82 KB) |
 | `makeSigner(salt)` → `sign(text)` | 고쳐 쓴 기록을 가려내는 서명(FNV-1a 두 벌) |
 | `rleEncode(arr)` → 글자열 · `rleDecode(s, len, Uint8Array)` | 타일 배열 압축(한 토막 두 글자 — Ashfall 소형 세이브 119만 → 52만 글자) |
 | `upgrade(d, steps)` | 판올림 사슬 — `steps[i]` 는 판 i+1 → i+2. **판 번호는 `steps.length + 1`** 로 저절로 오른다(손으로 올리지 않는다) |

@@ -1164,7 +1164,8 @@
   "표정": "Caras",
   "신호": "Señales",
   "잿빛 땅": "Tierra gris",
-  "· 효과음은 위 서비스의 약관을 따릅니다": "· Los efectos de sonido siguen los términos del servicio anterior"
+  "· 효과음은 위 서비스의 약관을 따릅니다": "· Los efectos de sonido siguen los términos del servicio anterior",
+  "세계 바탕 기록을 읽지 못했다 — 열 수 없다": "No se pudo leer el registro base de este mundo: no se puede abrir"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",

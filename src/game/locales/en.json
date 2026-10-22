@@ -1164,7 +1164,8 @@
   "표정": "Faces",
   "신호": "Signs",
   "잿빛 땅": "Ashlands",
-  "· 효과음은 위 서비스의 약관을 따릅니다": "· Sound effects follow the terms of the service above"
+  "· 효과음은 위 서비스의 약관을 따릅니다": "· Sound effects follow the terms of the service above",
+  "세계 바탕 기록을 읽지 못했다 — 열 수 없다": "Couldn't read this world's base record — it can't be opened"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",

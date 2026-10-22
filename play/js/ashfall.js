@@ -407,6 +407,44 @@
         if (this.mode === "idb") await this._tx(["data", "head"], "readwrite", (tx) => {
           tx.objectStore("data").delete(slotKey2(slot));
           tx.objectStore("head").delete(slotKey2(slot));
+          tx.objectStore("data").delete(this._sideRange(slot));
+        });
+      },
+      /* ---- 곁 기록 — 슬롯에 딸린 큰 덩어리(세계 바탕 따위). IndexedDB 에서만 쓴다(localStorage 는 용량이 모자라 슬롯 본문에 다 싣는다). ---- */
+      _sideKey(slot, name) {
+        return slotKey2(slot) + "#" + name;
+      },
+      _sideRange(slot) {
+        return IDBKeyRange.bound(slotKey2(slot) + "#", slotKey2(slot) + "#￿");
+      },
+      hasSides() {
+        return this.mode === "idb";
+      },
+      async putSide(slot, name, text) {
+        await this.start();
+        if (this.mode !== "idb") throw new Error("side records need IndexedDB");
+        const gz = await this._gz(text);
+        const rec = gz ? { gz, sig: saveSign2(text) } : { text, sig: saveSign2(text) };
+        await this._tx(["data"], "readwrite", (tx) => {
+          tx.objectStore("data").put(rec, this._sideKey(slot, name));
+        });
+      },
+      /** { raw, sig } 또는 null — 서명 대조는 부르는 쪽이 한다. */
+      async getSide(slot, name) {
+        await this.start();
+        if (this.mode !== "idb") return null;
+        const rec = await this._tx(["data"], "readonly", (tx) => this._req(tx.objectStore("data").get(this._sideKey(slot, name))));
+        if (!rec) return null;
+        return { raw: rec.gz ? await this._ungz(rec.gz) : rec.text, sig: rec.sig || null };
+      },
+      /** keep 말고는 그 슬롯의 곁 기록을 지운다(keep 이 없으면 전부). */
+      async pruneSides(slot, keep) {
+        await this.start();
+        if (this.mode !== "idb") return;
+        const keys = await this._tx(["data"], "readonly", (tx) => this._req(tx.objectStore("data").getAllKeys(this._sideRange(slot))));
+        const drop = keys.filter((k) => k !== (keep ? this._sideKey(slot, keep) : null));
+        if (drop.length) await this._tx(["data"], "readwrite", (tx) => {
+          for (const k of drop) tx.objectStore("data").delete(k);
         });
       },
       /** 슬롯 요약 SAVE_SLOTS 개(빈 칸은 null). */
@@ -16455,12 +16493,12 @@
         // 사막 구간 — 세계가 왼쪽으로 밀린 만큼 같이 민다
       ];
       const oreScale = WW2 / 2800;
-      for (const [tile, y0, y1, count, size, ox0, ox1] of oreSpec) {
+      for (const [tile, y0, y1, count, size2, ox0, ox1] of oreSpec) {
         const n = Math.round(count * (ox0 === void 0 ? oreScale : WSX2) * WSY2);
         for (let k = 0; k < n; k++) {
           const cx = rng.int(ox0 === void 0 ? 2 : ox0, ox1 === void 0 ? WW2 - 3 : ox1 - 1);
           const cy = rng.int(y0, y1);
-          const r = rng.range(1.4, size * 0.5 + 1.4);
+          const r = rng.range(1.4, size2 * 0.5 + 1.4);
           for (let x = Math.floor(cx - r); x <= cx + r; x++)
             for (let y = Math.floor(cy - r); y <= cy + r; y++) {
               if (dist(x, y, cx, cy) > r) continue;
@@ -16929,7 +16967,8 @@
       }
     }
     /* ================= 저장 ================= */
-    serialize() {
+    /** noGrid 이면 타일 · 벽지를 빼고 담는다 — 저장은 그 둘을 바탕 + 바뀐 청크로 따로 싣는다(game/save.ts saveDelta). */
+    serialize(noGrid = false) {
       const { WSIZE: WSIZE2, WW: WW2, WH: WH2 } = this.dims;
       return {
         seed: this.seed,
@@ -16938,8 +16977,8 @@
         size: WSIZE2,
         ruinSites: this.ruinSites,
         ruinEvents: this.ruinEvents,
-        tiles: rleEncode(this.tiles),
-        walls: rleEncode(this.walls),
+        tiles: noGrid ? null : rleEncode(this.tiles),
+        walls: noGrid ? null : rleEncode(this.walls),
         surface: Array.from(this.surface),
         objects: this.objects.map((o) => ({ ...o })),
         machines: Array.from(this.machines.values()),
@@ -16975,8 +17014,8 @@
     static deserialize(d) {
       const { WW: WW2, WH: WH2 } = dimsOf();
       const w = new _World(d.seed);
-      w.tiles = rleDecode(d.tiles, WW2 * WH2, Uint8Array);
-      w.walls = rleDecode(d.walls, WW2 * WH2, Uint8Array);
+      w.tiles = d.tiles instanceof Uint8Array ? d.tiles : rleDecode(d.tiles, WW2 * WH2, Uint8Array);
+      w.walls = d.walls instanceof Uint8Array ? d.walls : rleDecode(d.walls, WW2 * WH2, Uint8Array);
       w.surface = Int16Array.from(d.surface);
       w.objects = d.objects;
       w.fitObjects();
@@ -28115,13 +28154,13 @@
       return this.url("n:" + id);
     },
     /** 캔버스에 직접 그리기 */
-    draw(ctx, key, x, y, size) {
+    draw(ctx, key, x, y, size2) {
       const c = this.cells[key];
       if (!c) return;
-      ctx.drawImage(this.atlas, c[0] * S32, c[1] * S32, S32, S32, x, y, size, size);
+      ctx.drawImage(this.atlas, c[0] * S32, c[1] * S32, S32, S32, x, y, size2, size2);
     },
-    drawItem(ctx, id, x, y, size) {
-      this.draw(ctx, "i:" + id, x, y, size);
+    drawItem(ctx, id, x, y, size2) {
+      this.draw(ctx, "i:" + id, x, y, size2);
     },
     /* ================= 페인터 ================= */
     paint(g, s, rng) {
@@ -32351,7 +32390,7 @@
       return true;
     },
     /* 이펙트 시트(투사체 16×16 / 폭발 64×64) 한 프레임을 size 크기로 그린다. */
-    drawFx(c, key, frame, x, y, size) {
+    drawFx(c, key, frame, x, y, size2) {
       const im = this.img[key];
       if (!im || !im.width || !this.meta) return false;
       const m = key.startsWith("proj_") ? this.meta.fx.projectiles : key.startsWith("smoke_") ? this.meta.fx.smoke : this.meta.fx.bursts;
@@ -32361,7 +32400,7 @@
       const sx = frame * (sw + m.gap);
       const prev = c.imageSmoothingEnabled;
       c.imageSmoothingEnabled = false;
-      c.drawImage(im, sx, 0, sw, sh, x, y, size, size);
+      c.drawImage(im, sx, 0, sw, sh, x, y, size2, size2);
       c.imageSmoothingEnabled = prev;
       return true;
     },
@@ -32896,13 +32935,13 @@
     const short = same.reduce((a, b) => b.t < a.t ? b : a);
     short.t = Math.max(short.t, t);
   }
-  function tickDots(list, dt, each) {
+  function tickDots(list, dt, each2) {
     let dmg = 0;
     for (let i = list.length - 1; i >= 0; i--) {
       const d = list[i];
       d.t -= dt;
       dmg += d.dps * dt;
-      if (each) each(d);
+      if (each2) each2(d);
       if (d.t <= 0) list.splice(i, 1);
     }
     return dmg;
@@ -43890,14 +43929,14 @@
       return !!r && r.width > 0 && r.height > 0;
     },
     /** 아이콘 하나가 a 에서 b 로 — 위로 휘었다가 작아지며 내려앉는다 */
-    flyIcon(url, a, b, delay = 0, dur = 420, size = 26) {
+    flyIcon(url, a, b, delay = 0, dur = 420, size2 = 26) {
       if (!this.motionOn() || !this.seen(a) || !this.seen(b)) return;
       const el = document.createElement("div");
       el.className = "uifx-ic";
       el.style.backgroundImage = `url(${url})`;
-      el.style.width = el.style.height = size + "px";
-      const x0 = a.left + a.width / 2 - size / 2, y0 = a.top + a.height / 2 - size / 2;
-      const dx = b.left + b.width / 2 - size / 2 - x0, dy = b.top + b.height / 2 - size / 2 - y0;
+      el.style.width = el.style.height = size2 + "px";
+      const x0 = a.left + a.width / 2 - size2 / 2, y0 = a.top + a.height / 2 - size2 / 2;
+      const dx = b.left + b.width / 2 - size2 / 2 - x0, dy = b.top + b.height / 2 - size2 / 2 - y0;
       const lift2 = Math.min(90, Math.abs(dx) * 0.3 + 28);
       el.style.left = x0 + "px";
       el.style.top = y0 + "px";
@@ -47314,11 +47353,11 @@
     return { img: cv };
   }
   var frameAt = (e, time) => e.f > 1 ? Math.floor(time / ((e.dur || 0.6) / e.f)) % e.f : 0;
-  function emojiHtml(k, size = 20) {
-    return emoOf(k) ? `<canvas class="emo" data-emo="${k}" width="${EMO_PX}" height="${EMO_PX}" title=":${k}:" style="width:${size}px;height:${size}px"></canvas>` : "";
+  function emojiHtml(k, size2 = 20) {
+    return emoOf(k) ? `<canvas class="emo" data-emo="${k}" width="${EMO_PX}" height="${EMO_PX}" title=":${k}:" style="width:${size2}px;height:${size2}px"></canvas>` : "";
   }
-  function emojify(html, size = 20) {
-    return html.replace(/:([a-z]+):/g, (m, k) => EMO_KEYS.has(k) ? emojiHtml(k, size) : m);
+  function emojify(html, size2 = 20) {
+    return html.replace(/:([a-z]+):/g, (m, k) => EMO_KEYS.has(k) ? emojiHtml(k, size2) : m);
   }
   function soloEmoji(s) {
     const m = /^\s*:([a-z]+):\s*$/.exec(s || "");
@@ -47358,12 +47397,12 @@
     });
     if (live.size && !ticker) ticker = window.setInterval(tickEmoji, 50);
   }
-  function drawEmoji(c, k, x, y, size, time) {
+  function drawEmoji(c, k, x, y, size2, time) {
     const e = emoOf(k);
     if (!e) return;
     c.save();
     c.imageSmoothingEnabled = false;
-    c.drawImage(emojiSheet(k).img, frameAt(e, time) * EMO_PX, 0, EMO_PX, EMO_PX, Math.round(x), Math.round(y), size, size);
+    c.drawImage(emojiSheet(k).img, frameAt(e, time) * EMO_PX, 0, EMO_PX, EMO_PX, Math.round(x), Math.round(y), size2, size2);
     c.restore();
   }
 
@@ -47851,7 +47890,10 @@
     /* v13 → v14 — 유적의 깊은 곳(ruinSites[].deep: 봉인 방을 다 풀면 파이는 아래층 자리). 옛 세계는 아직 닫혀 있다. */
     (d) => {
       for (const s of d.world && d.world.ruinSites || []) if (s.deep === void 0) s.deep = null;
-    }
+    },
+    /* v14 → v15 — 타일 · 벽지를 바탕(곁 기록) + 바뀐 청크(world.delta)로. 옛 세이브는 통째로 들고 있어 그대로 열리고, 다음 저장이 바탕을 뜬다.
+       ★ delta 는 판올림 **전에** 풀린다(game/save.ts loadDelta — 곁 기록을 읽어야 해서 비동기) — 여기서는 할 일이 없다. */
+    (d) => d
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;
   function upgradeSave(d) {
@@ -49061,7 +49103,7 @@
     }
     return { x0, y0 };
   }
-  function drawMapMark(c, origin, scale, w, h, tx, ty, color, shape = "box", size = scale + 2) {
+  function drawMapMark(c, origin, scale, w, h, tx, ty, color, shape = "box", size2 = scale + 2) {
     const x = (tx - origin.x0) * scale, y = (ty - origin.y0) * scale;
     if (x < 0 || y < 0 || x >= w || y >= h) return;
     c.fillStyle = color;
@@ -49070,9 +49112,9 @@
       c.fillRect(x - 3, y - 1, 7, 3);
     } else if (shape === "o") {
       c.beginPath();
-      c.arc(x + scale / 2, y + scale / 2, size / 2, 0, Math.PI * 2);
+      c.arc(x + scale / 2, y + scale / 2, size2 / 2, 0, Math.PI * 2);
       c.fill();
-    } else c.fillRect(x - (size - scale) / 2, y - (size - scale) / 2, size, size);
+    } else c.fillRect(x - (size2 - scale) / 2, y - (size2 - scale) / 2, size2, size2);
   }
 
   // src/engine/save/autosave.ts
@@ -49669,21 +49711,21 @@
         }, 480);
       });
     },
-    newGame(seedStr, slot, name, charId, mode, size) {
+    newGame(seedStr, slot, name, charId, mode, size2) {
       const seed = seedStr || "" + Math.floor(Math.random() * 1e9);
       this.currentSlot = slot;
       this.showLoading(tr("세계를 빚는 중…"));
       setTimeout(() => {
         try {
-          this._newGame(seed, name, charId, mode, size);
+          this._newGame(seed, name, charId, mode, size2);
         } finally {
           this.hideLoading();
         }
       }, 40);
     },
-    _newGame(seed, name, charId, mode, size) {
+    _newGame(seed, name, charId, mode, size2) {
       this.rng = new RNG(seed + "_g");
-      setWorldSize(size || new URLSearchParams(location.search).get("size") || "s");
+      setWorldSize(size2 || new URLSearchParams(location.search).get("size") || "s");
       this.world = new World(seed).generate();
       const { WW: WW2, WH: WH2 } = this.world.dims;
       this.fitMapAtlas();
@@ -50484,6 +50526,74 @@
   __export(save_exports, {
     SavePart: () => SavePart
   });
+
+  // src/engine/save/chunks.ts
+  function chunkGrid(w, h, cs = 64) {
+    const cx = Math.ceil(w / cs), cy = Math.ceil(h / cs);
+    return { w, h, cs, cx, cy, n: cx * cy };
+  }
+  function each(g, c, fn) {
+    const x0 = c % g.cx * g.cs, y0 = Math.floor(c / g.cx) * g.cs;
+    const x1 = Math.min(g.w, x0 + g.cs), y1 = Math.min(g.h, y0 + g.cs);
+    for (let y = y0; y < y1; y++) for (let i = y * g.w + x0, e = y * g.w + x1; i < e; i++) fn(i);
+  }
+  function size(g, c) {
+    const x0 = c % g.cx * g.cs, y0 = Math.floor(c / g.cx) * g.cs;
+    return (Math.min(g.w, x0 + g.cs) - x0) * (Math.min(g.h, y0 + g.cs) - y0);
+  }
+  function chunkHashes(arr, g) {
+    const out = new Uint32Array(g.n);
+    if (arr instanceof Uint8Array && arr.byteOffset % 4 === 0 && g.w % 4 === 0 && g.cs % 4 === 0) {
+      const u = new Uint32Array(arr.buffer, arr.byteOffset, arr.length >> 2), W4 = g.w >> 2;
+      for (let c = 0; c < g.n; c++) {
+        const x0 = c % g.cx * g.cs, y0 = Math.floor(c / g.cx) * g.cs;
+        const x1 = Math.min(g.w, x0 + g.cs), y1 = Math.min(g.h, y0 + g.cs), a = x0 >> 2, e = x1 + 3 >> 2;
+        let h = 2166136261;
+        for (let y = y0; y < y1; y++) for (let i = y * W4 + a, j = y * W4 + e; i < j; i++) {
+          h ^= u[i];
+          h = Math.imul(h, 16777619);
+          h ^= h >>> 15;
+        }
+        out[c] = h >>> 0;
+      }
+      return out;
+    }
+    for (let c = 0; c < g.n; c++) {
+      let h = 2166136261;
+      each(g, c, (i) => {
+        h ^= arr[i];
+        h = Math.imul(h, 16777619);
+      });
+      out[c] = h >>> 0;
+    }
+    return out;
+  }
+  function diffChunks(arr, g, base) {
+    const now2 = chunkHashes(arr, g), out = {};
+    for (let c = 0; c < g.n; c++) {
+      if (now2[c] === base[c]) continue;
+      const buf = new Array(size(g, c));
+      let k = 0;
+      each(g, c, (i) => {
+        buf[k++] = arr[i];
+      });
+      out[c] = rleEncode(buf);
+    }
+    return out;
+  }
+  function applyChunks(arr, g, chunks) {
+    for (const key in chunks) {
+      const c = +key;
+      if (!(c >= 0 && c < g.n)) continue;
+      const vals = rleDecode(chunks[key], size(g, c), Array);
+      let k = 0;
+      each(g, c, (i) => {
+        arr[i] = vals[k++];
+      });
+    }
+  }
+
+  // src/game/game/save.ts
   var SavePart = {
     /* ================= 저장 ================= */
     /** 그 캐릭터의 새 플레이어(시작 장비·가방) — 새 게임과 멀티플레이 새 참가자가 같이 쓴다. */
@@ -50607,9 +50717,11 @@
       this._saving = true;
       this._saveSeq = (this._saveSeq || 0) + 1;
       try {
-        const data = this.saveData();
+        const slot = this.currentSlot;
+        const data = SaveStore.hasSides() ? await this.saveDelta(slot) : this.saveData();
         data.sealed = 1;
-        await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
+        await SaveStore.put(slot, JSON.stringify(data), saveHead(data));
+        if (data.world.delta) SaveStore.pruneSides(slot, "base:" + data.world.delta.base).catch((e) => console.error(e));
         if (!quiet) this.toast(tr("저장했다"), "good");
         if (this.autosave) this.autosave.reset();
         return true;
@@ -50621,15 +50733,68 @@
         this._saving = false;
       }
     },
-    /** 지금 판의 세이브 본문 — 저장과 멀티플레이 참가자에게 보내는 세계 스냅샷이 같이 쓴다. */
-    saveData() {
+    /* ---- 바탕 + 바뀐 청크 — 세계 타일 · 벽지는 슬롯마다 바탕을 한 번 따로 적고(곁 기록 base:<id>), 본문에는 바탕과 다른 64칸 청크만 싣는다.
+       ★ 시드로 다시 만들어 견주지 않는다 — 생성기는 판마다 바뀌어(기준값 갱신) 옛 세계가 조용히 어긋난다. 바탕은 그 세계 자체에서 뜬다.
+       바탕을 새로 쓰면 이름(id)이 바뀌고, 본문이 들어간 **뒤에** 옛 바탕을 지운다 — 중간에 끊겨도 본문이 가리키는 바탕은 남아 있다. 사연: docs/code-history.md#h205 ---- */
+    async saveDelta(slot) {
+      const w = this.world, { WW: WW2, WH: WH2 } = w.dims, g = chunkGrid(WW2, WH2);
+      let data = null, t = {}, wl = {};
+      const rebase = async () => {
+        const id = Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+        let base = "", th = null, wh = null;
+        this.withoutSeal(() => {
+          base = JSON.stringify({ id, ww: WW2, wh: WH2, tiles: rleEncode(w.tiles), walls: rleEncode(w.walls) });
+          th = chunkHashes(w.tiles, g);
+          wh = chunkHashes(w.walls, g);
+        });
+        await SaveStore.putSide(slot, "base:" + id, base);
+        return this._base = { slot, w, id, th, wh };
+      };
+      let b = this._base;
+      if (!b || b.slot !== slot || b.w !== w) b = await rebase();
+      this.withoutSeal(() => {
+        data = this.saveData(true);
+        t = diffChunks(w.tiles, g, b.th);
+        wl = diffChunks(w.walls, g, b.wh);
+      });
+      if (Object.keys(t).length + Object.keys(wl).length > g.n * 0.8) {
+        b = await rebase();
+        t = {};
+        wl = {};
+      }
+      data.world.delta = { base: b.id, cs: g.cs, t, w: wl };
+      return data;
+    },
+    /** 본문이 바탕 + 청크로 저장돼 있으면 바탕을 읽어 배열을 채운다. 바탕이 없거나 손댔으면 false. */
+    async loadDelta(slot, d) {
+      const dl = d.world && d.world.delta;
+      if (!dl) {
+        this._baseNext = null;
+        return true;
+      }
+      const rec = await SaveStore.getSide(slot, "base:" + dl.base);
+      if (!rec || rec.sig !== saveSign(rec.raw)) return false;
+      const bd = JSON.parse(rec.raw);
+      if (bd.id !== dl.base || bd.ww !== d.world.ww || bd.wh !== d.world.wh) return false;
+      const n = bd.ww * bd.wh, g = chunkGrid(bd.ww, bd.wh, dl.cs || 64);
+      const tiles = rleDecode(bd.tiles, n, Uint8Array), walls = rleDecode(bd.walls, n, Uint8Array);
+      this._baseNext = { slot, id: dl.base, th: chunkHashes(tiles, g), wh: chunkHashes(walls, g) };
+      applyChunks(tiles, g, dl.t || {});
+      applyChunks(walls, g, dl.w || {});
+      d.world.tiles = tiles;
+      d.world.walls = walls;
+      delete d.world.delta;
+      return true;
+    },
+    /** 지금 판의 세이브 본문 — 저장과 멀티플레이 참가자에게 보내는 세계 스냅샷이 같이 쓴다(noGrid: 타일 · 벽지는 saveDelta 가 따로). */
+    saveData(noGrid = false) {
       const p = this.player;
       const data = {
         v: SAVE_VERSION,
         name: p.name,
         savedAt: Date.now(),
         mode: this.mode,
-        world: this.withoutSeal(() => this.world.serialize()),
+        world: this.withoutSeal(() => this.world.serialize(noGrid)),
         chapter: this.chapter,
         dayT: this.dayT,
         talked: this.talked,
@@ -50677,10 +50842,15 @@
         let n = 0;
         for (let i = 0; i < SAVE_SLOTS; i++) {
           const rec = await SaveStore.get(i);
-          if (rec) {
-            out.slots[i] = rec.raw;
-            n++;
-          }
+          if (!rec) continue;
+          const d = JSON.parse(rec.raw);
+          if (d.world && d.world.delta) {
+            if (!saveSealOk(rec.raw, d, rec.sig) || !await this.loadDelta(i, d)) continue;
+            d.world.tiles = rleEncode(d.world.tiles);
+            d.world.walls = rleEncode(d.world.walls);
+            out.slots[i] = JSON.stringify(d);
+          } else out.slots[i] = rec.raw;
+          n++;
         }
         const st = localStorage.getItem(SET_KEY);
         if (st) out.settings = st;
@@ -50721,6 +50891,8 @@
           const i = +k;
           if (!(i >= 0 && i < SAVE_SLOTS) || !d.slots[k]) continue;
           await SaveStore.put(i, d.slots[k], saveHead(JSON.parse(d.slots[k])));
+          await SaveStore.pruneSides(i);
+          if (this._base && this._base.slot === i) this._base = null;
           n++;
         }
         if (d.settings) {
@@ -50760,19 +50932,31 @@
         this.toast(tr("이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다"), "bad");
         return;
       }
-      this.currentSlot = slot;
       this.showLoading(tr("기록을 불러오는 중…"));
+      let ok = false;
+      try {
+        ok = await this.loadDelta(slot, head);
+      } catch (e) {
+        console.error(e);
+      }
+      if (!ok) {
+        this.hideLoading();
+        this.toast(tr("세계 바탕 기록을 읽지 못했다 — 열 수 없다"), "bad");
+        return;
+      }
+      this.currentSlot = slot;
       setTimeout(() => {
         try {
-          this._loadGame(raw);
+          this._loadGame(head);
         } finally {
           this.hideLoading();
         }
       }, 40);
     },
+    /** raw 는 세이브 글자열 또는 이미 푼 본문 */
     _loadGame(raw) {
       try {
-        const d = JSON.parse(raw);
+        const d = typeof raw === "string" ? JSON.parse(raw) : raw;
         upgradeSave(d);
         const prevSize = dimsOf(this.world).WSIZE;
         setWorldSize(d.world && d.world.size || "s");
@@ -50783,6 +50967,8 @@
           return;
         }
         this.world = World.deserialize(d.world);
+        this._base = this._baseNext ? { ...this._baseNext, w: this.world } : null;
+        this._baseNext = null;
         this.fitMapAtlas();
         this._rigs = null;
         this._fbg = null;
@@ -51375,9 +51561,9 @@
   var FxPart = {
     /* ================= 광역 피해 ================= */
     /** 폭발/타격 이펙트 등록 (kind: hit / fire / void / stargain / starmerge) slow: 재생을 늘리는 배수(기본 1 = 여섯 프레임 0.24초). */
-    burst(x, y, kind, size, slow) {
+    burst(x, y, kind, size2, slow) {
       if (!this.spritesOn) return;
-      const b = { x, y, kind, s: size || 64, t: 0, sp: slow || 1 };
+      const b = { x, y, kind, s: size2 || 64, t: 0, sp: slow || 1 };
       if (kind.startsWith("hit_slash")) {
         b.rot = (Math.random() - 0.5) * 1.6;
         b.fl = Math.random() < 0.5 ? -1 : 1;
@@ -72196,9 +72382,9 @@
 
   // src/engine/net/chunk.ts
   var CHUNK_SIZE = 16e3;
-  function chunkText(id, text, size = CHUNK_SIZE) {
-    const n = Math.max(1, Math.ceil(text.length / size)), out = [];
-    for (let i = 0; i < n; i++) out.push(`#${id}:${i}:${n}:` + text.slice(i * size, (i + 1) * size));
+  function chunkText(id, text, size2 = CHUNK_SIZE) {
+    const n = Math.max(1, Math.ceil(text.length / size2)), out = [];
+    for (let i = 0; i < n; i++) out.push(`#${id}:${i}:${n}:` + text.slice(i * size2, (i + 1) * size2));
     return out;
   }
   var isChunk = (msg) => msg.charCodeAt(0) === 35;

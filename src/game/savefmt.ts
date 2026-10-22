@@ -66,7 +66,10 @@ export const SAVE_UPGRADES = [
   /* v12 → v13 — 멀티플레이 손님 기록(mpGuests: 손님 아이디 → 마지막 자리 · 새로 만든 손님 캐릭터). 옛 세계엔 손님이 없었다. */
   (d: any) => { if (!d.mpGuests) d.mpGuests = {}; },
   /* v13 → v14 — 유적의 깊은 곳(ruinSites[].deep: 봉인 방을 다 풀면 파이는 아래층 자리). 옛 세계는 아직 닫혀 있다. */
-  (d: any) => { for (const s of (d.world && d.world.ruinSites) || []) if (s.deep === undefined) s.deep = null; }
+  (d: any) => { for (const s of (d.world && d.world.ruinSites) || []) if (s.deep === undefined) s.deep = null; },
+  /* v14 → v15 — 타일 · 벽지를 바탕(곁 기록) + 바뀐 청크(world.delta)로. 옛 세이브는 통째로 들고 있어 그대로 열리고, 다음 저장이 바탕을 뜬다.
+     ★ delta 는 판올림 **전에** 풀린다(game/save.ts loadDelta — 곁 기록을 읽어야 해서 비동기) — 여기서는 할 일이 없다. */
+  (d: any) => d
 ];
 export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 

@@ -945,6 +945,44 @@
         if (this.mode === "idb") await this._tx(["data", "head"], "readwrite", (tx) => {
           tx.objectStore("data").delete(slotKey(slot));
           tx.objectStore("head").delete(slotKey(slot));
+          tx.objectStore("data").delete(this._sideRange(slot));
+        });
+      },
+      /* ---- 곁 기록 — 슬롯에 딸린 큰 덩어리(세계 바탕 따위). IndexedDB 에서만 쓴다(localStorage 는 용량이 모자라 슬롯 본문에 다 싣는다). ---- */
+      _sideKey(slot, name) {
+        return slotKey(slot) + "#" + name;
+      },
+      _sideRange(slot) {
+        return IDBKeyRange.bound(slotKey(slot) + "#", slotKey(slot) + "#￿");
+      },
+      hasSides() {
+        return this.mode === "idb";
+      },
+      async putSide(slot, name, text) {
+        await this.start();
+        if (this.mode !== "idb") throw new Error("side records need IndexedDB");
+        const gz = await this._gz(text);
+        const rec = gz ? { gz, sig: saveSign(text) } : { text, sig: saveSign(text) };
+        await this._tx(["data"], "readwrite", (tx) => {
+          tx.objectStore("data").put(rec, this._sideKey(slot, name));
+        });
+      },
+      /** { raw, sig } 또는 null — 서명 대조는 부르는 쪽이 한다. */
+      async getSide(slot, name) {
+        await this.start();
+        if (this.mode !== "idb") return null;
+        const rec = await this._tx(["data"], "readonly", (tx) => this._req(tx.objectStore("data").get(this._sideKey(slot, name))));
+        if (!rec) return null;
+        return { raw: rec.gz ? await this._ungz(rec.gz) : rec.text, sig: rec.sig || null };
+      },
+      /** keep 말고는 그 슬롯의 곁 기록을 지운다(keep 이 없으면 전부). */
+      async pruneSides(slot, keep) {
+        await this.start();
+        if (this.mode !== "idb") return;
+        const keys = await this._tx(["data"], "readonly", (tx) => this._req(tx.objectStore("data").getAllKeys(this._sideRange(slot))));
+        const drop = keys.filter((k) => k !== (keep ? this._sideKey(slot, keep) : null));
+        if (drop.length) await this._tx(["data"], "readwrite", (tx) => {
+          for (const k of drop) tx.objectStore("data").delete(k);
         });
       },
       /** 슬롯 요약 SAVE_SLOTS 개(빈 칸은 null). */

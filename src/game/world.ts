@@ -951,11 +951,12 @@ export class World extends TileMap {
   }
 
   /* ================= 저장 ================= */
-  serialize() { const { WSIZE, WW, WH } = this.dims;
+  /** noGrid 이면 타일 · 벽지를 빼고 담는다 — 저장은 그 둘을 바탕 + 바뀐 청크로 따로 싣는다(game/save.ts saveDelta). */
+  serialize(noGrid = false) { const { WSIZE, WW, WH } = this.dims;
     return {
       seed: this.seed, ww: WW, wh: WH, size: WSIZE, ruinSites: this.ruinSites, ruinEvents: this.ruinEvents,
-      tiles: rleEncode(this.tiles),
-      walls: rleEncode(this.walls),
+      tiles: noGrid ? null : rleEncode(this.tiles),
+      walls: noGrid ? null : rleEncode(this.walls),
       surface: Array.from(this.surface),
       objects: this.objects.map(o => ({ ...o })),
       machines: Array.from(this.machines.values()),
@@ -972,8 +973,8 @@ export class World extends TileMap {
   }
   static deserialize(d: any) { const { WW, WH } = dimsOf();
     const w = new World(d.seed);
-    w.tiles = rleDecode(d.tiles, WW * WH, Uint8Array);
-    w.walls = rleDecode(d.walls, WW * WH, Uint8Array);
+    w.tiles = d.tiles instanceof Uint8Array ? d.tiles : rleDecode(d.tiles, WW * WH, Uint8Array);   // 청크로 푼 세이브는 배열이 바로 온다
+    w.walls = d.walls instanceof Uint8Array ? d.walls : rleDecode(d.walls, WW * WH, Uint8Array);
     w.surface = Int16Array.from(d.surface);
     w.objects = d.objects;
     w.fitObjects();   // 규격 도입 전 세이브에 담긴 큰 설치물도 여기서 한 칸 크기로 맞춘다

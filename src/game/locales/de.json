@@ -1164,7 +1164,8 @@
   "표정": "Gesichter",
   "신호": "Zeichen",
   "잿빛 땅": "Aschenland",
-  "· 효과음은 위 서비스의 약관을 따릅니다": "· Soundeffekte unterliegen den Bedingungen des obigen Dienstes"
+  "· 효과음은 위 서비스의 약관을 따릅니다": "· Soundeffekte unterliegen den Bedingungen des obigen Dienstes",
+  "세계 바탕 기록을 읽지 못했다 — 열 수 없다": "Der Grunddatensatz dieser Welt ließ sich nicht lesen — Öffnen nicht möglich"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",

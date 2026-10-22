@@ -2,6 +2,8 @@
 import { clamp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { RNG } from '../../engine/core/rng.js';
+import { applyChunks, chunkGrid, chunkHashes, diffChunks } from '../../engine/save/chunks.js';
+import { rleDecode, rleEncode } from '../../engine/save/rle.js';
 import { escHtml } from '../util.js';
 import { tr } from '../lang.js';
 import { WORLD_SIZES, dimsOf } from '../size.js';
@@ -95,9 +97,11 @@ export const SavePart: Bag = {
     if (this._saving) { this.toast(tr('저장하는 중이다'), 'info'); return false; }
     this._saving = true; this._saveSeq = (this._saveSeq || 0) + 1;   // 손님 기록만 적는 netGuestPersist 가 이 저장을 덮지 않게
     try {
-      const data = this.saveData();
+      const slot = this.currentSlot;
+      const data = SaveStore.hasSides() ? await this.saveDelta(slot) : this.saveData();
       data.sealed = 1;                                 // 서명이 있는 기록이라는 표시
-      await SaveStore.put(this.currentSlot, JSON.stringify(data), saveHead(data));
+      await SaveStore.put(slot, JSON.stringify(data), saveHead(data));
+      if (data.world.delta) SaveStore.pruneSides(slot, 'base:' + data.world.delta.base).catch(e => console.error(e));
       if (!quiet) this.toast(tr('저장했다'), 'good');
       if (this.autosave) this.autosave.reset();
       return true;
@@ -106,12 +110,54 @@ export const SavePart: Bag = {
       return false;
     } finally { this._saving = false; }
   },
-  /** 지금 판의 세이브 본문 — 저장과 멀티플레이 참가자에게 보내는 세계 스냅샷이 같이 쓴다. */
-  saveData() {
+  /* ---- 바탕 + 바뀐 청크 — 세계 타일 · 벽지는 슬롯마다 바탕을 한 번 따로 적고(곁 기록 base:<id>), 본문에는 바탕과 다른 64칸 청크만 싣는다.
+     ★ 시드로 다시 만들어 견주지 않는다 — 생성기는 판마다 바뀌어(기준값 갱신) 옛 세계가 조용히 어긋난다. 바탕은 그 세계 자체에서 뜬다.
+     바탕을 새로 쓰면 이름(id)이 바뀌고, 본문이 들어간 **뒤에** 옛 바탕을 지운다 — 중간에 끊겨도 본문이 가리키는 바탕은 남아 있다. 사연: docs/code-history.md#h205 ---- */
+  async saveDelta(slot: number) {
+    const w = this.world, { WW, WH } = w.dims, g = chunkGrid(WW, WH);
+    let data: Bag = null as any, t: Record<number, string> = {}, wl: Record<number, string> = {};
+    const rebase = async () => {
+      const id = Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+      let base = '', th = null as any, wh = null as any;
+      this.withoutSeal(() => {
+        base = JSON.stringify({ id, ww: WW, wh: WH, tiles: rleEncode(w.tiles), walls: rleEncode(w.walls) });
+        th = chunkHashes(w.tiles, g); wh = chunkHashes(w.walls, g);
+      });
+      await SaveStore.putSide(slot, 'base:' + id, base);
+      return (this._base = { slot, w, id, th, wh });
+    };
+    let b = this._base;
+    if (!b || b.slot !== slot || b.w !== w) b = await rebase();
+    this.withoutSeal(() => {
+      data = this.saveData(true);
+      t = diffChunks(w.tiles, g, b.th); wl = diffChunks(w.walls, g, b.wh);
+    });
+    /* 바뀐 청크가 4할을 넘으면 지금 모습으로 바탕을 다시 뜬다(본문이 바탕만큼 커지면 나눈 보람이 없다) */
+    if (Object.keys(t).length + Object.keys(wl).length > g.n * 0.8) { b = await rebase(); t = {}; wl = {}; }
+    data.world.delta = { base: b.id, cs: g.cs, t, w: wl };
+    return data;
+  },
+  /** 본문이 바탕 + 청크로 저장돼 있으면 바탕을 읽어 배열을 채운다. 바탕이 없거나 손댔으면 false. */
+  async loadDelta(slot: number, d: Bag) {
+    const dl = d.world && d.world.delta;
+    if (!dl) { this._baseNext = null; return true; }
+    const rec = await SaveStore.getSide(slot, 'base:' + dl.base);
+    if (!rec || rec.sig !== saveSign(rec.raw)) return false;
+    const bd = JSON.parse(rec.raw);
+    if (bd.id !== dl.base || bd.ww !== d.world.ww || bd.wh !== d.world.wh) return false;
+    const n = bd.ww * bd.wh, g = chunkGrid(bd.ww, bd.wh, dl.cs || 64);
+    const tiles = rleDecode(bd.tiles, n, Uint8Array), walls = rleDecode(bd.walls, n, Uint8Array);
+    this._baseNext = { slot, id: dl.base, th: chunkHashes(tiles, g), wh: chunkHashes(walls, g) };
+    applyChunks(tiles, g, dl.t || {}); applyChunks(walls, g, dl.w || {});
+    d.world.tiles = tiles; d.world.walls = walls; delete d.world.delta;
+    return true;
+  },
+  /** 지금 판의 세이브 본문 — 저장과 멀티플레이 참가자에게 보내는 세계 스냅샷이 같이 쓴다(noGrid: 타일 · 벽지는 saveDelta 가 따로). */
+  saveData(noGrid = false) {
     const p = this.player;
     const data: Bag = {
       v: SAVE_VERSION, name: p.name, savedAt: Date.now(), mode: this.mode,
-      world: this.withoutSeal(() => this.world.serialize()), chapter: this.chapter, dayT: this.dayT,
+      world: this.withoutSeal(() => this.world.serialize(noGrid)), chapter: this.chapter, dayT: this.dayT,
       talked: this.talked, crafted: this.crafted,
       talkSeq: this.talkSeq, storyHeard: this.storyHeard, villageSeen: this.villageSeen,
       sideActive: this.sideActive, sideDone: this.sideDone, tabletsRead: this.tabletsRead, termsRead: this.termsRead, loreRead: this.loreRead,
@@ -135,7 +181,15 @@ export const SavePart: Bag = {
       let n = 0;
       for (let i = 0; i < SAVE_SLOTS; i++) {
         const rec = await SaveStore.get(i);
-        if (rec) { out.slots[i] = rec.raw; n++; }
+        if (!rec) continue;
+        /* 바탕 + 청크 기록은 바탕을 채워 한 덩어리로 내보낸다 — 파일 하나로 어디서든 열리게 */
+        const d = JSON.parse(rec.raw);
+        if (d.world && d.world.delta) {
+          if (!saveSealOk(rec.raw, d, rec.sig) || !await this.loadDelta(i, d)) continue;
+          d.world.tiles = rleEncode(d.world.tiles); d.world.walls = rleEncode(d.world.walls);
+          out.slots[i] = JSON.stringify(d);
+        } else out.slots[i] = rec.raw;
+        n++;
       }
       const st = localStorage.getItem(SET_KEY);
       if (st) out.settings = st;
@@ -161,6 +215,8 @@ export const SavePart: Bag = {
         const i = +k;
         if (!(i >= 0 && i < SAVE_SLOTS) || !d.slots[k]) continue;
         await SaveStore.put(i, d.slots[k], saveHead(JSON.parse(d.slots[k])));
+        await SaveStore.pruneSides(i);               // 옛 바탕은 이제 아무도 안 가리킨다
+        if (this._base && this._base.slot === i) this._base = null;
         n++;
       }
       if (d.settings) { localStorage.setItem(SET_KEY, d.settings); this.loadSettings(); UI.syncSettings(); }
@@ -182,13 +238,17 @@ export const SavePart: Bag = {
       this.toast(tr('이 기록은 저장한 뒤에 바뀌었다 — 열 수 없다'), 'bad');
       return;
     }
-    this.currentSlot = slot;
     this.showLoading(tr('기록을 불러오는 중…'));
-    setTimeout(() => { try { this._loadGame(raw); } finally { this.hideLoading(); } }, 40);
+    let ok = false;
+    try { ok = await this.loadDelta(slot, head); } catch (e) { console.error(e); }
+    if (!ok) { this.hideLoading(); this.toast(tr('세계 바탕 기록을 읽지 못했다 — 열 수 없다'), 'bad'); return; }
+    this.currentSlot = slot;
+    setTimeout(() => { try { this._loadGame(head); } finally { this.hideLoading(); } }, 40);
   },
+  /** raw 는 세이브 글자열 또는 이미 푼 본문 */
   _loadGame(raw: any) {
     try {
-      const d = JSON.parse(raw);
+      const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
       upgradeSave(d);   // 옛 판으로 만든 기록을 지금 판 모양으로 올린다
       // 세계 폭이 바뀐 버전의 기록은 그대로 풀면 지형이 어긋난 채로 열린다 — 아예 막는다
       /* 세계 크기가 다른 판의 기록은 열지 않는다 — 사연: docs/code-history.md#h58 */
@@ -202,6 +262,8 @@ export const SavePart: Bag = {
         return;
       }
       this.world = World.deserialize(d.world);
+      /* 바탕 해시는 불러온 이 세계에 붙인다 — 다른 세계(새 여정 · 손님 접속)로 바뀌면 다음 저장이 바탕을 새로 뜬다 */
+      this._base = this._baseNext ? { ...this._baseNext, w: this.world } : null; this._baseNext = null;
       this.fitMapAtlas();
       this._rigs = null; this._fbg = null;   // 다른 세계를 불러왔다 — 자리·원경 캐시를 버린다
       this.world.placeRigs(true);            // 채취탑이 object 가 되기 전 세이브 — 지금 지면으로 한 번 골라 세운다
