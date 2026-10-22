@@ -683,7 +683,7 @@ export const RuinEventsPart: Bag = {
           const here = this.pulseRuinAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
           ev.mobs = [];
           if (here) for (const type of ['sunscarab', 'sunscarab', 'jarhusk']) { const at = this.pulseSpot(here, 3, 9); if (at) ev.mobs.push(this.evMob(type, at)); }
-          this.shake = 12; this.sfx('chapter');
+          this.shake = 12; this.sfx('danger');
           this.toast(tr('심장이 무겁다 — 삼키는 것들이 깨어난다'), 'bad');
         }
       } },

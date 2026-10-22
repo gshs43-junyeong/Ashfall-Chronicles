@@ -49,7 +49,7 @@ export const PetsPart: Bag = {
       this.shake = Math.max(this.shake, 5); pe.flash = 0.6;
     }
     this.toast(tr('{pet|이} {stage|로} 자랐다!', { pet: idef(fed).n, stage: tr(DRAGON_STAGE_N[dragonStage(gate)]) }), 'good');
-    p.recalc(); UI.refreshEquip(); UI.refreshBag(); this.sfx('level');
+    p.recalc(); UI.refreshEquip(); UI.refreshBag(); this.sfx('pet_evolve');
   },
   /** 장비창의 펫 슬롯을 실제로 따라다니는 펫 인스턴스와 맞춘다. */
   syncPets() {

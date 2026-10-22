@@ -33544,7 +33544,7 @@
       if (up) {
         this.recalc();
         ui.refreshEquip();
-        app.sfx("level");
+        app.sfx("pet_up");
       }
     }
     addXp(n) {
@@ -47875,10 +47875,43 @@
     /* ★ 몹·보스가 쏘는 소리. */
     efire_phys: ["bow", 0.82, 0.5],
     efire_magic: ["magic", 0.8, 0.5],
-    /* 업적 — 장 넘김(chapter)과 같은 소리를 조금 작게. 따로 두어야 업적만 줄일 수 있다 */
+    /* ★ 축하 · 알림 갈래 — 예전엔 열몇 자리가 chapter 하나를 같이 울려 무엇이 일어났는지 귀로 가를 수 없었다. 자리마다 제 키를 부르고,
+       파일이 오기 전에는 chapter · level 을 음높이 · 크기만 바꿔 빌린다(파일이 오면 SFX_FILES 에 적고 여기서 지운다 — 의뢰서 J). 사연: docs/code-history.md#h208 */
     ach: ["chapter", 1, 0.7],
-    story: ["chapter", 1, 0.7]
-    // 장(이야기) 완료 — 업적과 같은 크기
+    // 업적
+    ach_big: ["chapter", 0.9, 0.9],
+    // 어려운 업적(품 7 이상)
+    story: ["chapter", 1, 0.7],
+    // 장(이야기) 완료
+    ch_start: ["chapter", 0.84, 0.8],
+    // 새 장 카드
+    village_up: ["chapter", 1.06, 0.9],
+    discover: ["chapter", 1.18, 0.65],
+    // 숨은 굴 · 유적 자리 · 기억 조각 — 밝고 가볍게
+    rare_get: ["chapter", 1.26, 0.6],
+    // 귀한 것을 손에 넣음
+    unseal: ["chapter", 0.94, 0.8],
+    // 봉인 · 퍼즐 · 닻이 풀림
+    deep_open: ["chapter", 0.76, 1],
+    // 깊은 층이 열림
+    seal_shut: ["chapter", 0.66, 0.85],
+    // 봉인 방이 닫힘 — 낮고 무겁게
+    danger: ["chapter", 0.6, 0.9],
+    // 맥박 · 격노 · 유적 사건 — 가장 낮게
+    ev_clear: ["chapter", 1.1, 0.7],
+    // 유적 사건을 해냄
+    travel: ["chapter", 1.34, 0.5],
+    // 비석 · 구슬로 옮겨짐
+    timestop: ["chapter", 0.5, 0.7],
+    recover: ["chapter", 1.12, 0.55],
+    // 쓰러진 자리에서 물건을 되찾음
+    pet_up: ["level", 1.18, 0.55],
+    pet_evolve: ["level", 0.86, 0.9],
+    // 드래곤 단계
+    prof_perk: ["level", 1.08, 0.8],
+    // 숙련 특전
+    tame: ["level", 1.14, 0.65],
+    rest: ["level", 0.8, 0.5]
   };
   var SFX_GAP = {
     damage: 0.07,
@@ -50378,7 +50411,7 @@
           this.toast(bits.length ? bits.join(" · ") + tr("을 되찾았다") : tr("쓰러졌던 자리로 돌아왔다"), "good");
           if (dropped) this.toast(tr("가방이 차서 일부는 바닥에 떨어졌다"), "info");
           UI5.refreshBag();
-          this.sfx("chapter");
+          this.sfx("recover");
         }
       }
       this.mmTimer -= dt;
@@ -55023,7 +55056,7 @@
         this.toast(tr("물속에서 무언가 딸려 올라왔다 — {itemName}", { itemName: itemName(it) }), "good");
         this.burst(p.cx, p.cy - 4, "stargain", 52, 2);
         this.ringFx(p.cx, p.cy, 60, "#7fc8e8", 0.5);
-        this.sfx("level");
+        this.sfx("rare_get");
         p.addProf("fish", 3);
       } else {
         this.toast(tr("뭔가 걸렸다 — {itemName}{v}", { itemName: itemName(it), v: c.n > 1 ? " ×" + c.n : "" }), "good");
@@ -56148,7 +56181,7 @@
       w.objects.push(o);
       if (this.net) this.netObjAdd(o);
       for (let i = 0; i < 18; i++) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * 40, e.cy + (Math.random() - 0.5) * 20, i % 2 ? "#ff9ab0" : "#ffe0a0", -90 - Math.random() * 80, 1));
-      this.sfx("ach");
+      this.sfx("tame");
       if (!who || who === this.player) this.toast(tr("야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)"), "good");
     },
     /** 야생 말 — 안장 없는 시트 · 호감 막대 */
@@ -56746,7 +56779,7 @@
       for (let i = 0; i < 34; i++) this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 30, p.cy + (Math.random() - 0.5) * 40, "#ffe6a8", -50, 1.2));
       this.shake = Math.max(this.shake || 0, 4);
       this.toast(tr("{to}에 도착했다", { to }), "good");
-      this.sfx("chapter");
+      this.sfx("travel");
       return true;
     },
     /** 플레이어를 칸 (tx, ty) 에 — 카메라도 한 번에 옮긴다(따라가며 휩쓸리지 않게) */
@@ -56775,7 +56808,7 @@
     startTimeStop(x, y) {
       this.timeStop = STOP_T;
       this.stopAt = { x, y, t0: this.time };
-      this.sfx("chapter");
+      this.sfx("timestop");
     },
     /** 멈춘 동안은 몹 AI · 몹 투사체 · 보스 기술 시계를 건너뛴다(game.ts update 가 묻는다) */
     stopped() {
@@ -57137,7 +57170,7 @@
       this.shake = 12;
       this.toast(tr("봉인이 풀렸다"), "good");
       UI5.refreshBag();
-      this.sfx("chapter");
+      this.sfx("unseal");
     },
     /* ================= 여명 마을 시설 ================= */
     /** 귀환 비석 — 베이스캠프 ↔ 여명 마을 왕복 */
@@ -57165,7 +57198,7 @@
             this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
             for (let i = 0; i < 30; i++) this.parts.push(new Part(p.cx, p.cy, "#9fe8dc", -60, 1.1));
             this.toast(tr("{to}에 도착했다", { to }), "good");
-            this.sfx("chapter");
+            this.sfx("travel");
           }
         }
       ]);
@@ -57223,7 +57256,7 @@
               p.mp = p.d.maxMp;
               p.addBuff("rested");
               this.toast(tr("푹 잤다 — 아침이다"), "good");
-              this.sfx("level");
+              this.sfx("rest");
               this.tally = this.tally || {};
               this.tally.inn = (this.tally.inn || 0) + 1;
               this.checkAch();
@@ -57944,7 +57977,7 @@
       for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 200, p.cy, "#ffe08a", -70, 1.2));
       UI5.chapterCard({ sub: tr("마을 개선"), title: spec.n, line: spec.d });
       UI5.refreshBag();
-      this.sfx("chapter");
+      this.sfx("village_up");
     },
     /* 마을 단계가 주는 혜택 — 여러 곳에서 쓰이므로 한군데 모아 둔다 */
     vaultCap() {
@@ -58220,7 +58253,7 @@
       p.recalc();
       UI5.refreshEquip();
       UI5.refreshBag();
-      this.sfx("level");
+      this.sfx("pet_evolve");
     },
     /** 장비창의 펫 슬롯을 실제로 따라다니는 펫 인스턴스와 맞춘다. */
     syncPets() {
@@ -62433,6 +62466,7 @@
         UI5.storyScene(ch, "outro", () => {
           if (next) {
             UI5.chapterCard(next);
+            this.sfx("ch_start");
             setTimeout(() => UI5.storyScene(next, "intro"), 4e3);
           } else {
             UI5.chapterCard({ sub: tr("이야기는 계속된다"), title: tr("벽 너머"), line: tr("— 여기까지가 지금까지 쓰인 이야기다 —") });
@@ -62459,7 +62493,7 @@
       this.netNote("ach", { a: a.n });
       for (let i = 0; i < 24; i++)
         this.parts.push(new Part(this.player.cx, this.player.cy, "#ffe08a", -80, 1));
-      this.sfx("ach");
+      this.sfx((a.lv || 5) >= 7 ? "ach_big" : "ach");
       if (UI5.open === "quest") UI5.refreshQuest();
     },
     /** 이벤트 중 처치 보상 배수 (경험치·금화) */
@@ -62773,7 +62807,7 @@
       this.ringFx(p.cx, p.cy, perk ? 74 : 46, P2.c, perk ? 0.55 : 0.35);
       for (let i = 0; i < (perk ? 26 : 12); i++)
         this.parts.push(new Part(p.cx, p.cy, P2.c, -70, 0.8));
-      this.sfx(perk ? "level" : "learn");
+      this.sfx(perk ? "prof_perk" : "learn");
       if (perk) UI5.chapterCard({ sub: tr("{P} 숙련 {lv}", { P: P2.n, lv }), title: perk[1], line: perk[2] });
       if (UI5.open === "skill") UI5.refreshProf();
     },
@@ -63847,7 +63881,7 @@
       this.tally = this.tally || {};
       this.tally.faults = (this.tally.faults || 0) + 1;
       this.toast(tr("무너진 벽 너머에 {C|이} 숨어 있었다", { C: C.n }), "good");
-      this.sfx("chapter");
+      this.sfx("discover");
       this.checkAch();
     },
     /** 동굴 쪽 그리기 — 떨어지는 돌(흔들리는 동안은 제자리에서 떤다)과 독기 굴의 탁한 공기 */
@@ -64348,7 +64382,7 @@
       if (it.c <= 0) p.bag[slot] = null;
       const spec = RUIN_SPEC.find((s) => s.id === d.ruin);
       this.toast(tr("{v}의 자리를 알았다 — 나침반을 보라", { v: spec ? spec.n : tr("유적") }), "good");
-      this.sfx("chapter");
+      this.sfx("discover");
       UI5.refreshBag();
     },
     /** 그 유적에만 있는 방을 밟으면 한 번 터지는 일. */
@@ -64385,12 +64419,12 @@
       if (e.ev === "blackout") {
         this.ruinDark = 16;
         this.shake = 10;
-        this.sfx("chapter");
+        this.sfx("danger");
         this.toast(tr("불이 한꺼번에 꺼졌다"), "bad");
         this._ruinSpawn(e.ruin, 5, 150);
       } else if (e.ev === "swarm") {
         this.shake = 14;
-        this.sfx("chapter");
+        this.sfx("danger");
         this.toast(tr("둥지가 깨어났다"), "bad");
         this._ruinSpawn(e.ruin, 8, 170);
       } else if (e.ev === "collapse") {
@@ -64399,7 +64433,7 @@
         for (let x = tx - 8; x <= tx + 8; x++)
           if (TILE_DEF[w.get(x, ty)].solid === 1) w.set(x, ty, T.CRUMBLE);
         this.shake = 18;
-        this.sfx("chapter");
+        this.sfx("danger");
         this.toast(tr("발밑이 내려앉는다"), "bad");
         for (let i = 0; i < 40; i++)
           this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 260, p.cy - 90, "#6a5a48", 40, 1.1));
@@ -64407,7 +64441,7 @@
       } else if (e.ev === "bloom") {
         this.ruinSpore = 9;
         this.shake = 8;
-        this.sfx("chapter");
+        this.sfx("danger");
         this.toast(tr("홀씨가 한꺼번에 터졌다"), "bad");
         this._ruinSpawn(e.ruin, 5, 150);
       } else if (e.ev === "password") {
@@ -64448,7 +64482,7 @@
             this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#bfe8ff", -34, 1.3));
           this.shake = 8;
           this.toast(m.got, "good");
-          this.sfx("chapter");
+          this.sfx("rare_get");
           UI5.closeDialogue();
           UI5.refreshBag();
           UI5.updateHUD();
@@ -64619,7 +64653,7 @@
         this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#ffe08a", -30, 1.1));
       this.shake = 10;
       this.toast(tr("맞물리는 소리가 났다"), "good");
-      this.sfx("chapter");
+      this.sfx("unseal");
       setTimeout(() => this.closeCodeDoor(), 700);
     },
     /** 유적에 처음 발을 들였을 때 — 그 유적만의 카드를 한 번 띄운다. */
@@ -64638,7 +64672,7 @@
       const st = /^story(\d)$/.exec(r.id);
       const name = spec ? spec.n : st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n || tr("이름 없는 유적");
       if (card) UI5.chapterCard({ sub: card.sub, title: name, line: card.line });
-      this.sfx("chapter");
+      this.sfx("discover");
     }
   };
   mixin(Game.prototype, RuinsPart, true);
@@ -65560,7 +65594,7 @@
               if (at) ev.mobs.push(this.evMob(type, at));
             }
             this.shake = 12;
-            this.sfx("chapter");
+            this.sfx("danger");
             this.toast(tr("심장이 무겁다 — 삼키는 것들이 깨어난다"), "bad");
           }
         } },
@@ -66101,7 +66135,7 @@
         }
         this.toast(tr("유적의 맥박 — {S}", { S: S.n }), "bad");
         this.shake = Math.max(this.shake || 0, 4 + s1 * 3);
-        this.sfx("chapter");
+        this.sfx("danger");
         this._waveT = PULSE.wave[s1];
         if (s1 >= 3) {
           this._rageT = 8;
@@ -66200,7 +66234,7 @@
         this.pulseEvent = ev;
         this.toast(`${E.i} ${E.n} — ${E.d}`, "bad");
         this.shake = Math.max(this.shake || 0, 8);
-        this.sfx("chapter");
+        this.sfx("danger");
         return;
       }
     },
@@ -66254,7 +66288,7 @@
       const calm = E.calm === void 0 ? 25 : E.calm;
       if (calm) this.addPulse(ev.id, -calm);
       this.toast(tr("{E} — 해냈다 · 금화 {gold}{v}", { E: E.n, gold: fmt(gold), v: calm ? ` ${tr("· 맥박 -")}` + calm : "" }), "good");
-      this.sfx("chapter");
+      this.sfx("ev_clear");
       this.checkSurvey(ev.id);
       UI5.refreshBag();
     },
@@ -66264,7 +66298,7 @@
       if (!R) return;
       const p = this.player;
       this.toast(R.t, "bad");
-      this.sfx("chapter");
+      this.sfx("danger");
       if (R.k === "dark") {
         this.ruinDark = Math.max(this.ruinDark || 0, 6);
         this.spawnRuinMobs(here, 1);
@@ -66455,7 +66489,7 @@
           this.toast(tr("샅샅이 뒤졌다 — {item}", { item: ITEMS[sid].n }), "good");
         }
         this.shake = 8;
-        this.sfx("chapter");
+        this.sfx("rare_get");
       }
       this.checkAch();
       UI5.refreshBag();
@@ -66773,7 +66807,7 @@
       const sv = this.surveyOf(site.id);
       sv.pzTry = (sv.pzTry || 0) + 1;
       this.toast(tr("봉인 방 — {n}. {hint} · 장치는 우클릭", { n: P2.n, hint: P2.hint }), "bad");
-      this.sfx("chapter");
+      this.sfx("seal_shut");
       this.shake = Math.max(this.shake, 8);
       for (const [x, y] of cells) for (let q = 0; q < 4; q++) this.parts.push(new Part(x * TS + TS / 2, y * TS + TS / 2, "#b8a8ff", -30, 0.7));
       const spec = this.ruinSpec(site.id), pool = spec && spec.mobs || [];
@@ -67025,7 +67059,7 @@
       p.addXp(Math.round(p.xpNext * (pz.deep ? 0.3 + 0.15 * pz.L : 0.12)));
       if (pz.deep) this.evGive("pulse_shard", 2 + pz.L);
       this.toast(tr("봉인 방 — {n} 풀었다 · 금화 {gold}", { n: pz.n, gold: fmt(gold) }), "good");
-      this.sfx("chapter");
+      this.sfx("unseal");
       this.stageFx && this.stageFx("s_warcry");
       UI5.refreshBag();
     },
@@ -67519,7 +67553,7 @@
         this.deepOffered(site.id, L);
         if (this.net && this.net.role === "guest") this.netBroadcast({ k: "doff", id: site.id, L });
         this.toast(tr("{item} {n}개를 바쳤다", { item: ITEMS[K.item].n, n: K.n }), "good");
-        this.sfx("chapter");
+        this.sfx("unseal");
         for (let q = 0; q < 30; q++) this.parts.push(new Part((g.x + 0.5) * TS + (Math.random() - 0.5) * 40, g.fy * TS - 6, "#e8dcff", -90, 0.9));
       }
     },
@@ -67624,7 +67658,7 @@
       if (pool.length) for (const r of plan.left ? [plan.left, plan.right] : [H]) for (let i = 0; i < 2; i++)
         this.evMob(pool[pool.length - 1], [r.x + 3 + i * 4, fy - 1], 1.5 + 0.5 * L);
       this.shake = Math.max(this.shake, 14);
-      this.sfx("chapter");
+      this.sfx("deep_open");
       for (let q = 0; q < 50; q++) this.parts.push(new Part(plan.gx * TS + TS / 2 + (Math.random() - 0.5) * 60, plan.top * TS, "#b8a8ff", -80, 1.1));
       this.stageFx && this.stageFx("s_quake");
       this.toast(tr("깊은 곳 {L}단계가 열렸다 — {n}", { L: L + 2, n: spec.n || "" }), "good");
@@ -67792,7 +67826,7 @@
       if (this.ancRun) delete this.ancRun[o.i];
       for (const [x, y] of c.links && c.links[o.i] || []) if (w.get(x, y) === T.AIR) w.set(x, y, T.LIGHTBRIDGE);
       for (let k = 0; k < 40; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#9fe8ff", -50, 1.1));
-      this.sfx("chapter");
+      this.sfx("unseal");
       const n = c.anc.filter(Boolean).length;
       if (n >= 3) {
         for (const [x, y] of c.gate || []) if (w.get(x, y) === T.ORBITSEAL) w.set(x, y, T.AIR);
@@ -67896,7 +67930,7 @@
       const M2 = STORY_MEMORY[o.ruin];
       if (!M2) return;
       UI5.openLore(tr("기억의 조각 — {name}", { name: M2.n }), [M2.lines[o.k]]);
-      this.sfx("chapter");
+      this.sfx("discover");
       for (let k = 0; k < 24; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, "#cfe8ff", -40, 1));
       if (this.net && this.net.role === "guest") {
         o.got = 1;

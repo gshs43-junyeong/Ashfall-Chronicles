@@ -1,4 +1,4 @@
-# 효과음 의뢰서 — ElevenLabs Sound Effects (2026-10-16 · H · I 는 v1.1.5, 2026-10-18)
+# 효과음 의뢰서 — ElevenLabs Sound Effects (2026-10-16 · H · I 는 v1.1.5, 2026-10-18 · J 2026-10-22)
 
 > v1.1.4 에서 새로 생긴 자리(스킬 · 보스 · 몬스터 기술 · 대사 · 줍기 · 버리기 · 공장)에 넣을 효과음 프롬프트.
 > 옛 `talk` 효과음은 지웠다 — 말하는 쪽마다 넷으로 나뉜다(아래 B).
@@ -165,6 +165,34 @@
 | `low_hp_beat` 🔁 | ⏳ | 체력 30% 아래 심장 박동(화면 붉어질 때 같이) | 1.0 · 0.5 · loop | `a slow heavy heartbeat, muffled and tense, seamless loop` |
 
 ---
+
+## J. 축하 · 알림 갈래 — v1.1.5 (예전엔 열몇 자리가 `chapter` 하나를 같이 썼다)
+
+코드는 이미 이 이름들을 부른다(✅) — 지금은 `chapter` · `level` 을 음높이 · 크기만 바꿔 빌린다(music.ts `SFX_FAM`). 파일이 오면 `SFX_FILES` 에 적고 `SFX_FAM` 의 그 줄을 지운다.
+축하 소리는 **끝이 열린 채로 1.0초 안에 잦아들게** — 다음 소리와 겹쳐도 지저분하지 않게. 위험 갈래(`danger` · `seal_shut`)는 축하가 아니라 경고다.
+
+| 파일 | 상태 | 쓰는 곳 | 길이 · 영향 | 프롬프트 |
+|---|---|---|---|---|
+| `ach` | ✅ | 업적(품 1~6) | 1.0 · 0.6 | `a short bright achievement chime, two rising bell notes with a soft sparkle` |
+| `ach_big` | ✅ | 어려운 업적(품 7 이상) | 1.0 · 0.6 | `a grand achievement fanfare in miniature, three rising brass and bell notes with a shimmering swell` |
+| `story` | ✅ | 장(이야기) 완료 | 1.0 · 0.6 | `a warm resolving chord on harp and soft strings, a chapter closing, gentle and satisfying` |
+| `ch_start` | ✅ | 새 장 카드가 뜰 때 | 1.0 · 0.6 | `a low mysterious horn swell opening into an expectant chord, a new chapter begins` |
+| `village_up` | ✅ | 마을 단계가 오름 | 1.0 · 0.6 | `a cheerful village bell ringing twice with distant crowd murmur, festive but short` |
+| `discover` | ✅ | 숨은 굴 · 유적 자리 · 기억 조각 | 1.0 · 0.6 | `a curious discovery sting, airy rising glissando on glass chimes, wonder` |
+| `rare_get` | ✅ | 귀한 물건 · 유적 인장 · 물속 보물 | 1.0 · 0.6 | `a precious treasure obtained, crystalline sparkle burst with a warm low bell underneath` |
+| `unseal` | ✅ | 봉인 · 퍼즐 · 궤도 닻이 풀림 · 바치기 | 1.0 · 0.65 | `an ancient stone mechanism unlocking, heavy click and grind resolving into a soft magical hum` |
+| `deep_open` | ✅ | 유적 깊은 층이 열림 | 1.0 · 0.65 | `a deep stone floor splitting open, rumbling rockslide with an eerie resonant drone` |
+| `seal_shut` | ✅ | 봉인 방 출입구가 닫힘 | 1.0 · 0.7 | `a massive stone slab slamming shut, deep boom with dust and a tense low tone` |
+| `danger` | ✅ | 유적 맥박 · 격노 · 유적 사건 | 1.0 · 0.65 | `an ominous warning pulse, deep heartbeat thud with a dissonant low swell, danger approaching` |
+| `ev_clear` | ✅ | 유적 사건을 해냄 | 1.0 · 0.6 | `a relieved victory sting, quick rising plucked notes ending on a bright chord` |
+| `travel` | ✅ | 귀환 비석 · 귀환 구슬로 옮겨짐 | 1.0 · 0.6 | `a magical teleport whoosh, airy swirl collapsing into a soft chime arrival` |
+| `timestop` | ✅ | 시간 멈춤 구슬 | 1.0 · 0.6 | `time freezing, a reversed whoosh into a suspended glassy tone, clock tick stopping` |
+| `recover` | ✅ | 쓰러진 자리에서 물건을 되찾음 | 1.0 · 0.6 | `recovering lost belongings, soft bag rustle with a gentle reassuring chime` |
+| `pet_up` | ✅ | 펫 레벨업 | 0.8 · 0.6 | `a small cute level up blip, playful rising pip notes with a sparkle` |
+| `pet_evolve` | ✅ | 드래곤 단계가 오름 | 1.0 · 0.65 | `a young dragon growing, deep wing flap and a short proud roar into a bright shimmer` |
+| `prof_perk` | ✅ | 숙련 특전(낚시 · 농사 …) | 1.0 · 0.6 | `a skill mastery sting, crisp rising arpeggio on plucked strings with a light chime` |
+| `tame` | ✅ | 야생마를 길들임 | 1.0 · 0.6 | `a friendly bond formed, gentle horse snort followed by a warm two note chime` |
+| `rest` | ✅ | 여관에서 잠 — 아침 | 1.0 · 0.55 | `a peaceful morning after sleep, soft rooster far away and a calm warm pad swell` |
 
 ## 넣은 뒤
 

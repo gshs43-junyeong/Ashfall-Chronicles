@@ -133,7 +133,7 @@ export const RuinPuzzlePart: Bag = {
     this.puzzle = pz;
     const sv = this.surveyOf(site.id); sv.pzTry = (sv.pzTry || 0) + 1;
     this.toast(tr('봉인 방 — {n}. {hint} · 장치는 우클릭', { n: P.n, hint: P.hint }), 'bad');
-    this.sfx('chapter'); this.shake = Math.max(this.shake, 8);
+    this.sfx('seal_shut'); this.shake = Math.max(this.shake, 8);
     for (const [x, y] of cells) for (let q = 0; q < 4; q++) this.parts.push(new Part(x * TS + TS / 2, y * TS + TS / 2, '#b8a8ff', -30, .7));
     /* 조여 오는 것 — 그 유적 고유 몬스터 둘(석판 유적은 그 유적 몹) */
     const spec = this.ruinSpec(site.id), pool = (spec && spec.mobs) || [];
@@ -309,7 +309,7 @@ export const RuinPuzzlePart: Bag = {
     p.addXp(Math.round(p.xpNext * (pz.deep ? 0.3 + 0.15 * pz.L : 0.12)));
     if (pz.deep) this.evGive('pulse_shard', 2 + pz.L);
     this.toast(tr('봉인 방 — {n} 풀었다 · 금화 {gold}', { n: pz.n, gold: fmt(gold) }), 'good');
-    this.sfx('chapter');
+    this.sfx('unseal');
     this.stageFx && this.stageFx('s_warcry');
     UI.refreshBag();
   },

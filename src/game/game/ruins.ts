@@ -28,7 +28,7 @@ export const RuinsPart: Bag = {
     it.c--; if (it.c <= 0) p.bag[slot] = null;
     const spec = RUIN_SPEC.find(s => s.id === d.ruin);
     this.toast(tr('{v}의 자리를 알았다 — 나침반을 보라', { v: spec ? spec.n : tr('유적') }), 'good');
-    this.sfx('chapter');
+    this.sfx('discover');
     UI.refreshBag();
   },
 
@@ -65,11 +65,11 @@ export const RuinsPart: Bag = {
     if (e.ev === 'blackout') {
       /* 불이 꺼진다 — 화면이 한동안 어두워지고 서리 것들이 몰려온다. */
       this.ruinDark = 16;
-      this.shake = 10; this.sfx('chapter');
+      this.shake = 10; this.sfx('danger');
       this.toast(tr('불이 한꺼번에 꺼졌다'), 'bad');
       this._ruinSpawn(e.ruin, 5, 150);
     } else if (e.ev === 'swarm') {
-      this.shake = 14; this.sfx('chapter');
+      this.shake = 14; this.sfx('danger');
       this.toast(tr('둥지가 깨어났다'), 'bad');
       this._ruinSpawn(e.ruin, 8, 170);
     } else if (e.ev === 'collapse') {
@@ -78,7 +78,7 @@ export const RuinsPart: Bag = {
       const tx = Math.floor(p.cx / TS);
       for (let x = tx - 8; x <= tx + 8; x++)
         if (TILE_DEF[w.get(x, ty)].solid === 1) w.set(x, ty, T.CRUMBLE);
-      this.shake = 18; this.sfx('chapter');
+      this.shake = 18; this.sfx('danger');
       this.toast(tr('발밑이 내려앉는다'), 'bad');
       for (let i = 0; i < 40; i++)
         this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 260, p.cy - 90, '#6a5a48', 40, 1.1));
@@ -86,7 +86,7 @@ export const RuinsPart: Bag = {
     } else if (e.ev === 'bloom') {
       /* 홀씨가 터진다 — 한동안 독에 잠기고 굴의 것들이 깨어난다 */
       this.ruinSpore = 9;                     // 이 동안 홀씨에 잠긴다 (update 가 깎으며 물린다)
-      this.shake = 8; this.sfx('chapter');
+      this.shake = 8; this.sfx('danger');
       this.toast(tr('홀씨가 한꺼번에 터졌다'), 'bad');
       this._ruinSpawn(e.ruin, 5, 150);
     } else if (e.ev === 'password') {
@@ -117,7 +117,7 @@ export const RuinsPart: Bag = {
           this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#bfe8ff', -34, 1.3));
         this.shake = 8;
         this.toast(m.got, 'good');
-        this.sfx('chapter');
+        this.sfx('rare_get');
         UI.closeDialogue(); UI.refreshBag(); UI.updateHUD();
       }
     });
@@ -270,7 +270,7 @@ export const RuinsPart: Bag = {
       this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#ffe08a', -30, 1.1));
     this.shake = 10;
     this.toast(tr('맞물리는 소리가 났다'), 'good');
-    this.sfx('chapter');
+    this.sfx('unseal');
     setTimeout(() => this.closeCodeDoor(), 700);
   },
 
@@ -293,7 +293,7 @@ export const RuinsPart: Bag = {
     const name = spec ? spec.n
       : (st && STORY_RUIN[+st[1]] && STORY_RUIN[+st[1]].n) || tr('이름 없는 유적');
     if (card) UI.chapterCard({ sub: card.sub, title: name, line: card.line });
-    this.sfx('chapter');
+    this.sfx('discover');
   },
 };
 

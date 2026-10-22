@@ -78,7 +78,7 @@ export const RuinPulsePart: Bag = {
       }
       this.toast(tr('유적의 맥박 — {S}', { S: S.n }), 'bad');
       this.shake = Math.max(this.shake || 0, 4 + s1 * 3);
-      this.sfx('chapter');
+      this.sfx('danger');
       this._waveT = PULSE.wave[s1];
       if (s1 >= 3) { this._rageT = 8; this.checkSurvey(id); this.checkAch(); }
       /* 이미 벌어진 사건이 있으면 그것부터 끝내게 둔다(겹치면 둘 다 못 한다). */
@@ -177,7 +177,7 @@ export const RuinPulsePart: Bag = {
       this.pulseEvent = ev;
       this.toast(`${E.i} ${E.n} — ${E.d}`, 'bad');
       this.shake = Math.max(this.shake || 0, 8);
-      this.sfx('chapter');
+      this.sfx('danger');
       return;
     }
   },
@@ -220,7 +220,7 @@ export const RuinPulsePart: Bag = {
     const calm = E.calm === undefined ? 25 : E.calm;
     if (calm) this.addPulse(ev.id, -calm);
     this.toast(tr('{E} — 해냈다 · 금화 {gold}{v}', { E: E.n, gold: fmt(gold), v: calm ? ` ${tr('· 맥박 -')}` + calm : '' }), 'good');
-    this.sfx('chapter');
+    this.sfx('ev_clear');
     this.checkSurvey(ev.id);
     UI.refreshBag();
   },
@@ -229,7 +229,7 @@ export const RuinPulsePart: Bag = {
     const R = PULSE_RAGE[here.id]; if (!R) return;
     const p = this.player;
     this.toast(R.t, 'bad');
-    this.sfx('chapter');
+    this.sfx('danger');
     if (R.k === 'dark') { this.ruinDark = Math.max(this.ruinDark || 0, 6); this.spawnRuinMobs(here, 1); }
     else if (R.k === 'spore') this.ruinSpore = Math.max(this.ruinSpore || 0, 5);
     else if (R.k === 'heat') {
@@ -392,7 +392,7 @@ export const RuinPulsePart: Bag = {
       sv.s = 1;
       const sid = 'seal_' + id;
       if (ITEMS[sid]) { give(makeItem(sid, 1)!); this.toast(tr('샅샅이 뒤졌다 — {item}', { item: ITEMS[sid].n }), 'good'); }
-      this.shake = 8; this.sfx('chapter');
+      this.shake = 8; this.sfx('rare_get');
     }
     this.checkAch();
     UI.refreshBag();

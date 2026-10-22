@@ -292,7 +292,7 @@ export const InteractPart: Bag = {
       this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, atelier ? '#ffe8a0' : '#a06fff', -30, 1.2));
     this.shake = 12;
     this.toast(tr('봉인이 풀렸다'), 'good');
-    UI.refreshBag(); this.sfx('chapter');
+    UI.refreshBag(); this.sfx('unseal');
   },
 
   /* ================= 여명 마을 시설 ================= */
@@ -318,7 +318,7 @@ export const InteractPart: Bag = {
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH * TS - this.H);
           for (let i = 0; i < 30; i++) this.parts.push(new Part(p.cx, p.cy, '#9fe8dc', -60, 1.1));
           this.toast(tr('{to}에 도착했다', { to }), 'good');
-          this.sfx('chapter');
+          this.sfx('travel');
         }
       }
     ]);
@@ -364,7 +364,7 @@ export const InteractPart: Bag = {
             p.hp = p.d.maxHp; p.mp = p.d.maxMp;
             p.addBuff('rested');
             this.toast(tr('푹 잤다 — 아침이다'), 'good');
-            this.sfx('level');
+            this.sfx('rest');
             this.tally = this.tally || {};
             this.tally.inn = (this.tally.inn || 0) + 1;
             this.checkAch();

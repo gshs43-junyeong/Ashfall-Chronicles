@@ -32,7 +32,7 @@ export const TrinketPart: Bag = {
     for (let i = 0; i < 34; i++) this.parts.push(new Part(p.cx + (Math.random() - 0.5) * 30, p.cy + (Math.random() - 0.5) * 40, '#ffe6a8', -50, 1.2));
     this.shake = Math.max(this.shake || 0, 4);
     this.toast(tr('{to}에 도착했다', { to }), 'good');
-    this.sfx('chapter');
+    this.sfx('travel');
     return true;
   },
   /** 플레이어를 칸 (tx, ty) 에 — 카메라도 한 번에 옮긴다(따라가며 휩쓸리지 않게) */
@@ -56,7 +56,7 @@ export const TrinketPart: Bag = {
   },
   startTimeStop(x: number, y: number) {
     this.timeStop = STOP_T; this.stopAt = { x, y, t0: this.time };
-    this.sfx('chapter');
+    this.sfx('timestop');
   },
   /** 멈춘 동안은 몹 AI · 몹 투사체 · 보스 기술 시계를 건너뛴다(game.ts update 가 묻는다) */
   stopped() { return (this.timeStop || 0) > 0; },

@@ -304,7 +304,7 @@ export class Player extends Ent {
       }
       if (it.lv >= max) it.xp = 0;
     }
-    if (up) { this.recalc(); UI.refreshEquip(); G.sfx('level'); }
+    if (up) { this.recalc(); UI.refreshEquip(); G.sfx('pet_up'); }
   }
 
   addXp(n: number) {

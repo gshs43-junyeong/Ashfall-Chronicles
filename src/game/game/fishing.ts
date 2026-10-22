@@ -193,7 +193,7 @@ export const FishingPart: Bag = {
       this.toast(tr('물속에서 무언가 딸려 올라왔다 — {itemName}', { itemName: itemName(it!) }), 'good');
       this.burst(p.cx, p.cy - 4, 'stargain', 52, 2.0);
       this.ringFx(p.cx, p.cy, 60, '#7fc8e8', .5);
-      this.sfx('level');
+      this.sfx('rare_get');
       p.addProf('fish', 3);
     } else {
       this.toast(tr('뭔가 걸렸다 — {itemName}{v}', { itemName: itemName(it!), v: c.n > 1 ? ' ×' + c.n : '' }), 'good');

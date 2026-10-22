@@ -93,7 +93,7 @@ export const RuinDeepPart: Bag = {
       this.deepOffered(site.id, L);
       if (this.net && this.net.role === 'guest') this.netBroadcast({ k: 'doff', id: site.id, L });
       this.toast(tr('{item} {n}개를 바쳤다', { item: ITEMS[K.item].n, n: K.n }), 'good');
-      this.sfx('chapter');
+      this.sfx('unseal');
       for (let q = 0; q < 30; q++) this.parts.push(new Part((g.x + 0.5) * TS + (Math.random() - 0.5) * 40, g.fy * TS - 6, '#e8dcff', -90, 0.9));
     }
   },
@@ -182,7 +182,7 @@ export const RuinDeepPart: Bag = {
       this.evMob(pool[pool.length - 1], [r.x + 3 + i * 4, fy - 1], 1.5 + 0.5 * L);
     /* 열리는 순간 */
     this.shake = Math.max(this.shake, 14);
-    this.sfx('chapter');
+    this.sfx('deep_open');
     for (let q = 0; q < 50; q++) this.parts.push(new Part(plan.gx * TS + TS / 2 + (Math.random() - 0.5) * 60, plan.top * TS, '#b8a8ff', -80, 1.1));
     this.stageFx && this.stageFx('s_quake');
     this.toast(tr('깊은 곳 {L}단계가 열렸다 — {n}', { L: L + 2, n: spec.n || '' }), 'good');

@@ -68,7 +68,7 @@ export const RidesPart: Bag = {
     w.objects.push(o);
     if (this.net) this.netObjAdd(o);
     for (let i = 0; i < 18; i++) this.parts.push(new Part(e.cx + (Math.random() - .5) * 40, e.cy + (Math.random() - .5) * 20, i % 2 ? '#ff9ab0' : '#ffe0a0', -90 - Math.random() * 80, 1));
-    this.sfx('ach');
+    this.sfx('tame');
     if (!who || who === this.player) this.toast(tr('야생 말이 마음을 열었다 — 이제 탈 수 있다(곡괭이로 거두면 아이템)'), 'good');
   },
   /** 야생 말 — 안장 없는 시트 · 호감 막대 */

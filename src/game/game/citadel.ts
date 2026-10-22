@@ -72,7 +72,7 @@ export const CitadelPart: Bag = {
     if (this.ancRun) delete this.ancRun[o.i];
     for (const [x, y] of (c.links && c.links[o.i]) || []) if (w.get(x, y) === T.AIR) w.set(x, y, T.LIGHTBRIDGE);
     for (let k = 0; k < 40; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#9fe8ff', -50, 1.1));
-    this.sfx('chapter');
+    this.sfx('unseal');
     const n = c.anc.filter(Boolean).length;
     if (n >= 3) {
       for (const [x, y] of c.gate || []) if (w.get(x, y) === T.ORBITSEAL) w.set(x, y, T.AIR);

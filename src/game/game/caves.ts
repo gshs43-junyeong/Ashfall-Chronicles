@@ -85,7 +85,7 @@ export const CavesPart: Bag = {
     this.tally = this.tally || {};
     this.tally.faults = (this.tally.faults || 0) + 1;
     this.toast(tr('무너진 벽 너머에 {C|이} 숨어 있었다', { C: C.n }), 'good');
-    this.sfx('chapter');
+    this.sfx('discover');
     this.checkAch();
   },
 

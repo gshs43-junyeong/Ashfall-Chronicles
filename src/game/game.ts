@@ -755,7 +755,7 @@ export const GameCore: Bag = {
         this.toast(bits.length ? bits.join(' · ') + tr('을 되찾았다') : tr('쓰러졌던 자리로 돌아왔다'), 'good');
         if (dropped) this.toast(tr('가방이 차서 일부는 바닥에 떨어졌다'), 'info');
         UI.refreshBag();
-        this.sfx('chapter');
+        this.sfx('recover');
       }
     }
 

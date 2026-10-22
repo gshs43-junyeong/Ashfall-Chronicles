@@ -157,7 +157,7 @@ export const ProgressPart: Bag = {
     setTimeout(() => {
       UI.storyScene(ch, 'outro', () => {
         if (next) {
-          UI.chapterCard(next);
+          UI.chapterCard(next); this.sfx('ch_start');
           setTimeout(() => UI.storyScene(next, 'intro'), 4000);
         } else {
           // 이야기는 끝난 게 아니라 "여기까지 쓰였다". 뒤로 계속 이어붙일 자리를 남겨 둔다
@@ -185,7 +185,7 @@ export const ProgressPart: Bag = {
     this.netNote('ach', { a: a.n });
     for (let i = 0; i < 24; i++)
       this.parts.push(new Part(this.player.cx, this.player.cy, '#ffe08a', -80, 1.0));
-    this.sfx('ach');
+    this.sfx((a.lv || 5) >= 7 ? 'ach_big' : 'ach');   // 어려운 업적(품 7 이상)은 더 크게
     if (UI.open === 'quest') UI.refreshQuest();
   },
   /** 이벤트 중 처치 보상 배수 (경험치·금화) */

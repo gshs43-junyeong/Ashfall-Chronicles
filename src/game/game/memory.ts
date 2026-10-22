@@ -20,7 +20,7 @@ export const MemoryPart: Bag = {
     if (o.got) return;
     const M = STORY_MEMORY[o.ruin]; if (!M) return;
     UI.openLore(tr('기억의 조각 — {name}', { name: M.n }), [M.lines[o.k]]);
-    this.sfx('chapter');
+    this.sfx('discover');
     for (let k = 0; k < 24; k++) this.parts.push(new Part(o.x + o.w / 2, o.y + o.h / 2, '#cfe8ff', -40, 1));
     if (this.net && this.net.role === 'guest') { o.got = 1; this.netBroadcast({ k: 'mem', r: o.ruin, i: o.k }); return; }
     this.memoryGot(o, this.player);

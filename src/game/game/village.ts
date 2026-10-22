@@ -45,7 +45,7 @@ export const VillagePart: Bag = {
     this.toast(tr('마을이 『{spec}』{spec|-이} 되었다', { spec: spec!.n }), 'good');
     for (let i = 0; i < 40; i++) this.parts.push(new Part(p.cx + (Math.random() - .5) * 200, p.cy, '#ffe08a', -70, 1.2));
     UI.chapterCard({ sub: tr('마을 개선'), title: spec!.n, line: spec!.d });
-    UI.refreshBag(); this.sfx('chapter');
+    UI.refreshBag(); this.sfx('village_up');
   },
   /* 마을 단계가 주는 혜택 — 여러 곳에서 쓰이므로 한군데 모아 둔다 */
   vaultCap() { const lv = this.villageLv(); return VAULT_SIZE + (lv >= 2 ? 12 : 0) + (lv >= 4 ? 12 : 0); },

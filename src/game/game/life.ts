@@ -174,7 +174,7 @@ export const LifePart: Bag = {
     this.ringFx(p.cx, p.cy, perk ? 74 : 46, P.c, perk ? .55 : .35);
     for (let i = 0; i < (perk ? 26 : 12); i++)
       this.parts.push(new Part(p.cx, p.cy, P.c, -70, .8));
-    this.sfx(perk ? 'level' : 'learn');
+    this.sfx(perk ? 'prof_perk' : 'learn');
     if (perk) UI.chapterCard({ sub: tr('{P} 숙련 {lv}', { P: P.n, lv }), title: perk[1], line: perk[2] });
     if (UI.open === 'skill') UI.refreshProf();
   },
