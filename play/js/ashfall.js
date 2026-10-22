@@ -43556,7 +43556,7 @@
         f = ["base", "talk1", "talk2"][this.mouth];
         if (f === "base" && this.mood === "happy") f = "happy";
       } else if (this.mood) f = this.mood;
-      if (this.talk && this.mood === "cry" && this.mouth === 0) f = "cry";
+      if (this.talk && this.mouth === 0 && (this.mood === "cry" || this.mood === "sad")) f = this.mood;
       if (eye && (f === "base" || f === "talk1" || f === "talk2" || f === "wow")) f = eye;
       this.draw(PFRAME[f]);
     }
@@ -43661,6 +43661,8 @@
       const me = app.spritesOn && app.player ? this.faceUrl("pc_" + (app.player.charId || "wanderer")) : null;
       $("#dlg-mewrap").classList.toggle("on", !!me);
       this.faceM.set(me);
+      clearTimeout(this._reactT);
+      this.bodyMood(null, $("#dlg-me").parentElement);
       this.speaker(false);
       $("#dlg-name").textContent = `${d.n} · ${d.role}`;
       this.popBubble(false);
@@ -43688,6 +43690,7 @@
     faceN: null,
     faceM: null,
     saying: null,
+    _reactT: 0,
     faces() {
       if (!this.faceN) {
         this.faceN = new Face($("#dlg-portrait"));
@@ -43713,16 +43716,31 @@
       }
       if (this.faceN) this.faceN.setMood(m === "cry" ? "cry" : null);
       this.bodyMood(m === "cry" ? "cry" : null);
+      if (m === "cry") this.react("cry");
     },
     restMood(text) {
       if (!this.faceN) return;
       const m = moodOf(text);
       this.faceN.setMood(m, m === "wow" ? 900 : 0);
       this.bodyMood(m);
+      this.react(m);
+    },
+    /** 듣는 나의 얼굴 — 상대 감정을 그대로 베끼지 않고 대화에서 흔한 반응으로: 울음 · 처짐 → 안쓰러운 얼굴(처짐) ·
+        웃음 → 같이 웃음 · 놀람 → 잠깐 놀람 · 담담 → 담담. ★ 상대가 우는데 내가 웃고 있으면 안 된다(사용자 지적) — 기본 얼굴도 입꼬리가 올라가 있어
+        담담한 줄 뒤에도 앞 반응을 한 박자 남긴다. 사연: docs/code-history.md#h207 */
+    react(m) {
+      if (!this.faceM || !this.faceM.on) return;
+      const r = m === "cry" || m === "sad" ? "sad" : m === "happy" ? "happy" : m === "wow" ? "wow" : null;
+      clearTimeout(this._reactT);
+      this._reactT = setTimeout(() => {
+        if (!this.faceM || !this.faceM.on || this.saying) return;
+        if (r || this.faceM.mood !== "sad") this.faceM.setMood(r, r === "wow" ? 900 : 0);
+        this.bodyMood(r === "sad" || r === "happy" ? r : null, $("#dlg-me").parentElement);
+      }, r === "sad" ? 260 : 380);
     },
     /** 몸짓 — 감싼 칸(.dlg-pwrap)이 맡는다: 웃음 = 두 번 들썩 · 처짐 = 고개가 내려앉음 · 울음 = 어깨가 떨린다 */
-    bodyMood(m) {
-      const w = $("#dlg-portrait").parentElement;
+    bodyMood(m, wrap2) {
+      const w = wrap2 || $("#dlg-portrait").parentElement;
       if (!w) return;
       w.classList.remove("m-happy", "m-sad", "m-cry");
       if (m === "happy" || m === "sad" || m === "cry") {
@@ -43739,6 +43757,9 @@
       this.stopType();
       $("#dlg-text").textContent = `“${c.t}”`;
       this.faceM.setTalk(true);
+      clearTimeout(this._reactT);
+      const own = moodOf(c.t);
+      if (own) this.faceM.setMood(own === "wow" ? "wow" : own, own === "wow" ? 900 : 0);
       if (this.faceN) this.faceN.setMood(null);
       const t = setTimeout(() => this.endSay(true), Math.min(1300, 420 + c.t.length * 28));
       const nm = $("#dlg-name"), was = nm.textContent;

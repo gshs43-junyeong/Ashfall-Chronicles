@@ -36,6 +36,8 @@ export const DialogueUIPart: Bag = {
     const me = G.spritesOn && G.player ? this.faceUrl('pc_' + (G.player.charId || 'wanderer')) : null;
     $('#dlg-mewrap').classList.toggle('on', !!me);
     this.faceM.set(me);
+    clearTimeout(this._reactT);
+    this.bodyMood(null, $('#dlg-me').parentElement);
     this.speaker(false);
     $('#dlg-name').textContent = `${d.n} · ${d.role}`;
     this.popBubble(false);
@@ -57,7 +59,7 @@ export const DialogueUIPart: Bag = {
     if (this.faceN) this.faceN.setTalk(npc);
   },
   /* ---- 움직이는 초상(ui/portrait.ts) — 표정 띠는 매니페스트 npc.anim 에 있는 것만 ---- */
-  faceN: null, faceM: null, saying: null,
+  faceN: null, faceM: null, saying: null, _reactT: 0,
   faces() {
     if (!this.faceN) { this.faceN = new Face($('#dlg-portrait')); this.faceM = new Face($('#dlg-me')); }
   },
@@ -76,16 +78,31 @@ export const DialogueUIPart: Bag = {
     /* 우는 줄은 말하는 동안에도 운다 — 나머지 표정은 줄이 다 흐른 뒤에 */
     if (this.faceN) this.faceN.setMood(m === 'cry' ? 'cry' : null);
     this.bodyMood(m === 'cry' ? 'cry' : null);
+    if (m === 'cry') this.react('cry');               // 우는 걸 듣는 순간부터 웃는 얼굴이면 안 된다
   },
   restMood(text: string) {
     if (!this.faceN) return;
     const m = moodOf(text);
     this.faceN.setMood(m, m === 'wow' ? 900 : 0);
     this.bodyMood(m);
+    this.react(m);
+  },
+  /** 듣는 나의 얼굴 — 상대 감정을 그대로 베끼지 않고 대화에서 흔한 반응으로: 울음 · 처짐 → 안쓰러운 얼굴(처짐) ·
+      웃음 → 같이 웃음 · 놀람 → 잠깐 놀람 · 담담 → 담담. ★ 상대가 우는데 내가 웃고 있으면 안 된다(사용자 지적) — 기본 얼굴도 입꼬리가 올라가 있어
+      담담한 줄 뒤에도 앞 반응을 한 박자 남긴다. 사연: docs/code-history.md#h207 */
+  react(m: string | null) {
+    if (!this.faceM || !this.faceM.on) return;
+    const r = m === 'cry' || m === 'sad' ? 'sad' : m === 'happy' ? 'happy' : m === 'wow' ? 'wow' : null;
+    clearTimeout(this._reactT);
+    this._reactT = setTimeout(() => {                 // 듣고 나서 표정이 바뀐다 — 동시에 바뀌면 거울처럼 보였다
+      if (!this.faceM || !this.faceM.on || this.saying) return;
+      if (r || this.faceM.mood !== 'sad') this.faceM.setMood(r, r === 'wow' ? 900 : 0);
+      this.bodyMood(r === 'sad' || r === 'happy' ? r : null, $('#dlg-me').parentElement);
+    }, r === 'sad' ? 260 : 380);
   },
   /** 몸짓 — 감싼 칸(.dlg-pwrap)이 맡는다: 웃음 = 두 번 들썩 · 처짐 = 고개가 내려앉음 · 울음 = 어깨가 떨린다 */
-  bodyMood(m: string | null) {
-    const w = $('#dlg-portrait').parentElement;
+  bodyMood(m: string | null, wrap?: HTMLElement | null) {
+    const w = wrap || $('#dlg-portrait').parentElement;
     if (!w) return;
     w.classList.remove('m-happy', 'm-sad', 'm-cry');
     if (m === 'happy' || m === 'sad' || m === 'cry') { void w.offsetWidth; w.classList.add('m-' + m); }
@@ -99,6 +116,9 @@ export const DialogueUIPart: Bag = {
     this.stopType();
     $('#dlg-text').textContent = `“${c.t}”`;
     this.faceM.setTalk(true);
+    clearTimeout(this._reactT);
+    const own = moodOf(c.t);                          // 내 말에 감정이 실렸으면 그것, 아니면 듣던 얼굴 그대로
+    if (own) this.faceM.setMood(own === 'wow' ? 'wow' : own, own === 'wow' ? 900 : 0);
     if (this.faceN) this.faceN.setMood(null);
     const t = setTimeout(() => this.endSay(true), Math.min(1300, 420 + c.t.length * 28));
     const nm = $('#dlg-name'), was = nm.textContent;

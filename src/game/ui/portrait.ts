@@ -56,7 +56,7 @@ export class Face {
       f = ['base', 'talk1', 'talk2'][this.mouth];
       if (f === 'base' && this.mood === 'happy') f = 'happy';
     } else if (this.mood) f = this.mood;
-    if (this.talk && this.mood === 'cry' && this.mouth === 0) f = 'cry';   // 우는 채로 말한다 — 입이 닫히는 박자마다 우는 얼굴
+    if (this.talk && this.mouth === 0 && (this.mood === 'cry' || this.mood === 'sad')) f = this.mood;   // 울며 · 처진 채로 말한다 — 입이 닫히는 박자에 웃는 입이 끼지 않게
     if (eye && (f === 'base' || f === 'talk1' || f === 'talk2' || f === 'wow')) f = eye;   // 웃는 눈 · 처진 눈은 이미 감겨 있다
     this.draw(PFRAME[f]);
   }
