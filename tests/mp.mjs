@@ -30,8 +30,10 @@ const seen = await guest.evaluate(() => ({ seed: G.world.seed, n: G.players.leng
 check(seen.seed === 'd1' && seen.n === 2 && seen.hostName === 'Host', `참가자가 호스트 세계(${seen.seed})에서 호스트를 본다 (${seen.n}명)`);
 
 const x0 = await guest.evaluate(() => G.me.x);
-// 0.9초는 헤드리스 프레임에 따라 100px 기준선에 걸렸다(같은 판에서 81~101px) — 1.3초 걷는다
-await guest.keyboard.down('d'); await guest.waitForTimeout(1300); await guest.keyboard.up('d');
+// 시간으로 걸으면 헤드리스 프레임 빠르기에 따라 거리가 흔들렸다(1.3초에 81~148px) — 130px 를 걸을 때까지(최대 4초) 걷는다
+await guest.keyboard.down('d');
+await guest.waitForFunction(x0 => G.me.x - x0 > 130, x0, { timeout: 4000, polling: 50 }).catch(() => {});
+await guest.keyboard.up('d');
 await guest.waitForTimeout(700);
 const r = await host.evaluate(() => { const g = G.players.find(p => p.remote); return g ? { x: g.x, name: g.name, n: G.players.length } : null; });
 const gx = await guest.evaluate(() => G.me.x);
