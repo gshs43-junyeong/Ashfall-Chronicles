@@ -25,12 +25,19 @@ export function organAt(e: { cx: number; cy: number }, dx: number, dy: number): 
 /** 오르간이 디딘 바닥(px) */
 export const organFloor = (e: { cx: number; cy: number }) => e.cy + (ORGAN.BASE - ORGAN.CORE[1]) * ORGAN.K;
 
+/** 누운 손의 그림 범위(손목 기준) — 손가락이 바깥으로 165px · 위 24 · 아래 31. 판정 · 예고 · 그림이 같이 쓴다 */
+export const HAND = { back: 10, len: 165, up: 24, dn: 31 };
+/** 손이 차지하는 상자 [x0, y0, x1, y1] — s 쪽으로 뻗는다 */
+export function handBox(hx: number, hy: number, s: number): [number, number, number, number] {
+  const a = hx - s * HAND.back, b = hx + s * HAND.len;
+  return [Math.min(a, b), hy - HAND.up, Math.max(a, b), hy + HAND.dn];
+}
 const smooth = (u: number) => { const v = u < 0 ? 0 : u > 1 ? 1 : u; return v * v * (3 - 2 * v); };
 /** 팔 쓸기 중 손의 자리 — 치켜듦(tele) → 바깥으로 쓸기(dur) → 쉬는 자리로. 판정(game/boss-sig)과 그림(game/boss-organ-art)이 같이 쓴다 */
 export function sweepHand(h: Bag, b: { cx: number; cy: number }): [number, number, number] {
   const [sx, sy] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
-  const fy = organFloor(b), reach = ORGAN.L1 + ORGAN.L2 - 30, bandY = fy - (h.low ? 16 : 92);
-  const rest: [number, number] = [sx + h.s * 150, fy - 10], up: [number, number] = [sx + h.s * 80, sy - 150];
+  const fy = organFloor(b), reach = ORGAN.L1 + ORGAN.L2 - 30, bandY = fy - (h.low ? HAND.dn + 2 : 104);
+  const rest: [number, number] = [sx + h.s * 150, fy - HAND.dn - 2], up: [number, number] = [sx + h.s * 80, sy - 150];
   const t = h.t;
   if (t < h.tele) { const k = smooth(t / h.tele); return [rest[0] + (up[0] - rest[0]) * k, rest[1] + (up[1] - rest[1]) * k, 0]; }
   if (t < h.tele + h.dur) {
@@ -40,10 +47,17 @@ export function sweepHand(h: Bag, b: { cx: number; cy: number }): [number, numbe
   const k = smooth((t - h.tele - h.dur) / 0.55), ex = sx + h.s * reach;
   return [ex + (rest[0] - ex) * k, bandY + (rest[1] - bandY) * k, 2];
 }
+/** 쓸고 지나갈 띠 [x0, x1, 위, 아래] — 손이 지나는 길 전체(예고 그림이 판정과 같은 자리를 짚게) */
+export function sweepBand(h: Bag, b: { cx: number; cy: number }): [number, number, number, number] {
+  const [sx] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
+  const fy = organFloor(b), reach = ORGAN.L1 + ORGAN.L2 - 30, y = fy - (h.low ? HAND.dn + 2 : 104);
+  const a = sx + h.s * (110 - HAND.back), e = sx + h.s * (reach + HAND.len);
+  return [Math.min(a, e), Math.max(a, e), y - HAND.up, y + HAND.dn];
+}
 /** 쉬는 손 — 바닥을 짚고 숨에 맞춰 조금 오르내린다 */
 export function restHand(b: { cx: number; cy: number }, s: number, T: number): [number, number] {
   const [sx] = organAt(b, 40 + s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
-  return [sx + s * (150 + Math.sin(T * 1.3 + s) * 6), organFloor(b) - 10 - Math.max(0, Math.sin(T * 1.3 + s)) * 4];
+  return [sx + s * (150 + Math.sin(T * 1.3 + s) * 6), organFloor(b) - HAND.dn - 2 - Math.max(0, Math.sin(T * 1.3 + s)) * 4];
 }
 
 export const BossOrgan: Bag & ThisType<Enemy> = {

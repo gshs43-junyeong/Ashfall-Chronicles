@@ -6,7 +6,7 @@ import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
 import { Part, Proj } from '../entity.js';
 import { Game } from '../game.js';
-import { STRIKE_ART } from './boss-hazard-art.js';
+import { STRIKE_ART, groundZone } from './boss-hazard-art.js';
 import { BEAM_ART, VORTEX_ART, WALL_ART, WAVE_ART, ZONE_ART, drawPush } from './boss-field-art.js';
 import { drawDecoy, drawTell } from './boss-tell-art.js';
 import { drawArm } from './boss-pool-art.js';
@@ -182,10 +182,7 @@ export const BossHazardPart: Bag = {
           if (!art) { if (!h.done) this.drawPlainTell(c, h, x, y, col, k); break; }
           if (!h.done) {
             /* 예고 바닥 — 맞을 자리는 늘 옅게 짚어 준다(그림이 작아도 피할 칸이 보이게) */
-            c.globalAlpha = 0.18 + 0.22 * k; c.strokeStyle = col; c.lineWidth = 1.5; c.setLineDash([5, 5]);
-            if (h.shape === 'col') c.strokeRect(x - h.w / 2 + 0.5, y - 3, h.w - 1, 3);
-            else { c.beginPath(); c.ellipse(x, y - 1, h.r, h.r * 0.26, 0, 0, TAU); c.stroke(); }
-            c.setLineDash([]); c.globalAlpha = 1;
+            groundZone(c, x, y - 1, h.shape === 'col' ? h.w / 2 : h.r, art.zone || col, k, T0);
             art.tell(c, h, x, y, k, T0);
           } else if (!art.lit) art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);   // lit 은 빛 앞에서(drawBossLit)
         } break;

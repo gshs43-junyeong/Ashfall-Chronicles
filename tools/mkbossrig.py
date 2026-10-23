@@ -393,9 +393,9 @@ def organ_parts(f):
         F.part('clay', BONE_L, bevel=1.6).ell(5, 12, 3.4, 4)
         F.part('clay', BONE_L, bevel=1.4).ell(58, 12, 2.6, 3.6)
     else:
-        F.part('clay', BONE, bevel=2.4).poly([(3, 8), (24, 4), (34, 8), (34, 17), (22, 20), (3, 16)])    # 견갑 날 손바닥
-        fine(F, (6, 12), (30, 9), BONE_D); fine(F, (6, 14), (30, 14), BONE_D)
-        for k, (y0, ln) in enumerate(((6, 26), (10, 28), (14, 27), (18, 22))):
+        F.part('clay', BONE, bevel=2.4).poly([(3, 8), (22, 3.5), (35, 5), (36, 20.5), (22, 22.2), (3, 16.5)])    # 견갑 날 손바닥 — 네 손가락 뿌리를 다 덮게(아래 손가락이 잘려 보였다)
+        fine(F, (6, 11), (31, 8), BONE_D); fine(F, (6, 14), (31, 16), BONE_D)
+        for k, (y0, ln) in enumerate(((6, 26), (10, 28), (14, 27), (18, 25))):
             F.part('clay', BONE if k % 2 else BONE_L, bevel=1.2).cap(33, y0 + 1, 33 + ln * 0.55, y0, 1.6, 1.3)
             F.part('clay', BONE, bevel=1.1).cap(33 + ln * 0.55, y0, 33 + ln, y0 + 2.5 + k * 0.4, 1.3, 0.7)
     return F.render()

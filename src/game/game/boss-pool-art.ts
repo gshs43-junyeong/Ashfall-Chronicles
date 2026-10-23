@@ -3,7 +3,7 @@ import { TAU } from '../../engine/core/math.js';
 import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
 import { poolHalf } from '../entity/boss-pool.js';
-import { STRIKE_ART, glob, hs } from './boss-hazard-art.js';
+import { STRIKE_ART, glob, groundZone, hs } from './boss-hazard-art.js';
 /* ★ 팔 · 기둥은 빛 단계 **앞**(actors)에서 칠한다(boss-hazards `drawBossLit`) — fx 단계에 두면 어둠을 안 받아 몸만 어둡고
    팔은 밝고 납작하게 떠 '꺼진 그림'처럼 보였다. 예고 그림자만 fx 에 남긴다(어두워도 보여야 피한다).
    재질은 몸과 같은 붓으로 구운 결(조각 시트 6번)을 무늬로 깔고, 원통 명암 · 박힌 잡동사니를 그 위에 얹는다. 사연: docs/code-history.md#h213 */
@@ -222,13 +222,12 @@ export function drawArmTell(c: C2, h: Bag, cx0: number, cy0: number) {
   if (h.t >= h.slam) return;
   const tx = h.tx - cx0, ty = h.ty - cy0, u = easeOut(clamp01(h.t / h.slam));
   c.fillStyle = `rgba(20,16,14,${0.2 + 0.5 * u})`; c.beginPath(); c.ellipse(tx, ty + 1, 40 + 30 * u, 8, 0, 0, TAU); c.fill();
-  c.strokeStyle = h.c; c.globalAlpha = 0.35 + 0.4 * u; c.setLineDash([6, 5]); c.lineWidth = 1.5;
-  c.beginPath(); c.ellipse(tx, ty + 1, 62, 12, 0, 0, TAU); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+  groundZone(c, tx, ty, 64, '#ff8a40', u, h.t);           // 바닥 밑에서 잿불이 비친다
 }
 
 /* 잿물 기둥 · 범람 — 바닥이 끓다가(예고, 빛 뒤) 솟는다(빛 앞 — lit). 폭이 넓으면 둑 넘는 물결(범람) */
 STRIKE_ART.sludge = {
-  lit: true,
+  lit: true, zone: '#ff8a40',
   tell(c, h, x, y, k, T) {
     const w = h.shape === 'col' ? h.w : h.r * 2, n = Math.max(3, Math.floor(w / 22));
     c.fillStyle = `rgba(30,26,24,${0.25 + 0.45 * k})`; c.fillRect(x - w / 2, y - 4, w, 4);

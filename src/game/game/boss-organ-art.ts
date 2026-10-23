@@ -2,9 +2,9 @@
 import { mixin } from '../../engine/core/mixin.js';
 import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
-import { ORGAN, organAt, organFloor, restHand, sweepHand } from '../entity/boss-organ.js';
+import { ORGAN, organAt, organFloor, restHand, sweepBand, sweepHand } from '../entity/boss-organ.js';
 import { Game } from '../game.js';
-import { hzGlow } from './boss-hazard-art.js';
+import { flowBand, groundZone, hs, hzGlow } from './boss-hazard-art.js';
 /* ★ 몸은 objects 단계(인물 뒤 · 빛 앞)에 그린다 — 뒷벽에 박힌 것이라 플레이어가 그 앞을 지나간다. 팔은 바닥을 쓸어 플레이어를 치므로
    actors 단계(인물 앞 · 빛 앞), 혼불 · 관 입의 빛은 fx 단계(빛 뒤 — 어두운 무덤에서도 보여야 박자를 읽는다). drawEnemy 는 이 보스를 건너뛴다. */
 
@@ -76,9 +76,14 @@ export const BossOrganArt: Bag = {
       for (const s of [-1, 1]) {
         const [sx, sy] = organAt(e, 40 + s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
         const h = sweeps[s];
-        const [hx, hy] = h ? sweepHand(h, e) : restHand(e, s, T);
+        const [hx, hy, ph] = h ? sweepHand(h, e) : [...restHand(e, s, T), -1];
         const [ex, ey] = elbow(sx, sy, hx, hy, s);
         c.save(); c.translate(-cx0, -cy0);
+        if (ph === 1 && im) for (let g = 3; g >= 1; g--) {      // 잔상 — 쓰는 손이 지나온 자리에 흐리게 셋(빠르기가 손에 남는다)
+          const [gx, gy] = sweepHand(Object.assign({}, h, { t: h.t - g * 0.035 }), e);
+          c.save(); c.globalAlpha = 0.32 / g; c.translate(gx, gy); if (s < 0) { c.rotate(Math.PI); c.scale(1, -1); }
+          c.drawImage(im, 2 * PW, 0, PW, PH, -10, -PH * 0.36, PW * 0.72, PH * 0.72); c.restore();
+        }
         bone(c, im, 0, sx, sy, ex, ey, 20);
         bone(c, im, 1, ex, ey, hx, hy, 20);
         /* 손 — 쉴 때 · 쓸 때는 손바닥을 바닥에 눕히고(손가락이 바깥을 향한다), 치켜든 동안만 아래팔을 따라 뻗는다 */
@@ -117,22 +122,24 @@ export const BossOrganArt: Bag = {
       });
     }
   },
-  /** 팔 쓸기 예고(fx · drawSig 에서) — 쓸 높이의 띠: 낮게 = 바닥 띠(뛰어넘는다) · 높게 = 머리 위 띠(선 채로) */
+  /** 팔 쓸기 예고(fx · drawSig 에서) — 쓸 띠에 바람결이 바깥으로 흐르고(다가올수록 빨라짐), 낮으면 바닥이 빛나며 뼛가루가 들썩인다.
+     높으면 띠가 머리 높이에 떠 바닥은 비어 있다 — 서 있으면 지나간다는 것이 그림으로 읽힌다 */
   drawSweepTell(c: C2, h: Bag, cx0: number, cy0: number) {
     const b = this.hzBoss(h); if (!b || h.t >= h.tele + h.dur) return;
-    const [sx] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y), fy = organFloor(b);
-    const x0 = sx + h.s * 100, x1 = sx + h.s * (ORGAN.L1 + ORGAN.L2 - 10), top = h.low ? fy - 34 : fy - 112, bot = h.low ? fy : fy - 66;
+    const [x0, x1, top, bot] = sweepBand(h, b), T = T0(this);
     const k = Math.min(1, h.t / h.tele), fade = h.t > h.tele ? 1 - (h.t - h.tele) / h.dur : 1;
-    c.globalAlpha = (0.14 + 0.2 * k) * fade; c.fillStyle = h.c;
-    c.fillRect(Math.min(x0, x1) - cx0, top - cy0, Math.abs(x1 - x0), bot - top);
-    c.globalAlpha = (0.5 + 0.4 * k) * fade; c.strokeStyle = h.c; c.lineWidth = 1.5; c.setLineDash([8, 6]);
-    c.strokeRect(Math.min(x0, x1) - cx0 + 0.5, top - cy0 + 0.5, Math.abs(x1 - x0), bot - top); c.setLineDash([]);
-    c.fillStyle = h.c;                                      // 갈래 표지 — 낮으면 위로 뛰는 화살 · 높으면 아래로 누르는 화살
-    for (let x = Math.min(x0, x1) + 30; x < Math.max(x0, x1); x += 70) {
-      const y = (h.low ? top - 10 : bot + 10) - cy0, d = h.low ? -1 : 1, bob = Math.sin(T0(this) * 8 + x) * 2;
-      c.beginPath(); c.moveTo(x - cx0 - 6, y + bob); c.lineTo(x - cx0 + 6, y + bob); c.lineTo(x - cx0, y + bob + d * 8); c.closePath(); c.fill();
-    }
-    c.globalAlpha = 1;
+    c.save(); c.globalAlpha = fade;
+    flowBand(c, (h.id || 0) * 0.37, x0 - cx0, x1 - cx0, top - cy0, bot - cy0, h.s, h.c, h.t > h.tele ? 1 : k, T);
+    if (h.low) {
+      const fy = organFloor(b) - cy0, n = Math.floor((x1 - x0) / 18);
+      groundZone(c, (x0 + x1) / 2 - cx0, fy, (x1 - x0) / 2, h.c, k, T);
+      c.fillStyle = '#e8dcbc';                              // 뼛가루가 바닥에서 들썩인다 — 쓸 때가 다가올수록 높이
+      for (let i = 0; i < n; i++) {
+        const px = x0 + (i + hs(h.id || 1, i)) * (x1 - x0) / n - cx0, hop = Math.abs(Math.sin(T * (9 + hs(h.id || 1, i + 7) * 6) + i)) * (1 + k * 5);
+        c.globalAlpha = fade * (0.3 + 0.5 * k); c.fillRect(px, fy - 2 - hop, 2, 2);
+      }
+    } else groundZone(c, (x0 + x1) / 2 - cx0, (top + bot) / 2 - cy0, (x1 - x0) / 2, h.c, k * 0.6, T);
+    c.restore();
   },
 };
 function T0(g: Bag) { return g.time || 0; }

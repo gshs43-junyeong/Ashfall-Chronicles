@@ -2,7 +2,7 @@
 import { mixin } from '../../engine/core/mixin.js';
 import { TS } from '../world.js';
 import { Proj } from '../entity.js';
-import { sweepHand } from '../entity/boss-organ.js';
+import { HAND, handBox, sweepHand } from '../entity/boss-organ.js';
 import { Game } from '../game.js';
 /* ★ 피해 · 탄 · 새 위험 지대는 호스트만 만든다(host). 붙잡힘 · 물속 느려짐은 화면마다 제 플레이어(me)에게.
    호스트가 바꾼 상태(밟힌 버섯 · 드론 경보)는 bhzp 로 보내 참가자 그림도 같게 한다. 기술 쪽은 entity/boss-signature. */
@@ -50,8 +50,11 @@ export const BossSigPart: Bag = {
         const b = this.hzBoss(h); if (!b) return true;
         const [hx, hy, ph] = sweepHand(h, b);
         if (ph === 1) {
-          if (host) h.hit = (h.hit || []).concat(this.hitPlayersRect(hx - 40, hy - 20, hx + 40, hy + 20, h.dmg, h.hit));
-          this.organSweepFx(hx, hy + (h.low ? 14 : 0), !!h.low);
+          if (host) {
+            const nw = this.hitPlayersRect(...handBox(hx, hy, h.s), h.dmg, h.hit);
+            if (nw.length) { h.hit = (h.hit || []).concat(nw); this.organSweepHitFx(nw.map((i: number) => this.players[i]), h.s); }
+          }
+          this.organSweepFx(hx + h.s * HAND.len * 0.5, hy + (h.low ? HAND.dn - 2 : 0), !!h.low);
           if (!h.snd) { h.snd = 1; this.sfxAt && this.sfxAt('organ_sweep', hx / TS, hy / TS); }
         }
       } return true;

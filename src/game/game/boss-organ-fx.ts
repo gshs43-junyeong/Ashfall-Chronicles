@@ -22,6 +22,15 @@ export const BossOrganFx: Bag = {
       if (Math.random() < 0.5) this.vfx.sparks(x, y - 4, 2, '#f2e2b8', 260, -Math.PI / 2, 1.4, 0.35, 700);
     } else if (Math.random() < 0.5) this.vfx.motes(x, y, 1, '#f2ead4', 16, 20, 0.5, 4);
   },
+  /** 손에 맞은 순간 — 짧은 멈춤 · 흔들림 · 맞은 자리에서 뼛가루가 쓸려 간 쪽으로 튄다(손맛) */
+  organSweepHitFx(qs: any[], s: number) {
+    this.hitStop && this.hitStop(0.09); this.shake = Math.max(this.shake, 9);
+    for (const q of qs) {
+      this.vfx.flare(q.cx, q.cy, 54, '#f4ecd2', 0.16, 'impact');
+      this.vfx.sparks(q.cx, q.cy, 14, '#f2e2b8', 420, s > 0 ? 0 : Math.PI, 0.9, 0.4, 500);
+      this.vfx.puffs(q.cx, q.y + q.h - 6, 3, 18, DUST, 0.8, 16);
+    }
+  },
   /** 풀무 — 들이켤 때 갈비 틈으로 김이 빨려 들고, 열리는 순간 혼불이 솟는다 */
   organBreathFx(e: Enemy, opening: boolean) {
     if (!opening) { this.vfx.converge(e.cx, e.cy, 120, 10, SOUL, 0.6); return; }

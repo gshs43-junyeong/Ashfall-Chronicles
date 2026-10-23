@@ -23,6 +23,56 @@ export function hzGlow(c: C2, x: number, y: number, r: number, col: string, a: n
 export function floorMark(c: C2, x: number, y: number, rx: number, col: string, a: number) {
   c.globalAlpha = a; c.fillStyle = col; c.beginPath(); c.ellipse(x, y - 1, Math.max(1, rx), Math.max(1, rx * 0.26), 0, 0, TAU); c.fill(); c.globalAlpha = 1;
 }
+/** 더해 그리는 빛은 어두운 색이면 안 보인다 — 밝기가 낮으면 흰빛 쪽으로 끌어올린다 */
+function lift(hex: string) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255, L = (r * 0.3 + g * 0.59 + b * 0.11) / 255;
+  if (L >= 0.45) return hex;
+  const t = (0.45 - L) / 0.45 * 0.7, m = (v: number) => Math.round(v + (255 - v) * t);
+  return '#' + ((m(r) << 16) | (m(g) << 8) | m(b)).toString(16).padStart(6, '0');
+}
+/** 맞을 바닥 — 테 없이 번지는 빛. 가운데가 짙고 가장자리로 사라지며, 맞기 직전(k → 1)에 숨 가쁘게 깜박인다.
+    ★ 점선 테로 되돌리지 말 것(칸을 그어 둔 듯 납작했다). 사연: docs/code-history.md#h215 */
+export function groundZone(c: C2, x: number, y: number, rx: number, col: string, k: number, T: number) {
+  if (rx <= 0) return;
+  col = lift(col);
+  const beat = k > 0.75 ? 0.5 + 0.5 * Math.sin(T * (18 + k * 20)) : 0, a = 0.2 + 0.45 * k + 0.2 * beat;
+  const ry = Math.max(5, Math.min(18, rx * 0.2));
+  c.save(); c.translate(x, y); c.scale(1, ry / rx);
+  const g = c.createRadialGradient(0, 0, 0, 0, 0, rx);
+  g.addColorStop(0, rgba(col, a)); g.addColorStop(0.6, rgba(col, a * 0.55)); g.addColorStop(1, rgba(col, 0));
+  c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.beginPath(); c.arc(0, 0, rx, 0, TAU); c.fill();
+  c.restore();
+  const hh = Math.min(46, 14 + rx * 0.25) * (0.5 + k * 0.6);      // 바닥에서 피어오르는 엷은 빛 — 납작한 얼룩이 아니라 '여기서 솟는다'
+  const vg = c.createLinearGradient(0, y, 0, y - hh);
+  vg.addColorStop(0, rgba(col, a * 0.55)); vg.addColorStop(1, rgba(col, 0));
+  c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = vg;
+  c.beginPath(); c.moveTo(x - rx, y); c.quadraticCurveTo(x - rx * 0.6, y - hh * 0.6, x, y - hh); c.quadraticCurveTo(x + rx * 0.6, y - hh * 0.6, x + rx, y); c.closePath(); c.fill(); c.restore();
+  const lg = c.createLinearGradient(x - rx, 0, x + rx, 0);       // 바닥 결을 따라 한 줄 — 끝이 사라진다
+  lg.addColorStop(0, rgba(col, 0)); lg.addColorStop(0.5, rgba(col, 0.35 + 0.5 * k + 0.15 * beat)); lg.addColorStop(1, rgba(col, 0));
+  c.fillStyle = lg; c.fillRect(x - rx, y - 1, rx * 2, 1.5);
+}
+/** 쓸고 지나갈 띠 — 가장자리가 녹는 기운 + 쓸 방향으로 흐르는 바람결(가늘어지는 줄). 다가올수록 빨라진다 */
+export function flowBand(c: C2, sd: number, x0: number, x1: number, top: number, bot: number, dir: number, col: string, k: number, T: number) {
+  const w = x1 - x0, h = bot - top; if (w <= 0 || h <= 0) return;
+  col = lift(col);
+  const beat = k > 0.8 ? 0.5 + 0.5 * Math.sin(T * 40) : 0, n = 6;
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) {                                     // 위아래로도 녹게 — 가운데 줄이 가장 짙다
+    const v = (i + 0.5) / n, a = (0.05 + 0.16 * k + 0.08 * beat) * Math.sin(v * Math.PI);
+    const g = c.createLinearGradient(x0, 0, x1, 0);
+    g.addColorStop(0, rgba(col, 0)); g.addColorStop(0.15, rgba(col, a)); g.addColorStop(0.85, rgba(col, a)); g.addColorStop(1, rgba(col, 0));
+    c.fillStyle = g; c.fillRect(x0, top + i * h / n, w, h / n + 0.5);
+  }
+  const m = Math.max(4, Math.floor(w / 26)), sp = 0.35 + k * 1.6;
+  for (let i = 0; i < m; i++) {
+    const u = ((hs(sd, i) + T * sp * (0.7 + hs(sd, i + 40) * 0.6)) % 1), px = dir > 0 ? x0 + u * w : x1 - u * w;
+    const py = top + (0.15 + hs(sd, i + 9) * 0.7) * h, len = (18 + hs(sd, i + 5) * 34) * (0.6 + k * 0.8), fade = Math.sin(u * Math.PI);
+    const g = c.createLinearGradient(px - dir * len, 0, px, 0);
+    g.addColorStop(0, rgba(col, 0)); g.addColorStop(1, rgba(col, (0.25 + 0.5 * k) * fade));
+    c.fillStyle = g; c.fillRect(Math.min(px, px - dir * len), py - 0.75, len, 1.5);
+  }
+  c.restore();
+}
 /** 지그재그 번개 줄 — 점 목록 */
 export function jag(sd: number, x0: number, y0: number, x1: number, y1: number, n: number, amp: number) {
   const p: number[] = [x0, y0];
@@ -229,7 +279,7 @@ export function meteorRock(c: C2, sd: number, x: number, y: number, r: number, d
 /** 위에서 오는 것의 출발 높이 — 천장이 있으면 천장, 없으면 화면 위쪽 */
 const topOf = (h: Bag, y: number) => Math.max(h.top !== undefined ? h.top : -1e9, h.y - 460) - h.y + y;
 
-export const STRIKE_ART: Record<string, { lit?: boolean; tell: (c: C2, h: Bag, x: number, y: number, k: number, T: number) => void; hit: (c: C2, h: Bag, x: number, y: number, f: number, T: number) => void }> = {
+export const STRIKE_ART: Record<string, { lit?: boolean; zone?: string; tell: (c: C2, h: Bag, x: number, y: number, k: number, T: number) => void; hit: (c: C2, h: Bag, x: number, y: number, f: number, T: number) => void }> = {
   ice: {
     tell(c, h, x, y, k, T) {
       if (h.dir === 'up') {                                              // 얼음 감옥 — 땅에 서리 금이 번지고 얼음 끝이 비죽 나온다

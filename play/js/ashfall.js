@@ -38417,10 +38417,13 @@
   var boss_organ_exports = {};
   __export(boss_organ_exports, {
     BossOrgan: () => BossOrgan,
+    HAND: () => HAND,
     ORGAN: () => ORGAN,
+    handBox: () => handBox,
     organAt: () => organAt,
     organFloor: () => organFloor,
     restHand: () => restHand,
+    sweepBand: () => sweepBand,
     sweepHand: () => sweepHand
   });
   var oid = 0;
@@ -38441,14 +38444,19 @@
     return [e.cx + (dx - ORGAN.CORE[0]) * ORGAN.K, e.cy + (dy - ORGAN.CORE[1]) * ORGAN.K];
   }
   var organFloor = (e) => e.cy + (ORGAN.BASE - ORGAN.CORE[1]) * ORGAN.K;
+  var HAND = { back: 10, len: 165, up: 24, dn: 31 };
+  function handBox(hx, hy, s) {
+    const a = hx - s * HAND.back, b = hx + s * HAND.len;
+    return [Math.min(a, b), hy - HAND.up, Math.max(a, b), hy + HAND.dn];
+  }
   var smooth = (u) => {
     const v = u < 0 ? 0 : u > 1 ? 1 : u;
     return v * v * (3 - 2 * v);
   };
   function sweepHand(h, b) {
     const [sx, sy] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
-    const fy = organFloor(b), reach = ORGAN.L1 + ORGAN.L2 - 30, bandY = fy - (h.low ? 16 : 92);
-    const rest = [sx + h.s * 150, fy - 10], up = [sx + h.s * 80, sy - 150];
+    const fy = organFloor(b), reach = ORGAN.L1 + ORGAN.L2 - 30, bandY = fy - (h.low ? HAND.dn + 2 : 104);
+    const rest = [sx + h.s * 150, fy - HAND.dn - 2], up = [sx + h.s * 80, sy - 150];
     const t = h.t;
     if (t < h.tele) {
       const k2 = smooth(t / h.tele);
@@ -38461,9 +38469,15 @@
     const k = smooth((t - h.tele - h.dur) / 0.55), ex = sx + h.s * reach;
     return [ex + (rest[0] - ex) * k, bandY + (rest[1] - bandY) * k, 2];
   }
+  function sweepBand(h, b) {
+    const [sx] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
+    const fy = organFloor(b), reach = ORGAN.L1 + ORGAN.L2 - 30, y = fy - (h.low ? HAND.dn + 2 : 104);
+    const a = sx + h.s * (110 - HAND.back), e = sx + h.s * (reach + HAND.len);
+    return [Math.min(a, e), Math.max(a, e), y - HAND.up, y + HAND.dn];
+  }
   function restHand(b, s, T2) {
     const [sx] = organAt(b, 40 + s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
-    return [sx + s * (150 + Math.sin(T2 * 1.3 + s) * 6), organFloor(b) - 10 - Math.max(0, Math.sin(T2 * 1.3 + s)) * 4];
+    return [sx + s * (150 + Math.sin(T2 * 1.3 + s) * 6), organFloor(b) - HAND.dn - 2 - Math.max(0, Math.sin(T2 * 1.3 + s)) * 4];
   }
   var BossOrgan = {
     /** 몸놀림 — 처음에 바닥에 박고, 그다음은 숨만 쉰다(풀무가 열리고 닫힌다) */
@@ -44549,14 +44563,14 @@
       el.style.width = el.style.height = size2 + "px";
       const x0 = a.left + a.width / 2 - size2 / 2, y0 = a.top + a.height / 2 - size2 / 2;
       const dx = b.left + b.width / 2 - size2 / 2 - x0, dy = b.top + b.height / 2 - size2 / 2 - y0;
-      const lift2 = Math.min(90, Math.abs(dx) * 0.3 + 28);
+      const lift3 = Math.min(90, Math.abs(dx) * 0.3 + 28);
       el.style.left = x0 + "px";
       el.style.top = y0 + "px";
       this.fxLayer().appendChild(el);
       const an = el.animate([
         { transform: "translate(0,0) scale(.8)", opacity: 0 },
-        { transform: `translate(${dx * 0.1}px,${dy * 0.1 - lift2 * 0.4}px) scale(1.15)`, opacity: 1, offset: 0.15 },
-        { transform: `translate(${dx * 0.55}px,${dy * 0.55 - lift2}px) scale(.95)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(${dx * 0.1}px,${dy * 0.1 - lift3 * 0.4}px) scale(1.15)`, opacity: 1, offset: 0.15 },
+        { transform: `translate(${dx * 0.55}px,${dy * 0.55 - lift3}px) scale(.95)`, opacity: 1, offset: 0.55 },
         { transform: `translate(${dx}px,${dy}px) scale(.45)`, opacity: 0.15 }
       ], { duration: dur, delay, easing: "cubic-bezier(.45,.05,.55,.95)", fill: "both" });
       an.onfinish = () => el.remove();
@@ -46763,9 +46777,9 @@
       const molt = step === 0 ? 0 : step === 1 ? ease(sk) : 1;
       let cxr = mx + mw / 2, cyr = my + mh - 14, tilt = 0;
       if (step === 2) {
-        const lift2 = ease(seg(sk, 0, 0.3)), go = ease(seg(sk, 0.25, 0.5));
+        const lift3 = ease(seg(sk, 0, 0.3)), go = ease(seg(sk, 0.25, 0.5));
         cxr = lerp(cxr, tx + 30, go);
-        cyr = lerp(cyr, ty - 40, lift2);
+        cyr = lerp(cyr, ty - 40, lift3);
         tilt = ease(seg(sk, 0.45, 0.65)) * 1.15;
       } else if (step === 3) {
         cxr = tx + 30;
@@ -46840,9 +46854,9 @@
         if (cool < 0.6) glow2(c, tx + 48, ty - 5, 30, "#ff8a2a", 0.5 * (1 - cool) * fill);
       }
       if (step === 3) {
-        const lift2 = ease(seg(sk, 0.45, 0.6)), dunk = ease(seg(sk, 0.6, 0.72)), rise = ease(seg(sk, 0.8, 1));
+        const lift3 = ease(seg(sk, 0.45, 0.6)), dunk = ease(seg(sk, 0.6, 0.72)), rise = ease(seg(sk, 0.8, 1));
         if (sk > 0.45) {
-          const ox = lerp(tx + 40, qx + 16, lift2), oy = lerp(ty - 30, qy - 30, lift2) + dunk * 26 * (1 - rise) - rise * 34;
+          const ox = lerp(tx + 40, qx + 16, lift3), oy = lerp(ty - 30, qy - 30, lift3) + dunk * 26 * (1 - rise) - rise * 34;
           hotIcon(c, s.out, ox, oy, 28, Math.max(0, 0.7 - dunk * 0.9));
           if (dunk > 0) {
             puffs(c, qx + 24, qy, 6, t, 0.9, 40 + 20 * (1 - rise), "220,226,236", 0.75 * (1 - rise * 0.6));
@@ -50217,12 +50231,12 @@
       });
       if (this.touch) document.body.classList.add("touch");
       if (this.touch) {
-        const lift2 = () => {
+        const lift3 = () => {
           const bar = $("#tabbar"), r = bar && bar.getBoundingClientRect();
           this.touch.el.style.setProperty("--ti-bottom", (r && r.height ? innerHeight - r.top + 14 : 24) + "px");
         };
-        lift2();
-        addEventListener("resize", lift2);
+        lift3();
+        addEventListener("resize", lift3);
         $$("#skillbar .sk").forEach((el, i) => el.addEventListener("pointerdown", (e) => {
           e.preventDefault();
           if (this.state === "play" && !UI5.dlg && !UI5.open) this.player.useSkill(i, this.input.wx, this.input.wy);
@@ -53090,22 +53104,22 @@
       }
     } },
     s_wolf: { life: 1, draw(c, a, age, k, x, y, foot) {
-      const wx = a.wx - (a.x - x), up = ease2(Math.min(1, age / 0.35)), lift2 = Math.min(1, age / 0.5);
+      const wx = a.wx - (a.x - x), up = ease2(Math.min(1, age / 0.35)), lift3 = Math.min(1, age / 0.5);
       const P2 = [
         [-16, 0],
         [-14, -14],
         [-10, -24],
         [-6, -30],
-        [-4, -38 - 4 * lift2],
-        [-1, -44 - 6 * lift2],
-        [1, -38 - 4 * lift2],
+        [-4, -38 - 4 * lift3],
+        [-1, -44 - 6 * lift3],
+        [1, -38 - 4 * lift3],
         // 엉덩이 · 등 · 목덜미 · 귀
-        [5, -40 - 8 * lift2],
-        [10, -50 - 10 * lift2],
-        [12, -47 - 10 * lift2],
-        [8, -38 - 6 * lift2],
-        [11, -36 - 6 * lift2],
-        [7, -32 - 2 * lift2],
+        [5, -40 - 8 * lift3],
+        [10, -50 - 10 * lift3],
+        [12, -47 - 10 * lift3],
+        [8, -38 - 6 * lift3],
+        [11, -36 - 6 * lift3],
+        [7, -32 - 2 * lift3],
         // 치켜든 주둥이(벌린 입)
         [6, -24],
         [8, -10],
@@ -53130,14 +53144,14 @@
       c.fill();
       c.stroke();
       c.fillStyle = "#5ab8ff";
-      c.fillRect(3, -39 - 6 * lift2, 2, 2);
+      c.fillRect(3, -39 - 6 * lift3, 2, 2);
       c.strokeStyle = "rgba(220,240,255,.7)";
       c.lineWidth = 1.5;
       for (let w = 0; w < 3; w++) {
         const r = 6 + (age * 40 + w * 8) % 24;
         c.globalAlpha = 0.7 * (1 - r / 30) * up * fade;
         c.beginPath();
-        c.arc(12, -50 - 10 * lift2, r, -1.6, -0.4);
+        c.arc(12, -50 - 10 * lift3, r, -1.6, -0.4);
         c.stroke();
       }
       c.restore();
@@ -58843,8 +58857,10 @@
     flame: () => flame,
     fleshSpike: () => fleshSpike,
     floorMark: () => floorMark,
+    flowBand: () => flowBand,
     glob: () => glob,
     glyph: () => glyph,
+    groundZone: () => groundZone,
     hs: () => hs3,
     hzGlow: () => hzGlow,
     iceCluster: () => iceCluster,
@@ -58896,6 +58912,80 @@
     c.ellipse(x, y - 1, Math.max(1, rx), Math.max(1, rx * 0.26), 0, 0, TAU);
     c.fill();
     c.globalAlpha = 1;
+  }
+  function lift2(hex) {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255, L = (r * 0.3 + g * 0.59 + b * 0.11) / 255;
+    if (L >= 0.45) return hex;
+    const t = (0.45 - L) / 0.45 * 0.7, m = (v) => Math.round(v + (255 - v) * t);
+    return "#" + (m(r) << 16 | m(g) << 8 | m(b)).toString(16).padStart(6, "0");
+  }
+  function groundZone(c, x, y, rx, col, k, T2) {
+    if (rx <= 0) return;
+    col = lift2(col);
+    const beat = k > 0.75 ? 0.5 + 0.5 * Math.sin(T2 * (18 + k * 20)) : 0, a = 0.2 + 0.45 * k + 0.2 * beat;
+    const ry = Math.max(5, Math.min(18, rx * 0.2));
+    c.save();
+    c.translate(x, y);
+    c.scale(1, ry / rx);
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, rgba(col, a));
+    g.addColorStop(0.6, rgba(col, a * 0.55));
+    g.addColorStop(1, rgba(col, 0));
+    c.globalCompositeOperation = "lighter";
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(0, 0, rx, 0, TAU);
+    c.fill();
+    c.restore();
+    const hh = Math.min(46, 14 + rx * 0.25) * (0.5 + k * 0.6);
+    const vg = c.createLinearGradient(0, y, 0, y - hh);
+    vg.addColorStop(0, rgba(col, a * 0.55));
+    vg.addColorStop(1, rgba(col, 0));
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    c.fillStyle = vg;
+    c.beginPath();
+    c.moveTo(x - rx, y);
+    c.quadraticCurveTo(x - rx * 0.6, y - hh * 0.6, x, y - hh);
+    c.quadraticCurveTo(x + rx * 0.6, y - hh * 0.6, x + rx, y);
+    c.closePath();
+    c.fill();
+    c.restore();
+    const lg = c.createLinearGradient(x - rx, 0, x + rx, 0);
+    lg.addColorStop(0, rgba(col, 0));
+    lg.addColorStop(0.5, rgba(col, 0.35 + 0.5 * k + 0.15 * beat));
+    lg.addColorStop(1, rgba(col, 0));
+    c.fillStyle = lg;
+    c.fillRect(x - rx, y - 1, rx * 2, 1.5);
+  }
+  function flowBand(c, sd, x0, x1, top, bot, dir, col, k, T2) {
+    const w = x1 - x0, h = bot - top;
+    if (w <= 0 || h <= 0) return;
+    col = lift2(col);
+    const beat = k > 0.8 ? 0.5 + 0.5 * Math.sin(T2 * 40) : 0, n = 6;
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    for (let i = 0; i < n; i++) {
+      const v = (i + 0.5) / n, a = (0.05 + 0.16 * k + 0.08 * beat) * Math.sin(v * Math.PI);
+      const g = c.createLinearGradient(x0, 0, x1, 0);
+      g.addColorStop(0, rgba(col, 0));
+      g.addColorStop(0.15, rgba(col, a));
+      g.addColorStop(0.85, rgba(col, a));
+      g.addColorStop(1, rgba(col, 0));
+      c.fillStyle = g;
+      c.fillRect(x0, top + i * h / n, w, h / n + 0.5);
+    }
+    const m = Math.max(4, Math.floor(w / 26)), sp = 0.35 + k * 1.6;
+    for (let i = 0; i < m; i++) {
+      const u = (hs3(sd, i) + T2 * sp * (0.7 + hs3(sd, i + 40) * 0.6)) % 1, px = dir > 0 ? x0 + u * w : x1 - u * w;
+      const py = top + (0.15 + hs3(sd, i + 9) * 0.7) * h, len = (18 + hs3(sd, i + 5) * 34) * (0.6 + k * 0.8), fade = Math.sin(u * Math.PI);
+      const g = c.createLinearGradient(px - dir * len, 0, px, 0);
+      g.addColorStop(0, rgba(col, 0));
+      g.addColorStop(1, rgba(col, (0.25 + 0.5 * k) * fade));
+      c.fillStyle = g;
+      c.fillRect(Math.min(px, px - dir * len), py - 0.75, len, 1.5);
+    }
+    c.restore();
   }
   function jag(sd, x0, y0, x1, y1, n, amp) {
     const p = [x0, y0];
@@ -61562,18 +61652,11 @@
     c.beginPath();
     c.ellipse(tx, ty + 1, 40 + 30 * u, 8, 0, 0, TAU);
     c.fill();
-    c.strokeStyle = h.c;
-    c.globalAlpha = 0.35 + 0.4 * u;
-    c.setLineDash([6, 5]);
-    c.lineWidth = 1.5;
-    c.beginPath();
-    c.ellipse(tx, ty + 1, 62, 12, 0, 0, TAU);
-    c.stroke();
-    c.setLineDash([]);
-    c.globalAlpha = 1;
+    groundZone(c, tx, ty, 64, "#ff8a40", u, h.t);
   }
   STRIKE_ART.sludge = {
     lit: true,
+    zone: "#ff8a40",
     tell(c, h, x, y, k, T2) {
       const w = h.shape === "col" ? h.w : h.r * 2, n = Math.max(3, Math.floor(w / 22));
       c.fillStyle = `rgba(30,26,24,${0.25 + 0.45 * k})`;
@@ -61820,10 +61903,22 @@
         for (const s of [-1, 1]) {
           const [sx, sy] = organAt(e, 40 + s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
           const h = sweeps[s];
-          const [hx, hy] = h ? sweepHand(h, e) : restHand(e, s, T2);
+          const [hx, hy, ph] = h ? sweepHand(h, e) : [...restHand(e, s, T2), -1];
           const [ex, ey] = elbow(sx, sy, hx, hy, s);
           c.save();
           c.translate(-cx0, -cy0);
+          if (ph === 1 && im) for (let g = 3; g >= 1; g--) {
+            const [gx, gy] = sweepHand(Object.assign({}, h, { t: h.t - g * 0.035 }), e);
+            c.save();
+            c.globalAlpha = 0.32 / g;
+            c.translate(gx, gy);
+            if (s < 0) {
+              c.rotate(Math.PI);
+              c.scale(1, -1);
+            }
+            c.drawImage(im, 2 * PW, 0, PW, PH, -10, -PH * 0.36, PW * 0.72, PH * 0.72);
+            c.restore();
+          }
           bone2(c, im, 0, sx, sy, ex, ey, 20);
           bone2(c, im, 1, ex, ey, hx, hy, 20);
           const fa = Math.atan2(hy - ey, hx - ex), flat = s > 0 ? 0 : Math.PI;
@@ -61870,33 +61965,27 @@
         });
       }
     },
-    /** 팔 쓸기 예고(fx · drawSig 에서) — 쓸 높이의 띠: 낮게 = 바닥 띠(뛰어넘는다) · 높게 = 머리 위 띠(선 채로) */
+    /** 팔 쓸기 예고(fx · drawSig 에서) — 쓸 띠에 바람결이 바깥으로 흐르고(다가올수록 빨라짐), 낮으면 바닥이 빛나며 뼛가루가 들썩인다.
+       높으면 띠가 머리 높이에 떠 바닥은 비어 있다 — 서 있으면 지나간다는 것이 그림으로 읽힌다 */
     drawSweepTell(c, h, cx0, cy0) {
       const b = this.hzBoss(h);
       if (!b || h.t >= h.tele + h.dur) return;
-      const [sx] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y), fy = organFloor(b);
-      const x0 = sx + h.s * 100, x1 = sx + h.s * (ORGAN.L1 + ORGAN.L2 - 10), top = h.low ? fy - 34 : fy - 112, bot = h.low ? fy : fy - 66;
+      const [x0, x1, top, bot] = sweepBand(h, b), T2 = T0(this);
       const k = Math.min(1, h.t / h.tele), fade = h.t > h.tele ? 1 - (h.t - h.tele) / h.dur : 1;
-      c.globalAlpha = (0.14 + 0.2 * k) * fade;
-      c.fillStyle = h.c;
-      c.fillRect(Math.min(x0, x1) - cx0, top - cy0, Math.abs(x1 - x0), bot - top);
-      c.globalAlpha = (0.5 + 0.4 * k) * fade;
-      c.strokeStyle = h.c;
-      c.lineWidth = 1.5;
-      c.setLineDash([8, 6]);
-      c.strokeRect(Math.min(x0, x1) - cx0 + 0.5, top - cy0 + 0.5, Math.abs(x1 - x0), bot - top);
-      c.setLineDash([]);
-      c.fillStyle = h.c;
-      for (let x = Math.min(x0, x1) + 30; x < Math.max(x0, x1); x += 70) {
-        const y = (h.low ? top - 10 : bot + 10) - cy0, d = h.low ? -1 : 1, bob = Math.sin(T0(this) * 8 + x) * 2;
-        c.beginPath();
-        c.moveTo(x - cx0 - 6, y + bob);
-        c.lineTo(x - cx0 + 6, y + bob);
-        c.lineTo(x - cx0, y + bob + d * 8);
-        c.closePath();
-        c.fill();
-      }
-      c.globalAlpha = 1;
+      c.save();
+      c.globalAlpha = fade;
+      flowBand(c, (h.id || 0) * 0.37, x0 - cx0, x1 - cx0, top - cy0, bot - cy0, h.s, h.c, h.t > h.tele ? 1 : k, T2);
+      if (h.low) {
+        const fy = organFloor(b) - cy0, n = Math.floor((x1 - x0) / 18);
+        groundZone(c, (x0 + x1) / 2 - cx0, fy, (x1 - x0) / 2, h.c, k, T2);
+        c.fillStyle = "#e8dcbc";
+        for (let i = 0; i < n; i++) {
+          const px = x0 + (i + hs3(h.id || 1, i)) * (x1 - x0) / n - cx0, hop = Math.abs(Math.sin(T2 * (9 + hs3(h.id || 1, i + 7) * 6) + i)) * (1 + k * 5);
+          c.globalAlpha = fade * (0.3 + 0.5 * k);
+          c.fillRect(px, fy - 2 - hop, 2, 2);
+        }
+      } else groundZone(c, (x0 + x1) / 2 - cx0, (top + bot) / 2 - cy0, (x1 - x0) / 2, h.c, k * 0.6, T2);
+      c.restore();
     }
   };
   function T0(g) {
@@ -61924,6 +62013,16 @@
         if (Math.random() < 0.7) this.vfx.puffs(x, y - 6, 1, 16, DUST, 0.7, 14);
         if (Math.random() < 0.5) this.vfx.sparks(x, y - 4, 2, "#f2e2b8", 260, -Math.PI / 2, 1.4, 0.35, 700);
       } else if (Math.random() < 0.5) this.vfx.motes(x, y, 1, "#f2ead4", 16, 20, 0.5, 4);
+    },
+    /** 손에 맞은 순간 — 짧은 멈춤 · 흔들림 · 맞은 자리에서 뼛가루가 쓸려 간 쪽으로 튄다(손맛) */
+    organSweepHitFx(qs, s) {
+      this.hitStop && this.hitStop(0.09);
+      this.shake = Math.max(this.shake, 9);
+      for (const q of qs) {
+        this.vfx.flare(q.cx, q.cy, 54, "#f4ecd2", 0.16, "impact");
+        this.vfx.sparks(q.cx, q.cy, 14, "#f2e2b8", 420, s > 0 ? 0 : Math.PI, 0.9, 0.4, 500);
+        this.vfx.puffs(q.cx, q.y + q.h - 6, 3, 18, DUST, 0.8, 16);
+      }
     },
     /** 풀무 — 들이켤 때 갈비 틈으로 김이 빨려 들고, 열리는 순간 혼불이 솟는다 */
     organBreathFx(e, opening) {
@@ -62779,8 +62878,14 @@
             if (!b) return true;
             const [hx, hy, ph] = sweepHand(h, b);
             if (ph === 1) {
-              if (host) h.hit = (h.hit || []).concat(this.hitPlayersRect(hx - 40, hy - 20, hx + 40, hy + 20, h.dmg, h.hit));
-              this.organSweepFx(hx, hy + (h.low ? 14 : 0), !!h.low);
+              if (host) {
+                const nw = this.hitPlayersRect(...handBox(hx, hy, h.s), h.dmg, h.hit);
+                if (nw.length) {
+                  h.hit = (h.hit || []).concat(nw);
+                  this.organSweepHitFx(nw.map((i) => this.players[i]), h.s);
+                }
+              }
+              this.organSweepFx(hx + h.s * HAND.len * 0.5, hy + (h.low ? HAND.dn - 2 : 0), !!h.low);
               if (!h.snd) {
                 h.snd = 1;
                 this.sfxAt && this.sfxAt("organ_sweep", hx / TS, hy / TS);
@@ -63255,18 +63360,7 @@
                 break;
               }
               if (!h.done) {
-                c.globalAlpha = 0.18 + 0.22 * k;
-                c.strokeStyle = col;
-                c.lineWidth = 1.5;
-                c.setLineDash([5, 5]);
-                if (h.shape === "col") c.strokeRect(x - h.w / 2 + 0.5, y - 3, h.w - 1, 3);
-                else {
-                  c.beginPath();
-                  c.ellipse(x, y - 1, h.r, h.r * 0.26, 0, 0, TAU);
-                  c.stroke();
-                }
-                c.setLineDash([]);
-                c.globalAlpha = 1;
+                groundZone(c, x, y - 1, h.shape === "col" ? h.w / 2 : h.r, art.zone || col, k, T02);
                 art.tell(c, h, x, y, k, T02);
               } else if (!art.lit) art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T02);
             }
@@ -66034,18 +66128,18 @@
         if (!site) return false;
         const x0 = (site.x - (site.w >> 1)) * TS, x1 = (site.x + (site.w >> 1)) * TS;
         const fromLeft = p.cx - x0 < x1 - p.cx;
-        let lift2 = null, ld = -1;
+        let lift3 = null, ld = -1;
         for (const r of site.rooms) {
           const s = this.evStand(r);
           if (!s) continue;
           const d = fromLeft ? s[0] * TS - p.cx : p.cx - s[0] * TS;
           if (d > ld) {
             ld = d;
-            lift2 = s;
+            lift3 = s;
           }
         }
-        if (!lift2 || ld < 12 * TS) return false;
-        ev.lift = { x: (lift2[0] + 0.5) * TS, y: lift2[1] * TS };
+        if (!lift3 || ld < 12 * TS) return false;
+        ev.lift = { x: (lift3[0] + 0.5) * TS, y: lift3[1] * TS };
         ev.dir = fromLeft ? 1 : -1;
         ev.front = fromLeft ? x0 : x1;
         ev.speed = Math.abs(ev.lift.x - ev.front) / (ev.t * 0.8);
