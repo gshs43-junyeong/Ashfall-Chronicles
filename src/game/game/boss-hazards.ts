@@ -9,6 +9,7 @@ import { Game } from '../game.js';
 import { STRIKE_ART } from './boss-hazard-art.js';
 import { BEAM_ART, VORTEX_ART, WALL_ART, WAVE_ART, ZONE_ART, drawPush } from './boss-field-art.js';
 import { drawDecoy, drawTell } from './boss-tell-art.js';
+import { drawArm } from './boss-pool-art.js';
 /* ★ 피해는 호스트(혼자면 나)만 매기고, 끌림 · 밀림 · 느려짐은 화면마다 제 플레이어(me)에게만 건다 — 남의 몸은 그 사람 화면이 움직인다.
    그래서 위험 지대는 만들어질 때 참가자에게 그대로 보낸다(bhz) — 같은 시각에 같은 예고를 보고 같은 때 피한다. */
 
@@ -185,7 +186,7 @@ export const BossHazardPart: Bag = {
             else { c.beginPath(); c.ellipse(x, y - 1, h.r, h.r * 0.26, 0, 0, TAU); c.stroke(); }
             c.setLineDash([]); c.globalAlpha = 1;
             art.tell(c, h, x, y, k, T0);
-          } else art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
+          } else if (!art.lit) art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);   // lit 은 빛 앞에서(drawBossLit)
         } break;
         case 'line': {
           c.globalAlpha = 0.35 + 0.35 * Math.sin(T0 * 30); c.strokeStyle = col; c.lineWidth = h.w || 3; c.setLineDash([10, 8]);
@@ -255,6 +256,18 @@ export const BossHazardPart: Bag = {
       }
     }
     c.restore();
+  },
+  /** 몸으로 된 위험 지대(잿물 팔 · 잿물 기둥) — 빛 앞(actors)에서 칠해 둘레처럼 어둠을 받는다. 예고는 drawBossHazards(빛 뒤) */
+  drawBossLit(c: CanvasRenderingContext2D) {
+    const L = this.bhz; if (!L || !L.length) return;
+    const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
+    for (const h of L) {
+      if (h.k === 'parm') drawArm(c, h, this.hzBoss(h), cx0, cy0, T0);
+      else if (h.k === 'strike' && h.done) {
+        const art = STRIKE_ART[h.fx];
+        if (art && art.lit) art.hit(c, h, h.x - cx0, h.y - cy0, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
+      }
+    }
   },
   /** 결 그림이 없는 위험 지대(예전 · 몹 스킬이 빌려 쓰는 것) — 기둥 · 타원 */
   drawPlainTell(c: CanvasRenderingContext2D, h: Bag, x: number, y: number, col: string, k: number) {

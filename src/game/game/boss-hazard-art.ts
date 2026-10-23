@@ -229,7 +229,7 @@ export function meteorRock(c: C2, sd: number, x: number, y: number, r: number, d
 /** 위에서 오는 것의 출발 높이 — 천장이 있으면 천장, 없으면 화면 위쪽 */
 const topOf = (h: Bag, y: number) => Math.max(h.top !== undefined ? h.top : -1e9, h.y - 460) - h.y + y;
 
-export const STRIKE_ART: Record<string, { tell: (c: C2, h: Bag, x: number, y: number, k: number, T: number) => void; hit: (c: C2, h: Bag, x: number, y: number, f: number, T: number) => void }> = {
+export const STRIKE_ART: Record<string, { lit?: boolean; tell: (c: C2, h: Bag, x: number, y: number, k: number, T: number) => void; hit: (c: C2, h: Bag, x: number, y: number, f: number, T: number) => void }> = {
   ice: {
     tell(c, h, x, y, k, T) {
       if (h.dir === 'up') {                                              // 얼음 감옥 — 땅에 서리 금이 번지고 얼음 끝이 비죽 나온다

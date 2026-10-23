@@ -50,6 +50,7 @@ export const RenderPart: Bag = {
     this.pipe.add('drops', (f: any) => this.rDrops(f));
     this.pipe.add('drops', (f: any) => this.drawFormBack(f.c));      // 날아오른 보스의 날개 · 분사 · 물기둥 — 몸 뒤(game/boss-form-fx)
     this.pipe.add('actors', (f: any) => this.rActors(f));
+    this.pipe.add('actors', (f: any) => this.drawBossLit(f.c));     // 보스 몸으로 된 위험 지대 — 빛을 받게(game/boss-hazards)
     this.pipe.add('lighting', (f: any) => this.rLightOverlay(f));
     this.pipe.add('lighting', (f: any) => this.drawStageDim(f));   // 스킬 무대 어둠 — 빛 다음 · 연출 앞(game/stage-fx)
     this.pipe.add('fx', (f: any) => this.rFx(f));

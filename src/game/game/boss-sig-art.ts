@@ -5,7 +5,7 @@ import { Sprites } from '../sprites.js';
 import { Game } from '../game.js';
 import { STRIKE_ART, bone, cracks, glob, glyph, hs, hzGlow, jag, poly, rgba, rock, strokePath } from './boss-hazard-art.js';
 import { WALL_ART, WAVE_ART } from './boss-field-art.js';
-import { drawArm } from './boss-pool-art.js';
+import { drawArmTell } from './boss-pool-art.js';
 /* 고유 기술은 그 보스만의 물건을 보여야 한다 — 이름이 '광차 돌진'이면 레일과 광차가, '피뢰침'이면 꽂힌 쇠막대와 그 사이 전류가 보인다. */
 
 type C2 = CanvasRenderingContext2D;
@@ -165,7 +165,7 @@ export const BossSigArtPart: Bag = {
   drawSig(c: C2, h: Bag, cx0: number, cy0: number, T: number) {
     const b = this.hzBoss(h), f = Math.min(1, h.t * 4, Math.max(0, h.life - h.t) * 3);
     switch (h.k) {
-      case 'parm': drawArm(c, h, b, cx0, cy0, T); return true;    // 잿물 군체의 팔(game/boss-pool-art)
+      case 'parm': drawArmTell(c, h, cx0, cy0); return true;      // 잿물 팔 예고 — 팔 몸은 빛 앞에서(drawBossLit)
       case 'bonepile': {                                               // 흩어진 뼈 — 굴러가다 다시 솟아 맞춰진다
         if (!b || h.t < 0.3) return true;
         const x = b.cx - cx0, y = b.y + b.h - cy0, up = b.burrowT > 0 ? 0 : 1;

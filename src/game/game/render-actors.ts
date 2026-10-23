@@ -329,7 +329,7 @@ export const RenderActorsPart: Bag = {
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     if (e.def.tame) { this.drawWildHorse(c, e, sx, sy); return; }
     if (e.hide > 0 || e.amb) { this.drawBuried(c, e, sx, sy); return; }
-    if (e.def.ai === 'b_pool') drawPool(c, e, sx, sy, this.time);         // 잿물 군체 — 몸 밑 웅덩이(잠겨도 남는다)
+    if (e.def.ai === 'b_pool') drawPool(c, e, sx, sy, this.time, this.world);         // 잿물 군체 — 몸 밑 웅덩이(잠겨도 남는다)
     if (e.burrowT > 0) return;                                              // 땅속을 기는 보스 — 흙먼지만(entity/boss-moves)   // 모래 · 바닥 밑 — 땅만 들썩인다
     /* 손그림 스프라이트 우선. */
     /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet). */

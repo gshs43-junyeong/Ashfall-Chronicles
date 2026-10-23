@@ -1942,13 +1942,13 @@
       this.m = o.mods || {};
       this.th = { ...DEF_THEME, ...o.theme || {} };
       this.rng = new RNG(o.seed);
-      const { ar, cs, od, hp } = this.d, ease4 = o.ease || 0;
+      const { ar, cs, od, hp } = this.d, ease3 = o.ease || 0;
       this.r = 54.4 - 4.48 * cs;
       this.pre = ar < 5 ? 1.2 + 0.6 * (5 - ar) / 5 : 1.2 - 0.75 * (ar - 5) / 5;
       this.fade = Math.min(0.4, this.pre * 2 / 3);
-      this.w300 = (80 - 6 * od) / 1e3 + ease4 * 0.5;
-      this.w100 = (140 - 8 * od) / 1e3 + ease4 * 0.75;
-      this.w50 = (200 - 10 * od) / 1e3 + ease4;
+      this.w300 = (80 - 6 * od) / 1e3 + ease3 * 0.5;
+      this.w100 = (140 - 8 * od) / 1e3 + ease3 * 0.75;
+      this.w50 = (200 - 10 * od) / 1e3 + ease3;
       this.beat = 60 / this.d.bpm;
       this.t = 0;
       this.objs = [];
@@ -16887,14 +16887,14 @@
         if (kd !== 1 && kd !== 2) return false;
         return !(t === T.FALLS || FLUID_FLOW[t] && this.flv[n] === 8);
       };
-      let seg2 = [];
+      let seg3 = [];
       const flush = () => {
-        const want = seg2.length >= 4 ? T.FALLS : T.FLOWWATER;
-        for (const n of seg2) if (this.tiles[n] !== want) {
+        const want = seg3.length >= 4 ? T.FALLS : T.FLOWWATER;
+        for (const n of seg3) if (this.tiles[n] !== want) {
           this.set(n % WW2, n / WW2 | 0, want);
           this.flv[n] = 8;
         }
-        seg2 = [];
+        seg3 = [];
       };
       for (let n = top; n <= bot; n += WW2) {
         if (still(n - 1) || still(n + 1)) {
@@ -16903,7 +16903,7 @@
             this.set(n % WW2, n / WW2 | 0, T.FLOWWATER);
             this.flv[n] = 8;
           }
-        } else seg2.push(n);
+        } else seg3.push(n);
       }
       flush();
     }
@@ -20570,15 +20570,15 @@
             lastRoom = f;
             continue;
           }
-          let seg2 = rng.weighted([
+          let seg3 = rng.weighted([
             ["flight", 5],
             ["hall", kind === "maze" ? 3 : 2],
             ["rise", kind === "maze" ? 1.6 : 1]
           ]);
-          if (seg2 === "rise" && (lastSeg === "well" || lastSeg === "rise" || rem < 12 || ahead() < 30)) seg2 = "flight";
-          if (seg2 === "hall" && (ahead() < 18 || !(lastSeg === "landing" || lastSeg === "well" || lastSeg === "start")))
-            seg2 = "flight";
-          if (seg2 === "flight") {
+          if (seg3 === "rise" && (lastSeg === "well" || lastSeg === "rise" || rem < 12 || ahead() < 30)) seg3 = "flight";
+          if (seg3 === "hall" && (ahead() < 18 || !(lastSeg === "landing" || lastSeg === "well" || lastSeg === "start")))
+            seg3 = "flight";
+          if (seg3 === "flight") {
             const n = Math.max(3, Math.min(rng.int(5, 12), ahead() - 12));
             for (let i = 1; i <= n && !stop && f < yT; i++) step(1);
             if (cols.length > 3 && rng.chance(0.45)) {
@@ -20589,7 +20589,7 @@
               const c = cols[cols.length - 1];
               if (TILE_DEF[this.get(c[0], c[1] + 1)].solid === 1) this.set(c[0], c[1], T.SPIKE);
             }
-          } else if (seg2 === "hall") {
+          } else if (seg3 === "hall") {
             const n = rng.int(3, 8);
             const x0h = x;
             for (let i = 0; i < n && !stop; i++) step(0);
@@ -20606,7 +20606,7 @@
             const n = rng.int(2, 3);
             for (let i = 0; i < n && !stop; i++) step(-1);
           }
-          lastSeg = seg2;
+          lastSeg = seg3;
         }
       };
       const ruin = o.ruin;
@@ -48564,10 +48564,10 @@
       this.rings.push({ x, y, r, t: life, max: life, c });
     }
     /** 두 점을 잇는 번개 — 마디 seg 개, 옆으로 jitter px 까지 흔들린다 */
-    bolt(x0, y0, x1, y1, c, life = 0.22, seg2 = 7, jitter = 26, rand = Math.random) {
+    bolt(x0, y0, x1, y1, c, life = 0.22, seg3 = 7, jitter = 26, rand = Math.random) {
       const pts = [], nx = -(y1 - y0), ny = x1 - x0, L = Math.hypot(nx, ny) || 1;
-      for (let i = 0; i <= seg2; i++) {
-        const k = i / seg2, j = i === 0 || i === seg2 ? 0 : (rand() - 0.5) * jitter;
+      for (let i = 0; i <= seg3; i++) {
+        const k = i / seg3, j = i === 0 || i === seg3 ? 0 : (rand() - 0.5) * jitter;
         pts.push([x0 + (x1 - x0) * k + nx / L * j, y0 + (y1 - y0) * k + ny / L * j]);
       }
       this.bolts.push({ pts, t: life, max: life, c });
@@ -56853,12 +56853,12 @@
     drawClaw(c, p, camX, camY) {
       const k = p.claw, cs = Math.cos(k.ang), sn = Math.sin(k.ang);
       const ox = p.cx - camX + cs * 8, oy = p.cy - 4 - camY + sn * 8, L = Math.max(4, k.len);
-      const n = Math.max(2, Math.round(L / 26)), seg2 = L / n;
+      const n = Math.max(2, Math.round(L / 26)), seg3 = L / n;
       const fold = 1 - Math.min(1, L / 220);
       const pts = [[ox, oy]];
       for (let i = 1; i <= n; i++) {
-        const off = (i % 2 ? 1 : -1) * seg2 * 0.45 * fold * (i < n ? 1 : 0);
-        pts.push([ox + cs * seg2 * i - sn * off, oy + sn * seg2 * i + cs * off]);
+        const off = (i % 2 ? 1 : -1) * seg3 * 0.45 * fold * (i < n ? 1 : 0);
+        pts.push([ox + cs * seg3 * i - sn * off, oy + sn * seg3 * i + cs * off]);
       }
       c.save();
       c.lineCap = "round";
@@ -61048,13 +61048,28 @@
   var boss_pool_art_exports = {};
   __export(boss_pool_art_exports, {
     drawArm: () => drawArm,
+    drawArmTell: () => drawArmTell,
     drawPool: () => drawPool
   });
   var SL = "#4a4541", SL_D = "#2f2b29", SL_L = "#7a716a", EMB = "#ff8a40";
-  var PART = 120;
+  var PART = 120, SWATCH = 6, JUNK = [7, 8, 9];
   var clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
-  var ease3 = (u) => 1 - (1 - u) * (1 - u);
-  function part(c, im, fr, x, y, size2, a, flipY = false) {
+  var easeOut2 = (u) => 1 - (1 - u) * (1 - u);
+  var smooth = (u) => u * u * (3 - 2 * u);
+  var pats = /* @__PURE__ */ new WeakMap();
+  function sludgePat(c) {
+    const im = Sprites.want("king_slime_parts");
+    if (!im) return null;
+    const got = pats.get(c);
+    if (got && got.src === im) return got.pat;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = PART;
+    cv.getContext("2d").drawImage(im, SWATCH * PART, 0, PART, PART, 0, 0, PART, PART);
+    const pat = c.createPattern(cv, "repeat");
+    pats.set(c, { src: im, pat });
+    return pat;
+  }
+  function part(c, im, fr, x, y, size2, a, flipY = false, sy = 1) {
     if (!im) {
       glob(c, x, y, size2 * 0.36, SL, SL_D);
       return;
@@ -61062,146 +61077,275 @@
     c.save();
     c.translate(x, y);
     c.rotate(a);
-    if (flipY) c.scale(1, -1);
+    c.scale(1, (flipY ? -1 : 1) * sy);
     c.drawImage(im, fr * PART, 0, PART, PART, -size2 / 2, -size2 / 2, size2, size2);
     c.restore();
   }
-  function drawPool(c, e, sx, sy, T2) {
-    const x = sx + e.w / 2, y = sy + e.h, half = poolHalf(e), fade = e.dead ? 0 : 1;
-    if (fade <= 0) return;
+  function drawPool(c, e, sx, sy, T2, world) {
+    if (e.dead) return;
+    const half = poolHalf(e), feet = e.y + e.h, ox = sx - e.x, oy = sy - e.y;
+    const floorAt = (x) => {
+      const tx = Math.floor(x / TS), t0 = Math.floor((feet - 2) / TS) - 2;
+      for (let ty = t0; ty < t0 + 6; ty++) if (world.solid(tx, ty) && !world.solid(tx, ty - 1)) return ty * TS;
+      return null;
+    };
+    const side = (s) => {
+      const out = [];
+      let prev = floorAt(e.cx);
+      if (prev === null) return out;
+      for (let d = 0; d <= half; d += 4) {
+        const f = floorAt(e.cx + s * d);
+        if (f === null || Math.abs(f - prev) > TS * 1.2) break;
+        out.push([d, f]);
+        prev = f;
+      }
+      return out;
+    };
+    const R = side(1), L = side(-1);
+    if (!R.length || !L.length) return;
+    const reachR = R[R.length - 1][0] + 4, reachL = L[L.length - 1][0] + 4;
+    const thick = (d, reach) => (6 + 8 * Math.exp(-((d / (e.w * 0.45)) ** 2))) * Math.sqrt(clamp01(1 - (d / reach) ** 2));
+    const top = [], bot = [];
+    for (let i = L.length - 1; i > 0; i--) {
+      const [d, f] = L[i];
+      top.push([e.cx - d, f - thick(d, reachL) + Math.sin(d * 0.08 + T2 * 3) * 0.8]);
+      bot.push([e.cx - d, f + 1]);
+    }
+    for (const [d, f] of R) {
+      top.push([e.cx + d, f - thick(d, reachR) + Math.sin(d * 0.08 - T2 * 3) * 0.8]);
+      bot.push([e.cx + d, f + 1]);
+    }
+    top.unshift([e.cx - reachL, L[L.length - 1][1]]);
+    top.push([e.cx + reachR, R[R.length - 1][1]]);
     c.save();
-    c.globalAlpha = fade;
-    const g = c.createRadialGradient(x, y - 2, 4, x, y - 2, half);
-    g.addColorStop(0, SL_D);
-    g.addColorStop(0.8, "rgba(47,43,41,.92)");
-    g.addColorStop(1, "rgba(47,43,41,0)");
-    c.fillStyle = g;
+    c.translate(ox, oy);
     c.beginPath();
-    c.ellipse(x, y - 2, half, 13, 0, 0, TAU);
+    c.moveTo(top[0][0], top[0][1]);
+    for (const q of top) c.lineTo(q[0], q[1]);
+    for (let i = bot.length - 1; i >= 0; i--) c.lineTo(bot[i][0], bot[i][1]);
+    c.closePath();
+    const pat = sludgePat(c);
+    c.fillStyle = pat || SL;
     c.fill();
-    c.strokeStyle = "rgba(138,128,120,.45)";
+    const g = c.createLinearGradient(0, feet - 16, 0, feet + 2);
+    g.addColorStop(0, "rgba(255,236,210,.06)");
+    g.addColorStop(1, "rgba(10,8,8,.45)");
+    c.fillStyle = g;
+    c.fill();
+    c.strokeStyle = "rgba(176,166,156,.55)";
     c.lineWidth = 1.5;
     c.beginPath();
-    c.ellipse(x, y - 4, half * 0.92, 9, 0, Math.PI * 1.05, Math.PI * 1.95);
+    top.forEach((q, i) => i ? c.lineTo(q[0], q[1] + 0.8) : c.moveTo(q[0], q[1] + 0.8));
     c.stroke();
-    for (let i = 0; i < 3; i++) {
-      const u = (T2 * 0.45 + i / 3) % 1;
-      c.strokeStyle = `rgba(160,150,140,${0.35 * (1 - u)})`;
-      c.lineWidth = 1;
-      c.beginPath();
-      c.ellipse(x, y - 3, e.w * 0.45 + u * (half - e.w * 0.45), 4 + u * 7, 0, Math.PI, TAU);
-      c.stroke();
-    }
-    const boil = e.burrowT > 0 ? 3 : 1;
-    for (let i = 0; i < 7 * boil; i++) {
+    const boil = e.burrowT > 0 ? 3 : 1, all = top;
+    for (let i = 0; i < 6 * boil; i++) {
       const per = 1.3 + hs3(i, 1) * 1.2, u = (T2 + hs3(i, 2) * 9) / per % 1;
-      const bx = x + (hs3(i, 3) - 0.5) * 2 * half * (boil > 1 && i % 2 ? 0.25 : 0.88), by = y - 4 - hs3(i, 4) * 5;
+      const q = all[Math.floor(hs3(i, 3) * (all.length - 2)) + 1];
+      if (!q) continue;
+      const bx = boil > 1 && i % 2 ? e.cx + (hs3(i, 6) - 0.5) * 60 : q[0], by = boil > 1 && i % 2 ? feet - 10 : q[1];
       if (u < 0.8) {
         const r = 1.5 + u * (3 + hs3(i, 5) * 4) * (boil > 1 ? 1.6 : 1);
         c.fillStyle = SL;
         c.strokeStyle = SL_L;
         c.lineWidth = 1;
         c.beginPath();
-        c.arc(bx, by - r * 0.6, r, Math.PI, TAU);
+        c.arc(bx, by - r * 0.4, r, Math.PI, TAU);
         c.fill();
         c.stroke();
-        c.fillStyle = "rgba(220,210,200,.5)";
-        c.fillRect(bx - r * 0.4, by - r * 1.1, 1.5, 1.5);
+        c.fillStyle = "rgba(220,210,200,.55)";
+        c.fillRect(bx - r * 0.4, by - r * 0.9, 1.5, 1.5);
       } else {
-        c.strokeStyle = `rgba(160,150,140,${(1 - u) * 3})`;
+        c.strokeStyle = `rgba(170,160,150,${(1 - u) * 3})`;
+        c.lineWidth = 1;
         c.beginPath();
-        c.ellipse(bx, by, 4 + (u - 0.8) * 30, 2, 0, 0, TAU);
+        c.ellipse(bx, by, 4 + (u - 0.8) * 30, 1.6, 0, 0, TAU);
         c.stroke();
       }
     }
     for (let i = 0; i < 6; i++) {
-      const bx = x + (hs3(i, 7) - 0.5) * 1.7 * half, a = 0.4 + 0.4 * Math.sin(T2 * 2 + i);
+      const q = all[Math.floor(hs3(i, 7) * (all.length - 2)) + 1];
+      if (!q) continue;
+      c.globalAlpha = 0.4 + 0.4 * Math.sin(T2 * 2 + i);
       c.fillStyle = EMB;
-      c.globalAlpha = fade * a;
-      c.fillRect(bx, y - 3 - hs3(i, 8) * 4, 2, 2);
+      c.fillRect(q[0], q[1] + 3, 2, 2);
     }
     c.restore();
   }
-  function drawArm(c, h, b, cx0, cy0, T2) {
-    const rx = (b ? b.cx + h.ox : h.x) - cx0, ry = (b ? b.y + b.h : h.y) - cy0 - 6;
-    const tx = h.tx - cx0, ty = h.ty - cy0 - 10, t = h.t;
-    const u = ease3(clamp01(t / h.rise)), s = clamp01((t - h.rise) / (h.slam - h.rise)), k = clamp01((t - (h.life - h.back)) / h.back);
-    if (s < 1) {
-      const a = 0.2 + 0.5 * u;
-      c.fillStyle = `rgba(20,16,14,${a})`;
-      c.beginPath();
-      c.ellipse(tx, ty + 9, 40 + 30 * u, 8, 0, 0, TAU);
-      c.fill();
-      c.strokeStyle = h.c;
-      c.globalAlpha = 0.35 + 0.4 * u;
-      c.setLineDash([6, 5]);
-      c.lineWidth = 1.5;
-      c.beginPath();
-      c.ellipse(tx, ty + 9, 62, 12, 0, 0, TAU);
-      c.stroke();
-      c.setLineDash([]);
-      c.globalAlpha = 1;
+  var lerpP = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  var lerpPose = (a, b, k) => [lerpP(a[0], b[0], k), lerpP(a[1], b[1], k), lerpP(a[2], b[2], k)];
+  function armShape(h, b, T2) {
+    const s0 = Math.sign(h.ox) || 1;
+    const rx = b ? b.cx + s0 * b.w * 0.42 : h.x, ry = b ? b.y + b.h - 50 : h.y - 50;
+    const tx = h.tx, ty = h.ty - 8, dir = Math.sign(tx - rx) || s0, D = Math.abs(tx - rx), H = 235;
+    const U = [[rx + s0 * 30, ry - 70], [rx + s0 * 26, ry - H * 0.66], [rx + s0 * 16, ry - H]];
+    const W = [[rx + s0 * 34 - dir * 8, ry - 85], [rx + s0 * 8 - dir * 46, ry - H * 0.95], [rx - dir * 92, ry - H * 0.7]];
+    const S = [[rx + s0 * 28 + dir * 34, ry - 150], [tx - dir * D * 0.3, ty - 110], [tx, ty]];
+    const t = h.t, r = t / h.rise;
+    let pose, lam = 1, grow = 1, sq = 0;
+    if (t < h.rise) {
+      if (r < 0.2) {
+        lam = 0.12 * (r / 0.2);
+        grow = 0.65 + 0.35 * (r / 0.2);
+        pose = U;
+      } else {
+        const q = (r - 0.2) / 0.8;
+        lam = Math.min(1, 0.12 + 0.88 * easeOut2(Math.min(1, q / 0.65)));
+        pose = lerpPose(U, W, smooth(q));
+        if (q > 0.75) {
+          const tr2 = Math.sin(T2 * 40 + h.sd) * 2.5;
+          pose = [pose[0], pose[1], [pose[2][0] + tr2, pose[2][1] - tr2 * 0.5]];
+        }
+      }
+    } else if (t < h.slam) {
+      const e = (t - h.rise) / (h.slam - h.rise), w = Math.pow(e, 1.6);
+      pose = lerpPose(W, S, w);
+      pose[1] = [pose[1][0], pose[1][1] - Math.sin(e * Math.PI) * 90];
+    } else {
+      const settle = clamp01((t - h.slam) / 0.25);
+      sq = 1 - clamp01((t - h.slam) / 0.3);
+      pose = [S[0], [S[1][0], S[1][1] + 16 * settle], S[2]];
+      const k = clamp01((t - (h.life - h.back)) / h.back);
+      if (k > 0) {
+        lam = 1 - Math.pow(k, 1.5) * 0.98;
+        pose = [pose[0], lerpP(pose[1], [rx + dir * 40, ry - 30], k * 0.5), pose[2]];
+      }
     }
-    const wob = Math.sin(T2 * 7 + h.sd) * 10 * (1 - s);
-    const upX = rx + (tx - rx) * 0.18 + wob, upY = ry - 260 * u;
-    const ss = s * s;
-    let ex = upX + (tx - upX) * ss, ey = upY + (ty - upY) * ss - Math.sin(s * Math.PI) * 60;
-    ex += (rx - ex) * k;
-    ey += (ry - ey) * k;
-    const lift2 = (130 + 100 * Math.max(u, s)) * (1 - k);
-    const cpx = rx + (ex - rx) * 0.25, cpy = Math.min(ry, ey) - lift2;
-    const im = Sprites.want("king_slime_parts");
-    const N = 26, grow = 0.55 + 0.45 * u, L = [], R = [], mid = [];
-    for (let i = 0; i <= N; i++) {
-      const q = i / N, iq = 1 - q;
-      const x = iq * iq * rx + 2 * iq * q * cpx + q * q * ex, y = iq * iq * ry + 2 * iq * q * cpy + q * q * ey;
-      const dx = 2 * iq * (cpx - rx) + 2 * q * (ex - cpx), dy = 2 * iq * (cpy - ry) + 2 * q * (ey - cpy), dl = Math.hypot(dx, dy) || 1;
-      const r = (36 - 22 * q) * grow * (1 - k * 0.45) * (1 + Math.sin(q * 9 - T2 * 6 + h.sd) * 0.08);
-      L.push([x - dy / dl * r, y + dx / dl * r]);
-      R.push([x + dy / dl * r, y - dx / dl * r]);
-      mid.push([x, y, r, Math.atan2(dy, dx)]);
-    }
-    const g = c.createLinearGradient(rx - 40, 0, rx + 40, 0);
-    g.addColorStop(0, SL_D);
-    g.addColorStop(0.45, SL);
-    g.addColorStop(1, SL_D);
-    c.beginPath();
-    c.moveTo(L[0][0], L[0][1]);
-    for (const q of L) c.lineTo(q[0], q[1]);
-    for (let i = R.length - 1; i >= 0; i--) c.lineTo(R[i][0], R[i][1]);
-    c.closePath();
-    c.fillStyle = g;
-    c.fill();
-    c.strokeStyle = "#1c1a18";
-    c.lineWidth = 2;
-    c.stroke();
-    c.strokeStyle = "rgba(170,160,150,.45)";
-    c.lineWidth = 3;
-    c.beginPath();
-    for (let i = 1; i < N - 2; i++) {
-      const [x, y, r, a] = mid[i];
-      const hx2 = x + Math.cos(a - 1.57) * r * 0.5, hy2 = y + Math.sin(a - 1.57) * r * 0.5;
-      if (i === 1) c.moveTo(hx2, hy2);
-      else c.lineTo(hx2, hy2);
-    }
-    c.stroke();
-    for (let i = 3; i < N - 3; i += 4) {
-      const [x, y, r] = mid[i];
-      c.fillStyle = EMB;
-      c.fillRect(x + Math.sin(i * 7.3) * r * 0.4, y + Math.cos(i * 3.1) * r * 0.3, 3, 3);
-      const dr = (T2 * 0.9 + i * 0.37) % 1;
-      if (r > 14) glob(c, x + Math.sin(i) * r * 0.5, y + r * 0.6 + dr * 30, 3.2, SL, SL_D);
-    }
-    const [hx, hy, , ha] = mid[N];
-    part(c, im, 3, hx, hy, PART * 0.95 * grow, ha, Math.cos(ha) < 0);
-    if (s >= 1 && t < h.slam + 0.35) {
-      const f = (t - h.slam) / 0.35;
-      c.globalAlpha = 1 - f;
-      part(c, im, 5, tx, ty - 10 - f * 8, PART * (1 + f * 0.6), 0);
-      c.globalAlpha = 1;
+    return { P0: [rx, ry], pose, lam, grow, sq };
+  }
+  var bez = (P0, [P1, P2, P3], u) => {
+    const v = 1 - u, a = v * v * v, b = 3 * v * v * u, c = 3 * v * u * u, d = u * u * u;
+    return [a * P0[0] + b * P1[0] + c * P2[0] + d * P3[0], a * P0[1] + b * P1[1] + c * P2[1] + d * P3[1]];
+  };
+  var tube = null;
+  function seg2(g, pts, rr, dx, dy, wmul, style) {
+    g.strokeStyle = style;
+    g.lineCap = "round";
+    for (let i = 0; i < pts.length - 1; i++) {
+      g.lineWidth = Math.max(1, (rr[i] + rr[i + 1]) * wmul);
+      g.beginPath();
+      g.moveTo(pts[i][0] + dx * rr[i], pts[i][1] + dy * rr[i]);
+      g.lineTo(pts[i + 1][0] + dx * rr[i + 1], pts[i + 1][1] + dy * rr[i + 1]);
+      g.stroke();
     }
   }
+  function drawArm(c, h, b, cx0, cy0, T2) {
+    const A = armShape(h, b, T2);
+    if (A.lam <= 0.01) return;
+    const N = 34, pts = [], rr = [];
+    for (let i = 0; i <= N; i++) {
+      const u = i / N * A.lam;
+      pts.push(bez(A.P0, A.pose, u));
+      rr.push((40 - 24 * u + 16 * Math.max(0, 1 - u / 0.12)) * A.grow * (1 + Math.sin(u * 10 - T2 * 5 + h.sd) * 0.06));
+    }
+    const tip = pts[N], tipR = rr[N];
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    pts.forEach((q, i) => {
+      const r = rr[i] + 34;
+      x0 = Math.min(x0, q[0] - r);
+      y0 = Math.min(y0, q[1] - r);
+      x1 = Math.max(x1, q[0] + r);
+      y1 = Math.max(y1, q[1] + r);
+    });
+    x0 = Math.floor(x0);
+    y0 = Math.floor(y0);
+    const W = Math.ceil(x1 - x0), H = Math.ceil(y1 - y0);
+    if (!tube) tube = document.createElement("canvas");
+    if (tube.width < W || tube.height < H) {
+      tube.width = Math.max(tube.width, W);
+      tube.height = Math.max(tube.height, H);
+    }
+    const o = tube.getContext("2d");
+    o.setTransform(1, 0, 0, 1, 0, 0);
+    o.clearRect(0, 0, W, H);
+    o.translate(-x0, -y0);
+    o.globalCompositeOperation = "source-over";
+    seg2(o, pts, rr, 0, 0, 1, SL);
+    o.fillStyle = SL;
+    o.beginPath();
+    o.ellipse(A.P0[0], A.P0[1] + 8, rr[0] + 14, rr[0] * 0.85, 0, 0, TAU);
+    o.fill();
+    const splat = A.lam > 0.97 && h.t >= h.slam;
+    if (splat) {
+      o.beginPath();
+      o.ellipse(tip[0], tip[1] + 6, tipR * (1.6 + A.sq * 0.8), tipR * (0.7 - A.sq * 0.15), 0, 0, TAU);
+      o.fill();
+    }
+    o.globalCompositeOperation = "source-atop";
+    const pat = sludgePat(o);
+    if (pat) {
+      if (pat.setTransform) pat.setTransform(new DOMMatrix([1, 0, 0, 1, A.P0[0], A.P0[1]]));
+      o.fillStyle = pat;
+      o.fillRect(x0, y0, W, H);
+    }
+    o.fillStyle = "rgba(12,10,9,.55)";
+    o.fillRect(x0, y0, W, H);
+    seg2(o, pts, rr, -0.22, -0.3, 0.78, "rgba(110,100,92,.34)");
+    seg2(o, pts, rr, -0.42, -0.5, 0.26, "rgba(214,204,190,.34)");
+    seg2(o, pts, rr, 0.55, 0.6, 0.12, "rgba(255,140,60,.08)");
+    const im = Sprites.want("king_slime_parts");
+    if (im) [0.3, 0.55, 0.78].forEach((q, k) => {
+      if (q > A.lam) return;
+      const i = Math.min(N - 1, Math.round(q / A.lam * N)), p = pts[i], p2 = pts[i + 1];
+      part(o, im, JUNK[k], p[0] + Math.sin(k * 2.3) * rr[i] * 0.3, p[1], rr[i] * 1.5, Math.atan2(p2[1] - p[1], p2[0] - p[0]) + k);
+    });
+    for (let i = 3; i < N; i += 5) {
+      const q = pts[i];
+      o.fillStyle = EMB;
+      o.globalAlpha = 0.5 + 0.4 * Math.sin(T2 * 3 + i);
+      o.fillRect(q[0] + Math.sin(i * 7.3) * rr[i] * 0.4, q[1] + Math.cos(i * 3.1) * rr[i] * 0.3, 3, 3);
+    }
+    o.globalAlpha = 1;
+    o.globalCompositeOperation = "source-over";
+    c.save();
+    c.translate(-cx0, -cy0);
+    seg2(c, pts, rr.map((r) => r + 1.5), 0, 0, 1, "#15110e");
+    if (splat) {
+      c.fillStyle = "#15110e";
+      c.beginPath();
+      c.ellipse(tip[0], tip[1] + 6, tipR * (1.6 + A.sq * 0.8) + 1.5, tipR * (0.7 - A.sq * 0.15) + 1.5, 0, 0, TAU);
+      c.fill();
+    }
+    c.drawImage(tube, 0, 0, W, H, x0, y0, W, H);
+    for (const q of [0.22, 0.46, 0.68]) {
+      if (q > A.lam) continue;
+      const i = Math.round(q / A.lam * N), p = pts[i], u = (T2 * 1.3 + q * 3.7) % 1;
+      c.globalAlpha = 1 - u;
+      glob(c, p[0] + rr[i] * 0.2, p[1] + rr[i] * 0.85 + u * 46, 3 + (1 - u) * 1.5, SL, SL_D);
+    }
+    c.globalAlpha = 1;
+    if (A.lam > 0.85) {
+      const p = pts[N - 1], a = Math.atan2(tip[1] - p[1], tip[0] - p[0]);
+      c.globalAlpha = clamp01((A.lam - 0.85) / 0.15);
+      part(c, im, 3, tip[0], tip[1], PART * 0.9 * A.grow, a, Math.cos(a) < 0, 1 - A.sq * 0.25);
+      c.globalAlpha = 1;
+    }
+    if (h.t >= h.slam && h.t < h.slam + 0.35) {
+      const f = (h.t - h.slam) / 0.35;
+      c.globalAlpha = 1 - f;
+      part(c, im, 5, h.tx, h.ty - 16 - f * 8, PART * (1.1 + f * 0.6), 0);
+      c.globalAlpha = 1;
+    }
+    c.restore();
+  }
+  function drawArmTell(c, h, cx0, cy0) {
+    if (h.t >= h.slam) return;
+    const tx = h.tx - cx0, ty = h.ty - cy0, u = easeOut2(clamp01(h.t / h.slam));
+    c.fillStyle = `rgba(20,16,14,${0.2 + 0.5 * u})`;
+    c.beginPath();
+    c.ellipse(tx, ty + 1, 40 + 30 * u, 8, 0, 0, TAU);
+    c.fill();
+    c.strokeStyle = h.c;
+    c.globalAlpha = 0.35 + 0.4 * u;
+    c.setLineDash([6, 5]);
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.ellipse(tx, ty + 1, 62, 12, 0, 0, TAU);
+    c.stroke();
+    c.setLineDash([]);
+    c.globalAlpha = 1;
+  }
   STRIKE_ART.sludge = {
+    lit: true,
     tell(c, h, x, y, k, T2) {
       const w = h.shape === "col" ? h.w : h.r * 2, n = Math.max(3, Math.floor(w / 22));
       c.fillStyle = `rgba(30,26,24,${0.25 + 0.45 * k})`;
@@ -61223,13 +61367,6 @@
       const tall = h.shape === "col" ? h.hh : h.r * 1.8;
       const up = Math.min(1, f * 5) * (f > 0.6 ? 1 - (f - 0.6) / 0.4 : 1), hh = tall * up;
       if (hh < 2) return;
-      const g = c.createLinearGradient(0, y - hh, 0, y);
-      g.addColorStop(0, SL_L);
-      g.addColorStop(0.2, SL);
-      g.addColorStop(1, SL_D);
-      c.fillStyle = g;
-      c.strokeStyle = "#1c1a18";
-      c.lineWidth = 1.5;
       c.beginPath();
       if (wide) {
         c.moveTo(x - w / 2, y);
@@ -61252,11 +61389,26 @@
         c.lineTo(x + w * 0.62, y);
       }
       c.closePath();
+      const pat = sludgePat(c);
+      c.fillStyle = pat || SL;
       c.fill();
+      const g = wide ? c.createLinearGradient(0, y - hh, 0, y) : c.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+      if (wide) {
+        g.addColorStop(0, "rgba(160,150,140,.12)");
+        g.addColorStop(0.3, "rgba(12,10,9,.38)");
+        g.addColorStop(1, "rgba(12,10,9,.6)");
+      } else {
+        g.addColorStop(0, "rgba(12,10,9,.35)");
+        g.addColorStop(0.3, "rgba(200,190,176,.16)");
+        g.addColorStop(0.75, "rgba(12,10,9,.3)");
+        g.addColorStop(1, "rgba(12,10,9,.55)");
+      }
+      c.fillStyle = g;
+      c.fill();
+      c.strokeStyle = "#15110e";
+      c.lineWidth = 1.5;
       c.stroke();
       if (!wide) {
-        c.fillStyle = "rgba(210,200,190,.3)";
-        c.fillRect(x - w * 0.18, y - hh * 0.85, 3, hh * 0.65);
         const im = Sprites.want("king_slime_parts");
         if (im) c.drawImage(im, 5 * PART, 0, PART, PART, x - w * 0.6, y - hh - w * 0.75, w * 1.2, w * 1.2);
       } else {
@@ -61632,9 +61784,9 @@
       const b = this.hzBoss(h), f = Math.min(1, h.t * 4, Math.max(0, h.life - h.t) * 3);
       switch (h.k) {
         case "parm":
-          drawArm(c, h, b, cx0, cy0, T2);
+          drawArmTell(c, h, cx0, cy0);
           return true;
-        // 잿물 군체의 팔(game/boss-pool-art)
+        // 잿물 팔 예고 — 팔 몸은 빛 앞에서(drawBossLit)
         case "bonepile": {
           if (!b || h.t < 0.3) return true;
           const x = b.cx - cx0, y = b.y + b.h - cy0, up = b.burrowT > 0 ? 0 : 1;
@@ -62562,7 +62714,7 @@
                 c.setLineDash([]);
                 c.globalAlpha = 1;
                 art.tell(c, h, x, y, k, T0);
-              } else art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
+              } else if (!art.lit) art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
             }
             break;
           case "line":
@@ -62707,6 +62859,19 @@
         }
       }
       c.restore();
+    },
+    /** 몸으로 된 위험 지대(잿물 팔 · 잿물 기둥) — 빛 앞(actors)에서 칠해 둘레처럼 어둠을 받는다. 예고는 drawBossHazards(빛 뒤) */
+    drawBossLit(c) {
+      const L = this.bhz;
+      if (!L || !L.length) return;
+      const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
+      for (const h of L) {
+        if (h.k === "parm") drawArm(c, h, this.hzBoss(h), cx0, cy0, T0);
+        else if (h.k === "strike" && h.done) {
+          const art = STRIKE_ART[h.fx];
+          if (art && art.lit) art.hit(c, h, h.x - cx0, h.y - cy0, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
+        }
+      }
     },
     /** 결 그림이 없는 위험 지대(예전 · 몹 스킬이 빌려 쓰는 것) — 기둥 · 타원 */
     drawPlainTell(c, h, x, y, col, k) {
@@ -63235,9 +63400,9 @@
         let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
         if (this.starGain && i === n - 1) {
           const gk = Math.min(1, this.starGain.t / this.starGain.dur);
-          const ease4 = 1 - Math.pow(1 - gk, 3);
-          y -= (1 - ease4) * 240;
-          x += (1 - ease4) * 40;
+          const ease3 = 1 - Math.pow(1 - gk, 3);
+          y -= (1 - ease3) * 240;
+          x += (1 - ease3) * 40;
         }
         const back = riseK > 0.9 || Math.sin(a) >= 0 ? 1 : 0.45;
         const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));
@@ -68634,6 +68799,7 @@
       this.pipe.add("drops", (f) => this.rDrops(f));
       this.pipe.add("drops", (f) => this.drawFormBack(f.c));
       this.pipe.add("actors", (f) => this.rActors(f));
+      this.pipe.add("actors", (f) => this.drawBossLit(f.c));
       this.pipe.add("lighting", (f) => this.rLightOverlay(f));
       this.pipe.add("lighting", (f) => this.drawStageDim(f));
       this.pipe.add("fx", (f) => this.rFx(f));
@@ -71151,7 +71317,7 @@
         this.drawBuried(c, e, sx, sy);
         return;
       }
-      if (e.def.ai === "b_pool") drawPool(c, e, sx, sy, this.time);
+      if (e.def.ai === "b_pool") drawPool(c, e, sx, sy, this.time, this.world);
       if (e.burrowT > 0) return;
       const pose = this.poseKey(e);
       const key0 = pose || (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type);
@@ -72098,9 +72264,9 @@
           c.stroke();
           c.setLineDash([]);
         }
-        const lock = Math.min(1, pa / 0.35), ease4 = 1 - Math.pow(1 - lock, 3);
-        const pad = 3 + (1 - ease4) * 22 + beat * 2.5, rot = (1 - ease4) * 1.6;
-        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease4) * 4;
+        const lock = Math.min(1, pa / 0.35), ease3 = 1 - Math.pow(1 - lock, 3);
+        const pad = 3 + (1 - ease3) * 22 + beat * 2.5, rot = (1 - ease3) * 1.6;
+        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease3) * 4;
         c.save();
         c.translate(x + ew / 2, y + eh / 2);
         c.rotate(rot);

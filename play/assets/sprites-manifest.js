@@ -2304,7 +2304,7 @@ window.SPRITE_MANIFEST = {
         "file": "boss/king_slime.png",
         "frameW": 256,
         "frameH": 224,
-        "count": 6,
+        "count": 8,
         "foot": 7,
         "side": 0,
         "death": 2,
@@ -2817,7 +2817,7 @@ window.SPRITE_MANIFEST = {
         "file": "boss/king_slime_parts.png",
         "frameW": 120,
         "frameH": 120,
-        "count": 6,
+        "count": 10,
         "scale": 1,
         "gap": 0,
         "rig": 1
