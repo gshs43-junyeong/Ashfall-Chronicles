@@ -58,6 +58,7 @@ export const BossPart: Bag = {
   },
   spawnBoss(id: string, x: number, y: number) {
     /* 스토리 보스는 수치를 고정한다. */
+    this.arenaCarve(id, x, y);                // 큰 보스 — 몸이 들어갈 싸움터를 판다(game/boss-arena)
     const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
     /* 큰 보스(2~3배)는 정해 둔 자리에 두면 몸이 바닥 · 천장에 박힌다 — 가운데를 맞추고, 벽 속이면 한 칸씩 올린다(최대 12칸) */
     e.x = x - e.w / 2;

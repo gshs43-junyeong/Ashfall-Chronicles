@@ -69,7 +69,9 @@ export const SAVE_UPGRADES = [
   (d: any) => { for (const s of (d.world && d.world.ruinSites) || []) if (s.deep === undefined) s.deep = null; },
   /* v14 → v15 — 타일 · 벽지를 바탕(곁 기록) + 바뀐 청크(world.delta)로. 옛 세이브는 통째로 들고 있어 그대로 열리고, 다음 저장이 바탕을 뜬다.
      ★ delta 는 판올림 **전에** 풀린다(game/save.ts loadDelta — 곁 기록을 읽어야 해서 비동기) — 여기서는 할 일이 없다. */
-  (d: any) => d
+  (d: any) => d,
+  /* v15 → v16 — 플레이어가 놓은 칸(world.built). 옛 세계는 어느 칸을 지었는지 모른다 — 빈 채로 시작한다. */
+  (d: any) => { if (d.world && !d.world.built) d.world.built = []; }
 ];
 export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 

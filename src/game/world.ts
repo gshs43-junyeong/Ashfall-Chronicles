@@ -183,7 +183,7 @@ export class World extends TileMap {
   declare buildCitadel: (...a: any[]) => any; declare buildDawnCity: (...a: any[]) => any; declare clearSkyOverSettlements: () => void; declare buildDeepShaft: (...a: any[]) => any; declare buildDungeon: (...a: any[]) => any;
   declare buildJungleFalls: (...a: any[]) => any; declare buildRuinCaches: (...a: any[]) => any; declare buildRuins: (...a: any[]) => any; declare buildRunaway: (...a: any[]) => any;
   declare buildSea: (...a: any[]) => any; declare buildSkyIslands: (...a: any[]) => any; declare buildVillage: (...a: any[]) => any; declare buildWorks: (...a: any[]) => any;
-  declare cactusPlant: (...a: any[]) => any; declare caveGrid: Uint8Array | null; declare caverns: any[]; declare citadel: Record<string, any>; declare crops: Set<any>; declare wet: Record<string, any>; declare isWet: (...a: any[]) => any; declare waterFarm: (...a: any[]) => any; declare nearWater: (...a: any[]) => any;
+  declare cactusPlant: (...a: any[]) => any; declare caveGrid: Uint8Array | null; declare caverns: any[]; declare citadel: Record<string, any>; declare crops: Set<any>; declare built: Set<number>; declare wet: Record<string, any>; declare isWet: (...a: any[]) => any; declare waterFarm: (...a: any[]) => any; declare nearWater: (...a: any[]) => any;
   declare crumbled: Map<any, any>; declare dawnCity: Record<string, any>; declare dawnY: number; declare decoratePonds: (...a: any[]) => any; declare decorateWater: (...a: any[]) => any;
   declare deepShaft: Record<string, any>; declare doors: any[]; declare dungeon: Record<string, any>; declare ensureEntranceTraps: (...a: any[]) => any; 
   declare falls: any[]; declare faults: any[]; declare fillMossCorners: (...a: any[]) => any; declare fitObjects: (...a: any[]) => any; declare floodCaves: (...a: any[]) => any;
@@ -218,6 +218,7 @@ export class World extends TileMap {
     /* 심어 둔 작물의 타일 인덱스. */
     this.crops = new Set();
     this.wet = {};              // 밭 칸 → 이 날(G.dayCount)까지 젖어 있다
+    this.built = new Set();     // 플레이어가 놓은 칸 — 보스 싸움터를 넓힐 때 건드리지 않는다(game/boss-arena)
     /* 부서진 바닥이 되돌아올 시각. */
     this.crumbled = new Map();
     this.spawnX = 180; this.spawnY = 0;
@@ -960,7 +961,7 @@ export class World extends TileMap {
       surface: Array.from(this.surface),
       objects: this.objects.map(o => ({ ...o })),
       machines: Array.from(this.machines.values()),
-      crops: Array.from(this.crops), wet: this.wet || {},
+      crops: Array.from(this.crops), wet: this.wet || {}, built: Array.from(this.built || []),
       spawnX: this.spawnX, spawnY: this.spawnY, villageY: this.villageY,
       dawnY: this.dawnY, dawnCity: this.dawnCity, works: this.works, runaway: this.runaway,
       atelier: this.atelier, citadel: this.citadel, deepShaft: this.deepShaft,
@@ -990,6 +991,7 @@ export class World extends TileMap {
     }
     for (const k of (d.crops || [])) w.crops.add(k);
     w.wet = d.wet || {};
+    w.built = new Set(d.built || []);
     w.netDirty = true;
     // 예전 세이브(v3 이전)에는 explored가 없다 — 그런 경우 처음부터 다시 밝혀 나가면 된다
     if (d.explored) w.explored = rleDecode(d.explored, WW * WH, Uint8Array);

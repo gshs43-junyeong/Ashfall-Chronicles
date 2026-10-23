@@ -14583,6 +14583,7 @@
   var bossmoves_exports = {};
   __export(bossmoves_exports, {
     ARC_FX: () => ARC_FX,
+    BOSS_ARENA: () => BOSS_ARENA,
     BOSS_FORM: () => BOSS_FORM,
     BOSS_GAP: () => BOSS_GAP,
     BOSS_MOVES: () => BOSS_MOVES,
@@ -14915,6 +14916,12 @@
   var ARC_FX = { boulder: 1, seed: 1, bile: 1 };
   var DOWN_COL = { bolt: 1, sun: 1, metal: 1, ice: 1 };
   var XFX_OF = { rune: "rune", fire: "fire", frost: "ice", bolt: "bolt", rivet: "metal", void: "rune", dark: "flesh", poison: "plant", star: "rune" };
+  var BOSS_ARENA = {
+    king_slime: { w: 40, h: 12 },
+    bone_lord: { w: 44, h: 21 },
+    corrupt_heart: { w: 42, h: 26 },
+    sand_guardian: { w: 50, h: 22 }
+  };
   var BOSS_GAP = {
     king_slime: "stagger",
     bone_lord: "stagger",
@@ -16231,6 +16238,7 @@
       this.nets = [];
       this.crops = /* @__PURE__ */ new Set();
       this.wet = {};
+      this.built = /* @__PURE__ */ new Set();
       this.crumbled = /* @__PURE__ */ new Map();
       this.spawnX = 180;
       this.spawnY = 0;
@@ -16988,6 +16996,7 @@
         machines: Array.from(this.machines.values()),
         crops: Array.from(this.crops),
         wet: this.wet || {},
+        built: Array.from(this.built || []),
         spawnX: this.spawnX,
         spawnY: this.spawnY,
         villageY: this.villageY,
@@ -17039,6 +17048,7 @@
       }
       for (const k of d.crops || []) w.crops.add(k);
       w.wet = d.wet || {};
+      w.built = new Set(d.built || []);
       w.netDirty = true;
       if (d.explored) w.explored = rleDecode(d.explored, WW2 * WH2, Uint8Array);
       w.spawnX = d.spawnX;
@@ -48527,6 +48537,8 @@
     organ_sweep: ["sk_whirl", 0.62, 0.85],
     organ_scatter: ["mat_bone", 0.7, 1.3],
     organ_requiem: ["chapter", 0.5, 0.9],
+    arena_crumble: ["boom_small", 0.45, 1.1],
+    // 싸움터가 무너져 넓어진다(game/boss-arena)
     /* 잿빛 고치 · 불나방 — 실이 삐걱이고, 날개는 바람 소리를 낮게 늘여 빌린다 */
     cocoon_creak: ["door_open", 0.55, 0.7],
     cocoon_silk: ["sk_mark", 1.3, 0.4],
@@ -48840,7 +48852,11 @@
     },
     /* v14 → v15 — 타일 · 벽지를 바탕(곁 기록) + 바뀐 청크(world.delta)로. 옛 세이브는 통째로 들고 있어 그대로 열리고, 다음 저장이 바탕을 뜬다.
        ★ delta 는 판올림 **전에** 풀린다(game/save.ts loadDelta — 곁 기록을 읽어야 해서 비동기) — 여기서는 할 일이 없다. */
-    (d) => d
+    (d) => d,
+    /* v15 → v16 — 플레이어가 놓은 칸(world.built). 옛 세계는 어느 칸을 지었는지 모른다 — 빈 채로 시작한다. */
+    (d) => {
+      if (d.world && !d.world.built) d.world.built = [];
+    }
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;
   function upgradeSave(d) {
@@ -55115,6 +55131,7 @@
           }
         }
         w.set(tx, ty, tileId);
+        w.built.add(ty * w.dims.WW + tx);
         held.c--;
         if (held.c <= 0) p.bag[p.sel] = null;
         UI5.refreshBag();
@@ -59032,6 +59049,7 @@
       UI5.refreshBag();
     },
     spawnBoss(id, x, y) {
+      this.arenaCarve(id, x, y);
       const e = new Enemy(id, x, y, STORY_BOSSES[id] ? 1 : this.scale() * 0.9);
       e.x = x - e.w / 2;
       for (let i = 0; i < 12 && this.world.hitSolid(e.x, e.y, e.w, e.h); i++) e.y -= TS;
@@ -62817,6 +62835,56 @@
     }
   };
   mixin(Game.prototype, BossCocoonFx, true);
+
+  // src/game/game/boss-arena.ts
+  var boss_arena_exports = {};
+  __export(boss_arena_exports, {
+    BossArena: () => BossArena
+  });
+  var KEEP = /* @__PURE__ */ new Set([T.BEDROCK, T.SEALSTONE, T.ORBITSEAL, T.LIGHTBRIDGE, T.ARCHSEAL, T.TORCH]);
+  var BossArena = {
+    /** 보스가 깨어날 자리(x, y)의 바닥에서 위로 둥근 방을 판다 — 판 칸 수 */
+    arenaCarve(id, x, y) {
+      const A = BOSS_ARENA[id];
+      if (!A) return 0;
+      const w = this.world, tx = Math.floor(x / TS);
+      let fy = -1;
+      for (let ty = Math.floor(y / TS); ty < Math.floor(y / TS) + 40; ty++) if (w.solid(tx, ty) && !w.solid(tx, ty - 1)) {
+        fy = ty;
+        break;
+      }
+      if (fy < 0) return 0;
+      const half = A.w / 2, rows = [];
+      let n = 0;
+      for (let r = 1; r <= A.h; r++) {
+        const u = r / A.h, hw = u < 0.5 ? half : half * Math.sqrt(Math.max(0, 1 - ((u - 0.5) / 0.5) ** 2));
+        const row = [];
+        for (let dx = -Math.floor(hw); dx <= Math.floor(hw); dx++) {
+          const cx = tx + dx, cy = fy - r, t = w.get(cx, cy);
+          if (!w.inB(cx, cy) || !TILE_DEF[t] || !TILE_DEF[t].solid || TILE_DEF[t].liquid || KEEP.has(t) || MACH_OF_TILE[t] || w.built.has(cy * w.dims.WW + cx)) continue;
+          w.set(cx, cy, T.AIR);
+          row.push(cx);
+          n++;
+        }
+        rows.push(row);
+      }
+      if (!n) return 0;
+      rows.forEach((row, i) => {
+        if (row.length) this.after(0.03 * i, () => {
+          const cy = (fy - i - 1) * TS + TS / 2;
+          for (let k = 0; k < Math.min(4, row.length); k++) {
+            const cx = row[Math.random() * row.length | 0] * TS + TS / 2;
+            this.vfx.puffs(cx, cy, 2, 18, "rgba(120,108,92,.7)", 0.9, 20);
+            this.vfx.shards(cx, cy, 3, "#7a6e5e", 220, 0.8, 4);
+          }
+        });
+      });
+      this.shake = Math.max(this.shake, 22);
+      this.sfxAt && this.sfxAt("arena_crumble", tx, fy - A.h / 2);
+      return n;
+    }
+  };
+  mixin(Game.prototype, BossArena, true);
 
   // src/game/game/boss-sig-art.ts
   var boss_sig_art_exports = {};
@@ -77049,7 +77117,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

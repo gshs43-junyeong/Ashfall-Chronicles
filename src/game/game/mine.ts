@@ -417,7 +417,7 @@ export const MinePart: Bag = {
           return;
         }
       }
-      w.set(tx, ty, tileId);
+      w.set(tx, ty, tileId); w.built.add(ty * w.dims.WW + tx);   // 지은 칸 — 보스 싸움터가 넓어져도 남는다
       held.c--; if (held.c <= 0) p.bag[p.sel] = null;
       UI.refreshBag(); this.sfx('place');
     }
