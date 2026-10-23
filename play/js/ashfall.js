@@ -1942,13 +1942,13 @@
       this.m = o.mods || {};
       this.th = { ...DEF_THEME, ...o.theme || {} };
       this.rng = new RNG(o.seed);
-      const { ar, cs, od, hp } = this.d, ease3 = o.ease || 0;
+      const { ar, cs, od, hp } = this.d, ease4 = o.ease || 0;
       this.r = 54.4 - 4.48 * cs;
       this.pre = ar < 5 ? 1.2 + 0.6 * (5 - ar) / 5 : 1.2 - 0.75 * (ar - 5) / 5;
       this.fade = Math.min(0.4, this.pre * 2 / 3);
-      this.w300 = (80 - 6 * od) / 1e3 + ease3 * 0.5;
-      this.w100 = (140 - 8 * od) / 1e3 + ease3 * 0.75;
-      this.w50 = (200 - 10 * od) / 1e3 + ease3;
+      this.w300 = (80 - 6 * od) / 1e3 + ease4 * 0.5;
+      this.w100 = (140 - 8 * od) / 1e3 + ease4 * 0.75;
+      this.w50 = (200 - 10 * od) / 1e3 + ease4;
       this.beat = 60 / this.d.bpm;
       this.t = 0;
       this.objs = [];
@@ -63094,6 +63094,82 @@
       for (let i = 0; i < 5; i++) c.fillRect(-1, (T2 * 160 + i * 13) % (y1 + 2) - 2, 2, 2);
     }
   }
+  function stepDt(g, e, key) {
+    const T2 = g.time || 0, dt = g.paused ? 0 : Math.max(0, Math.min(0.1, T2 - (e[key] ?? T2)));
+    e[key] = T2;
+    return dt;
+  }
+  var ease3 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
+  function headGoal(g, e, T2) {
+    const q = g.hzNear(e.cx, e.cy), look = q ? Math.max(-1, Math.min(1, (q.cx - e.cx) / 500)) : 0;
+    let a = look * 0.1, dx = look * 7, dy = Math.sin(T2 * 1.9) * 2;
+    const fist = hzOf3(g, e, "hfist"), sand = hzOf3(g, e, "hsand"), pit = hzOf3(g, e, "hpit"), dl = hzOf3(g, e, "hdead"), fl = hzOf3(g, e, "hflip");
+    if (fist) {
+      const s = Math.sign(fist.tx - e.cx) || 1, t = fist.t - fist.tele;
+      a = s * 0.16;
+      dx = s * 9;
+      dy += 5;
+      if (t > 0 && t < 0.5) dy += 8 * (1 - t / 0.5) * Math.abs(Math.cos(t * 30));
+    } else if (sand && sand.t < sand.fill + sand.hold) {
+      a = Math.sin(T2 * 1.3) * 0.05;
+      dy -= 7;
+    } else if (pit && pit.t < pit.tele + 1) {
+      a = look * 0.2;
+      dx = look * 10;
+      dy += 6;
+    }
+    if (dl && !dl.done) {
+      a = Math.sin(T2 * 28) * 0.03;
+      dx = 0;
+      dy -= 9;
+    }
+    if (fl && fl.t < 1.4) a = Math.sin(fl.t * 22) * 0.1 * (1 - fl.t / 1.4);
+    if (e.gapT > 0 && e.gapK === "stagger") {
+      a = Math.sin(T2 * 3.2) * 0.14;
+      dy += 10;
+    }
+    return [a, dx, dy];
+  }
+  function armGoal(g, e, s, T2) {
+    const [bx, by] = hgAt({ cx: 0, cy: 0 }, 42 + s * (HG.KNEE + 6), HG.KNEE_Y - 6);
+    let x = bx, y = by + Math.sin(T2 * 1.9 + s * 0.6) * 3;
+    const u = (T2 + (s > 0 ? 0 : 4.2)) % 8.5 / 8.5;
+    if (u < 0.16) {
+      const k = Math.sin(Math.PI * u / 0.16);
+      x += s * 16 * k;
+      y -= 30 * k;
+    }
+    const q = g.hzNear(e.cx, e.cy);
+    if (q && Math.sign(q.cx - e.cx) === s && Math.abs(q.cx - e.cx) < 460) {
+      x += s * 8;
+      y -= 12;
+    }
+    const sand = hzOf3(g, e, "hsand"), pit = hzOf3(g, e, "hpit"), dl = hzOf3(g, e, "hdead"), fl = hzOf3(g, e, "hflip");
+    if (sand && sand.t < sand.fill + sand.hold) {
+      const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 50, 47);
+      x = ax;
+      y = ay + Math.sin(T2 * 2.4 + s) * 6;
+    } else if (pit && pit.t < pit.tele + 1 && q && Math.sign(q.cx - e.cx) === s) {
+      const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 58, 74);
+      x = ax;
+      y = ay;
+    }
+    if (dl && !dl.done) {
+      const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 54, 26);
+      x = ax + Math.sin(T2 * 26 + s) * 2;
+      y = ay;
+    }
+    if (fl && fl.t < 1.4) {
+      const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 35, 56);
+      x = ax;
+      y = ay;
+    }
+    if (e.gapT > 0 && e.gapK === "stagger") {
+      x += s * 6;
+      y += 12;
+    }
+    return [x, y];
+  }
   var BossHourglassArt = {
     /** 몸 · 모래시계 · 둔덕(objects 단계) */
     drawHourglassBody(f) {
@@ -63103,7 +63179,7 @@
         if (!this.paused) this.hourglassAmbient(e);
         for (const h of this.bhz || []) if (h.k === "hsand" && this.hzBoss(h) === e) this.drawDune(c, h, f.camX, f.camY, T2);
         if (!im) continue;
-        const st = Math.min(2, Math.round((e.pf || 0) * 2)), br = Math.floor(T2 / 1.3) % 2, fr = st * 2 + br;
+        const st = Math.min(2, Math.round((e.pf || 0) * 2)), fr = st * 2;
         const [x0, y0] = hgAt(e, 0, 0), x = x0 - f.camX, y = y0 - f.camY;
         c.save();
         const w = this.world, tx0 = Math.floor(x0 / TS), ty0 = Math.floor(y0 / TS);
@@ -63119,6 +63195,28 @@
           c.drawImage(im, fr * BW2, 0, BW2, BH2, x, y, BW2, BH2);
           c.globalCompositeOperation = "source-over";
           c.globalAlpha = 1;
+        }
+        const dt = stepDt(this, e, "hgT0"), [ga, gdx, gdy] = headGoal(this, e, T2), H = e.hgHead || (e.hgHead = { a: 0, dx: 0, dy: 0 });
+        H.a = ease3(H.a, ga, dt, 6);
+        H.dx = ease3(H.dx, gdx, dt, 6);
+        H.dy = ease3(H.dy, gdy, dt, 8);
+        if (pim) {
+          const [nx, ny] = hgAt(e, 42, 36), hx = nx + H.dx - f.camX, hy = ny + H.dy - f.camY;
+          c.save();
+          c.translate(hx, hy);
+          c.rotate(H.a);
+          c.drawImage(pim, (5 + st) * PW2, 0, PW2, PH2, -80, -144, PW2, PH2);
+          if (e.flash > 0) {
+            c.globalCompositeOperation = "lighter";
+            c.globalAlpha = Math.min(0.5, e.flash * 4);
+            c.drawImage(pim, (5 + st) * PW2, 0, PW2, PH2, -80, -144, PW2, PH2);
+          }
+          c.restore();
+          const ca = Math.cos(H.a), sa = Math.sin(H.a);
+          e.hgEyes = [-1, 1].map((s2) => {
+            const ox = s2 * 4.6 * HG.K, oy = -15 * HG.K;
+            return [nx + H.dx + ox * ca - oy * sa, ny + H.dy + ox * sa + oy * ca];
+          });
         }
         const [gx, gy] = hgAt(e, 42, HG.GLASS_Y), fl = hzOf3(this, e, "hflip"), dl = hzOf3(this, e, "hdead");
         let top = hgSand(e), rot = 0, flow = true;
@@ -63204,9 +63302,21 @@
         for (const h of this.bhz || []) if (h.k === "hfist" && this.hzBoss(h) === e) fists[h.s] = h;
         for (const s of [-1, 1]) {
           const [sx, sy] = hgAt(e, 42 + s * HG.SH, HG.SH_Y), h = fists[s];
-          const rest = hgAt(e, 42 + s * (HG.KNEE + 6), HG.KNEE_Y - 6 + Math.sin(T2 * 1.6 + s) * 0.4);
-          const [hx, hy, ph] = h ? fistAt(h, e) : [rest[0], rest[1], -1];
-          const w = !h ? 0 : ph === 0 ? smooth3(h.t / h.tele) : ph === 3 ? 1 - smooth3((h.t - h.tele - 0.7) / 0.6) : 1;
+          const A = e.hgArm || (e.hgArm = {}), cur = A[s] || (A[s] = armGoal(this, e, s, T2)), dt = stepDt(this, A, "t" + s);
+          let hx, hy, ph = -1;
+          if (h) {
+            [hx, hy, ph] = fistAt(h, e);
+            cur[0] = hx - e.cx;
+            cur[1] = hy - e.cy;
+          } else {
+            const [gx, gy] = armGoal(this, e, s, T2);
+            cur[0] = ease3(cur[0], gx, dt, 4);
+            cur[1] = ease3(cur[1], gy, dt, 4);
+            hx = e.cx + cur[0];
+            hy = e.cy + cur[1];
+          }
+          const kn = hgAt(e, 42 + s * (HG.KNEE + 6), HG.KNEE_Y - 6);
+          const w = h ? ph === 0 ? smooth3(h.t / h.tele) : ph === 3 ? 1 - smooth3((h.t - h.tele - 0.7) / 0.6) : 1 : smooth3((Math.hypot(hx - kn[0], hy - kn[1]) - 20) / 90);
           const [rx, ry] = hgAt(e, 42 + s * 31, 61), [ix, iy] = elbow2(sx, sy, hx, hy, s);
           const ex = rx + (ix - rx) * w, ey = ry + (iy - ry) * w;
           c.save();
@@ -63247,10 +63357,9 @@
       for (const e of this.ents) {
         if (!isHg(e)) continue;
         const st = Math.min(2, Math.round((e.pf || 0) * 2)), eye = ["#ffb040", "#ff9a30", "#ff7020"][st];
-        for (const s of [-1, 1]) {
-          const [x, y] = hgAt(e, 42 + s * 4.6, 21);
-          hzGlow(c, x - f.camX, y - f.camY, 16 + st * 3, eye, 0.45);
-        }
+        const blink = (T2 + e.cx * 0.01) % 4.3 < 0.13 ? 0.08 : 1, dlo = hzOf3(this, e, "hdead");
+        const eyes = e.hgEyes || [-1, 1].map((s) => hgAt(e, 42 + s * 4.6, 21));
+        for (const [x, y] of eyes) hzGlow(c, x - f.camX, y - f.camY, (16 + st * 3) * (dlo && !dlo.done ? 1.6 : 1), eye, 0.45 * blink);
         const [gx, gy] = hgAt(e, 42, HG.GLASS_Y), dl = hzOf3(this, e, "hdead");
         hzGlow(c, gx - f.camX, gy - f.camY, 44, AMBER, 0.18 + 0.06 * Math.sin(T2 * 2));
         if (dl && !dl.done) {
@@ -65498,9 +65607,9 @@
         let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
         if (this.starGain && i === n - 1) {
           const gk = Math.min(1, this.starGain.t / this.starGain.dur);
-          const ease3 = 1 - Math.pow(1 - gk, 3);
-          y -= (1 - ease3) * 240;
-          x += (1 - ease3) * 40;
+          const ease4 = 1 - Math.pow(1 - gk, 3);
+          y -= (1 - ease4) * 240;
+          x += (1 - ease4) * 40;
         }
         const back = riseK > 0.9 || Math.sin(a) >= 0 ? 1 : 0.45;
         const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));
@@ -74377,9 +74486,9 @@
           c.stroke();
           c.setLineDash([]);
         }
-        const lock = Math.min(1, pa / 0.35), ease3 = 1 - Math.pow(1 - lock, 3);
-        const pad = 3 + (1 - ease3) * 22 + beat * 2.5, rot = (1 - ease3) * 1.6;
-        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease3) * 4;
+        const lock = Math.min(1, pa / 0.35), ease4 = 1 - Math.pow(1 - lock, 3);
+        const pad = 3 + (1 - ease4) * 22 + beat * 2.5, rot = (1 - ease4) * 1.6;
+        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease4) * 4;
         c.save();
         c.translate(x + ew / 2, y + eh / 2);
         c.rotate(rot);

@@ -582,6 +582,32 @@ BRONZE, BRONZE_D, AMBER = '#a8743a', '#5a3a1a', '#ffc85a'     # 청동 · 그늘
 HG_C = (42, 52)                                               # 모래시계 홈 가운데(게임 HG.GLASS_Y 와 같다)
 
 
+def colossus_head(F, cx, hy, st, f=0):
+    """머리 — 두건(옆 자락) · 사암 가면 · 이마 왕관 · 눈(손상 단계 st 의 금 · 깨진 조각까지). 몸 시트(쓰러지는 장)와 조각 5~7 이 같이 쓴다"""
+    F.part('cloth', '#3a5a8a', bevel=2).poly([(cx - 13, hy - 8), (cx + 13, hy - 8), (cx + 17, hy + 16), (cx + 12, hy + 18), (cx - 12, hy + 18), (cx - 17, hy + 16)])
+    F.part('stone', SANDST_L, bevel=3).poly([(cx - 10, hy - 9), (cx + 10, hy - 9), (cx + 11, hy + 6), (cx + 6, hy + 14), (cx - 6, hy + 14), (cx - 11, hy + 6)])
+    for k in range(5):                                    # 두건 줄무늬 — 얼굴 밖 자락에만
+        y = hy - 4 + k * 4.2
+        for s2 in (-1, 1):
+            fine(F, (cx + s2 * 11.5, y), (cx + s2 * (13.5 + k * 0.7), y), '#d8b060', 220)
+    F.part('stone', SANDST_D, bevel=1).box(cx - 1, hy - 2, 2, 7, 1)
+    F.part('stone', SANDST_D, bevel=1).box(cx - 4, hy + 8.5, 8, 1.4, 0.5)
+    F.part('metal', BRONZE, bevel=2).poly([(cx - 10, hy - 9), (cx + 10, hy - 9), (cx + 7, hy - 14), (cx, hy - 18), (cx - 7, hy - 14)])
+    F.part('glow', AMBER, glow=True).ell(cx, hy - 13, 1.8, 1.8)
+    eye, b = ('#ffb040', '#ff9a30', '#ff7020')[st], 0
+    for s2 in (-1, 1):
+        if f >= 7:
+            F.line(cx + s2 * 5 - 1.5, hy + 1, cx + s2 * 5 + 1.5, hy + 1, '#4a3a20')
+        else:
+            F.part('glow', eye, glow=True).ell(cx + s2 * 4.6, hy + 1, 2.2, 1.0 + b * 0.3)
+            F.glow(cx + s2 * 4.6, hy + 1, 4 + st + b, eye, 0.35 + b * 0.1)
+    if st >= 1:
+        crack(F, [(cx - 6, hy - 8), (cx - 4, hy - 3), (cx - 7, hy + 3), (cx - 5, hy + 9)], 0.45, AMBER)
+    if st >= 2:
+        F.part('stone', SANDST_D, flat=True).ell(cx + 7, hy - 12, 3, 2.2)
+        fine(F, (cx + 4.4, hy - 13), (cx + 9.6, hy - 11), SANDST_L, 220)
+
+
 def colossus_body(f):
     """몸 시트 8장(84×104 설계 칸 · 바닥 101) — 0·1 멀쩡(눈이 숨 쉰다) · 2·3 금 · 4·5 깨진 왕관 · 무너진 어깨 · 6·7 쓰러짐(무너져 내린다).
        왕좌에 앉은 거상 — 가슴 가운데 둥근 홈에 모래시계(조각 0)가 박히고 그 속 모래는 게임이 그린다 · 팔은 조각(1 · 2 · 3)으로 무릎에 얹힌다.
@@ -619,32 +645,17 @@ def colossus_body(f):
     for s2 in (-1, 1):
         F.part('metal', BRONZE, bevel=2).poly([(cx + s2 * 15, 33 + fall), (cx + s2 * 30, 33 + fall), (cx + s2 * 32, 40 + fall), (cx + s2 * 27, 44 + fall), (cx + s2 * 17, 40 + fall)])
         F.part('metal', '#c8925a', bevel=1).poly([(cx + s2 * 17, 34 + fall), (cx + s2 * 28, 34 + fall), (cx + s2 * 29, 37 + fall), (cx + s2 * 18, 37 + fall)])
-    # 머리 — 두건(옆 자락) · 사암 가면 · 이마 왕관
+    # 목 — 머리는 조각(5~7)이라 게임이 돌린다. 쓰러지는 장(6 · 7)만 머리를 몸에 같이 그린다
+    F.part('stone', SANDST_D, bevel=2).box(cx - 6, 29 + fall, 12, 9, 2)
     hy = 20 + fall
-    F.part('cloth', '#3a5a8a', bevel=2).poly([(cx - 13, hy - 8), (cx + 13, hy - 8), (cx + 17, hy + 16), (cx + 12, hy + 18), (cx - 12, hy + 18), (cx - 17, hy + 16)])
-    F.part('stone', SANDST_L, bevel=3).poly([(cx - 10, hy - 9), (cx + 10, hy - 9), (cx + 11, hy + 6), (cx + 6, hy + 14), (cx - 6, hy + 14), (cx - 11, hy + 6)])
-    for k in range(5):                                    # 두건 줄무늬 — 얼굴 밖 자락에만
-        y = hy - 4 + k * 4.2
-        for s2 in (-1, 1):
-            fine(F, (cx + s2 * 11.5, y), (cx + s2 * (13.5 + k * 0.7), y), '#d8b060', 220)
-    F.part('stone', SANDST_D, bevel=1).box(cx - 1, hy - 2, 2, 7, 1)
-    F.part('stone', SANDST_D, bevel=1).box(cx - 4, hy + 8.5, 8, 1.4, 0.5)
-    F.part('metal', BRONZE, bevel=2).poly([(cx - 10, hy - 9), (cx + 10, hy - 9), (cx + 7, hy - 14), (cx, hy - 18), (cx - 7, hy - 14)])
-    F.part('glow', AMBER, glow=True).ell(cx, hy - 13, 1.8, 1.8)
-    eye = ('#ffb040', '#ff9a30', '#ff7020')[st]
-    for s2 in (-1, 1):
-        if f >= 7:
-            F.line(cx + s2 * 5 - 1.5, hy + 1, cx + s2 * 5 + 1.5, hy + 1, '#4a3a20')
-        else:
-            F.part('glow', eye, glow=True).ell(cx + s2 * 4.6, hy + 1, 2.2, 1.0 + b * 0.3)
-            F.glow(cx + s2 * 4.6, hy + 1, 4 + st + b, eye, 0.35 + b * 0.1)
+    if fall:
+        colossus_head(F, cx, hy, st, f)
     if st >= 1:
-        crack(F, [(cx - 6, hy - 8), (cx - 4, hy - 3), (cx - 7, hy + 3), (cx - 5, hy + 9)], 0.45, AMBER)
         crack(F, [(cx + 19, 40 + fall), (cx + 15, 48), (cx + 17, 56), (cx + 13, 63)], 0.5, AMBER)
     if st >= 2:
         crack(F, [(cx - 20, 46 + fall), (cx - 15, 54), (cx - 17, 62)], 0.5, AMBER)
         crack(F, [(cx + 17, 72), (cx + 14, 80), (cx + 18, 86)], 0.45, AMBER)
-        for (x, y) in ((cx + 7, hy - 12), (cx - 26, 38 + fall), (cx + 12, 58)):
+        for (x, y) in ((cx - 26, 38 + fall), (cx + 12, 58)):
             F.part('stone', SANDST_D, flat=True).ell(x, y, 3, 2.2)
             fine(F, (x - 2.6, y - 1), (x + 2.6, y + 1), SANDST_L, 220)
     if fall:
@@ -655,7 +666,7 @@ def colossus_body(f):
 
 
 def colossus_parts(f):
-    """조각 5장(40×44 설계 칸) — 0 모래시계(청동 마개 · 기둥 둘 · 유리의 빛 — 속은 비었다: 모래는 게임이 그린다) · 1 위팔 · 2 아래팔 · 3 주먹 · 4 사암 덩이"""
+    """조각 8장(40×44 설계 칸) — 5~7 머리(손상 단계) · 0 모래시계(청동 마개 · 기둥 둘 · 유리의 빛 — 속은 비었다: 모래는 게임이 그린다) · 1 위팔 · 2 아래팔 · 3 주먹 · 4 사암 덩이"""
     F = ZFig(40, 44)
     cx = 20
     if f == 0:
@@ -688,9 +699,11 @@ def colossus_parts(f):
             fine(F, (9 + k * 5.6, 19), (14 + k * 5.6, 19), SANDST_D, 220)
         F.part('stone', SANDST_D, bevel=2).box(4, 20, 6, 10, 2)                           # 엄지
         F.part('metal', BRONZE, bevel=1.4).box(28, 15, 4, 16, 1)
-    else:
+    elif f == 4:
         F.part('stone', SANDST, bevel=3).poly([(8, 14), (22, 9), (32, 16), (30, 30), (16, 34), (7, 26)])
         crack(F, [(14, 18), (20, 24), (26, 21)], 0.6, AMBER)
+    else:                                                 # 5~7 머리(손상 0 · 1 · 2) — 목 축 (20, 34) 둘레로 게임이 돌린다
+        colossus_head(F, cx, 20, f - 5)
     return F.render()
 
 
@@ -698,7 +711,7 @@ RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts)},
     'corrupt_heart': {'body': (46, 80, 8, 0, cocoon_body), 'parts': (100, 80, 14, moth_frame)},
-    'sand_guardian': {'body': (84, 104, 8, 2, colossus_body), 'parts': (40, 44, 5, colossus_parts)},
+    'sand_guardian': {'body': (84, 104, 8, 2, colossus_body), 'parts': (40, 44, 8, colossus_parts)},
 }
 
 

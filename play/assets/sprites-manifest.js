@@ -2808,7 +2808,7 @@ window.SPRITE_MANIFEST = {
         "file": "boss/sand_guardian_parts.png",
         "frameW": 160,
         "frameH": 176,
-        "count": 5,
+        "count": 8,
         "scale": 1,
         "gap": 0,
         "rig": 1

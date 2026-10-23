@@ -58,6 +58,46 @@ function glassSand(c: C2, top: number, bot: number, flow: boolean, T: number) {
   }
 }
 
+/** 지난 그림 뒤 흐른 시간 — 몸짓을 부드럽게 옮길 때(멈춘 동안 0) */
+function stepDt(g: Bag, e: Bag, key: string) {
+  const T = g.time || 0, dt = g.paused ? 0 : Math.max(0, Math.min(0.1, T - (e[key] ?? T)));
+  e[key] = T; return dt;
+}
+const ease = (cur: number, to: number, dt: number, rate: number) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
+
+/** 머리의 자세 [기울기, 옆 · 아래로 민 px] — 가까운 플레이어를 보고 숨에 맞춰 오르내리며, 기술마다 다르게 반응한다 */
+function headGoal(g: Bag, e: Enemy, T: number): [number, number, number] {
+  const q = g.hzNear(e.cx, e.cy), look = q ? Math.max(-1, Math.min(1, (q.cx - e.cx) / 500)) : 0;
+  let a = look * 0.1, dx = look * 7, dy = Math.sin(T * 1.9) * 2;
+  const fist = hzOf(g, e, 'hfist'), sand = hzOf(g, e, 'hsand'), pit = hzOf(g, e, 'hpit'), dl = hzOf(g, e, 'hdead'), fl = hzOf(g, e, 'hflip');
+  if (fist) {                                                        // 내리칠 자리를 내려다보고, 맞는 순간 고개가 꺾인다
+    const s = Math.sign(fist.tx - e.cx) || 1, t = fist.t - fist.tele;
+    a = s * 0.16; dx = s * 9; dy += 5;
+    if (t > 0 && t < 0.5) dy += 8 * (1 - t / 0.5) * Math.abs(Math.cos(t * 30));
+  } else if (sand && sand.t < sand.fill + sand.hold) { a = Math.sin(T * 1.3) * 0.05; dy -= 7; }   // 고개를 들고 모래를 쏟는다
+  else if (pit && pit.t < pit.tele + 1) { a = look * 0.2; dx = look * 10; dy += 6; }            // 늪이 꺼질 자리를 노려본다
+  if (dl && !dl.done) { a = Math.sin(T * 28) * 0.03; dx = 0; dy -= 9; }                          // 마감 — 버티며 떤다
+  if (fl && fl.t < 1.4) a = Math.sin(fl.t * 22) * 0.1 * (1 - fl.t / 1.4);                         // 뒤집히는 동안 흔들린다
+  if (e.gapT > 0 && e.gapK === 'stagger') { a = Math.sin(T * 3.2) * 0.14; dy += 10; }             // 비틀 — 고개가 늘어진다
+  return [a, dx, dy];
+}
+/** 쉬는 팔의 주먹 자리(몸 기준 px) — 숨 · 가끔 한 손을 들었다 놓기 · 가까운 쪽 팔은 들썩 · 기술마다 몸짓 */
+function armGoal(g: Bag, e: Enemy, s: number, T: number): [number, number] {
+  const [bx, by] = hgAt({ cx: 0, cy: 0 }, 42 + s * (HG.KNEE + 6), HG.KNEE_Y - 6);
+  let x = bx, y = by + Math.sin(T * 1.9 + s * 0.6) * 3;
+  const u = ((T + (s > 0 ? 0 : 4.2)) % 8.5) / 8.5;                   // 8.5초마다 한 번 — 주먹을 들었다 무릎에 쿵
+  if (u < 0.16) { const k = Math.sin(Math.PI * u / 0.16); x += s * 16 * k; y -= 30 * k; }
+  const q = g.hzNear(e.cx, e.cy);
+  if (q && Math.sign(q.cx - e.cx) === s && Math.abs(q.cx - e.cx) < 460) { x += s * 8; y -= 12; }   // 다가온 쪽 팔이 들썩
+  const sand = hzOf(g, e, 'hsand'), pit = hzOf(g, e, 'hpit'), dl = hzOf(g, e, 'hdead'), fl = hzOf(g, e, 'hflip');
+  if (sand && sand.t < sand.fill + sand.hold) { const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 50, 47); x = ax; y = ay + Math.sin(T * 2.4 + s) * 6; }
+  else if (pit && pit.t < pit.tele + 1 && q && Math.sign(q.cx - e.cx) === s) { const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 58, 74); x = ax; y = ay; }   // 늪 쪽을 가리킨다
+  if (dl && !dl.done) { const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 54, 26); x = ax + Math.sin(T * 26 + s) * 2; y = ay; }   // 두 팔을 벌려 목을 드러낸다
+  if (fl && fl.t < 1.4) { const [ax, ay] = hgAt({ cx: 0, cy: 0 }, 42 + s * 35, 56); x = ax; y = ay; }   // 팔걸이를 움켜쥔다
+  if (e.gapT > 0 && e.gapK === 'stagger') { x += s * 6; y += 12; }
+  return [x, y];
+}
+
 export const BossHourglassArt: Bag = {
   /** 몸 · 모래시계 · 둔덕(objects 단계) */
   drawHourglassBody(f: any) {
@@ -67,7 +107,7 @@ export const BossHourglassArt: Bag = {
       if (!this.paused) this.hourglassAmbient(e);
       for (const h of this.bhz || []) if (h.k === 'hsand' && this.hzBoss(h) === e) this.drawDune(c, h, f.camX, f.camY, T);   // 쏟은 모래 둔덕 — 인물이 그 위에 선다
       if (!im) continue;
-      const st = Math.min(2, Math.round((e.pf || 0) * 2)), br = Math.floor(T / 1.3) % 2, fr = st * 2 + br;
+      const st = Math.min(2, Math.round((e.pf || 0) * 2)), fr = st * 2;
       const [x0, y0] = hgAt(e, 0, 0), x = x0 - f.camX, y = y0 - f.camY;
       c.save();
       /* 방이 좁으면 몸이 벽에 묻힌다 — 빈 칸에만 보이게 */
@@ -79,6 +119,18 @@ export const BossHourglassArt: Bag = {
       c.imageSmoothingEnabled = false;
       c.drawImage(im, fr * BW, 0, BW, BH, x, y, BW, BH);
       if (e.flash > 0) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.min(0.5, e.flash * 4); c.drawImage(im, fr * BW, 0, BW, BH, x, y, BW, BH); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; }
+      /* 머리 — 목 축(설계 42, 36) 둘레로 돈다. 눈 자리는 빛 단계가 쓴다 */
+      const dt = stepDt(this, e, 'hgT0'), [ga, gdx, gdy] = headGoal(this, e, T), H = e.hgHead || (e.hgHead = { a: 0, dx: 0, dy: 0 });
+      H.a = ease(H.a, ga, dt, 6); H.dx = ease(H.dx, gdx, dt, 6); H.dy = ease(H.dy, gdy, dt, 8);
+      if (pim) {
+        const [nx, ny] = hgAt(e, 42, 36), hx = nx + H.dx - f.camX, hy = ny + H.dy - f.camY;
+        c.save(); c.translate(hx, hy); c.rotate(H.a);
+        c.drawImage(pim, (5 + st) * PW, 0, PW, PH, -80, -144, PW, PH);
+        if (e.flash > 0) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.min(0.5, e.flash * 4); c.drawImage(pim, (5 + st) * PW, 0, PW, PH, -80, -144, PW, PH); }
+        c.restore();
+        const ca = Math.cos(H.a), sa = Math.sin(H.a);
+        e.hgEyes = [-1, 1].map(s2 => { const ox = s2 * 4.6 * HG.K, oy = -15 * HG.K; return [nx + H.dx + ox * ca - oy * sa, ny + H.dy + ox * sa + oy * ca]; });
+      }
       /* 모래시계 — 뒤집는 동안 돈다. 속 모래: 평소엔 이 막의 남은 몫, 마감 중엔 남은 시간 */
       const [gx, gy] = hgAt(e, 42, HG.GLASS_Y), fl = hzOf(this, e, 'hflip'), dl = hzOf(this, e, 'hdead');
       let top = hgSand(e), rot = 0, flow = true;
@@ -129,10 +181,13 @@ export const BossHourglassArt: Bag = {
       for (const h of this.bhz || []) if (h.k === 'hfist' && this.hzBoss(h) === e) fists[h.s] = h;
       for (const s of [-1, 1]) {
         const [sx, sy] = hgAt(e, 42 + s * HG.SH, HG.SH_Y), h = fists[s];
-        const rest = hgAt(e, 42 + s * (HG.KNEE + 6), HG.KNEE_Y - 6 + Math.sin(T * 1.6 + s) * 0.4);
-        const [hx, hy, ph] = h ? fistAt(h, e) : [rest[0], rest[1], -1];
-        /* 쉴 땐 팔꿈치가 팔걸이에 놓이고 아래팔은 허벅지를 따라 앞으로(짧아 보인다) — 치켜드는 동안만 두 마디를 다 편다 */
-        const w = !h ? 0 : ph === 0 ? smooth(h.t / h.tele) : ph === 3 ? 1 - smooth((h.t - h.tele - 0.7) / 0.6) : 1;
+        const A = e.hgArm || (e.hgArm = {}), cur = A[s] || (A[s] = armGoal(this, e, s, T)), dt = stepDt(this, A, 't' + s);
+        let hx: number, hy: number, ph = -1;
+        if (h) { [hx, hy, ph] = fistAt(h, e); cur[0] = hx - e.cx; cur[1] = hy - e.cy; }   // 내리치는 동안은 그 자리 — 끝나면 거기서 이어 간다
+        else { const [gx, gy] = armGoal(this, e, s, T); cur[0] = ease(cur[0], gx, dt, 4); cur[1] = ease(cur[1], gy, dt, 4); hx = e.cx + cur[0]; hy = e.cy + cur[1]; }
+        /* 쉴 땐 팔꿈치가 팔걸이에 놓이고 아래팔은 허벅지를 따라 앞으로(짧아 보인다) — 주먹이 무릎에서 멀어질수록 두 마디를 편다 */
+        const kn = hgAt(e, 42 + s * (HG.KNEE + 6), HG.KNEE_Y - 6);
+        const w = h ? (ph === 0 ? smooth(h.t / h.tele) : ph === 3 ? 1 - smooth((h.t - h.tele - 0.7) / 0.6) : 1) : smooth((Math.hypot(hx - kn[0], hy - kn[1]) - 20) / 90);
         const [rx, ry] = hgAt(e, 42 + s * 31, 61), [ix, iy] = elbow(sx, sy, hx, hy, s);
         const ex = rx + (ix - rx) * w, ey = ry + (iy - ry) * w;
         c.save(); c.translate(-cx0, -cy0); c.imageSmoothingEnabled = false;
@@ -161,7 +216,9 @@ export const BossHourglassArt: Bag = {
     for (const e of this.ents) {
       if (!isHg(e)) continue;
       const st = Math.min(2, Math.round((e.pf || 0) * 2)), eye = ['#ffb040', '#ff9a30', '#ff7020'][st];
-      for (const s of [-1, 1]) { const [x, y] = hgAt(e, 42 + s * 4.6, 21); hzGlow(c, x - f.camX, y - f.camY, 16 + st * 3, eye, 0.45); }
+      const blink = ((T + e.cx * 0.01) % 4.3) < 0.13 ? 0.08 : 1, dlo = hzOf(this, e, 'hdead');   // 가끔 깜박 · 마감 중엔 타오른다
+      const eyes = e.hgEyes || [-1, 1].map(s => hgAt(e, 42 + s * 4.6, 21));
+      for (const [x, y] of eyes) hzGlow(c, x - f.camX, y - f.camY, (16 + st * 3) * (dlo && !dlo.done ? 1.6 : 1), eye, 0.45 * blink);
       const [gx, gy] = hgAt(e, 42, HG.GLASS_Y), dl = hzOf(this, e, 'hdead');
       hzGlow(c, gx - f.camX, gy - f.camY, 44, AMBER, 0.18 + 0.06 * Math.sin(T * 2));
       if (dl && !dl.done) {                                         // 마감 — 목이 맥박치며 밝고, 둘레에 남은 시간이 고리로 준다
