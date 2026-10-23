@@ -3712,7 +3712,7 @@
     sword_wood: { n: "금 간 목검", i: "🗡", type: "weapon", wc: "melee", dmg: 9, spd: 2.2, kb: 3, reach: 40, tier: 0, d: "아버지의 창고 구석에서 찾아낸 연습용 검." },
     sword_copper: { n: "구리 장검", i: "⚔", type: "weapon", wc: "melee", dmg: 16, spd: 2, kb: 4, reach: 44, tier: 1, d: "무르지만 정직하게 벤다." },
     sword_iron: { n: "강철 브로드소드", i: "⚔", type: "weapon", wc: "melee", dmg: 28, spd: 1.9, kb: 5, reach: 48, tier: 2, d: "잿빛 마을 대장간의 표준품." },
-    sword_bone: { n: "뼈의 군주의 이빨", i: "🦴", type: "weapon", wc: "melee", dmg: 42, spd: 2.3, kb: 4, reach: 46, tier: 3, lifesteal: 5, d: "휘두를 때마다 낮은 웃음소리가 난다." },
+    sword_bone: { n: "오르간 건반 이빨", i: "🦴", type: "weapon", wc: "melee", dmg: 42, spd: 2.3, kb: 4, reach: 46, tier: 3, lifesteal: 5, d: "휘두를 때마다 낮은 웃음소리가 난다." },
     sword_mythril: { n: "미스릴 세이버", i: "⚔", type: "weapon", wc: "melee", dmg: 58, spd: 2.4, kb: 5, reach: 50, tier: 4, d: "푸른 잔상이 궤적을 따라 남는다." },
     sword_dawn: { n: "여명의 대검", i: "🌅", type: "weapon", wc: "melee", dmg: 88, spd: 1.7, kb: 9, reach: 62, tier: 5, fire: 2, d: "한 번의 일격에 밤을 걷어낸다." },
     scythe_void: { n: "공허의 낫", i: "🌑", type: "weapon", wc: "melee", dmg: 128, spd: 2.1, kb: 7, reach: 66, tier: 6, lifesteal: 9, d: "벤 자리에 잠시 별이 보인다." },
@@ -8445,14 +8445,15 @@
       drops: [["slime_gel", 1, 25, 40], ["ring_vigor", 1, 1, 1], ["star_heart", 1, 1, 1], ["sword_copper", 0.5, 1, 1]]
     },
     bone_lord: {
-      n: "뼈의 군주",
+      n: "뼈 오르간",
       hp: 2e3,
       dmg: 36,
       def: 14,
-      spd: 70,
-      ai: "b_bone",
-      w: 104,
-      h: 136,
+      spd: 0,
+      ai: "b_organ",
+      w: 88,
+      h: 96,
+      wall: 1,
       c: "#ded6bd",
       xp: 1100,
       gold: 480,
@@ -9206,7 +9207,7 @@
     hepha: { k: "rage", t: 1.8, cd: 20, dur: 9, v: 0.35, brk: 0.04, c: "#ff9a4a", s: "sk_fire", n: "화로를 올린다", m: "달아오름" },
     restorer: { k: "mend", t: 2, cd: 22, v: 0.03, brk: 0.035, c: "#a8c8e8", s: "sk_heal", n: "되돌리려 한다" }
   };
-  var SURGE_FLY = { b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+  var SURGE_FLY = { b_organ: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
   var SKILLS = {
     /* ===== 검투사 — 붙어서 버티고 밀어붙인다 ===== */
     s_cleave: {
@@ -9827,7 +9828,7 @@
   };
   var BOSS_LINES = {
     king_slime: { 1: "웅덩이가 끓는다 — 투구 밑에서 무언가 뒤척인다.", 2: "투구에 금이 간다. 등불이 붉게 탄다." },
-    bone_lord: { 1: "뼈가 일어선다.", 2: "기둥이 저를 대신 든다." },
+    bone_lord: { 1: "갈비가 숨을 들이쉰다 — 관마다 바람이 찬다.", 2: "부러진 관이 운다. 음이 어긋난다." },
     corrupt_heart: { 1: "뿌리가 바닥을 짚는다.", 2: "제단만이 아직 뛰고 있다." },
     frost_witch: { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
     void_king: { 1: "나선이 되감긴다.", 2: "공허가 방향을 바꾼다." },
@@ -12694,9 +12695,9 @@
       ],
       needBasics: 2,
       require: ["depth"],
-      goal: { type: "boss", target: "bone_lord", t: "뼈 위에 앉은 것을 내린다", task: "뼈의 군주 토벌", verb: "boss" },
+      goal: { type: "boss", target: "bone_lord", t: "뼈 위에 앉은 것을 내린다", task: "뼈 오르간 토벌", verb: "boss" },
       rw: { xp: 1600, gold: 600, items: [["ring_vigor", 1], ["potion_hp_small", 8]] },
-      outro: '뼈의 군주는 무너지기 직전, 조각을 제 갈비뼈 사이에서 꺼내 네 쪽으로 밀어주었다.\n\n"…고맙다. 꿈이 너무 길었어."\n그는 재가 되기 전에 한 마디를 더 남겼다. "셋째는 스스로 걸어올 것이다."'
+      outro: '뼈 오르간은 마지막 관이 꺼지기 직전, 조각을 제 갈비뼈 사이에서 꺼내 네 쪽으로 밀어주었다.\n\n"…고맙다. 꿈이 너무 길었어."\n그는 재가 되기 전에 한 마디를 더 남겼다. "셋째는 스스로 걸어올 것이다."'
     },
     {
       id: 3,
@@ -13032,7 +13033,7 @@
   var CHAPTER_HOOK = {
     0: "별은 무언가로부터 도망치고 있었다. 그렇다면 쫓아온 것은 어디까지 왔을까.",
     1: '엘라라는 잿빛이 "번지고 있다"고 했다. 번진다는 건, 시작점이 있다는 뜻이다.',
-    2: "뼈의 군주는 왕이었던 적이 없다. 누군가 그를 여기 묻었고, 다시 일어나게 두었다.",
+    2: "뼈 오르간은 처음부터 악기가 아니었다. 누군가 그를 여기 묻었고, 무덤 벽이 그를 연주하게 두었다.",
     3: "부패는 천 년째 이 땅을 아주 천천히 먹고 있었다. 별이 떨어진 밤, 먹는 속도가 바뀌었다.",
     4: "서리는 벌이 아니라 방패였다. 서리 지대는 무엇으로부터 스스로를 숨기고 있었나.",
     5: "별의 심장이 다섯 조각이라는 걸 누가 먼저 알고 나눠 두었을까. 별이 떨어지기 전에.",
@@ -14610,19 +14611,19 @@
       ],
       ult: { k: "sig", sig: "surge", n: "잿물 범람", tele: 1, m: 1 }
     },
+    /* 뼈 오르간 — 무덤 뒷벽에 박힌 갈비 오르간. 몸은 움직이지 않고 팔 · 관 · 풀무가 싸운다(entity/boss-organ) */
     bone_lord: {
-      c: "#ede4c8",
-      every: 7,
+      c: "#bfe8d8",
+      every: 6,
       moves: [
-        { k: "dash", n: "뼈 회전", tele: 0.55, times: 3, spd: 3.4, m: 1 },
-        { k: "homing", n: "울부짖는 해골", tele: 0.6, cnt: 4, spd: 210, turn: 2.2, proj: "skull", m: 0.7 },
-        { k: "rain", n: "뼈 감옥", tele: 0.7, form: "cage", cnt: 9, gapX: 46, delay: 0.9, shape: "col", fx: "bone", m: 0.9 },
-        { k: "sig", sig: "reform", n: "흩어졌다 맞추기", tele: 0.6, pose: 0, m: 1 },
-        { k: "march", n: "뼈 창 줄", tele: 0.6, cnt: 7, gap: 56, every: 0.13, h: 110, fx: "bone", m: 0.9, pw: [1, 1, 1] },
-        { k: "shield", n: "뼈 방패", tele: 0.7, v: 0.12, life: 12, fx: "bone", ph: 1, pw: [0, 1.2, 1] },
-        { k: "summon", n: "해골 궁수대", tele: 0.8, mob: "archer", cnt: 3, ph: 2, pw: [0, 0, 1.3] }
+        { k: "sig", sig: "sweep", n: "뼈 팔 쓸기", tele: 0.3, m: 1 },
+        { k: "sig", sig: "pipes", n: "관 울림", tele: 0.3, m: 0.7 },
+        { k: "sig", sig: "scatter", n: "흩어졌다 맞추기", tele: 0.5, m: 0.6 },
+        { k: "summon", n: "해골 성가대", tele: 0.8, mob: "skeleton", cnt: 3 },
+        { k: "sig", sig: "sweep", n: "두 팔 쓸기", tele: 0.3, both: 1, m: 1, ph: 1, pw: [0, 1, 1.3] },
+        { k: "sig", sig: "pipes", n: "불협화음", tele: 0.3, wild: 1, m: 0.6, ph: 2, pw: [0, 0, 1.4] }
       ],
-      ult: { k: "spiral", n: "뼈 폭풍", tele: 1, arms: 4, dur: 4, every: 0.12, spd: 300, proj: "bone", turn: 2.4, m: 0.5 }
+      ult: { k: "sig", sig: "requiem", n: "장송곡", tele: 1, m: 0.6 }
     },
     corrupt_heart: {
       c: "#b07aff",
@@ -18700,8 +18701,8 @@
           for (let m = 0; m < want; m++) {
             const nb = put.flatMap((i) => [i + 1, i - 1, i + WW2, i - WW2]).filter((j) => ok(j, t) && !put.includes(j));
             if (!nb.length) break;
-            const best = Math.max(...nb.map((j) => dist3.get(j))), pick2 = [...new Set(nb.filter((j) => dist3.get(j) === best))].sort((a, b) => a - b);
-            put.push(pick2[r.int(0, pick2.length - 1)]);
+            const best = Math.max(...nb.map((j) => dist3.get(j))), pick3 = [...new Set(nb.filter((j) => dist3.get(j) === best))].sort((a, b) => a - b);
+            put.push(pick3[r.int(0, pick3.length - 1)]);
           }
           for (const i of put) {
             this.set(i % WW2, i / WW2 | 0, RICH[t]);
@@ -20619,11 +20620,11 @@
       const edgeL = (r) => r.x - ruin.x0, edgeR = (r) => ruin.x0 + ruin.w - (r.x + r.w);
       const cands = ruin.rooms.filter((r) => Math.min(edgeL(r), edgeR(r)) <= 3 && r.h >= 5);
       const pool = cands.length ? cands : ruin.rooms;
-      let T0 = pool[0];
+      let T02 = pool[0];
       for (const r of pool)
-        if (r.y < T0.y || r.y === T0.y && Math.abs(r.x - x) < Math.abs(T0.x - x)) T0 = r;
-      const side = edgeL(T0) <= edgeR(T0) ? -1 : 1;
-      const tf = T0.y + T0.h - 3;
+        if (r.y < T02.y || r.y === T02.y && Math.abs(r.x - x) < Math.abs(T02.x - x)) T02 = r;
+      const side = edgeL(T02) <= edgeR(T02) ? -1 : 1;
+      const tf = T02.y + T02.h - 3;
       const cxo = side < 0 ? ruin.x0 - 5 : ruin.x0 + ruin.w + 4;
       dir = Math.sign(cxo - x) || side;
       lastSeg = "hall";
@@ -20634,7 +20635,7 @@
       yGuard = tf + 3;
       run(tf);
       dir = -side;
-      const inRoom = () => dir > 0 ? x >= T0.x + 1 : x <= T0.x + T0.w - 2;
+      const inRoom = () => dir > 0 ? x >= T02.x + 1 : x <= T02.x + T02.w - 2;
       for (let i = 0; i < 60 && !stop && !inRoom(); i++) step(0);
       return { x, f };
     },
@@ -21220,22 +21221,22 @@
           traps: (sp.traps || ["dart", "crumble"]).slice()
         });
       });
-      const pick2 = this.ruinSpec.map((_, i) => i);
-      for (let i = pick2.length - 1; i > 0; i--) {
+      const pick3 = this.ruinSpec.map((_, i) => i);
+      for (let i = pick3.length - 1; i > 0; i--) {
         const j = rng.int(0, i);
-        [pick2[i], pick2[j]] = [pick2[j], pick2[i]];
+        [pick3[i], pick3[j]] = [pick3[j], pick3[i]];
       }
       const mrng = new RNG(this.seed + "_mystic");
-      pick2.slice(0, 3).forEach((ri) => {
+      pick3.slice(0, 3).forEach((ri) => {
         delete this.ruinSpec[ri].mystic;
       });
-      pick2.slice(0, 3).forEach((ri) => {
-        const pool = Object.keys(MYSTIC_W).filter((id) => id === "none" || !pick2.slice(0, 3).some((o) => this.ruinSpec[o].mystic === id));
+      pick3.slice(0, 3).forEach((ri) => {
+        const pool = Object.keys(MYSTIC_W).filter((id) => id === "none" || !pick3.slice(0, 3).some((o) => this.ruinSpec[o].mystic === id));
         const got = weightedKey(Object.fromEntries(pool.map((id) => [id, MYSTIC_W[id]])), () => mrng.next());
         if (got === "none") delete this.ruinSpec[ri].mystic;
         else this.ruinSpec[ri].mystic = got;
       });
-      pick2.slice(3).forEach((ri) => {
+      pick3.slice(3).forEach((ri) => {
         delete this.ruinSpec[ri].mystic;
       });
       this.ruinSpec.forEach((spec, i) => {
@@ -21350,8 +21351,8 @@
         }
         const cav = (this.caverns || []).filter((c) => Math.abs(c.cx - spec.x) > 500);
         if (!cav.length) continue;
-        const pick2 = cav[rng.int(0, cav.length - 1)];
-        let px = clamp(pick2.cx + rng.int(-6, 6), 40, WW2 - 40), py = pick2.cy;
+        const pick3 = cav[rng.int(0, cav.length - 1)];
+        let px = clamp(pick3.cx + rng.int(-6, 6), 40, WW2 - 40), py = pick3.cy;
         for (let k = 0; k < 40 && py < WH2 - 8; k++) {
           if (this.get(px, py) === T.AIR && TILE_DEF[this.get(px, py + 1)].solid === 1) break;
           py++;
@@ -24241,7 +24242,7 @@
         const i = Math.floor(u / 5), f = u / 5 - i, e = f * f * (3 - 2 * f);
         return lerp(tileHash(i, s), tileHash(i + 1, s), e);
       };
-      const T0 = 3.4 + nm * 1.3;
+      const T02 = 3.4 + nm * 1.3;
       const gx0 = tx * TS, gy0 = ty * TS;
       const blobs = [];
       const nb = Math.round((oT || oR || oB || oL ? 1 + (nm >> 1) : nm >= 2 ? nm - 1 : 0) * D);
@@ -24255,11 +24256,11 @@
           const gx = gx0 + x, gy = gy0 + y;
           const ex = x + 0.5, ey = y + 0.5;
           let f = 0;
-          if (oT) f += Math.exp(-ey / (T0 + 3.5 * vn(gx, 11)));
-          if (oB) f += Math.exp(-(TS - ey) / (T0 + 3.5 * vn(gx, 13)));
-          if (oL) f += Math.exp(-ex / (T0 + 3.5 * vn(gy, 17)));
-          if (oR) f += Math.exp(-(TS - ex) / (T0 + 3.5 * vn(gy, 19)));
-          const tc = T0 + 2.5;
+          if (oT) f += Math.exp(-ey / (T02 + 3.5 * vn(gx, 11)));
+          if (oB) f += Math.exp(-(TS - ey) / (T02 + 3.5 * vn(gx, 13)));
+          if (oL) f += Math.exp(-ex / (T02 + 3.5 * vn(gy, 17)));
+          if (oR) f += Math.exp(-(TS - ex) / (T02 + 3.5 * vn(gy, 19)));
+          const tc = T02 + 2.5;
           if (cTL) f += Math.exp(-Math.hypot(ex, ey) / tc);
           if (cTR) f += Math.exp(-Math.hypot(TS - ex, ey) / tc);
           if (cBR) f += Math.exp(-Math.hypot(TS - ex, TS - ey) / tc);
@@ -33024,11 +33025,11 @@
     return dmg;
   }
   var Timed = class {
-    constructor(rest, pick2) {
+    constructor(rest, pick3) {
       this.rest = rest;
       this.v = rest;
       this.t = 0;
-      this.pick = pick2;
+      this.pick = pick3;
     }
     set(v, t) {
       this.v = this.t > 0 ? this.pick === "min" ? Math.min(this.v, v) : Math.max(this.v, v) : v;
@@ -33897,6 +33898,11 @@
         if (m < 1 && Math.random() < 0.4) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#9fb4c8", 0));
         amount *= m;
       }
+      if (this.def.ai === "b_organ") {
+        const op = this.organOpen();
+        amount *= op ? 1.6 : 0.3;
+        if (!op && Math.random() < 0.4) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#9fb4c8", 0));
+      }
       if (this.guard) {
         amount *= 0.12;
         if (Math.random() < 0.5) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#8d8874", 0));
@@ -34213,6 +34219,7 @@
     fruit: { burst: "hit", ring: "#e8783a", rr: 20, parts: 9 },
     gel: { burst: "frost", ring: "#6fa8ff", rr: 22, parts: 8 },
     sludge: { burst: "hit", ring: "#8a7a68", rr: 22, parts: 8 },
+    note: { burst: "soul", ring: "#9ff0d0", rr: 24, parts: 8 },
     drop: { burst: "frost", ring: "#7fc8e8", rr: 20, parts: 8 }
     /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
   };
@@ -34248,7 +34255,8 @@
     gel: { c: "#6fa8ff", r: 7 },
     // 지킴이의 물방울 — 그림은 game/boss-tell-art
     sludge: { c: "#6a625a", r: 8 },
-    // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
+    note: { c: "#9ff0d0", r: 7, glow: 1 },
+    // 뼈 오르간의 관이 내는 음 — 그림은 game/boss-tell-art        // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
     drop: { c: "#7fc8e8", r: 6 }
   };
   var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1, fruit: 1 };
@@ -36208,7 +36216,7 @@
       } else {
         this.bossAI(dt, world, player, dx, dy, dd);
       }
-      if (!this.def.passive && !(this.burrowT > 0) && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
+      if (!this.def.passive && !this.def.wall && !(this.burrowT > 0) && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
         player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
         this.hitCd = 0.7;
         this.atkPose = 0.22;
@@ -36238,7 +36246,10 @@
         case "b_pool":
           app.poolPhaseFx(this);
           break;
-        // 투구가 깨지는 순간(game/boss-pool-fx)
+        case "b_organ":
+          app.organPhaseFx(this);
+          break;
+        // 갈비 · 관이 부러지는 순간(game/boss-organ-fx)                     // 투구가 깨지는 순간(game/boss-pool-fx)
         case "b_slime":
           if (ph >= lock) {
             this.guard = 1;
@@ -36976,7 +36987,8 @@
         this.stateT += dt;
         return;
       }
-      if (AI === "b_pool") this.poolAI(dt, world, p, dx);
+      if (AI === "b_organ") this.organAI(dt, world, p);
+      else if (AI === "b_pool") this.poolAI(dt, world, p, dx);
       else if (AI === "b_slime") {
         if (this.onGround) {
           this.vx *= 0.86;
@@ -37989,7 +38001,7 @@
   var hid = 1;
   var nid = () => hid = hid % 1e6 + 1;
   var BossSignature = {
-    /** 숨었다 다른 자리에서 솟는 몸(잠겼다 솟기 · 흩어졌다 맞추기) — 숨는 동안 맞지 않는다 */
+    /** 숨었다 다른 자리에서 솟는 몸(잠겼다 솟기) — 숨는 동안 맞지 않는다 */
     sigHide(dt, world, r, toX, under, rise, onRise) {
       r.pt += dt;
       if (r.ph === 0) {
@@ -38029,21 +38041,12 @@
         case "surge":
           return this.poolSig(d, p, world, K);
         // 잿물 군체(entity/boss-pool)
-        case "reform": {
-          this.hz({ k: "bonepile", life: 2.9, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, sd: Math.random() * 99 });
-          const tx = p.cx + side * 170, r = { busy: 99, ph: 0, pt: 0 };
-          r.rise = () => {
-          };
-          r.tick = (dt, r2) => this.sigHide(dt, world, r2, () => tx, 1.2, 0.55, () => {
-            const n = 16, g0 = Math.floor(Math.random() * n);
-            for (let i = 0; i < n; i++) {
-              if ((i - g0 + n) % n < 3) continue;
-              const a = i / n * TAU;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 260, Math.sin(a) * 260, this.dmg * m * 0.6, "enemy", "bone"));
-            }
-          });
-          return r;
-        }
+        case "sweep":
+        case "pipes":
+        case "scatter":
+        case "requiem":
+          return this.organSig(d, p, world, K);
+        // 뼈 오르간(entity/boss-organ)
         case "beat": {
           this.hz({ k: "pulse", life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
           for (let b = 0; b < 3; b++) app.after(b * 0.85, () => {
@@ -38410,6 +38413,184 @@
   };
   mixin(Enemy.prototype, BossPool, true);
 
+  // src/game/entity/boss-organ.ts
+  var boss_organ_exports = {};
+  __export(boss_organ_exports, {
+    BossOrgan: () => BossOrgan,
+    ORGAN: () => ORGAN,
+    organAt: () => organAt,
+    organFloor: () => organFloor,
+    restHand: () => restHand,
+    sweepHand: () => sweepHand
+  });
+  var oid = 0;
+  var nid3 = () => 3e6 + (oid = oid % 1e6 + 1);
+  var ORGAN = {
+    K: 4,
+    CORE: [40, 58],
+    BASE: 93,
+    CHEST: 30,
+    PIPES: [-24, -16, -8, 0, 8, 16, 24],
+    MOUTH: 24.6,
+    SHOULDER: 24,
+    SHOULDER_Y: 44,
+    L1: 212,
+    L2: 212
+  };
+  function organAt(e, dx, dy) {
+    return [e.cx + (dx - ORGAN.CORE[0]) * ORGAN.K, e.cy + (dy - ORGAN.CORE[1]) * ORGAN.K];
+  }
+  var organFloor = (e) => e.cy + (ORGAN.BASE - ORGAN.CORE[1]) * ORGAN.K;
+  var smooth = (u) => {
+    const v = u < 0 ? 0 : u > 1 ? 1 : u;
+    return v * v * (3 - 2 * v);
+  };
+  function sweepHand(h, b) {
+    const [sx, sy] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
+    const fy = organFloor(b), reach = ORGAN.L1 + ORGAN.L2 - 30, bandY = fy - (h.low ? 16 : 92);
+    const rest = [sx + h.s * 150, fy - 10], up = [sx + h.s * 80, sy - 150];
+    const t = h.t;
+    if (t < h.tele) {
+      const k2 = smooth(t / h.tele);
+      return [rest[0] + (up[0] - rest[0]) * k2, rest[1] + (up[1] - rest[1]) * k2, 0];
+    }
+    if (t < h.tele + h.dur) {
+      const u = (t - h.tele) / h.dur, k2 = smooth(u), dn = smooth(u / 0.18);
+      return [sx + h.s * (110 + k2 * (reach - 110)), up[1] + (bandY - up[1]) * dn, 1];
+    }
+    const k = smooth((t - h.tele - h.dur) / 0.55), ex = sx + h.s * reach;
+    return [ex + (rest[0] - ex) * k, bandY + (rest[1] - bandY) * k, 2];
+  }
+  function restHand(b, s, T2) {
+    const [sx] = organAt(b, 40 + s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
+    return [sx + s * (150 + Math.sin(T2 * 1.3 + s) * 6), organFloor(b) - 10 - Math.max(0, Math.sin(T2 * 1.3 + s)) * 4];
+  }
+  var BossOrgan = {
+    /** 몸놀림 — 처음에 바닥에 박고, 그다음은 숨만 쉰다(풀무가 열리고 닫힌다) */
+    organAI(dt, world, p) {
+      this.vx = this.vy = 0;
+      if (!this.anchored) {
+        this.anchored = 1;
+        const tx = Math.floor(this.cx / TS);
+        for (let ty = Math.floor(this.cy / TS); ty < Math.floor(this.cy / TS) + 40; ty++)
+          if (world.solid(tx, ty) && !world.solid(tx, ty - 1)) {
+            this.y = ty * TS - (ORGAN.BASE - ORGAN.CORE[1]) * ORGAN.K - this.h / 2;
+            break;
+          }
+      }
+      this.breathCd = (this.breathCd ?? 3) - dt;
+      if (this.breathCd <= 0 && !this.reqOn) {
+        this.breathCd = 7.5 - this.pf * 2;
+        const open = 2.6 + this.pf * 0.6;
+        this.breathH = this.hz({ k: "obreath", id: nid3(), ref: this, nid: this.nid, x: this.cx, y: this.cy, open0: 0.7, life: 0.7 + open, c: "#bfe8d8" });
+        app.sfxAt && app.sfxAt("organ_breath", this.cx / TS, this.cy / TS);
+      }
+    },
+    /** 핵이 드러났나(풀무가 열린 동안) */
+    organOpen() {
+      const h = this.breathH;
+      return !!h && h.t >= h.open0 && h.t < h.life;
+    },
+    /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
+    organSig(d, p, world, K) {
+      const m = d.m ?? 1, E = this;
+      switch (d.sig) {
+        case "sweep": {
+          const sides = d.both ? [-1, 1] : [Math.sign(p.cx - this.cx) || 1];
+          const lowFirst = Math.random() < 0.5;
+          sides.forEach((s, i) => this.organSweep(s, d.both ? i === 0 === lowFirst : Math.random() < 0.55, 0.85, m, K));
+          return { busy: 2 };
+        }
+        case "pipes": {
+          const order = [0, 1, 2, 3, 4, 5, 6];
+          if (d.wild) for (let i = order.length - 1; i > 0; i--) {
+            const j = Math.random() * (i + 1) | 0;
+            [order[i], order[j]] = [order[j], order[i]];
+          }
+          else if (Math.random() < 0.5) order.reverse();
+          const gap = d.wild ? 0.12 : 0.16, tele = 0.9;
+          this.hz({ k: "opipes", id: nid3(), ref: this, nid: this.nid, order, gap, tele, life: tele + order.length * gap + 0.4, c: K.c });
+          order.forEach((pi, i) => app.after(tele + i * gap, () => {
+            if (!E.dead) E.organNote(pi, p, d.wild ? 5 : 3, m);
+          }));
+          return { busy: tele + order.length * gap + 0.3 };
+        }
+        case "scatter": {
+          this.hz({ k: "oscatter", id: nid3(), ref: this, nid: this.nid, life: 2.3, c: K.c });
+          const ring = (out) => {
+            const n = 20, g0 = Math.floor(Math.random() * n), R = 430;
+            for (let i = 0; i < n; i++) {
+              if ((i - g0 + n) % n < 3) continue;
+              const a = i / n * TAU, sp = out ? 300 : 340;
+              const x = out ? E.cx : E.cx + Math.cos(a) * R, y = out ? E.cy : E.cy + Math.sin(a) * R;
+              const pr = new Proj(x, y, Math.cos(a) * sp * (out ? 1 : -1), Math.sin(a) * sp * (out ? 1 : -1), E.dmg * m, "enemy", "bone");
+              pr.life = out ? 2 : R / sp - 0.05;
+              app.projs.push(pr);
+            }
+          };
+          ring(true);
+          app.after(1, () => {
+            if (!E.dead) ring(false);
+          });
+          app.sfxAt && app.sfxAt("organ_scatter", this.cx / TS, this.cy / TS);
+          return { busy: 2.2 };
+        }
+        case "requiem": {
+          this.reqOn = 1;
+          const dur = 5;
+          this.hz({ k: "oreq", id: nid3(), ref: this, nid: this.nid, life: dur, beat: 0.3, c: K.c });
+          for (let b = 0; b * 0.3 < dur - 0.3; b++) app.after(0.3 + b * 0.3, () => {
+            if (E.dead) return;
+            const k = b % 12, pi = k < 7 ? k : 12 - k;
+            E.organNote(pi, p, 1, m);
+          });
+          [0.6, 2.1, 3.6].forEach((t, i) => app.after(t, () => {
+            if (!E.dead) E.organSweep(i % 2 ? 1 : -1, i !== 1, 0.6, m, K);
+          }));
+          app.after(dur, () => {
+            E.reqOn = 0;
+          });
+          app.sfxAt && app.sfxAt("organ_requiem", this.cx / TS, this.cy / TS);
+          return { busy: dur + 0.2 };
+        }
+      }
+      return { busy: 0.3 };
+    },
+    /** 팔 하나가 쓴다 — tele 동안 팔을 치켜들고(쓸 높이에 띠가 진다), 0.9초에 걸쳐 바깥으로 쓸어 간다 */
+    organSweep(s, low, tele, m, K) {
+      const fl = organFloor(this);
+      this.hz({
+        k: "osweep",
+        id: nid3(),
+        ref: this,
+        nid: this.nid,
+        s,
+        low: low ? 1 : 0,
+        tele,
+        dur: 0.9,
+        life: tele + 0.9 + 0.55,
+        fy: fl,
+        dmg: this.dmg * m * 1.1,
+        c: K.c
+      });
+      app.sfxAt && app.sfxAt("organ_lift", this.cx / TS, this.cy / TS);
+    },
+    /** 관 하나가 운다 — 관 입에서 플레이어 쪽으로 음표 n 개(부채꼴) */
+    organNote(pi, p, n, m) {
+      const [x, y] = organAt(this, 40 + ORGAN.PIPES[pi], ORGAN.MOUTH);
+      const a0 = Math.atan2(p.cy - y, p.cx - x), sp = 250;
+      for (let i = 0; i < n; i++) {
+        const a = a0 + (i - (n - 1) / 2) * (n > 3 ? 0.32 : 0.2);
+        const pr = new Proj(x, y, Math.cos(a) * sp, Math.sin(a) * sp, this.dmg * m * 0.7, "enemy", "note");
+        pr.life = 4;
+        app.projs.push(pr);
+      }
+      app.organPipeFx && app.organPipeFx(x, y, pi);
+      app.sfxAt && app.sfxAt("organ_pipe", x / TS, y / TS, 0.75 + pi * 0.09);
+    }
+  };
+  mixin(Enemy.prototype, BossOrgan, true);
+
   // src/game/entity/boss-gaps.ts
   var boss_gaps_exports = {};
   __export(boss_gaps_exports, {
@@ -38438,6 +38619,7 @@
       this.gapT -= dt;
       if (this.mvCd !== void 0 && this.mvCd < this.gapT + 0.4) this.mvCd = this.gapT + 0.4;
       if (this.gapK !== "stagger") return false;
+      if (this.def.wall) return true;
       const fly = this.flies();
       this.vx *= 0.8;
       if (fly) this.vy = this.vy * 0.85 + 22;
@@ -39442,7 +39624,7 @@
     runProc(w, m, s) {
       const cap = s.cap || 40;
       if (m.rec < 0) {
-        let pick2 = -1;
+        let pick3 = -1;
         for (let i = 0; i < MRECIPES.length; i++) {
           const r3 = MRECIPES[i];
           if (r3.m !== s.proc) continue;
@@ -39452,24 +39634,24 @@
             break;
           }
           if (ok) {
-            pick2 = i;
+            pick3 = i;
             break;
           }
         }
-        if (pick2 < 0) {
+        if (pick3 < 0) {
           m.st = s.store ? m.e >= s.store ? N_("가득 참") : N_("축전 중") : N_("재료 없음");
           m.prog = 0;
           m.act = 0;
           return;
         }
-        const r2 = MRECIPES[pick2];
+        const r2 = MRECIPES[pick3];
         if (this.outFull(m, r2, cap)) {
           m.st = N_("출력 가득");
           m.act = 0;
           return;
         }
         for (const k in r2.in) this.bufTake(m.in, k, r2.in[k]);
-        m.rec = pick2;
+        m.rec = pick3;
         m.prog = 0;
       }
       const r = MRECIPES[m.rec];
@@ -40448,29 +40630,29 @@
     renderBig(c, w, m, ax, ay, time, camX, camY) {
       const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t], [bx, by] = this.brokeJolt(m, time);
       const jx = (busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0) + bx;
-      const [X, Y, PW, PH] = this.drawBig(c, m, ax + jx, ay + by, time);
+      const [X, Y, PW2, PH2] = this.drawBig(c, m, ax + jx, ay + by, time);
       if (m.t === "drill_x") this.drawWork(c, w, m, ax, ay, time, camX, camY);
-      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW - TS, Y, time);
+      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW2 - TS, Y, time);
       if (s.rot) {
         const [dx, dy] = DIR4[m.dir & 3];
-        const ex = dx > 0 ? X + PW : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH : Y + PH - TS / 2;
+        const ex = dx > 0 ? X + PW2 : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH2 : Y + PH2 - TS / 2;
         c.fillStyle = "rgba(255,214,120,.9)";
         c.fillRect(ex + dx * 2 - 2 - (dx > 0 ? 2 : 0), ey + dy * 2 - 2 - (dy > 0 ? 2 : 0), 4, 4);
       }
       if (m.fmax && m.fuel > 0) {
-        const h = Math.round(m.fuel / m.fmax * (PH - 8));
+        const h = Math.round(m.fuel / m.fmax * (PH2 - 8));
         c.fillStyle = "#e8842a";
-        c.fillRect(X + 1, Y + PH - 4 - h, 2, h);
+        c.fillRect(X + 1, Y + PH2 - 4 - h, 2, h);
       }
       if (m.rec >= 0 && MRECIPES[m.rec]) {
         const p = clamp(m.prog / MRECIPES[m.rec].t, 0, 1);
         c.fillStyle = "#2a2a32";
-        c.fillRect(X + 4, Y + PH - 3, PW - 8, 2);
+        c.fillRect(X + 4, Y + PH2 - 3, PW2 - 8, 2);
         c.fillStyle = "#5fc45f";
-        c.fillRect(X + 4, Y + PH - 3, Math.round((PW - 8) * p), 2);
+        c.fillRect(X + 4, Y + PH2 - 3, Math.round((PW2 - 8) * p), 2);
       }
       c.fillStyle = this.statusColor(m);
-      c.fillRect(X + PW - 4, Y + 2, 2, 2);
+      c.fillRect(X + PW2 - 4, Y + 2, 2, 2);
     }
   };
   mixin(Factory11, FactoryRenderPart);
@@ -41843,17 +42025,17 @@
         mx = Math.max(mx, Math.abs(x));
         my = Math.max(my, Math.abs(y));
       }
-      const PW = Math.round((mx + 80) * 2), PH = Math.round((my + 80) * 2);
+      const PW2 = Math.round((mx + 80) * 2), PH2 = Math.round((my + 80) * 2);
       const grid = document.createElement("div");
       grid.className = "bgrid";
       grid.style.height = `min(${this.TREE_H}px, calc(100vh - 380px))`;
       grid.style.setProperty("--cy", "50%");
       const plane = document.createElement("div");
       plane.className = "bplane";
-      plane.style.width = PW + "px";
-      plane.style.height = PH + "px";
-      plane.style.setProperty("--cy", PH / 2 + "px");
-      this._treePlane = { el: plane, grid, w: PW, h: PH };
+      plane.style.width = PW2 + "px";
+      plane.style.height = PH2 + "px";
+      plane.style.setProperty("--cy", PH2 / 2 + "px");
+      this._treePlane = { el: plane, grid, w: PW2, h: PH2 };
       const svg = document.createElementNS(NS, "svg");
       svg.setAttribute("class", "blines");
       const line4 = (a, b, cls, c) => {
@@ -43004,8 +43186,8 @@
       }
       const bag = $("#mg-bag");
       const order = p.bag.map((it, i) => i).filter((i) => p.bag[i]);
-      const pick2 = m.t === "sorter" || m.t === "converter" || m.t === "gate_if" || m.t === "gate_or";
-      const yes = (i) => pick2 || Factory11.accepts(m, p.bag[i].id);
+      const pick3 = m.t === "sorter" || m.t === "converter" || m.t === "gate_if" || m.t === "gate_or";
+      const yes = (i) => pick3 || Factory11.accepts(m, p.bag[i].id);
       order.sort((a2, b2) => (yes(b2) ? 1 : 0) - (yes(a2) ? 1 : 0) || a2 - b2);
       for (const i of order) {
         const it = p.bag[i];
@@ -43022,7 +43204,7 @@
             app.sfx("place");
             return;
           }
-          if (pick2) {
+          if (pick3) {
             if (!this.logicPick(m, it.id)) this.toast(tr("셋까지만 고를 수 있다"), "bad");
             this.refreshMachine(true);
             app.sfx("place");
@@ -47080,11 +47262,11 @@
         hopper(c, 10, by - 52, binW, 40);
         ins.slice(0, 3).forEach((id, i) => pile(c, id, m.in[id], 14 + i * 12 - (ins.length > 1 ? 6 : 0), by - 50 + i * 3, 16));
         belt(c, lx0 - 8, hx + 2, by, run, t);
-        const nid3 = inId || fuelId;
-        if (nid3 && run && p < IN) {
+        const nid4 = inId || fuelId;
+        if (nid4 && run && p < IN) {
           const k2 = ease(p / IN);
-          drawIc(c, nid3, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
-        } else if (nid3) drawIc(c, nid3, lx0 - 4, by - 15, 16);
+          drawIc(c, nid4, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
+        } else if (nid4) drawIc(c, nid4, lx0 - 4, by - 15, 16);
       } else if (kind === "drill" && outId) {
         c.fillStyle = "#3a2c20";
         c.fillRect(10, by - 30, binW, 50);
@@ -48064,6 +48246,13 @@
     pool_bubble: ["bubble", 0.75, 0.7],
     pool_sink: ["drown", 0.7, 0.75],
     pool_geyser: ["splash", 0.6, 1],
+    /* 뼈 오르간 — 관 울림은 관마다 음높이를 달리 부른다(sfxAt 의 rate) */
+    organ_pipe: ["sk_mark", 0.62, 0.55],
+    organ_breath: ["sk_smoke", 0.6, 0.7],
+    organ_lift: ["swing", 0.5, 0.8],
+    organ_sweep: ["sk_whirl", 0.62, 0.85],
+    organ_scatter: ["mat_bone", 0.7, 1.3],
+    organ_requiem: ["chapter", 0.5, 0.9],
     /* ★ 몹·보스가 쏘는 소리. */
     efire_phys: ["bow", 0.82, 0.5],
     efire_magic: ["magic", 0.8, 0.5],
@@ -54395,12 +54584,12 @@
             const [cx, cy] = st.pop();
             group.push([cx, cy]);
             for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-              const nx = cx + dx, ny = cy + dy, nid3 = w.get(nx, ny);
-              if (nid3 === T.WOOD) {
+              const nx = cx + dx, ny = cy + dy, nid4 = w.get(nx, ny);
+              if (nid4 === T.WOOD) {
                 touching = true;
                 continue;
               }
-              if (!leafy(nid3)) continue;
+              if (!leafy(nid4)) continue;
               const k = ny * WW2 + nx;
               if (seen.has(k)) continue;
               seen.add(k);
@@ -57629,9 +57818,9 @@
     /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
         대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
         가게나 의뢰가 사라지면 안 되니까. */
-    talkMenu(id, pick2, rest) {
-      if (!(pick2 && pick2.re)) return rest;
-      const re = pick2.re;
+    talkMenu(id, pick3, rest) {
+      if (!(pick3 && pick3.re)) return rest;
+      const re = pick3.re;
       return [{ t: re.t, say: 1, fn: () => {
         UI5.closeDialogue();
         this.talkAnswer(id, re, rest);
@@ -57686,11 +57875,11 @@
       this.storyHeard = this.storyHeard || {};
       const fresh = this.storyHeard[id] !== this.chapter;
       this.storyHeard[id] = this.chapter;
-      const pick2 = first && this.chapter === 0 ? null : this.talkPick(id);
+      const pick3 = first && this.chapter === 0 ? null : this.talkPick(id);
       const lines = fresh ? story.slice() : [];
-      const call = pick2 && !fresh ? this.nameCall(id) : null;
+      const call = pick3 && !fresh ? this.nameCall(id) : null;
       if (call) lines.push(call);
-      if (pick2) lines.push(pick2.say);
+      if (pick3) lines.push(pick3.say);
       if (!lines.length) lines.push(story[story.length - 1]);
       const rest = [];
       if (!fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
@@ -57713,7 +57902,7 @@
       if (id === "elara" && this.chapter === 0) rest.push({ t: tr("(여정을 시작한다)"), quest: 1, fn: () => {
         UI5.closeDialogue();
       } });
-      UI5.openDialogue(id, lines, this.talkMenu(id, pick2, rest));
+      UI5.openDialogue(id, lines, this.talkMenu(id, pick3, rest));
     },
     /** 그 사람이 이 장에 할 이야기. */
     storyOf(id, ch) {
@@ -57729,13 +57918,13 @@
       this.storyHeard = this.storyHeard || {};
       const fresh = !!story && this.storyHeard[id] !== this.chapter;
       if (story) this.storyHeard[id] = this.chapter;
-      const pick2 = first || fresh ? null : this.talkPick(id);
+      const pick3 = first || fresh ? null : this.talkPick(id);
       const lines = [];
       if (first) lines.push(d.line);
       if (fresh) lines.push(...story);
-      const call = pick2 ? this.nameCall(id) : null;
+      const call = pick3 ? this.nameCall(id) : null;
       if (call) lines.push(call);
-      if (pick2) lines.push(pick2.say);
+      if (pick3) lines.push(pick3.say);
       this.villageSeen = this.villageSeen || {};
       const lv = this.villageLv(), vt = VILLAGE_TALK[id];
       if (vt && vt[lv] && this.villageSeen[id] !== lv) {
@@ -57760,7 +57949,7 @@
         UI5.closeDialogue();
         this.tellQuest();
       } });
-      UI5.openDialogue(id, lines, this.talkMenu(id, pick2, rest));
+      UI5.openDialogue(id, lines, this.talkMenu(id, pick3, rest));
     }
   };
   mixin(Game.prototype, TalkPart, true);
@@ -57975,8 +58164,8 @@
       if (st.complete) this.toast(tr("할 일은 모두 끝냈다."));
       else if (st.ready) this.toast(tr("{session} · 목표 — {v}", { session, v: st.goal ? st.goal.o.t : tr("이 장의 마지막") }));
       else {
-        const pick2 = st.basics.find((b) => !b.p.done && st.missing.includes(b.o.verb)) || st.basics.find((b) => !b.p.done);
-        this.toast(tr("{session} · 준비 {done}/{need}", { session, done: st.done, need: st.need }) + (pick2 ? ` · ${pick2.o.t} (${pick2.p.label || pick2.p.cur + "/" + pick2.p.max})` : ""));
+        const pick3 = st.basics.find((b) => !b.p.done && st.missing.includes(b.o.verb)) || st.basics.find((b) => !b.p.done);
+        this.toast(tr("{session} · 준비 {done}/{need}", { session, done: st.done, need: st.need }) + (pick3 ? ` · ${pick3.o.t} (${pick3.p.label || pick3.p.cur + "/" + pick3.p.max})` : ""));
       }
       UI5.togglePanel("quest");
     }
@@ -60497,7 +60686,10 @@
     bubbles: ["quake", ""],
     sink: ["leap", "gel"],
     surge: ["leap", "gel"],
-    reform: ["blink", ""],
+    sweep: ["wall", "bone"],
+    pipes: ["ring", ""],
+    scatter: ["blink", ""],
+    requiem: ["ring", ""],
     beat: ["ring", ""],
     mirrors: ["clones", ""],
     veil: ["vortex", "void"],
@@ -60993,6 +61185,36 @@
         c.restore();
         return true;
       }
+      case "note": {
+        const wob = Math.sin(T2 * 12 + sd) * 0.25;
+        hzGlow(c, x, y, 16, "#9ff0d0", 0.55);
+        c.strokeStyle = "rgba(159,240,208,.5)";
+        c.lineWidth = 1.5;
+        for (let i = 1; i <= 2; i++) {
+          c.beginPath();
+          c.arc(x - Math.cos(a) * i * 7, y - Math.sin(a) * i * 7, 4 + i * 3, a + Math.PI - 0.8, a + Math.PI + 0.8);
+          c.stroke();
+        }
+        c.save();
+        c.translate(x, y);
+        c.rotate(wob);
+        c.fillStyle = "#e8fff4";
+        c.strokeStyle = "#2a5a4a";
+        c.lineWidth = 1.2;
+        c.beginPath();
+        c.ellipse(-2, 3, 4.4, 3.2, -0.4, 0, TAU);
+        c.fill();
+        c.stroke();
+        c.fillRect(1.6, -9, 1.8, 12);
+        c.beginPath();
+        c.moveTo(3.4, -9);
+        c.quadraticCurveTo(9, -6, 6, -1);
+        c.lineTo(3.4, -5);
+        c.closePath();
+        c.fill();
+        c.restore();
+        return true;
+      }
       case "drop": {
         c.save();
         c.translate(x, y);
@@ -61061,7 +61283,7 @@
   var PART = 120, SWATCH = 6, JUNK = [7, 8, 9];
   var clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
   var easeOut2 = (u) => 1 - (1 - u) * (1 - u);
-  var smooth = (u) => u * u * (3 - 2 * u);
+  var smooth2 = (u) => u * u * (3 - 2 * u);
   var pats = /* @__PURE__ */ new WeakMap();
   function sludgePat(c) {
     const im = Sprites.want("king_slime_parts");
@@ -61196,7 +61418,7 @@
       } else {
         const q = (r - 0.2) / 0.8;
         lam = Math.min(1, 0.12 + 0.88 * easeOut2(Math.min(1, q / 0.65)));
-        pose = lerpPose(U, W, smooth(q));
+        pose = lerpPose(U, W, smooth2(q));
         if (q > 0.75) {
           const tr2 = Math.sin(T2 * 40 + h.sd) * 2.5;
           pose = [pose[0], pose[1], [pose[2][0] + tr2, pose[2][1] - tr2 * 0.5]];
@@ -61507,6 +61729,234 @@
     }
   };
   mixin(Game.prototype, BossPoolFx, true);
+
+  // src/game/game/boss-organ-art.ts
+  var boss_organ_art_exports = {};
+  __export(boss_organ_art_exports, {
+    BossOrganArt: () => BossOrganArt
+  });
+  var BW = 320, BH = 384, PW = 256, PH = 96, SOUL = "#9ff0d0";
+  function hzOf(g, e, k) {
+    for (const h of g.bhz || []) if (h.k === k && g.hzBoss(h) === e) return h;
+    return null;
+  }
+  var isOrgan = (e) => e && !e.dead && e.def && e.def.ai === "b_organ";
+  function elbow(sx, sy, hx, hy, s) {
+    const L1 = ORGAN.L1, L2 = ORGAN.L2, dx = hx - sx, dy = hy - sy;
+    const d = Math.max(20, Math.min(L1 + L2 - 2, Math.hypot(dx, dy))), a = Math.atan2(dy, dx);
+    const al = Math.acos(Math.max(-1, Math.min(1, (L1 * L1 + d * d - L2 * L2) / (2 * L1 * d))));
+    const c1 = [sx + Math.cos(a - al) * L1, sy + Math.sin(a - al) * L1];
+    const c2 = [sx + Math.cos(a + al) * L1, sy + Math.sin(a + al) * L1];
+    void s;
+    return c1[1] < c2[1] ? c1 : c2;
+  }
+  function bone2(c, im, fr, x0, y0, x1, y1, off) {
+    const a = Math.atan2(y1 - y0, x1 - x0), L = Math.hypot(x1 - x0, y1 - y0);
+    if (!im) {
+      c.strokeStyle = "#e2d8bc";
+      c.lineWidth = 14;
+      c.lineCap = "round";
+      c.beginPath();
+      c.moveTo(x0, y0);
+      c.lineTo(x1, y1);
+      c.stroke();
+      return;
+    }
+    c.save();
+    c.translate(x0, y0);
+    c.rotate(a);
+    if (Math.cos(a) < 0) c.scale(1, -1);
+    const k = L / (PW - off - 24);
+    c.drawImage(im, fr * PW, 0, PW, PH, -off * k, -PH / 2, PW * k, PH);
+    c.restore();
+  }
+  var BossOrganArt = {
+    /** 몸(objects 단계) — 손상 단계 · 풀무 열림에 맞는 장, 흩어지는 동안은 흐려지며 떨린다 */
+    drawOrgans(f) {
+      const c = f.c, im = Sprites.want("bone_lord");
+      for (const e of this.ents) {
+        if (!isOrgan(e)) continue;
+        const br = hzOf(this, e, "obreath"), sc = hzOf(this, e, "oscatter");
+        const open = br && br.t >= br.open0 ? 1 : 0, st = Math.min(2, Math.round((e.pf || 0) * 2));
+        const fr = st * 2 + open;
+        let x = e.cx - ORGAN.CORE[0] * ORGAN.K - f.camX, y = e.cy - ORGAN.CORE[1] * ORGAN.K - f.camY;
+        let a = 1;
+        if (sc) {
+          const k = Math.sin(Math.min(1, sc.t / sc.life) * Math.PI);
+          a = 1 - k * 0.55;
+          x += (Math.random() - 0.5) * 6 * k;
+          y += (Math.random() - 0.5) * 4 * k;
+        }
+        const breathe = br && br.t < br.open0 ? Math.sin(br.t / br.open0 * Math.PI) * 0.02 : 0;
+        if (!this.paused) this.organAmbient(e);
+        if (!im) continue;
+        c.save();
+        const w = this.world, TSZ = TS, tx0 = Math.floor((x + f.camX) / TSZ), ty0 = Math.floor((y + f.camY) / TSZ);
+        c.beginPath();
+        for (let ty = ty0; ty <= ty0 + Math.ceil(BH / TSZ); ty++) for (let tx = tx0; tx <= tx0 + Math.ceil(BW / TSZ); tx++)
+          if (!w.solid(tx, ty)) c.rect(tx * TSZ - f.camX, ty * TSZ - f.camY, TSZ, TSZ);
+        c.clip();
+        c.globalAlpha = a;
+        c.imageSmoothingEnabled = false;
+        c.translate(x + BW / 2, y + BH);
+        c.scale(1 + breathe, 1 + breathe);
+        c.translate(-BW / 2, -BH);
+        c.drawImage(im, fr * BW, 0, BW, BH, 0, 0, BW, BH);
+        if (e.flash > 0) {
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = Math.min(0.5, e.flash * 4);
+          c.drawImage(im, fr * BW, 0, BW, BH, 0, 0, BW, BH);
+        }
+        c.restore();
+      }
+    },
+    /** 팔(actors 단계) — 쉴 땐 바닥을 짚고, 쓸기 중엔 치켜들었다 바닥을 쓴다 */
+    drawOrganArms(c) {
+      const im = Sprites.want("bone_lord_parts"), cx0 = this.cam.x, cy0 = this.cam.y, T2 = this.time || 0;
+      for (const e of this.ents) {
+        if (!isOrgan(e)) continue;
+        const sweeps = {};
+        for (const h of this.bhz || []) if (h.k === "osweep" && this.hzBoss(h) === e) sweeps[h.s] = h;
+        for (const s of [-1, 1]) {
+          const [sx, sy] = organAt(e, 40 + s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y);
+          const h = sweeps[s];
+          const [hx, hy] = h ? sweepHand(h, e) : restHand(e, s, T2);
+          const [ex, ey] = elbow(sx, sy, hx, hy, s);
+          c.save();
+          c.translate(-cx0, -cy0);
+          bone2(c, im, 0, sx, sy, ex, ey, 20);
+          bone2(c, im, 1, ex, ey, hx, hy, 20);
+          const fa = Math.atan2(hy - ey, hx - ex), flat = s > 0 ? 0 : Math.PI;
+          const up = h && h.t < h.tele ? Math.min(1, h.t / (h.tele * 0.5)) : 0;
+          const a = flat + Math.atan2(Math.sin(fa - flat), Math.cos(fa - flat)) * up;
+          c.translate(hx, hy);
+          c.rotate(a);
+          if (Math.cos(a) < 0) c.scale(1, -1);
+          if (im) c.drawImage(im, 2 * PW, 0, PW, PH, -10, -PH * 0.36, PW * 0.72, PH * 0.72);
+          c.restore();
+        }
+      }
+    },
+    /** 빛(fx 단계) — 혼불(풀무가 열리면 맥박치며 밝다) · 눈 · 관 입의 빛(차례 · 박자) · 팔 쓸기 띠 예고 */
+    drawOrganGlow(f) {
+      const c = f.c, T2 = this.time || 0;
+      for (const e of this.ents) {
+        if (!isOrgan(e)) continue;
+        const cx = e.cx - f.camX, cy = e.cy - f.camY;
+        const br = hzOf(this, e, "obreath"), open = br && br.t >= br.open0;
+        hzGlow(c, cx, cy, open ? 90 + Math.sin(T2 * 9) * 10 : 46, SOUL, open ? 0.55 : 0.2);
+        for (const s of [-1, 1]) {
+          const [x, y] = organAt(e, 40 + s * 3.6, 36.8);
+          hzGlow(c, x - f.camX, y - f.camY, 14, SOUL, 0.5);
+        }
+        const pp = hzOf(this, e, "opipes"), rq = hzOf(this, e, "oreq");
+        ORGAN.PIPES.forEach((px, i) => {
+          let k = 0;
+          if (pp) {
+            const idx = pp.order.indexOf(i), lit = pp.tele * (idx + 1) / pp.order.length, fire = pp.tele + idx * pp.gap;
+            if (pp.t >= lit * 0.9) k = 0.45;
+            if (pp.t >= fire && pp.t < fire + 0.25) k = 1;
+          }
+          if (rq) {
+            const b = Math.floor(rq.t / rq.beat), kk = b % 12, pi = kk < 7 ? kk : 12 - kk;
+            if (pi === i) k = Math.max(k, 1 - rq.t % rq.beat / rq.beat);
+            else k = Math.max(k, 0.2);
+          }
+          if (k <= 0) return;
+          const [x, y] = organAt(e, 40 + px, ORGAN.MOUTH);
+          hzGlow(c, x - f.camX, y - f.camY, 18 + 22 * k, SOUL, 0.3 + 0.5 * k);
+          c.fillStyle = `rgba(230,255,244,${0.4 + 0.6 * k})`;
+          c.fillRect(x - f.camX - 4, y - f.camY - 3, 8, 6);
+        });
+      }
+    },
+    /** 팔 쓸기 예고(fx · drawSig 에서) — 쓸 높이의 띠: 낮게 = 바닥 띠(뛰어넘는다) · 높게 = 머리 위 띠(선 채로) */
+    drawSweepTell(c, h, cx0, cy0) {
+      const b = this.hzBoss(h);
+      if (!b || h.t >= h.tele + h.dur) return;
+      const [sx] = organAt(b, 40 + h.s * ORGAN.SHOULDER, ORGAN.SHOULDER_Y), fy = organFloor(b);
+      const x0 = sx + h.s * 100, x1 = sx + h.s * (ORGAN.L1 + ORGAN.L2 - 10), top = h.low ? fy - 34 : fy - 112, bot = h.low ? fy : fy - 66;
+      const k = Math.min(1, h.t / h.tele), fade = h.t > h.tele ? 1 - (h.t - h.tele) / h.dur : 1;
+      c.globalAlpha = (0.14 + 0.2 * k) * fade;
+      c.fillStyle = h.c;
+      c.fillRect(Math.min(x0, x1) - cx0, top - cy0, Math.abs(x1 - x0), bot - top);
+      c.globalAlpha = (0.5 + 0.4 * k) * fade;
+      c.strokeStyle = h.c;
+      c.lineWidth = 1.5;
+      c.setLineDash([8, 6]);
+      c.strokeRect(Math.min(x0, x1) - cx0 + 0.5, top - cy0 + 0.5, Math.abs(x1 - x0), bot - top);
+      c.setLineDash([]);
+      c.fillStyle = h.c;
+      for (let x = Math.min(x0, x1) + 30; x < Math.max(x0, x1); x += 70) {
+        const y = (h.low ? top - 10 : bot + 10) - cy0, d = h.low ? -1 : 1, bob = Math.sin(T0(this) * 8 + x) * 2;
+        c.beginPath();
+        c.moveTo(x - cx0 - 6, y + bob);
+        c.lineTo(x - cx0 + 6, y + bob);
+        c.lineTo(x - cx0, y + bob + d * 8);
+        c.closePath();
+        c.fill();
+      }
+      c.globalAlpha = 1;
+    }
+  };
+  function T0(g) {
+    return g.time || 0;
+  }
+  mixin(Game.prototype, BossOrganArt, true);
+
+  // src/game/game/boss-organ-fx.ts
+  var boss_organ_fx_exports = {};
+  __export(boss_organ_fx_exports, {
+    BossOrganFx: () => BossOrganFx
+  });
+  var SOUL2 = "#9ff0d0", DUST = "rgba(200,190,160,.6)", BONE = ["#e2d8bc", "#c8bc9c", "#f2ead4"];
+  var pick2 = (a) => a[Math.random() * a.length | 0];
+  var BossOrganFx = {
+    /** 관 하나가 운 순간 — 입에서 혼불이 터지고 음파 고리 */
+    organPipeFx(x, y) {
+      this.vfx.flare(x, y, 34, SOUL2, 0.18, "impact");
+      this.vfx.shock(x, y, 46, SOUL2, 0.32, 4);
+      this.vfx.motes(x, y, 4, SOUL2, 10, 90, 0.9, 5);
+    },
+    /** 팔이 바닥을 쓰는 동안(매 프레임) — 손끝에서 뼛가루 · 불꽃 */
+    organSweepFx(x, y, low) {
+      if (low) {
+        if (Math.random() < 0.7) this.vfx.puffs(x, y - 6, 1, 16, DUST, 0.7, 14);
+        if (Math.random() < 0.5) this.vfx.sparks(x, y - 4, 2, "#f2e2b8", 260, -Math.PI / 2, 1.4, 0.35, 700);
+      } else if (Math.random() < 0.5) this.vfx.motes(x, y, 1, "#f2ead4", 16, 20, 0.5, 4);
+    },
+    /** 풀무 — 들이켤 때 갈비 틈으로 김이 빨려 들고, 열리는 순간 혼불이 솟는다 */
+    organBreathFx(e, opening) {
+      if (!opening) {
+        this.vfx.converge(e.cx, e.cy, 120, 10, SOUL2, 0.6);
+        return;
+      }
+      this.vfx.puffs(e.cx, e.cy + 10, 8, 26, "rgba(190,230,214,.4)", 1.4, 70);
+      this.vfx.motes(e.cx, e.cy, 14, SOUL2, 40, 140, 1.4, 6);
+      this.vfx.shock(e.cx, e.cy, 120, SOUL2, 0.5, 8);
+    },
+    /** 흩어질 때 — 뼛조각과 뼛가루 */
+    organScatterFx(e) {
+      this.vfx.shards(e.cx, e.cy - 40, 26, "#e2d8bc", 520, 0.9, 8);
+      this.vfx.puffs(e.cx, e.cy, 10, 30, DUST, 1.2, 120);
+      this.shake = Math.max(this.shake, 8);
+    },
+    /** 막 넘김 — 갈비 · 관이 부러지는 순간 */
+    organPhaseFx(e) {
+      for (let i = 0; i < 22; i++) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * 200, e.cy - 60 - Math.random() * 120, pick2(BONE), -200, 1, { spd: 1.4, r: 2.4, g: 1.4, bounce: 0.3 }));
+      this.vfx.puffs(e.cx, e.cy - 80, 12, 34, DUST, 1.6, 140);
+      const [x, y] = organAt(e, 40, ORGAN.MOUTH);
+      this.vfx.flare(x, y, 120, SOUL2, 0.3, "impact");
+      this.vfx.motes(e.cx, e.cy, 20, SOUL2, 60, 160, 1.6, 7);
+      this.shake = Math.max(this.shake, 12);
+    },
+    /** 상시 — 천장 쪽에서 뼛가루가 내리고, 혼불이 핵 둘레를 떠돈다 */
+    organAmbient(e) {
+      if (Math.random() < 0.05) this.vfx.motes(e.cx + (Math.random() - 0.5) * 220, e.cy - 220, 1, "#d8ccac", 20, -60, 2, 4);
+      if (Math.random() < 0.06) this.vfx.motes(e.cx + (Math.random() - 0.5) * 40, e.cy + 20, 1, SOUL2, 20, 70, 1.4, 5);
+    }
+  };
+  mixin(Game.prototype, BossOrganFx, true);
 
   // src/game/game/boss-sig-art.ts
   var boss_sig_art_exports = {};
@@ -61862,26 +62312,15 @@
           drawArmTell(c, h, cx0, cy0);
           return true;
         // 잿물 팔 예고 — 팔 몸은 빛 앞에서(drawBossLit)
-        case "bonepile": {
-          if (!b || h.t < 0.3) return true;
-          const x = b.cx - cx0, y = b.y + b.h - cy0, up = b.burrowT > 0 ? 0 : 1;
-          c.globalAlpha = f;
-          for (let i = 0; i < 12; i++) {
-            const a = hs3(h.sd, i) * TAU, rr = 6 + hs3(h.sd, i + 2) * b.w * 0.4;
-            bone(c, x + Math.cos(a) * rr, y - 4 - Math.abs(Math.sin(a)) * 8 - up * 20 * hs3(h.sd, i + 5), 12 + hs3(h.sd, i + 7) * 8, a + T2 * (b.vx ? 6 : 0), 3);
-          }
-          c.fillStyle = "#efe6cc";
-          c.beginPath();
-          c.arc(x + Math.sin(T2 * 8) * 6, y - 10, 8, 0, TAU);
-          c.fill();
-          c.strokeStyle = "#4a4030";
-          c.stroke();
-          c.fillStyle = "#1a1410";
-          c.fillRect(x - 4 + Math.sin(T2 * 8) * 6, y - 12, 2.5, 2.5);
-          c.fillRect(x + 1 + Math.sin(T2 * 8) * 6, y - 12, 2.5, 2.5);
-          c.globalAlpha = 1;
+        case "osweep":
+          this.drawSweepTell(c, h, cx0, cy0);
           return true;
-        }
+        // 뼈 오르간 — 몸 · 팔 · 빛은 game/boss-organ-art
+        case "obreath":
+        case "opipes":
+        case "oreq":
+        case "oscatter":
+          return true;
         case "pulse": {
           if (!b) return true;
           const u = h.t % h.every / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);
@@ -62334,7 +62773,47 @@
             }
           }
           return true;
-        case "bonepile":
+        case "osweep":
+          {
+            const b = this.hzBoss(h);
+            if (!b) return true;
+            const [hx, hy, ph] = sweepHand(h, b);
+            if (ph === 1) {
+              if (host) h.hit = (h.hit || []).concat(this.hitPlayersRect(hx - 40, hy - 20, hx + 40, hy + 20, h.dmg, h.hit));
+              this.organSweepFx(hx, hy + (h.low ? 14 : 0), !!h.low);
+              if (!h.snd) {
+                h.snd = 1;
+                this.sfxAt && this.sfxAt("organ_sweep", hx / TS, hy / TS);
+              }
+            }
+          }
+          return true;
+        case "obreath":
+          {
+            const b = this.hzBoss(h);
+            if (!b) return true;
+            if (!h.fx0) {
+              h.fx0 = 1;
+              this.organBreathFx(b, false);
+            }
+            if (!h.fx1 && h.t >= h.open0) {
+              h.fx1 = 1;
+              this.organBreathFx(b, true);
+            }
+          }
+          return true;
+        case "oscatter":
+          {
+            const b = this.hzBoss(h);
+            if (b && !h.fx0) {
+              h.fx0 = 1;
+              this.organScatterFx(b);
+            }
+          }
+          return true;
+        case "opipes":
+        case "oreq":
+          return true;
         case "pulse":
         case "veil":
         case "rod":
@@ -62762,7 +63241,7 @@
     drawBossHazards(c) {
       const L = this.bhz;
       if (!L || !L.length) return;
-      const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
+      const cx0 = this.cam.x, cy0 = this.cam.y, T02 = this.time || 0;
       c.save();
       for (const h of L) {
         const col = FX_COL[h.fx] || h.c || "#ffb070", k = Math.min(1, h.t / Math.max(0.01, h.delay || h.tele || 0.5));
@@ -62788,13 +63267,13 @@
                 }
                 c.setLineDash([]);
                 c.globalAlpha = 1;
-                art.tell(c, h, x, y, k, T0);
-              } else if (!art.lit) art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
+                art.tell(c, h, x, y, k, T02);
+              } else if (!art.lit) art.hit(c, h, x, y, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T02);
             }
             break;
           case "line":
             {
-              c.globalAlpha = 0.35 + 0.35 * Math.sin(T0 * 30);
+              c.globalAlpha = 0.35 + 0.35 * Math.sin(T02 * 30);
               c.strokeStyle = col;
               c.lineWidth = h.w || 3;
               c.setLineDash([10, 8]);
@@ -62810,7 +63289,7 @@
             {
               const x = h.x - cx0, y = h.y - cy0, ex = Math.cos(h.a) * h.len, ey = Math.sin(h.a) * h.len;
               if (h.t <= h.tele) {
-                c.globalAlpha = 0.3 + 0.4 * Math.abs(Math.sin(T0 * 18));
+                c.globalAlpha = 0.3 + 0.4 * Math.abs(Math.sin(T02 * 18));
                 c.strokeStyle = col;
                 c.lineWidth = 2;
                 c.beginPath();
@@ -62823,7 +63302,7 @@
                 c.save();
                 c.translate(x, y);
                 c.rotate(h.a);
-                if (art) art(c, h, x, y, h.len, h.w, fade, T0);
+                if (art) art(c, h, x, y, h.len, h.w, fade, T02);
                 else {
                   const im = Sprites.vfxArt("beam", col);
                   c.globalCompositeOperation = "lighter";
@@ -62839,14 +63318,14 @@
           case "wave":
             {
               const x = h.x - cx0, y = h.y - cy0, art = WAVE_ART[h.fx] || WAVE_ART.rock;
-              art(c, h, x, y, T0);
+              art(c, h, x, y, T02);
             }
             break;
           case "zone":
             {
               const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 3, (h.life - h.t) * 2), art = ZONE_ART[h.fx];
               if (art) {
-                art(c, h, x, y, f, T0);
+                art(c, h, x, y, f, T02);
                 break;
               }
               const g = c.createRadialGradient(x, y - 6, 2, x, y - 6, h.r);
@@ -62864,7 +63343,7 @@
             {
               const x = h.x - cx0, f = Math.min(1, h.t * 4, (h.life - h.t) * 3), art = WALL_ART[h.fx];
               if (art) {
-                art(c, h, x, h.top - cy0, h.bot - cy0, f, T0);
+                art(c, h, x, h.top - cy0, h.bot - cy0, f, T02);
                 break;
               }
               const g = c.createLinearGradient(x - h.w / 2, 0, x + h.w / 2, 0);
@@ -62881,7 +63360,7 @@
             {
               const x = h.x - cx0, y = h.y - cy0, f = Math.min(1, h.t * 3, (h.life - h.t) * 3 + 0.2), art = VORTEX_ART[h.fx];
               if (art) {
-                art(c, h, x, y, f, T0);
+                art(c, h, x, y, f, T02);
                 break;
               }
               const im = Sprites.vfxArt("swirl", col);
@@ -62900,21 +63379,21 @@
             }
             break;
           case "push":
-            drawPush(c, h, cx0, cy0, this.W, this.H, T0, Math.min(1, h.t * 4, (h.life - h.t) * 3));
+            drawPush(c, h, cx0, cy0, this.W, this.H, T02, Math.min(1, h.t * 4, (h.life - h.t) * 3));
             break;
           case "decoy":
-            drawDecoy(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4), T0);
+            drawDecoy(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4), T02);
             break;
           case "aura":
             {
               const b = this.hzBoss(h);
               if (!b) break;
               const box = { x: b.x - cx0, y: b.y - cy0, w: b.w, h: b.h, cx: b.cx - cx0, cy: b.cy - cy0, feet: b.y + b.h - cy0, face: b.facing < 0 ? -1 : 1 };
-              drawTell(c, h, box, k, T0);
+              drawTell(c, h, box, k, T02);
             }
             break;
           default:
-            this.drawSig(c, h, cx0, cy0, T0);
+            this.drawSig(c, h, cx0, cy0, T02);
             break;
           // 고유 기술(game/boss-sig-art)
           case "call":
@@ -62937,14 +63416,15 @@
     },
     /** 몸으로 된 위험 지대(잿물 팔 · 잿물 기둥) — 빛 앞(actors)에서 칠해 둘레처럼 어둠을 받는다. 예고는 drawBossHazards(빛 뒤) */
     drawBossLit(c) {
+      this.drawOrganArms(c);
       const L = this.bhz;
       if (!L || !L.length) return;
-      const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
+      const cx0 = this.cam.x, cy0 = this.cam.y, T02 = this.time || 0;
       for (const h of L) {
-        if (h.k === "parm") drawArm(c, h, this.hzBoss(h), cx0, cy0, T0);
+        if (h.k === "parm") drawArm(c, h, this.hzBoss(h), cx0, cy0, T02);
         else if (h.k === "strike" && h.done) {
           const art = STRIKE_ART[h.fx];
-          if (art && art.lit) art.hit(c, h, h.x - cx0, h.y - cy0, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T0);
+          if (art && art.lit) art.hit(c, h, h.x - cx0, h.y - cy0, Math.min(1, (h.t - h.delay) / Math.max(0.05, h.life - h.delay)), T02);
         }
       }
     },
@@ -67146,9 +67626,9 @@
       };
       let tier = SURVEY_TIERS[SURVEY_TIERS.length - 1], next = null, missing = [];
       for (let i = 0; i < SURVEY_TIERS.length; i++) {
-        const T0 = SURVEY_TIERS[i];
-        if (Object.keys(T0.need).every((k) => meets(k, T0.need[k]))) {
-          tier = T0;
+        const T02 = SURVEY_TIERS[i];
+        if (Object.keys(T02.need).every((k) => meets(k, T02.need[k]))) {
+          tier = T02;
           next = i > 0 ? SURVEY_TIERS[i - 1] : null;
           break;
         }
@@ -68870,6 +69350,7 @@
       this.pipe.add("machines", (f) => this.drawRails(f));
       this.pipe.add("objects", (f) => this.rObjects(f));
       this.pipe.add("objects", (f) => this.rStreaks(f));
+      this.pipe.add("objects", (f) => this.drawOrgans(f));
       this.pipe.add("ground", (f) => this.rGround(f));
       this.pipe.add("drops", (f) => this.rDrops(f));
       this.pipe.add("drops", (f) => this.drawFormBack(f.c));
@@ -68887,6 +69368,7 @@
       this.pipe.add("fx", (f) => this.drawSkillArt(f.c));
       this.pipe.add("fx", (f) => this.drawFormFront(f.c));
       this.pipe.add("fx", (f) => this.drawBossHazards(f.c));
+      this.pipe.add("fx", (f) => this.drawOrganGlow(f));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
       this.pipe.add("screen", (f) => this.rTimeStop(f));
@@ -71380,6 +71862,7 @@
         }
         return;
       }
+      if (e.def.ai === "b_organ") return;
       if (e.def.ai === "flotsam") {
         this.drawFlotsam(c, e, sx, sy);
         return;
@@ -74015,15 +74498,15 @@
     },
     netPutEnemies(list) {
       const n = this.net, t = now();
-      for (const [nid3, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
-        let e = n.ghosts.get(nid3);
+      for (const [nid4, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
+        let e = n.ghosts.get(nid4);
         if (!e) {
           if (!ENEMIES[type]) continue;
           e = new Enemy(type, x, y);
           e.ghost = true;
-          e.nid = nid3;
+          e.nid = nid4;
           e.netBuf = new SnapBuffer(1.5 / NET_HZ);
-          n.ghosts.set(nid3, e);
+          n.ghosts.set(nid4, e);
           this.ents.push(e);
         }
         e.netBuf.push(t, { x, y });
@@ -74059,9 +74542,9 @@
         }
         e.seenAt = t;
       }
-      for (const [nid3, e] of n.ghosts) if (t - e.seenAt > 1) {
+      for (const [nid4, e] of n.ghosts) if (t - e.seenAt > 1) {
         e.dead = true;
-        n.ghosts.delete(nid3);
+        n.ghosts.delete(nid4);
       }
     },
     /** 참가자가 그림자 몹을 쳤다 — 맞는 그림은 바로(손맛), 피해는 호스트가 계산한다. */
@@ -74102,10 +74585,10 @@
     },
     netPutDeaths(list) {
       const n = this.net;
-      for (const nid3 of list) {
-        const e = n.ghosts.get(nid3);
+      for (const nid4 of list) {
+        const e = n.ghosts.get(nid4);
         if (!e) continue;
-        n.ghosts.delete(nid3);
+        n.ghosts.delete(nid4);
         e.dead = true;
         this.addCorpse(e);
         this.deathBurst(e);
@@ -74123,13 +74606,13 @@
     },
     netPutProjs(list) {
       const n = this.net, t = now();
-      for (const [nid3, x, y, vx, vy, type] of list) {
-        let q = n.gproj.get(nid3);
+      for (const [nid4, x, y, vx, vy, type] of list) {
+        let q = n.gproj.get(nid4);
         if (!q) {
           q = new Proj(x, y, vx, vy, 0, "enemy", type);
           q.ghost = true;
-          q.nid = nid3;
-          n.gproj.set(nid3, q);
+          q.nid = nid4;
+          n.gproj.set(nid4, q);
           this.projs.push(q);
         }
         q.x = x - q.w / 2;
@@ -74138,9 +74621,9 @@
         q.vy = vy;
         q.seenAt = t;
       }
-      for (const [nid3, q] of n.gproj) if (t - q.seenAt > 0.25) {
+      for (const [nid4, q] of n.gproj) if (t - q.seenAt > 0.25) {
         q.dead = true;
-        n.gproj.delete(nid3);
+        n.gproj.delete(nid4);
       }
     },
     /** 시계·날짜·세계 사건(비·붉은 달…) — 참가자는 사건을 굴리지 않고 호스트 것을 받는다. */
@@ -74787,9 +75270,9 @@
       if (tiles) {
         for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", { k: "tiles", l: tiles });
       }
-      for (const [nid3, e] of n.live) if (e.dead) {
-        n.live.delete(nid3);
-        if (!n.dead.includes(nid3)) n.dead.push(nid3);
+      for (const [nid4, e] of n.live) if (e.dead) {
+        n.live.delete(nid4);
+        if (!n.dead.includes(nid4)) n.dead.push(nid4);
       }
       for (const q of n.peers.values()) {
         if (!q.rp) continue;
@@ -74964,9 +75447,9 @@
         this.netSay(tr("방 코드는 영문·숫자 5~6자다"));
         return;
       }
-      const pick2 = $("#mp-char").value;
-      if (pick2 !== "") {
-        const slot = +pick2;
+      const pick3 = $("#mp-char").value;
+      if (pick3 !== "") {
+        const slot = +pick3;
         this.netSay(tr("방을 찾는 중…"), true);
         this.netReadSlot(slot).then((d) => {
           if (!d || !d.p) {
@@ -75684,7 +76167,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

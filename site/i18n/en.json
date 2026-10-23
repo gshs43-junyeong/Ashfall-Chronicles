@@ -206,7 +206,6 @@
  "블록·기계 설치 · NPC·상자·제단 상호작용 · 낚싯대는 물에 던지기": "Place blocks and machines · interact with NPCs, chests and altars · cast a fishing rod into water",
  "빙하 지대": "Glacier Reach",
  "뼈가 쌓인 곳": "Where the Bones Pile Up",
- "뼈의 군주": "Bone Lord",
  "뿌리 신전 유적 제거 — 세션 1 경로의 유적 밀도를 낮췄습니다.": "Removed the Root Temple ruin — lowering the density of ruins along the Act 1 route.",
  "상점 · 여관": "Shops · Inn",
  "새로 그린 스킬 연출, 새 로고와 타이틀 화면, 마을 사람들의 초상, 펫의 몸짓과 단계마다 모습이 바뀌는 드래곤.": "Redrawn skill effects, a new logo and title screen, village portraits, livelier pets, and dragons that change at every stage.",
@@ -401,5 +400,6 @@
  "4코어 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U 급)": "Quad-core 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U class)",
  "Intel Iris Xe · Radeon Vega 7 급 이상": "Intel Iris Xe · Radeon Vega 7 class or better",
  "하드웨어 가속 2D (Intel UHD Graphics 620 급)": "Hardware-accelerated 2D (Intel UHD Graphics 620 class)",
- "잿물 군체": "Ashpool Colony"
+ "잿물 군체": "Ashpool Colony",
+ "뼈 오르간": "Bone Organ"
 }

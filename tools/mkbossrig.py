@@ -269,8 +269,141 @@ def pool_parts(f):
     return F.render()
 
 
+# ===== 뼈 오르간(bone_lord 자리) — 무덤 뒷벽에 박힌 갈비 오르간 · 넓적다리뼈 관 · 견갑골 두 팔 =====
+BONE, BONE_D, BONE_L = '#e2d8bc', '#a89c80', '#f2ead4'
+SOUL = '#8fe8c8'
+ORGAN_PIPES = [(-24, 14), (-16, 19), (-8, 24), (0, 28), (8, 24), (16, 19), (24, 14)]   # (x, 높이) — game/boss-organ-art 의 PIPE_X 와 같게
+ORGAN_CHEST = 30                                                                        # 관을 받치는 바람통 높이(설계 y)
+
+
+def organ_body(f):
+    """몸 시트 8장 — 0·1 1막(닫힘 · 풀무 열림) · 2·3 2막(갈비 둘 · 관 하나 부러짐 · 두개골 금) · 4·5 3막(갈비 넷 · 관 셋 · 턱 빠짐 · 속불이 새어 나옴)
+       · 6·7 쓰러짐(관이 기울고 갈비가 흩어진다). 핵(가슴의 혼불)이 판정 상자의 가운데 — 설계 (40, 58)"""
+    W, H = 80, 96
+    F = ZFig(W, H)
+    cx, base = 40, 93
+    st = min(2, f // 2) if f < 6 else 2
+    opn = f % 2 == 1 and f < 6
+    dying = f >= 6
+    fall = 0 if not dying else (1 if f == 6 else 2)
+    # 뒷판 — 무덤 벽에 박힌 자리(어두운 흙 테두리 · 오르간 받침)
+    def niche(rx, ry, top, jag):
+        pts = [(cx - rx, base)]
+        for k in range(25):
+            t = math.pi + k / 24 * math.pi
+            j = jag * (((k * 7) % 5) / 4 - 0.5)
+            pts.append((cx + math.cos(t) * (rx + j), top + ry + math.sin(t) * (ry + j)))
+        pts.append((cx + rx, base))
+        return pts
+    F.part('stone', '#5a5044', bevel=3).poly(niche(33, 30, 22, 2.4))          # 벽감 테두리 돌
+    F.part('stone', '#2e2a24', bevel=2).poly(niche(30, 27, 25, 1.2))          # 벽감 안 — 깊은 그늘
+    # 건반 — 이빨이 늘어선 손건반
+    F.part('stone', '#5a5044', bevel=2).box(cx - 24, 80, 48, 9, 1)
+    for k in range(11):
+        x = cx - 21 + k * 4.2
+        F.part('clay', BONE_L if k % 3 else BONE, bevel=1).box(x, 81.5, 3.2, 5.5, 1)
+    # 핵 — 갈비 안의 혼불(열리면 드러난다 · 3막은 닫혀도 틈으로 샌다)
+    core = SOUL if not dying else '#4a6a60'
+    F.part('flesh', '#2a2a26', bevel=3).ell(cx, 58, 13, 15)
+    F.part('glow', core, glow=not dying).ell(cx, 58, 7 + opn * 1.5, 9 + opn * 1.5)
+    F.part('glow', '#e8fff4', glow=not dying).ell(cx - 1, 56, 2.6, 3.4)
+    if not dying:
+        F.glow(cx, 58, 14 + opn * 6, core, 0.3 + opn * 0.2 + st * 0.05)
+    # 등뼈 — 가운데 마디 줄
+    for y in range(38, 80, 4):
+        F.part('clay', BONE if y % 8 else BONE_D, bevel=1.2).ell(cx, y + fall * 2, 3.2, 1.7)
+    # 갈비 — 여섯 쌍. 닫히면 앞으로 감겨 핵을 덮고, 열리면 풀무처럼 벌어진다. 손상 단계마다 부러진 갈비가 는다
+    broken = {1: {(1, -1), (3, 1)}, 2: {(1, -1), (3, 1), (0, 1), (4, -1), (5, 1)}}.get(st, set())
+    for k in range(6):
+        y = 46 + k * 5.2
+        for sd in (-1, 1):
+            spread = 1.0 if opn else 0.0
+            if dying:
+                spread = 0.5 + fall * 0.3
+            p0 = (cx + sd * 2.5, y)
+            p1 = (cx + sd * (17 - k * 0.6), y - 3)
+            p2 = (cx + sd * (16 - k * 0.6 + spread * 8), y + 3)
+            p3 = (cx + sd * (4 + spread * 18), y + 5 - spread * 2 + fall * 2)
+            pts = [p0, p1, p2, p3]
+            if (k, sd) in broken:
+                pts = pts[:3]                            # 부러진 갈비 — 끝이 들쭉날쭉 끊긴다
+            for a, b in zip(pts, pts[1:]):
+                F.part('clay', BONE, bevel=1.2).cap(a[0], a[1], b[0], b[1], 1.5, 1.2)
+            if (k, sd) in broken:
+                e = pts[-1]
+                F.part('clay', BONE_D, bevel=0.8).poly([(e[0] - 1.2, e[1] - 1), (e[0] + sd * 2, e[1] + 0.5), (e[0] - 0.4, e[1] + 1.4)])
+    # 어깨 견갑 — 팔이 붙는 자리(게임이 그 위에 팔 조각을 잇는다)
+    for sd in (-1, 1):
+        F.part('clay', BONE, bevel=2).poly([(cx + sd * 18, 40), (cx + sd * 27, 42), (cx + sd * 26, 52), (cx + sd * 19, 50)])
+        F.part('clay', BONE_D, bevel=1).ell(cx + sd * 24, 44, 2.4, 2.4)
+    # 바람통 — 골반 · 척추 마디를 이은 받침대
+    F.part('clay', BONE_D, bevel=2).box(cx - 29, ORGAN_CHEST, 58, 5, 2)
+    for x in range(cx - 27, cx + 28, 6):
+        F.part('clay', BONE, bevel=1).ell(x, ORGAN_CHEST + 2.5, 2.4, 2)
+    # 관 — 넓적다리뼈. 손상 단계마다 부러진 관(끝이 깨져 짧다) · 쓰러지면 기운다
+    snapped = {1: {5}, 2: {1, 5, 6}}.get(st, set())
+    for i, (px, ph) in enumerate(ORGAN_PIPES):
+        x = cx + px
+        top = ORGAN_CHEST - ph
+        if i in snapped:
+            top += ph * 0.45
+        tilt = (fall * (0.5 if i % 2 else -0.4) * (1 + abs(px) / 24)) if dying else 0
+        tx = x + tilt * (ORGAN_CHEST - top) * 0.25
+        F.part('clay', BONE if i % 2 else BONE_L, bevel=1.6).cap(x, ORGAN_CHEST, tx, top + 1.5, 2.3, 2.0)
+        if i in snapped:
+            F.part('clay', BONE_D, bevel=0.8).poly([(tx - 2.2, top + 2), (tx - 0.5, top - 0.8), (tx + 0.7, top + 1), (tx + 2.2, top - 0.4), (tx + 2.2, top + 2.5)])
+        else:
+            F.part('clay', BONE_L, bevel=1.4).ell(tx - 1.2, top + 1.2, 1.8, 1.6)
+            F.part('clay', BONE_L, bevel=1.4).ell(tx + 1.2, top + 1.2, 1.8, 1.6)    # 넓적다리 머리 두 혹
+        F.part('stone', '#2a2620', bevel=0.6).box(x - 1.3, ORGAN_CHEST - 6.5, 2.6, 2.2, 0.6)   # 소리 나는 입(게임이 여기에 빛을 얹는다)
+    # 두개골 — 오르간의 얼굴(바람통 앞 · 갈비 위)
+    sy0 = 36 + fall * 3
+    F.part('clay', BONE_L, bevel=3).ell(cx, sy0, 9, 7.5)
+    F.part('clay', BONE, bevel=2).box(cx - 6, sy0 + 4, 12, 4, 1.5)
+    if st < 2:
+        F.part('clay', BONE_D, bevel=1.5).box(cx - 5.5, sy0 + 8, 11, 3, 1)       # 아래턱(3막은 빠졌다)
+        for k in range(5):
+            F.px(cx - 4 + k * 2, sy0 + 8, '#2a2620')
+    eye = SOUL if not dying else '#2a2620'
+    for sd in (-1, 1):
+        F.part('stone', '#1e1c18', bevel=0.8).ell(cx + sd * 3.6, sy0 + 0.5, 2.6, 2.4)
+        if not dying:
+            F.part('glow', eye, glow=True).ell(cx + sd * 3.6, sy0 + 0.8, 1.1 + st * 0.3, 1.1 + st * 0.3)
+            F.glow(cx + sd * 3.6, sy0 + 0.8, 4 + st, eye, 0.35)
+    F.part('stone', '#1e1c18', bevel=0.5).poly([(cx - 1.2, sy0 + 4.5), (cx + 1.2, sy0 + 4.5), (cx, sy0 + 2.5)])
+    if st >= 1:
+        fine(F, (cx - 3, sy0 - 6.5), (cx - 1, sy0 - 3), '#4a4234'); fine(F, (cx - 1, sy0 - 3), (cx - 2.5, sy0 - 0.5), '#4a4234')
+    if st >= 2:
+        fine(F, (cx + 4, sy0 - 6), (cx + 6, sy0 - 2.5), '#4a4234'); fine(F, (cx + 6, sy0 - 2.5), (cx + 8, sy0 - 1), '#4a4234')
+        F.glow(cx, 58, 9, SOUL, 0.25)                    # 닫혀도 새는 혼불
+    return F.render()
+
+
+def organ_parts(f):
+    """팔 조각 3장(64×24 설계 칸 — 오른쪽을 향해 누운 뼈) · 0 윗팔(위팔뼈) · 1 아래팔(노뼈 · 자뼈 둘) · 2 손(견갑 날 손바닥 + 손가락뼈 넷)"""
+    F = ZFig(64, 24)
+    if f == 0:
+        F.part('clay', BONE, bevel=2).cap(6, 12, 58, 12, 2.6, 2.2)
+        F.part('clay', BONE_L, bevel=2).ell(5, 12, 4.4, 4)
+        F.part('clay', BONE_L, bevel=2).ell(58.5, 10.5, 3, 2.6); F.part('clay', BONE_L, bevel=2).ell(58.5, 13.8, 3, 2.6)
+        fine(F, (20, 11), (40, 11.4), BONE_D)
+    elif f == 1:
+        F.part('clay', BONE_D, bevel=1.6).cap(5, 10, 58, 9.5, 1.7, 1.5)
+        F.part('clay', BONE, bevel=1.6).cap(5, 14, 58, 14.5, 2.0, 1.6)
+        F.part('clay', BONE_L, bevel=1.6).ell(5, 12, 3.4, 4)
+        F.part('clay', BONE_L, bevel=1.4).ell(58, 12, 2.6, 3.6)
+    else:
+        F.part('clay', BONE, bevel=2.4).poly([(3, 8), (24, 4), (34, 8), (34, 17), (22, 20), (3, 16)])    # 견갑 날 손바닥
+        fine(F, (6, 12), (30, 9), BONE_D); fine(F, (6, 14), (30, 14), BONE_D)
+        for k, (y0, ln) in enumerate(((6, 26), (10, 28), (14, 27), (18, 22))):
+            F.part('clay', BONE if k % 2 else BONE_L, bevel=1.2).cap(33, y0 + 1, 33 + ln * 0.55, y0, 1.6, 1.3)
+            F.part('clay', BONE, bevel=1.1).cap(33 + ln * 0.55, y0, 33 + ln, y0 + 2.5 + k * 0.4, 1.3, 0.7)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
+    'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts)},
 }
 
 

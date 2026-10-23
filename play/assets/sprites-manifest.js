@@ -2314,15 +2314,15 @@ window.SPRITE_MANIFEST = {
       },
       "bone_lord": {
         "file": "boss/bone_lord.png",
-        "frameW": 120,
-        "frameH": 152,
+        "frameW": 320,
+        "frameH": 384,
         "count": 8,
-        "foot": 10.5,
-        "side": 0,
+        "foot": 11,
+        "side": 1,
         "death": 2,
         "scale": 1,
         "gap": 0,
-        "big": 2
+        "rig": 1
       },
       "corrupt_heart": {
         "file": "boss/corrupt_heart.png",
@@ -2548,18 +2548,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "bone_lord_pose": {
-        "file": "boss/bone_lord_pose.png",
-        "frameW": 192,
-        "frameH": 206,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": 10.5,
-        "side": 0,
-        "pose": 1
       },
       "corrupt_heart_pose": {
         "file": "boss/corrupt_heart_pose.png",
@@ -2818,6 +2806,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 120,
         "frameH": 120,
         "count": 10,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "bone_lord_parts": {
+        "file": "boss/bone_lord_parts.png",
+        "frameW": 256,
+        "frameH": 96,
+        "count": 3,
         "scale": 1,
         "gap": 0,
         "rig": 1

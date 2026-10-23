@@ -47,6 +47,8 @@
       "onLevelUp",
       "onPickup",
       "onProfUp",
+      "organPhaseFx",
+      "organPipeFx",
       "parts",
       "pathBudget",
       "player",

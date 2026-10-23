@@ -18,15 +18,15 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'ring', n: '기름 파문', tele: 0.5, times: 2, cnt: 16, gap: 3, spd: 200, every: 0.6, proj: 'sludge', m: 0.5, pw: [1, 1, 0.8] },
     { k: 'sig', sig: 'slap', n: '세 팔 내리치기', tele: 0.8, arms: 3, m: 1, ph: 1, pw: [0, 1, 1.4] }],
     ult: { k: 'sig', sig: 'surge', n: '잿물 범람', tele: 1, m: 1 } },
-  bone_lord: { c: '#ede4c8', every: 7, moves: [
-    { k: 'dash', n: '뼈 회전', tele: 0.55, times: 3, spd: 3.4, m: 1 },
-    { k: 'homing', n: '울부짖는 해골', tele: 0.6, cnt: 4, spd: 210, turn: 2.2, proj: 'skull', m: 0.7 },
-    { k: 'rain', n: '뼈 감옥', tele: 0.7, form: 'cage', cnt: 9, gapX: 46, delay: 0.9, shape: 'col', fx: 'bone', m: 0.9 },
-    { k: 'sig', sig: 'reform', n: '흩어졌다 맞추기', tele: 0.6, pose: 0, m: 1 },
-    { k: 'march', n: '뼈 창 줄', tele: 0.6, cnt: 7, gap: 56, every: 0.13, h: 110, fx: 'bone', m: 0.9, pw: [1, 1, 1] },
-    { k: 'shield', n: '뼈 방패', tele: 0.7, v: 0.12, life: 12, fx: 'bone', ph: 1, pw: [0, 1.2, 1] },
-    { k: 'summon', n: '해골 궁수대', tele: 0.8, mob: 'archer', cnt: 3, ph: 2, pw: [0, 0, 1.3] }],
-    ult: { k: 'spiral', n: '뼈 폭풍', tele: 1, arms: 4, dur: 4, every: 0.12, spd: 300, proj: 'bone', turn: 2.4, m: 0.5 } },
+  /* 뼈 오르간 — 무덤 뒷벽에 박힌 갈비 오르간. 몸은 움직이지 않고 팔 · 관 · 풀무가 싸운다(entity/boss-organ) */
+  bone_lord: { c: '#bfe8d8', every: 6, moves: [
+    { k: 'sig', sig: 'sweep', n: '뼈 팔 쓸기', tele: 0.3, m: 1 },
+    { k: 'sig', sig: 'pipes', n: '관 울림', tele: 0.3, m: 0.7 },
+    { k: 'sig', sig: 'scatter', n: '흩어졌다 맞추기', tele: 0.5, m: 0.6 },
+    { k: 'summon', n: '해골 성가대', tele: 0.8, mob: 'skeleton', cnt: 3 },
+    { k: 'sig', sig: 'sweep', n: '두 팔 쓸기', tele: 0.3, both: 1, m: 1, ph: 1, pw: [0, 1, 1.3] },
+    { k: 'sig', sig: 'pipes', n: '불협화음', tele: 0.3, wild: 1, m: 0.6, ph: 2, pw: [0, 0, 1.4] }],
+    ult: { k: 'sig', sig: 'requiem', n: '장송곡', tele: 1, m: 0.6 } },
   corrupt_heart: { c: '#b07aff', every: 6.5, moves: [
     { k: 'ring', n: '고동 파문', tele: 0.6, times: 3, cnt: 22, gap: 4, spd: 230, every: 0.55, proj: 'dark', m: 0.6 },
     { k: 'march', n: '혈관 가시', tele: 0.6, cnt: 7, gap: 54, every: 0.13, h: 90, fx: 'flesh', m: 0.9 },

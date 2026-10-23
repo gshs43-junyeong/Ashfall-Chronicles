@@ -431,6 +431,9 @@ export class Enemy extends Ent {
   declare floorY: (x: number, y: number) => number; declare hz: (h: Bag) => Bag; declare strike: (x: number, y: number, o: Bag, K: Bag, dm: number) => Bag;
   declare ceilY: (x: number, fy: number) => number | undefined; declare mvFx: (d: Bag) => string;
   declare sigStart: (d: Bag, p: Player, world: World, K: Bag) => any;
+  declare organAI: (dt: number, world: World, p: Player) => void; declare organSig: (d: Bag, p: Player, world: World, K: Bag) => any; declare organOpen: () => boolean;
+  declare organSweep: (s: number, low: boolean, tele: number, m: number, K: Bag) => void; declare organNote: (pi: number, p: Player, n: number, m: number) => void;
+  declare anchored: number; declare breathCd: number; declare breathH: Bag | null; declare reqOn: number;
   declare poolAI: (dt: number, world: World, p: Player, dx: number) => void; declare poolSig: (d: Bag, p: Player, world: World, K: Bag) => any;
   declare poolArm: (ox: number, tx: number, ty: number, rise: number, dm: number, K: Bag) => Bag; declare sigHide: (dt: number, world: World, r: any, toX: () => number, under: number, rise: number, onRise: () => void) => void;
   declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
@@ -634,6 +637,11 @@ export class Enemy extends Ent {
       const m = this.gapHurtMul();
       if (m < 1 && Math.random() < 0.4) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, tr('막혔다'), '#9fb4c8', 0));
       amount *= m;
+    }
+    /* 뼈 오르간 — 풀무가 열려 핵이 드러난 동안만 제대로 들어간다(entity/boss-organ) */
+    if (this.def.ai === 'b_organ') {
+      const op = this.organOpen(); amount *= op ? 1.6 : 0.3;
+      if (!op && Math.random() < 0.4) G.texts.push(new DmgText(this.cx + (Math.random() - .5) * 20, this.y - 10, tr('막혔다'), '#9fb4c8', 0));
     }
     /* 굳어 있을 때(guard) — 약점이 드러나기 전에는 거의 통하지 않는다. */
     if (this.guard) {
@@ -912,6 +920,7 @@ export const IMPACT_FX: Bag = {
   fruit: { burst: 'hit', ring: '#e8783a', rr: 20, parts: 9 },
   gel: { burst: 'frost', ring: '#6fa8ff', rr: 22, parts: 8 },
   sludge: { burst: 'hit', ring: '#8a7a68', rr: 22, parts: 8 },
+  note: { burst: 'soul', ring: '#9ff0d0', rr: 24, parts: 8 },
   drop: { burst: 'frost', ring: '#7fc8e8', rr: 20, parts: 8 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
@@ -939,7 +948,8 @@ export const PROJ_STYLE: Bag = {
   web: { c: '#eef0f4', r: 6 },           // 거미줄 덩이 — 그림은 game/boss-tell-art
   fruit: { c: '#c8641e', r: 6 },         // 원숭이가 던지는 열매
   gel: { c: '#6fa8ff', r: 7 },           // 지킴이의 물방울 — 그림은 game/boss-tell-art
-  sludge: { c: '#6a625a', r: 8 },        // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
+  sludge: { c: '#6a625a', r: 8 },
+  note: { c: '#9ff0d0', r: 7, glow: 1 },        // 뼈 오르간의 관이 내는 음 — 그림은 game/boss-tell-art        // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
   drop: { c: '#7fc8e8', r: 6 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */

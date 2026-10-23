@@ -63,7 +63,7 @@ function underfoot(c: C2, fx: string, b: Box, k: number, T: number, sd: number) 
 
 /** 고유 기술의 예고 — 닮은 틀 기술의 소품을 빌린다 [갈래, 결] */
 const SIG_TELL: Record<string, [string, string]> = {
-  slap: ['leap', 'gel'], bubbles: ['quake', ''], sink: ['leap', 'gel'], surge: ['leap', 'gel'], reform: ['blink', ''], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
+  slap: ['leap', 'gel'], bubbles: ['quake', ''], sink: ['leap', 'gel'], surge: ['leap', 'gel'], sweep: ['wall', 'bone'], pipes: ['ring', ''], scatter: ['blink', ''], requiem: ['ring', ''], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
   scales: ['rain', 'rune'], gaze: ['rain', 'meteor'], cart: ['wall', 'metal'], snowball: ['wall', 'ice'], grapple: ['beam', 'thorn'], dune: ['wall', 'sand'],
   garden: ['zone', 'spore'], tongue: ['rain', 'bile'], anchor: ['wall', 'water'], islet: ['rain', 'boulder'], flood: ['wall', 'water'], turrets: ['wall', 'metal'],
   pour: ['rain', 'fire'], drones: ['beam', 'laser'], project: ['beam', 'blueprint'], veins: ['quake', '']
@@ -247,6 +247,17 @@ export function drawBossProjAt(c: C2, type: string, x: number, y: number, a: num
       c.beginPath(); c.moveTo(9, 0); c.quadraticCurveTo(2, -8, -6, -5); c.arc(-5, 0, 5, -Math.PI / 2, Math.PI / 2, true); c.quadraticCurveTo(2, 8, 9, 0); c.fill(); c.stroke();
       c.fillStyle = 'rgba(200,190,176,.6)'; c.beginPath(); c.ellipse(-1, -3, 2.6, 1.2, -0.3, 0, TAU); c.fill();
       c.fillStyle = '#ff8a40'; c.fillRect(-3 + Math.sin(T * 5 + sd) * 1.5, 1, 2, 2);
+      c.restore(); return true;
+    }
+    case 'note': {                                                     // 관이 낸 음 — 혼불 음표(머리 · 기둥 · 깃) · 뒤로 음파 고리
+      const wob = Math.sin(T * 12 + sd) * 0.25;
+      hzGlow(c, x, y, 16, '#9ff0d0', 0.55);
+      c.strokeStyle = 'rgba(159,240,208,.5)'; c.lineWidth = 1.5;
+      for (let i = 1; i <= 2; i++) { c.beginPath(); c.arc(x - Math.cos(a) * i * 7, y - Math.sin(a) * i * 7, 4 + i * 3, a + Math.PI - 0.8, a + Math.PI + 0.8); c.stroke(); }
+      c.save(); c.translate(x, y); c.rotate(wob);
+      c.fillStyle = '#e8fff4'; c.strokeStyle = '#2a5a4a'; c.lineWidth = 1.2;
+      c.beginPath(); c.ellipse(-2, 3, 4.4, 3.2, -0.4, 0, TAU); c.fill(); c.stroke();
+      c.fillRect(1.6, -9, 1.8, 12); c.beginPath(); c.moveTo(3.4, -9); c.quadraticCurveTo(9, -6, 6, -1); c.lineTo(3.4, -5); c.closePath(); c.fill();
       c.restore(); return true;
     }
     case 'drop': {                                                     // 물방울 — 나는 쪽으로 뾰족한 방울, 뒤로 잔물방울

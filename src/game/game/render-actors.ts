@@ -327,6 +327,7 @@ export const RenderActorsPart: Bag = {
       try { this.drawEnemy(c, e, sx, sy); } finally { e._shading = 0; c.restore(); }
       return;
     }
+    if (e.def.ai === 'b_organ') return;                                  // 뒷벽의 오르간 — 몸은 objects · 팔은 actors 단계에서(game/boss-organ-art)
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     if (e.def.tame) { this.drawWildHorse(c, e, sx, sy); return; }
     if (e.hide > 0 || e.amb) { this.drawBuried(c, e, sx, sy); return; }

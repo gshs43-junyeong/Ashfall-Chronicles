@@ -43,7 +43,7 @@ interface EnemyDef {
   drops?: [string, number, number, number][];
   passive?: number; squish?: number; hop?: number; tame?: number; biome?: string; aggro?: number; lvScale?: number; range?: number; cw?: string; d?: string;
   proj?: string; tier?: number; ph?: number; boss?: number; minion?: string;
-  trait?: string; kit?: string;   // 유적 고유 몬스터의 규칙 하나(entity/enemy-traits.ts)
+  trait?: string; kit?: string; wall?: number;   // wall — 뒷벽에 박힌 보스(닿아도 아프지 않다)   // 유적 고유 몬스터의 규칙 하나(entity/enemy-traits.ts)
 }
 
 /** 유적(RUIN_SPEC · STORY_RUIN) — rooms 가 목표 방 수, bsp 가 [깊이, 최소 가로, 최소 세로]. */
@@ -104,7 +104,7 @@ interface AppCtx {
   player: any; me: any; players: any[]; netRemoteHurt: (rp: any, amount: number, srcX?: number) => void; netRemoteInflict: (rp: any, id: string, dur: number, dps: number) => void; statusOnset: (e: any, kind: string) => void; mobCastFx: (e: any, S: any) => void; mobSkillFx: (e: any, S: any, id: string, tgt?: any, amt?: number) => void; net: any; pvpTargets: () => any[]; pvpHit: (q: any, dmg: number, srcX: number) => void; netHitGhost: (...a: any[]) => any; netKilledBy: (...a: any[]) => any; price: (...a: any[]) => any; projs: any[]; reforgeCost: (...a: any[]) => any; reforgeSlot: (...a: any[]) => any;
   ringFx: (...a: any[]) => any; rng: any; rollBounties: (...a: any[]) => any; saveSettings: (...a: any[]) => any;
   scale: (...a: any[]) => any; sellItem: (...a: any[]) => any; setOpt: (...a: any[]) => any; setPause: (...a: any[]) => any;
-  settings: any; sfx: (...a: any[]) => any; sfxAt: (...a: any[]) => any; poolSinkFx: (x: number, y: number, out: boolean) => void; poolPhaseFx: (e: any) => void; shake: number; shopBundle: (...a: any[]) => any; sideActive: any;
+  settings: any; sfx: (...a: any[]) => any; sfxAt: (...a: any[]) => any; poolSinkFx: (x: number, y: number, out: boolean) => void; organPhaseFx: (e: any) => void; organPipeFx: (x: number, y: number, pi: number) => void; poolPhaseFx: (e: any) => void; shake: number; shopBundle: (...a: any[]) => any; sideActive: any;
   sideDone: any; sidePay: (...a: any[]) => any; sideProgress: (...a: any[]) => any; sigilFx: (...a: any[]) => any;
   skillDeny: (...a: any[]) => any; spritesOn: boolean; state: string; stockOf: (...a: any[]) => any; strokeRate: (...a: any[]) => any;
   surfacePx: (...a: any[]) => any; texts: any[]; time: number; toast: (...a: any[]) => any; triggerFault: (...a: any[]) => any;

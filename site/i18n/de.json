@@ -206,7 +206,6 @@
  "블록·기계 설치 · NPC·상자·제단 상호작용 · 낚싯대는 물에 던지기": "Blöcke und Maschinen setzen · mit NPCs, Truhen und Altären interagieren · die Angel ins Wasser werfen",
  "빙하 지대": "Gletscherland",
  "뼈가 쌓인 곳": "Wo die Knochen sich türmen",
- "뼈의 군주": "Knochenfürst",
  "뿌리 신전 유적 제거 — 세션 1 경로의 유적 밀도를 낮췄습니다.": "Ruine des Wurzeltempels entfernt — weniger Ruinen entlang des Wegs in Akt 1.",
  "상점 · 여관": "Läden · Gasthaus",
  "새로 그린 스킬 연출, 새 로고와 타이틀 화면, 마을 사람들의 초상, 펫의 몸짓과 단계마다 모습이 바뀌는 드래곤.": "Neu gezeichnete Fähigkeitseffekte, ein neues Logo und ein neuer Titelbildschirm, Dorfporträts, lebendigere Begleiter und Drachen, die sich in jeder Stufe verwandeln.",
@@ -401,5 +400,6 @@
  "4코어 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U 급)": "Vierkern 2,4 GHz (Core i5-1135G7 · Ryzen 5 5500U-Klasse)",
  "Intel Iris Xe · Radeon Vega 7 급 이상": "Intel Iris Xe · Radeon Vega 7 oder besser",
  "하드웨어 가속 2D (Intel UHD Graphics 620 급)": "Hardwarebeschleunigtes 2D (Intel-UHD-Graphics-620-Klasse)",
- "잿물 군체": "Aschenschlamm-Kolonie"
+ "잿물 군체": "Aschenschlamm-Kolonie",
+ "뼈 오르간": "Knochenorgel"
 }

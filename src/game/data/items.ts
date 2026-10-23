@@ -9,7 +9,7 @@ export const ITEMS: Record<string, ItemDef> = {
   sword_wood:   { n: '금 간 목검', i: '🗡', type: 'weapon', wc: 'melee', dmg: 9,  spd: 2.2, kb: 3, reach: 40, tier: 0, d: '아버지의 창고 구석에서 찾아낸 연습용 검.'  },
   sword_copper: { n: '구리 장검', i: '⚔', type: 'weapon', wc: 'melee', dmg: 16, spd: 2.0, kb: 4, reach: 44, tier: 1, d: '무르지만 정직하게 벤다.'  },
   sword_iron:   { n: '강철 브로드소드', i: '⚔', type: 'weapon', wc: 'melee', dmg: 28, spd: 1.9, kb: 5, reach: 48, tier: 2, d: '잿빛 마을 대장간의 표준품.'  },
-  sword_bone:   { n: '뼈의 군주의 이빨', i: '🦴', type: 'weapon', wc: 'melee', dmg: 42, spd: 2.3, kb: 4, reach: 46, tier: 3, lifesteal: 5, d: '휘두를 때마다 낮은 웃음소리가 난다.'  },
+  sword_bone:   { n: '오르간 건반 이빨', i: '🦴', type: 'weapon', wc: 'melee', dmg: 42, spd: 2.3, kb: 4, reach: 46, tier: 3, lifesteal: 5, d: '휘두를 때마다 낮은 웃음소리가 난다.'  },
   sword_mythril:{ n: '미스릴 세이버', i: '⚔', type: 'weapon', wc: 'melee', dmg: 58, spd: 2.4, kb: 5, reach: 50, tier: 4, d: '푸른 잔상이 궤적을 따라 남는다.'  },
   sword_dawn:   { n: '여명의 대검', i: '🌅', type: 'weapon', wc: 'melee', dmg: 88, spd: 1.7, kb: 9, reach: 62, tier: 5, fire: 2, d: '한 번의 일격에 밤을 걷어낸다.'  },
   scythe_void:  { n: '공허의 낫', i: '🌑', type: 'weapon', wc: 'melee', dmg: 128, spd: 2.1, kb: 7, reach: 66, tier: 6, lifesteal: 9, d: '벤 자리에 잠시 별이 보인다.'  },

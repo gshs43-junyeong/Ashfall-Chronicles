@@ -38,7 +38,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
     /* 고유 기술 — 쓰는 동안 몸놀림은 쉰다(entity/boss-moves · data/bossmoves) */
     if (this.tickMoves(dt, world, p, dd)) { this.stateT += dt; return; }
 
-    if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
+    if (AI === 'b_organ') this.organAI(dt, world, p);              // 뼈 오르간(entity/boss-organ)
+    else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
     else if (AI === 'b_slime') {
       if (this.onGround) {
         this.vx *= 0.86;

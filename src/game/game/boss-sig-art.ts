@@ -3,7 +3,7 @@ import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { Sprites } from '../sprites.js';
 import { Game } from '../game.js';
-import { STRIKE_ART, bone, cracks, glob, glyph, hs, hzGlow, jag, poly, rgba, rock, strokePath } from './boss-hazard-art.js';
+import { STRIKE_ART, cracks, glob, glyph, hs, hzGlow, jag, poly, rgba, rock, strokePath } from './boss-hazard-art.js';
 import { WALL_ART, WAVE_ART } from './boss-field-art.js';
 import { drawArmTell } from './boss-pool-art.js';
 /* 고유 기술은 그 보스만의 물건을 보여야 한다 — 이름이 '광차 돌진'이면 레일과 광차가, '피뢰침'이면 꽂힌 쇠막대와 그 사이 전류가 보인다. */
@@ -166,18 +166,8 @@ export const BossSigArtPart: Bag = {
     const b = this.hzBoss(h), f = Math.min(1, h.t * 4, Math.max(0, h.life - h.t) * 3);
     switch (h.k) {
       case 'parm': drawArmTell(c, h, cx0, cy0); return true;      // 잿물 팔 예고 — 팔 몸은 빛 앞에서(drawBossLit)
-      case 'bonepile': {                                               // 흩어진 뼈 — 굴러가다 다시 솟아 맞춰진다
-        if (!b || h.t < 0.3) return true;
-        const x = b.cx - cx0, y = b.y + b.h - cy0, up = b.burrowT > 0 ? 0 : 1;
-        c.globalAlpha = f;
-        for (let i = 0; i < 12; i++) {
-          const a = hs(h.sd, i) * TAU, rr = 6 + hs(h.sd, i + 2) * b.w * 0.4;
-          bone(c, x + Math.cos(a) * rr, y - 4 - Math.abs(Math.sin(a)) * 8 - up * 20 * hs(h.sd, i + 5), 12 + hs(h.sd, i + 7) * 8, a + T * (b.vx ? 6 : 0), 3);
-        }
-        c.fillStyle = '#efe6cc'; c.beginPath(); c.arc(x + Math.sin(T * 8) * 6, y - 10, 8, 0, TAU); c.fill(); c.strokeStyle = '#4a4030'; c.stroke();
-        c.fillStyle = '#1a1410'; c.fillRect(x - 4 + Math.sin(T * 8) * 6, y - 12, 2.5, 2.5); c.fillRect(x + 1 + Math.sin(T * 8) * 6, y - 12, 2.5, 2.5);
-        c.globalAlpha = 1; return true;
-      }
+      case 'osweep': this.drawSweepTell(c, h, cx0, cy0); return true;   // 뼈 오르간 — 몸 · 팔 · 빛은 game/boss-organ-art
+      case 'obreath': case 'opipes': case 'oreq': case 'oscatter': return true;
       case 'pulse': {                                                  // 박동 — 뛸 때마다 심장 둘레가 확 부푼다
         if (!b) return true;
         const u = (h.t % h.every) / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);

@@ -2,6 +2,7 @@
 import { mixin } from '../../engine/core/mixin.js';
 import { TS } from '../world.js';
 import { Proj } from '../entity.js';
+import { sweepHand } from '../entity/boss-organ.js';
 import { Game } from '../game.js';
 /* ★ 피해 · 탄 · 새 위험 지대는 호스트만 만든다(host). 붙잡힘 · 물속 느려짐은 화면마다 제 플레이어(me)에게.
    호스트가 바꾼 상태(밟힌 버섯 · 드론 경보)는 bhzp 로 보내 참가자 그림도 같게 한다. 기술 쪽은 entity/boss-signature. */
@@ -45,7 +46,23 @@ export const BossSigPart: Bag = {
           this.sfxAt && this.sfxAt('pool_slam', h.tx / TS, h.ty / TS);
         }
       } return true;
-      case 'bonepile': case 'pulse': case 'veil': case 'rod': case 'rail': case 'scales': case 'vine': case 'ghost': return true;
+      case 'osweep': {                                               // 뼈 팔 쓸기 — 쓰는 동안 손이 닿으면(한 사람에 한 번)
+        const b = this.hzBoss(h); if (!b) return true;
+        const [hx, hy, ph] = sweepHand(h, b);
+        if (ph === 1) {
+          if (host) h.hit = (h.hit || []).concat(this.hitPlayersRect(hx - 40, hy - 20, hx + 40, hy + 20, h.dmg, h.hit));
+          this.organSweepFx(hx, hy + (h.low ? 14 : 0), !!h.low);
+          if (!h.snd) { h.snd = 1; this.sfxAt && this.sfxAt('organ_sweep', hx / TS, hy / TS); }
+        }
+      } return true;
+      case 'obreath': {                                              // 풀무 — 들이켜고(김이 빨려 듦) 열린다(혼불이 솟음)
+        const b = this.hzBoss(h); if (!b) return true;
+        if (!h.fx0) { h.fx0 = 1; this.organBreathFx(b, false); }
+        if (!h.fx1 && h.t >= h.open0) { h.fx1 = 1; this.organBreathFx(b, true); }
+      } return true;
+      case 'oscatter': { const b = this.hzBoss(h); if (b && !h.fx0) { h.fx0 = 1; this.organScatterFx(b); } } return true;
+      case 'opipes': case 'oreq': return true;
+      case 'pulse': case 'veil': case 'rod': case 'rail': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로
         h.fired = 1;
         const q = this.hzNear(h.x, h.y);

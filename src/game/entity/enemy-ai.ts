@@ -212,7 +212,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     }
 
     // 접촉 피해 (순한 동물은 dmg 0이라 사실상 무해하지만, 명시적으로 건너뛴다)
-    if (!this.def.passive && !(this.burrowT > 0) && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
+    if (!this.def.passive && !this.def.wall && !(this.burrowT > 0) && this.hitCd <= 0 && aabb(this.rect(), player.rect())) {
       player.hurt(this.dmg * (this.boss ? 1 : 0.9), this.cx);
       this.hitCd = 0.7;
       this.atkPose = 0.22;
@@ -239,7 +239,8 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     /* 보스마다 이 순간에 켜지는 규칙. */
     const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
     switch (this.def.ai) {
-      case 'b_pool': G.poolPhaseFx(this); break;                     // 투구가 깨지는 순간(game/boss-pool-fx)
+      case 'b_pool': G.poolPhaseFx(this); break;
+      case 'b_organ': G.organPhaseFx(this); break;                  // 갈비 · 관이 부러지는 순간(game/boss-organ-fx)                     // 투구가 깨지는 순간(game/boss-pool-fx)
       case 'b_slime':
         // 2페이즈 — 껍데기가 굳는다.
         if (ph >= lock) { this.guard = 1; this.openT = 0; }

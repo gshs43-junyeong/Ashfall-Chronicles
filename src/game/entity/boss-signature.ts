@@ -3,7 +3,7 @@ import { app as G } from '../ctx.js';
 import { TAU, angleTo, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { TS } from '../world.js';
-import { Enemy, Proj } from '../entity.js';
+import { Enemy } from '../entity.js';
 /* 설계: docs/update/v1.1.4-boss-identity.md §3. 틀 기술(boss-moves)은 여럿이 나눠 쓰지만 이것들은 그 보스만 쓴다.
    ★ 예고 → 실행 순서는 틀 기술과 같다(tele 동안 몸에 소품이 맺힌다). 위험 지대는 G.bossHazard 로만 놓는다 — 참가자에게 같은 때 보인다.
    피해는 호스트가 매기고, 끌림 · 붙잡힘 · 물속 느려짐은 화면마다 제 플레이어에게 건다(game/boss-sig). */
@@ -15,7 +15,7 @@ const nid = () => (hid = hid % 1e6 + 1);
 
 export const BossSignature: Bag & ThisType<Enemy> = {
 
-  /** 숨었다 다른 자리에서 솟는 몸(잠겼다 솟기 · 흩어졌다 맞추기) — 숨는 동안 맞지 않는다 */
+  /** 숨었다 다른 자리에서 솟는 몸(잠겼다 솟기) — 숨는 동안 맞지 않는다 */
   sigHide(dt: number, world: World, r: Run, toX: () => number, under: number, rise: number, onRise: () => void) {
     r.pt += dt;
     if (r.ph === 0) { this.burrowT = 1; this.guard = 1; this.vx = 0; if (r.pt > 0.45) { r.ph = 1; r.pt = 0; } }
@@ -33,19 +33,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
     const m = d.m ?? 1, E = this, fy = this.floorY(p.cx, p.y), side = Math.sign(p.cx - this.cx) || 1;
     switch (d.sig) {
       case 'slap': case 'bubbles': case 'sink': case 'surge': return this.poolSig(d, p, world, K);   // 잿물 군체(entity/boss-pool)
-      case 'reform': {                                            // 흩어졌다 맞추기 — 뼈 무더기로 굴러가 등 뒤에서 다시 선다
-        this.hz({ k: 'bonepile', life: 2.9, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, sd: Math.random() * 99 });
-        const tx = p.cx + side * 170, r: Run = { busy: 99, ph: 0, pt: 0 };
-        r.rise = () => {};
-        r.tick = (dt, r) => this.sigHide(dt, world, r, () => tx, 1.2, 0.55, () => {
-          const n = 16, g0 = Math.floor(Math.random() * n);
-          for (let i = 0; i < n; i++) {
-            if (((i - g0 + n) % n) < 3) continue;
-            const a = i / n * TAU; G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 260, Math.sin(a) * 260, this.dmg * m * 0.6, 'enemy', 'bone'));
-          }
-        });
-        return r;
-      }
+      case 'sweep': case 'pipes': case 'scatter': case 'requiem': return this.organSig(d, p, world, K);   // 뼈 오르간(entity/boss-organ)
       case 'beat': {                                              // 박동 — 세 번 뛸 때마다 바닥을 타고 고동이 퍼진다(뛰어넘는다)
         this.hz({ k: 'pulse', life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
         for (let b = 0; b < 3; b++) G.after(b * 0.85, () => {

@@ -110,6 +110,9 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   /* 잿물 군체 — 무거운 잿물이 끓고 철썩인다(물 소리를 낮게 늘여 빌린다) */
   pool_spit: ['splash', 1.3, .45], pool_rise: ['bubble', .55, .8], pool_slam: ['boom_small', .62, .9],
   pool_bubble: ['bubble', .75, .7], pool_sink: ['drown', .7, .75], pool_geyser: ['splash', .6, 1],
+  /* 뼈 오르간 — 관 울림은 관마다 음높이를 달리 부른다(sfxAt 의 rate) */
+  organ_pipe: ['sk_mark', .62, .55], organ_breath: ['sk_smoke', .6, .7], organ_lift: ['swing', .5, .8], organ_sweep: ['sk_whirl', .62, .85],
+  organ_scatter: ['mat_bone', .7, 1.3], organ_requiem: ['chapter', .5, .9],
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],

@@ -260,6 +260,7 @@ export const BossHazardPart: Bag = {
   },
   /** 몸으로 된 위험 지대(잿물 팔 · 잿물 기둥) — 빛 앞(actors)에서 칠해 둘레처럼 어둠을 받는다. 예고는 drawBossHazards(빛 뒤) */
   drawBossLit(c: CanvasRenderingContext2D) {
+    this.drawOrganArms(c);                                          // 뼈 오르간의 팔 — 쉴 때도 그린다
     const L = this.bhz; if (!L || !L.length) return;
     const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
     for (const h of L) {
