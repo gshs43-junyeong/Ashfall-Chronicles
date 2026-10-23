@@ -19,10 +19,11 @@ function hzOf(g: Bag, e: Enemy, k: string) {
 const isHive = (e: any) => e && !e.dead && e.def && e.def.ai === 'b_hive' && e.anchored;
 
 /** 머리 하나 — out 0(방 안) ~ 1(다 나옴): 작고 어두운 데서 커지며 앞으로 */
-function head(c: C2, im: HTMLImageElement, x: number, y: number, out: number, open: boolean, T: number, flash: number) {
+function head(c: C2, im: HTMLImageElement, x: number, y: number, out: number, open: boolean, T: number, flash: number, look = 0, lunge = 0) {
   if (out <= 0.02) return;
-  const k = 0.45 + 0.55 * out, bob = Math.sin(T * 3.1) * 1.5 * out;
-  c.save(); c.translate(x, y + bob + (1 - out) * 6); c.scale(k, k); c.rotate(Math.sin(T * 1.7) * 0.05 * out);
+  /* ★ 머리는 늘 움직인다 — 플레이어 쪽으로 고개를 틀고 · 숨 쉬듯 부풀고 · 뱉을 땐 앞으로 내민다(멈춘 머리는 석상으로 읽힌다) */
+  const k = (0.45 + 0.55 * out) * (1 + 0.025 * Math.sin(T * 2.4) + lunge * 0.14), bob = Math.sin(T * 3.1) * 1.5 * out;
+  c.save(); c.translate(x + look * 6 * out, y + bob + (1 - out) * 6 + lunge * 6); c.scale(k, k); c.rotate((Math.sin(T * 1.7) * 0.05 + look * 0.16) * out);
   c.globalAlpha = Math.min(1, out * 1.6);
   c.drawImage(im, (open ? 1 : 0) * PW, 0, PW, PH, -PW / 2, -PH / 2, PW, PH);
   if (out < 1) { c.globalCompositeOperation = 'source-atop'; c.fillStyle = `rgba(10,4,10,${0.7 * (1 - out)})`; c.fillRect(-PW / 2, -PH / 2, PW, PH); }
@@ -48,13 +49,14 @@ export const BossHiveArt: Bag = {
       c.clip();
       c.imageSmoothingEnabled = false;
       const bl = hzOf(this, e, 'hvbloom'), quake = bl && bl.t < bl.tele ? (Math.random() - 0.5) * 3 : 0;
-      c.drawImage(im, fr * BW, 0, BW, BH, x + quake, y, BW, BH);
+      const heave = Math.sin(T * 1.3) * 0.006;                         // 벌집 전체가 느리게 숨 쉰다(바닥 기준)
+      c.drawImage(im, fr * BW, 0, BW, BH, x + quake - BW * heave / 2, y - BH * heave, BW * (1 + heave), BH * (1 + heave));
       /* 뚜껑 — 닫힌 애벌레 방. 깨질 방은 부풀고 떨리다 금이 간다 */
       const br = hzOf(this, e, 'hvbrood'), open = e.hvOpen || 0;
       for (const i of BROOD) {
         if (open & (1 << i)) continue;
         const [cx, cy] = cellAt(e, i);
-        let s = 0.92, sh = 0, cr = false;
+        let s = 0.92 + 0.018 * Math.sin(T * 2.2 + i * 1.7), sh = 0, cr = false;   // 뚜껑 속 애벌레가 꿈틀 — 방마다 박자가 다르다
         if (br && br.cells.includes(i) && br.t < br.tele) { const u = br.t / br.tele; s += 0.1 * u + Math.sin(T * 30) * 0.02 * u; sh = (Math.random() - 0.5) * 2 * u; cr = u > 0.45; }
         if (bl && bl.t < bl.tele) { const u = bl.t / bl.tele; s += 0.08 * u; sh = (Math.random() - 0.5) * 2 * u; cr = u > 0.5; }
         c.drawImage(pim, (cr ? 3 : 2) * PW, 0, PW, PH, cx - f.camX + sh - PW * s / 2, cy - f.camY - PH * s / 2, PW * s, PH * s);
@@ -67,14 +69,16 @@ export const BossHiveArt: Bag = {
       /* 어미 머리 — 옮기는 중이면 떠나는 방에서 숨고 다른 방에서 내민다 */
       const mv = hzOf(this, e, 'hvmove'), sp = hzOf(this, e, 'hvspit'), mouth = !!(sp && sp.t < sp.life) || !!(bl && bl.t > bl.tele && bl.t < bl.tele + 1.4);
       const stagger = e.gapT > 0 && e.gapK === 'stagger';
+      const look = this.player ? Math.max(-1, Math.min(1, (this.player.cx - e.cx) / 260)) : 0;
+      const lunge = sp ? (sp.t < sp.tele ? -0.4 * sp.t / sp.tele : Math.max(0, 1 - (sp.t - sp.tele) / 0.4)) : bl && bl.t > bl.tele && bl.t < bl.tele + 1.4 ? 0.6 : 0;
       if (mv) {
         const [hideK, , outK] = moveStage(mv);
         const [ax, ay] = cellAt(e, mv.from), [bx, by] = cellAt(e, mv.to);
         head(c, pim, ax - f.camX, ay - f.camY, 1 - hideK, false, T, 0);
-        head(c, pim, bx - f.camX, by - f.camY, outK, mouth, T, e.flash || 0);
+        head(c, pim, bx - f.camX, by - f.camY, outK, mouth, T, e.flash || 0, look, lunge);
       } else {
         const [hx, hy] = cellAt(e, e.hvCell ?? 9);
-        head(c, pim, hx - f.camX + (stagger ? Math.sin(T * 9) * 3 : 0), hy - f.camY + (stagger ? 6 : 0), 1, mouth, T, e.flash || 0);
+        head(c, pim, hx - f.camX + (stagger ? Math.sin(T * 9) * 3 : 0), hy - f.camY + (stagger ? 6 : 0), 1, mouth || stagger, T, e.flash || 0, look, lunge);
       }
       c.restore();
     }

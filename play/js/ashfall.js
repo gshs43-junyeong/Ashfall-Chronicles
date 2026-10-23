@@ -52419,7 +52419,10 @@
       this.shapes.update(dt);
       this.vfx.density = QUALITY[this.quality()].parts / PART_CAP;
       this.vfx.update(dt);
-      this.trail.update(dt, (p.dashV > 0 || p.chargeT > 0) && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: "player_" + CHAR_OF(p.charId).id }));
+      this.trail.update(dt, (p.dashV > 0 || p.chargeT > 0) && !p.swimming, p.x, p.y, () => {
+        const k = "player_" + CHAR_OF(p.charId).id;
+        return { fr: this.playerFrame(p), flip: p.facing < 0, key: p.facing < 0 && Sprites.img[k + "_l"] ? k + "_l" : k };
+      });
       this.walkDust(p);
       for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
       for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
@@ -63595,6 +63598,51 @@
     BossOrganArt: () => BossOrganArt
   });
   var BW = 320, BH = 384, PW = 256, PH = 96, SOUL = "#9ff0d0";
+  function organPose(g, e, T2) {
+    const p = g.player, look = p ? Math.max(-1, Math.min(1, (p.cx - e.cx) / 420)) : 0;
+    const br = hzOf(g, e, "obreath"), pp = hzOf(g, e, "opipes"), rq = hzOf(g, e, "oreq"), sw = hzOf(g, e, "osweep"), sc = hzOf(g, e, "oscatter");
+    let tilt = look * 0.13 + Math.sin(T2 * 1.3) * 0.04, bob = Math.sin(T2 * 2.1) * 3, lx = look * 7, jaw = 0.12 + 0.1 * Math.sin(T2 * 2.6);
+    let inhale = Math.sin(T2 * 1.7) * 0.5 + 0.5, sway = Math.sin(T2 * 0.9) * 0.012;
+    if (br) {
+      const k = br.t < br.open0 ? br.t / br.open0 : Math.max(0, 1 - (br.t - br.open0) / 0.6);
+      inhale = 0.5 + k * 1.8;
+      bob -= k * 8;
+      tilt *= 1 - k;
+      jaw = 0.2 + k * 0.6;
+    }
+    if (pp && pp.t >= pp.tele) jaw = 0.55 + 0.45 * Math.abs(Math.sin(T2 * 16));
+    else if (pp) {
+      bob -= 4 * pp.t / pp.tele;
+      tilt -= 0.05 * Math.sin(T2 * 6);
+    }
+    if (rq) {
+      jaw = 0.4 + 0.6 * Math.abs(Math.sin(rq.t / rq.beat * Math.PI));
+      tilt = Math.sin(rq.t / rq.beat * Math.PI * 0.5) * 0.18;
+      bob += Math.abs(Math.sin(rq.t / rq.beat * Math.PI)) * 5;
+    }
+    if (sw) {
+      const k = sw.t < sw.tele ? sw.t / sw.tele : Math.max(0, 1 - (sw.t - sw.tele) / 0.5);
+      tilt += sw.s * 0.22 * k;
+      lx += sw.s * 10 * k;
+      bob -= 6 * k;
+      sway += sw.s * 0.03 * k;
+    }
+    if (sc) {
+      const k = Math.sin(Math.min(1, sc.t / sc.life) * Math.PI);
+      tilt += (Math.random() - 0.5) * 0.3 * k;
+      jaw = Math.max(jaw, k);
+    }
+    if (e.flash > 0) {
+      tilt += (Math.random() - 0.5) * 0.12;
+      lx += (Math.random() - 0.5) * 4;
+    }
+    if (e.gapT > 0 && e.gapK === "stagger") {
+      tilt += Math.sin(T2 * 9) * 0.15;
+      bob += 6;
+      jaw = 0.8;
+    }
+    return { tilt, bob, lx, jaw: Math.min(1, jaw), inhale, sway };
+  }
   function hzOf(g, e, k) {
     for (const h of g.bhz || []) if (h.k === k && g.hzBoss(h) === e) return h;
     return null;
@@ -63632,7 +63680,7 @@
   var BossOrganArt = {
     /** 몸(objects 단계) — 손상 단계 · 풀무 열림에 맞는 장, 흩어지는 동안은 흐려지며 떨린다 */
     drawOrgans(f) {
-      const c = f.c, im = Sprites.want("bone_lord");
+      const c = f.c, im = Sprites.want("bone_lord"), T2 = this.time || 0;
       for (const e of this.ents) {
         if (!isOrgan(e)) continue;
         const br = hzOf(this, e, "obreath"), sc = hzOf(this, e, "oscatter");
@@ -63661,6 +63709,26 @@
         c.scale(1 + breathe, 1 + breathe);
         c.translate(-BW / 2, -BH);
         c.drawImage(im, fr * BW, 0, BW, BH, 0, 0, BW, BH);
+        const ch = Sprites.want("bone_lord_chest"), fc = Sprites.want("bone_lord_face"), P2 = organPose(this, e, T2);
+        if (ch) {
+          c.save();
+          c.translate(160, 240);
+          c.rotate(P2.sway);
+          c.scale(1 + 0.03 * P2.inhale, 1 + 0.018 * P2.inhale);
+          c.translate(-160, -240);
+          c.drawImage(ch, fr * 232, 0, 232, 192, 44, 136, 232, 192);
+          c.restore();
+        }
+        if (fc) {
+          c.save();
+          c.translate(160 + P2.lx, 168 + P2.bob);
+          c.rotate(P2.tilt);
+          if (st < 2) c.drawImage(fc, 3 * 96, 0, 96, 88, -48, -60 + P2.jaw * 12, 96, 88);
+          c.drawImage(fc, st * 96, 0, 96, 88, -48, -60, 96, 88);
+          c.restore();
+          const sn = Math.sin(P2.tilt), cs = Math.cos(P2.tilt), bx = x + f.camX, by = y + f.camY;
+          e.organEye = (d) => [bx + 160 + P2.lx + cs * d * 14.4 - sn * -21, by + 168 + P2.bob + sn * d * 14.4 + cs * -21];
+        }
         if (e.flash > 0) {
           c.globalCompositeOperation = "lighter";
           c.globalAlpha = Math.min(0.5, e.flash * 4);
@@ -63717,7 +63785,7 @@
         const br = hzOf(this, e, "obreath"), open = br && br.t >= br.open0;
         hzGlow(c, cx, cy, open ? 90 + Math.sin(T2 * 9) * 10 : 46, SOUL, open ? 0.55 : 0.2);
         for (const s of [-1, 1]) {
-          const [x, y] = organAt(e, 40 + s * 3.6, 36.8);
+          const [x, y] = e.organEye ? e.organEye(s) : organAt(e, 40 + s * 3.6, 36.8);
           hzGlow(c, x - f.camX, y - f.camY, 14, SOUL, 0.5);
         }
         const pp = hzOf(this, e, "opipes"), rq = hzOf(this, e, "oreq");
@@ -64830,13 +64898,13 @@
     return null;
   }
   var isHive = (e) => e && !e.dead && e.def && e.def.ai === "b_hive" && e.anchored;
-  function head(c, im, x, y, out, open, T2, flash) {
+  function head(c, im, x, y, out, open, T2, flash, look = 0, lunge = 0) {
     if (out <= 0.02) return;
-    const k = 0.45 + 0.55 * out, bob = Math.sin(T2 * 3.1) * 1.5 * out;
+    const k = (0.45 + 0.55 * out) * (1 + 0.025 * Math.sin(T2 * 2.4) + lunge * 0.14), bob = Math.sin(T2 * 3.1) * 1.5 * out;
     c.save();
-    c.translate(x, y + bob + (1 - out) * 6);
+    c.translate(x + look * 6 * out, y + bob + (1 - out) * 6 + lunge * 6);
     c.scale(k, k);
-    c.rotate(Math.sin(T2 * 1.7) * 0.05 * out);
+    c.rotate((Math.sin(T2 * 1.7) * 0.05 + look * 0.16) * out);
     c.globalAlpha = Math.min(1, out * 1.6);
     c.drawImage(im, (open ? 1 : 0) * PW3, 0, PW3, PH3, -PW3 / 2, -PH3 / 2, PW3, PH3);
     if (out < 1) {
@@ -64869,12 +64937,13 @@
         c.clip();
         c.imageSmoothingEnabled = false;
         const bl = hzOf4(this, e, "hvbloom"), quake = bl && bl.t < bl.tele ? (Math.random() - 0.5) * 3 : 0;
-        c.drawImage(im, fr * BW3, 0, BW3, BH3, x + quake, y, BW3, BH3);
+        const heave = Math.sin(T2 * 1.3) * 6e-3;
+        c.drawImage(im, fr * BW3, 0, BW3, BH3, x + quake - BW3 * heave / 2, y - BH3 * heave, BW3 * (1 + heave), BH3 * (1 + heave));
         const br = hzOf4(this, e, "hvbrood"), open = e.hvOpen || 0;
         for (const i of BROOD) {
           if (open & 1 << i) continue;
           const [cx, cy] = cellAt(e, i);
-          let s = 0.92, sh = 0, cr = false;
+          let s = 0.92 + 0.018 * Math.sin(T2 * 2.2 + i * 1.7), sh = 0, cr = false;
           if (br && br.cells.includes(i) && br.t < br.tele) {
             const u = br.t / br.tele;
             s += 0.1 * u + Math.sin(T2 * 30) * 0.02 * u;
@@ -64900,14 +64969,16 @@
         }
         const mv = hzOf4(this, e, "hvmove"), sp = hzOf4(this, e, "hvspit"), mouth = !!(sp && sp.t < sp.life) || !!(bl && bl.t > bl.tele && bl.t < bl.tele + 1.4);
         const stagger = e.gapT > 0 && e.gapK === "stagger";
+        const look = this.player ? Math.max(-1, Math.min(1, (this.player.cx - e.cx) / 260)) : 0;
+        const lunge = sp ? sp.t < sp.tele ? -0.4 * sp.t / sp.tele : Math.max(0, 1 - (sp.t - sp.tele) / 0.4) : bl && bl.t > bl.tele && bl.t < bl.tele + 1.4 ? 0.6 : 0;
         if (mv) {
           const [hideK, , outK] = moveStage(mv);
           const [ax, ay] = cellAt(e, mv.from), [bx, by] = cellAt(e, mv.to);
           head(c, pim, ax - f.camX, ay - f.camY, 1 - hideK, false, T2, 0);
-          head(c, pim, bx - f.camX, by - f.camY, outK, mouth, T2, e.flash || 0);
+          head(c, pim, bx - f.camX, by - f.camY, outK, mouth, T2, e.flash || 0, look, lunge);
         } else {
           const [hx, hy] = cellAt(e, e.hvCell ?? 9);
-          head(c, pim, hx - f.camX + (stagger ? Math.sin(T2 * 9) * 3 : 0), hy - f.camY + (stagger ? 6 : 0), 1, mouth, T2, e.flash || 0);
+          head(c, pim, hx - f.camX + (stagger ? Math.sin(T2 * 9) * 3 : 0), hy - f.camY + (stagger ? 6 : 0), 1, mouth || stagger, T2, e.flash || 0, look, lunge);
         }
         c.restore();
       }
@@ -74925,20 +74996,21 @@
       const key = "player_" + ch.id;
       const swim = this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel;
       if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS)))
-        drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0));
+        drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, p.facing < 0 && Sprites.img[key + "_l"] ? key + "_l" : key, fr, sx + ox, sy + oy, p.facing < 0));
       if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) {
         c.restore();
         return;
       }
-      const hand0 = this.spritesOn ? this.playerHand(key, fr, sx, sy, p.facing < 0) : null;
-      const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(key, fr, sx, sy, p.facing < 0, true) : null;
-      const wd = p.equip && p.equip.weapon ? idef(p.equip.weapon) : null;
-      const swap = !!(off && p.facing < 0 && hand0 && handB && !(p.swing > 0) && !(wd && wd.wc === "ranged") && this.time - (p.castAt ?? -9) >= 0.35);
-      if (swap) this.drawHeldWeapon(c, p, sx, sy, 0, handB);
+      const lk = key + "_l", left = p.facing < 0 && !!(Sprites.img[lk] && Sprites.img[lk].width);
+      const sk = left ? lk : key;
+      const hand0 = this.spritesOn ? this.playerHand(sk, fr, sx, sy, p.facing < 0) : null;
+      const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(sk, fr, sx, sy, p.facing < 0, true) : null;
+      if (left) this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
       else if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, false);
-      if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
-        if (swap) this.drawOffHand(c, p, sx, sy, hand0, hand0, true);
-        else this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
+      if (this.spritesOn && Sprites.draw(c, sk, fr, sx, sy, p.facing < 0)) {
+        if (left) {
+          if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, true);
+        } else this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
         c.restore();
         return;
       }

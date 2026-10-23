@@ -12,6 +12,23 @@ type C2 = CanvasRenderingContext2D;
 const BW = 320, BH = 384, PW = 256, PH = 96, SOUL = '#9ff0d0';
 
 /** 이 보스에 걸린 위험 지대 하나(갈래 k) */
+/** 얼굴 · 가슴의 몸놀림 — 두개골은 플레이어 쪽으로 고개를 돌리고, 관이 울릴 땐 턱이 덜컥이며, 팔을 치켜들면 고개를 젖힌다.
+    가슴(갈비)은 늘 숨 쉬고 풀무를 들이켤 때 크게 부푼다. ★ 몸이 멈춘 채 공격하면 석상으로 읽힌다(사용자 지적 2026-10-23). */
+function organPose(g: Bag, e: Enemy, T: number) {
+  const p = g.player, look = p ? Math.max(-1, Math.min(1, (p.cx - e.cx) / 420)) : 0;
+  const br = hzOf(g, e, 'obreath'), pp = hzOf(g, e, 'opipes'), rq = hzOf(g, e, 'oreq'), sw = hzOf(g, e, 'osweep'), sc = hzOf(g, e, 'oscatter');
+  let tilt = look * 0.13 + Math.sin(T * 1.3) * 0.04, bob = Math.sin(T * 2.1) * 3, lx = look * 7, jaw = 0.12 + 0.1 * Math.sin(T * 2.6);
+  let inhale = Math.sin(T * 1.7) * 0.5 + 0.5, sway = Math.sin(T * 0.9) * 0.012;
+  if (br) { const k = br.t < br.open0 ? br.t / br.open0 : Math.max(0, 1 - (br.t - br.open0) / 0.6); inhale = 0.5 + k * 1.8; bob -= k * 8; tilt *= 1 - k; jaw = 0.2 + k * 0.6; }
+  if (pp && pp.t >= pp.tele) jaw = 0.55 + 0.45 * Math.abs(Math.sin(T * 16));     // 관이 울리는 동안 턱이 박자를 탄다
+  else if (pp) { bob -= 4 * pp.t / pp.tele; tilt -= 0.05 * Math.sin(T * 6); }
+  if (rq) { jaw = 0.4 + 0.6 * Math.abs(Math.sin(rq.t / rq.beat * Math.PI)); tilt = Math.sin(rq.t / rq.beat * Math.PI * 0.5) * 0.18; bob += Math.abs(Math.sin(rq.t / rq.beat * Math.PI)) * 5; }
+  if (sw) { const k = sw.t < sw.tele ? sw.t / sw.tele : Math.max(0, 1 - (sw.t - sw.tele) / 0.5); tilt += sw.s * 0.22 * k; lx += sw.s * 10 * k; bob -= 6 * k; sway += sw.s * 0.03 * k; }
+  if (sc) { const k = Math.sin(Math.min(1, sc.t / sc.life) * Math.PI); tilt += (Math.random() - 0.5) * 0.3 * k; jaw = Math.max(jaw, k); }
+  if (e.flash > 0) { tilt += (Math.random() - 0.5) * 0.12; lx += (Math.random() - 0.5) * 4; }
+  if (e.gapT > 0 && e.gapK === 'stagger') { tilt += Math.sin(T * 9) * 0.15; bob += 6; jaw = 0.8; }
+  return { tilt, bob, lx, jaw: Math.min(1, jaw), inhale, sway };
+}
 function hzOf(g: Bag, e: Enemy, k: string) {
   for (const h of g.bhz || []) if (h.k === k && g.hzBoss(h) === e) return h;
   return null;
@@ -40,7 +57,7 @@ function bone(c: C2, im: HTMLImageElement | null, fr: number, x0: number, y0: nu
 export const BossOrganArt: Bag = {
   /** 몸(objects 단계) — 손상 단계 · 풀무 열림에 맞는 장, 흩어지는 동안은 흐려지며 떨린다 */
   drawOrgans(f: any) {
-    const c: C2 = f.c, im = Sprites.want('bone_lord');
+    const c: C2 = f.c, im = Sprites.want('bone_lord'), T = this.time || 0;
     for (const e of this.ents) {
       if (!isOrgan(e)) continue;
       const br = hzOf(this, e, 'obreath'), sc = hzOf(this, e, 'oscatter');
@@ -62,6 +79,18 @@ export const BossOrganArt: Bag = {
       c.globalAlpha = a; c.imageSmoothingEnabled = false;
       c.translate(x + BW / 2, y + BH); c.scale(1 + breathe, 1 + breathe); c.translate(-BW / 2, -BH);
       c.drawImage(im, fr * BW, 0, BW, BH, 0, 0, BW, BH);
+      const ch = Sprites.want('bone_lord_chest'), fc = Sprites.want('bone_lord_face'), P = organPose(this, e, T);
+      if (ch) {                                                   // 가슴 — 등뼈 가운데를 축으로 숨 쉰다
+        c.save(); c.translate(160, 240); c.rotate(P.sway); c.scale(1 + 0.03 * P.inhale, 1 + 0.018 * P.inhale); c.translate(-160, -240);
+        c.drawImage(ch, fr * 232, 0, 232, 192, 44, 136, 232, 192); c.restore();
+      }
+      if (fc) {                                                   // 얼굴 — 목(설계 40, 42)을 축으로 · 턱은 따로 벌어진다
+        c.save(); c.translate(160 + P.lx, 168 + P.bob); c.rotate(P.tilt);
+        if (st < 2) c.drawImage(fc, 3 * 96, 0, 96, 88, -48, -60 + P.jaw * 12, 96, 88);
+        c.drawImage(fc, st * 96, 0, 96, 88, -48, -60, 96, 88); c.restore();
+        const sn = Math.sin(P.tilt), cs = Math.cos(P.tilt), bx = x + f.camX, by = y + f.camY;      // 눈빛이 따라가게(fx 단계)
+        e.organEye = (d: number) => [bx + 160 + P.lx + cs * d * 14.4 - sn * -21, by + 168 + P.bob + sn * d * 14.4 + cs * -21];
+      }
       if (e.flash > 0) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.min(0.5, e.flash * 4); c.drawImage(im, fr * BW, 0, BW, BH, 0, 0, BW, BH); }
       c.restore();
     }
@@ -105,7 +134,7 @@ export const BossOrganArt: Bag = {
       const cx = e.cx - f.camX, cy = e.cy - f.camY;
       const br = hzOf(this, e, 'obreath'), open = br && br.t >= br.open0;
       hzGlow(c, cx, cy, open ? 90 + Math.sin(T * 9) * 10 : 46, SOUL, open ? 0.55 : 0.2);
-      for (const s of [-1, 1]) { const [x, y] = organAt(e, 40 + s * 3.6, 36.8); hzGlow(c, x - f.camX, y - f.camY, 14, SOUL, 0.5); }
+      for (const s of [-1, 1]) { const [x, y] = e.organEye ? e.organEye(s) : organAt(e, 40 + s * 3.6, 36.8); hzGlow(c, x - f.camX, y - f.camY, 14, SOUL, 0.5); }
       const pp = hzOf(this, e, 'opipes'), rq = hzOf(this, e, 'oreq');
       ORGAN.PIPES.forEach((px, i) => {
         let k = 0;

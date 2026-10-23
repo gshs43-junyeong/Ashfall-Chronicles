@@ -204,19 +204,19 @@ export const RenderActorsPart: Bag = {
     const swim = this.spritesOn && p.swimming && p.swimMove && !p.floating && !(p.swing > 0) && !p.channel;
     /* 물속에서는 몹(drawEnemy 의 헤엄 몹)과 같은 식으로 — 어두운 그림자 윤곽 + 등에 맺힌 빛 한 줄. 발광은 쓰지 않는다(어둠에선 같이 어둡다) */
     if (this.spritesOn && this.world.liquid(Math.floor(p.cx / TS), Math.floor(p.cy / TS)))
-      drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0));
+      drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, p.facing < 0 && Sprites.img[key + '_l'] ? key + '_l' : key, fr, sx + ox, sy + oy, p.facing < 0));
     if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) { c.restore(); return; }
-    const hand0 = this.spritesOn ? this.playerHand(key, fr, sx, sy, p.facing < 0) : null;
-    /* ★ 시트는 좌우를 거울로 뒤집어 쓴다 — 오른쪽을 보면 앞손 = 오른손 · 뒷손 = 왼손이지만, 왼쪽을 보면 앞손이 곧 **왼손**이다.
-       그래서 왼쪽을 볼 때 왼손 물건이 있으면 손을 맞바꾼다: 왼손 물건은 앞손(몸 앞), 무기는 뒷손(몸 뒤).
-       휘두르기 · 시전 · 활 겨누기는 앞손 동작으로 그려 두었으니 그동안은 맞바꾸지 않는다. 사연: docs/code-history.md#h221 */
-    const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(key, fr, sx, sy, p.facing < 0, true) : null;
-    const wd = p.equip && p.equip.weapon ? idef(p.equip.weapon) : null;
-    const swap = !!(off && p.facing < 0 && hand0 && handB && !(p.swing > 0) && !(wd && wd.wc === 'ranged') && this.time - (p.castAt ?? -9) >= 0.35);
-    if (swap) this.drawHeldWeapon(c, p, sx, sy, 0, handB);              // 오른손 무기 — 몸 뒤
+    /* ★ 왼쪽을 볼 때는 따로 구운 시트(<key>_l — 무기 든 오른팔이 몸 뒤 · 왼팔이 몸 앞, tools/player_left.py)를 뒤집어 쓴다.
+       그래서 무기는 몸 **뒤**(몸 그림이 덮는다), 왼손 물건은 몸 **앞**. 오른쪽 시트를 뒤집기만 하면 무기를 왼손에 든 꼴이었다.
+       사연: docs/code-history.md#h223 */
+    const lk = key + '_l', left = p.facing < 0 && !!(Sprites.img[lk] && Sprites.img[lk].width);
+    const sk = left ? lk : key;
+    const hand0 = this.spritesOn ? this.playerHand(sk, fr, sx, sy, p.facing < 0) : null;
+    const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(sk, fr, sx, sy, p.facing < 0, true) : null;
+    if (left) this.drawHeldWeapon(c, p, sx, sy, 0, hand0);                // 오른손 무기 — 몸 뒤
     else if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, false);   // 왼손 물건 — 몸 뒤
-    if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
-      if (swap) this.drawOffHand(c, p, sx, sy, hand0, hand0, true);      // 왼쪽을 볼 땐 왼손이 앞 — 몸 앞
+    if (this.spritesOn && Sprites.draw(c, sk, fr, sx, sy, p.facing < 0)) {
+      if (left) { if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, true); }   // 왼손 물건 — 몸 앞
       else this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
       c.restore();
       return;

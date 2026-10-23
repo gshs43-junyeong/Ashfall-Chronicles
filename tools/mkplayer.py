@@ -35,6 +35,7 @@
   그려 손이 자루를 감싼 것처럼 보이게 한다(game.js drawHeldWeapon).
 """
 import json, math, os
+import player_left
 from collections import Counter
 from PIL import Image
 
@@ -699,6 +700,9 @@ def main():
         frames = [fill_holes(c, pal12 if i == 12 else pal) for i, c in enumerate(frames)]
         frames = [fix_feet(c, i, cid) for i, c in enumerate(frames)]
         if cid == 'wanderer':
+            wpre = frames
+        left = [polish(c) for c in player_left.make_left(frames, wpre)]
+        if cid == 'wanderer':
             hs = [FIXED.get(i) or hand_of(c, i in HIGH) for i, c in enumerate(frames)]
             # 피격(붉게 물든 장)처럼 살색이 안 잡히는 장은 첫 장의 손을 쓴다
             hands = [h or hs[0] for h in hs]
@@ -709,7 +713,12 @@ def main():
                   'hand': [h[0] for h in hands], 'handBox': [h[1] for h in hands]})
         bh = back_hands(wsrc)
         m.update({'hand2': [h and h[0] for h in bh], 'hand2Box': [h and h[1] for h in bh]})
-        print('wrote', key)
+        save(left, os.path.join(CHAR, key + '_l.png'))      # 왼쪽 보기 — 무기 팔이 몸 뒤(tools/player_left.py)
+        lm = {k: v for k, v in m.items() if k not in ('hand', 'handBox', 'hand2', 'hand2Box', 'file')}
+        h1, b1, h2, b2 = player_left.hands()
+        lm.update({'file': 'char/%s_l.png' % key, 'hand': h1, 'handBox': b1, 'hand2': h2, 'hand2Box': b2})
+        sheets[key + '_l'] = lm
+        print('wrote', key, '+ _l')
     # 리그 시절 산출물(팔·망토를 코드로 그리던 몸 시트 · 누운 헤엄 시트)은 이제 안 쓴다
     for cid in IDS:
         for suf in ('_rig', '_swim', '_body', '_cape'):

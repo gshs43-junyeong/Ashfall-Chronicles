@@ -635,7 +635,7 @@ export const GameCore: Bag = {
     this.shapes.update(dt);
     this.vfx.density = QUALITY[this.quality()].parts / PART_CAP; this.vfx.update(dt);
     /* 대시 잔상 — 한순간에 멀리 가는 움직임을 눈이 따라가게(engine fx/trail) */
-    this.trail.update(dt, (p.dashV > 0 || p.chargeT > 0) && !p.swimming, p.x, p.y, () => ({ fr: this.playerFrame(p), flip: p.facing < 0, key: 'player_' + CHAR_OF(p.charId).id }));
+    this.trail.update(dt, (p.dashV > 0 || p.chargeT > 0) && !p.swimming, p.x, p.y, () => { const k = 'player_' + CHAR_OF(p.charId).id; return { fr: this.playerFrame(p), flip: p.facing < 0, key: p.facing < 0 && Sprites.img[k + '_l'] ? k + '_l' : k }; });
     this.walkDust(p);
     for (let i = this.corpses.length - 1; i >= 0; i--) if ((this.corpses[i].t += dt) >= this.corpses[i].dur) this.corpses.splice(i, 1);
     for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
