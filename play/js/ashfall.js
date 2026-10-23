@@ -8325,7 +8325,7 @@
       c: "#c8a46a",
       xp: 3100,
       gold: 2100,
-      ph: 2,
+      ph: 3,
       boss: 1,
       drops: [["sun_disc", 1, 2, 3], ["gold_ore", 1, 15, 25], ["venom_sting", 1, 6, 10], ["caged_sun", 1, 1, 1]]
     },
@@ -38910,7 +38910,7 @@
   var hgFloor = (e) => e.cy + (HG.BASE - HG.C[1]) * HG.K;
   var HG_REACH = 150;
   function hgSand(e) {
-    const n = (e.def.ph || 0) + 1, hpr = Math.max(0, e.hp / (e.maxHp || 1));
+    const n = e.phases || 1, hpr = Math.max(0, e.hp / (e.maxHp || 1));
     return Math.max(0, Math.min(1, hpr * n - (n - 1 - (e.phase || 0))));
   }
   function fistAt(h, b) {

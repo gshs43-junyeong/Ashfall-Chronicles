@@ -24,7 +24,7 @@ export const hgFloor = (e: { cx: number; cy: number }) => e.cy + (HG.BASE - HG.C
 export const HG_REACH = 150;
 /** 이 막의 남은 몫(0~1) — 모래시계 윗칸의 모래 */
 export function hgSand(e: Enemy): number {
-  const n = (e.def.ph || 0) + 1, hpr = Math.max(0, e.hp / (e.maxHp || 1));
+  const n = e.phases || 1, hpr = Math.max(0, e.hp / (e.maxHp || 1));
   return Math.max(0, Math.min(1, hpr * n - (n - 1 - (e.phase || 0))));
 }
 
