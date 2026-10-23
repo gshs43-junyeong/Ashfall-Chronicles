@@ -8,11 +8,12 @@ import { mixin } from '../../engine/core/mixin.js';
 import { FONT } from '../lang.js';
 import { Art } from '../itemart.js';
 import { UI } from '../ui.js';
-import { craftSteps, drawIc, glow, stepRow } from './process.js';
+import { ITEMS } from '../data/items.js';
+import { drawIc, glow, stepRow } from './process.js';
 import { ease, flames, hash, hotCol, puffs, seg, sparks } from './mach-kit.js';
 
 type C2 = CanvasRenderingContext2D;
-export interface SceneArg { st: string; step: number; sk: number; k: number; t: number; mats: string[]; out: string; idle: boolean }
+export interface SceneArg { st: string; step: number; idx?: number; names?: string[]; sk: number; k: number; t: number; mats: string[]; out: string; idle: boolean }
 
 /* 아이콘을 한 색으로 물들인 사본 — 달군 쇠 · 식은 쇠를 그림째 칠한다 */
 const TINT: Record<string, HTMLCanvasElement> = {};
@@ -61,8 +62,9 @@ export const CraftSceneUIPart: Bag = {
   craftScene(c: C2, W: number, H: number, s: SceneArg) {
     if (s.st === 'work') this.sceneWork(c, W, H, s);
     else if (s.st === 'forge') this.sceneForge(c, W, H, s);
+    else if (s.st === 'smith') this.sceneSmith(c, W, H, s);
     else this.sceneHand(c, W, H, s);
-    if (!s.idle) stepRow(c, craftSteps(s.st).n, s.step, s.sk, 8, 6, W - 16);
+    if (!s.idle && s.names) stepRow(c, s.names, s.idx ?? s.step, s.sk, 8, 6, W - 16);
   },
   /** 창이 열려 있는 동안 쉬는 무대 — 고른 탭의 시설이 숨 쉰다(공정이 돌면 공정이 그린다) */
   craftIdle() {
@@ -283,18 +285,90 @@ export const CraftSceneUIPart: Bag = {
     void FONT; void G;
   },
 
+  /* ================= 대장간(용광로에서 무기 · 방어구 · 도구) ================= */
+  /** 쇳물을 틀에 붓는 게 아니라 달구고(0) · 모루에서 두드리고(1) · 날을 세우거나 이어 맞추고(2) · 담금질한다(3) */
+  sceneSmith(c: C2, W: number, H: number, s: SceneArg) {
+    const { step, sk, t, idle } = s, floor = H - 12, ty = ITEMS[s.out] ? ITEMS[s.out].type : 'weapon';
+    c.fillStyle = '#141012'; c.fillRect(0, 0, W, H);
+    bricks(c, 0, 0, W, floor, '#2c2426', '#221b1d', 26, 11);
+    c.fillStyle = '#1a1416'; c.fillRect(0, floor, W, H - floor); c.fillStyle = '#2a2224'; c.fillRect(0, floor, W, 2);
+    /* 화덕 — 왼쪽, 숯 위에 쇠를 묻는다 */
+    const fx = 14, fw = 92, fy = floor - 46, heatOn = idle ? 0.5 : step === 0 ? 0.6 + 0.4 * Math.abs(Math.sin(sk * Math.PI * 4)) : 0.45;
+    c.fillStyle = '#3a3034'; c.fillRect(fx, fy, fw, floor - fy); bricks(c, fx + 3, fy + 10, fw - 6, floor - fy - 10, '#4a3e42', '#3a3034', 16, 8);
+    c.fillStyle = '#2a2224'; c.fillRect(fx + fw / 2 - 10, 0, 20, fy - 16); c.fillStyle = '#3a3034'; c.beginPath(); c.moveTo(fx + 6, fy); c.lineTo(fx + fw / 2 - 12, fy - 18); c.lineTo(fx + fw / 2 + 12, fy - 18); c.lineTo(fx + fw - 6, fy); c.fill();
+    c.fillStyle = '#120a08'; c.fillRect(fx + 10, fy + 2, fw - 20, 10);
+    for (let i = 0; i < 9; i++) { c.fillStyle = hash(i * 5) > 0.5 ? '#ff7a2a' : '#c84a18'; c.beginPath(); c.arc(fx + 14 + i * (fw - 28) / 8, fy + 10, 3.5, 0, TAU); c.fill(); }
+    flames(c, fx + 12, fy + 10, fw - 24, 0.35 + 0.5 * heatOn, t); glow(c, fx + fw / 2, fy + 6, 60, '#ff7a2a', 0.2 + 0.3 * heatOn);
+    const bw = 10 + 10 * (step === 0 && !idle ? Math.abs(Math.sin(sk * Math.PI * 4)) : 0.4);          // 풀무
+    c.fillStyle = '#6a4626'; c.beginPath(); c.moveTo(fx + fw + 4, fy + 22); c.lineTo(fx + fw + 34, fy + 22 - bw / 2); c.lineTo(fx + fw + 34, fy + 22 + bw / 2); c.closePath(); c.fill();
+    /* 모루 — 가운데 · 뿔은 왼쪽 */
+    const ax = W * 0.5, top = floor - 38;
+    c.fillStyle = '#4a3420'; c.fillRect(ax - 16, top + 14, 32, floor - top - 14);                       // 나무 받침
+    c.fillStyle = '#2e3038'; c.beginPath(); c.moveTo(ax - 44, top); c.lineTo(ax + 30, top); c.lineTo(ax + 30, top + 9); c.lineTo(ax + 14, top + 14); c.lineTo(ax - 14, top + 14); c.lineTo(ax - 24, top + 8); c.lineTo(ax - 44, top + 3); c.closePath(); c.fill();
+    c.fillStyle = '#5a5e6a'; c.fillRect(ax - 40, top, 70, 2);
+    /* 담금질 통 — 오른쪽 · 숫돌(날 세우기) */
+    const qx = W - 64, qy = floor - 34;
+    c.fillStyle = '#4a3420'; c.fillRect(qx, qy, 48, 34); c.fillStyle = '#5e4428'; for (let x = qx; x < qx + 48; x += 8) c.fillRect(x, qy, 7, 34);
+    c.fillStyle = '#3a3a40'; c.fillRect(qx - 2, qy + 5, 52, 3); c.fillRect(qx - 2, qy + 24, 52, 3);
+    c.fillStyle = '#2a4a5a'; c.fillRect(qx + 3, qy + 3, 42, 5); c.fillStyle = '#5a8aa0'; c.fillRect(qx + 3, qy + 3, 42, 1.5);
+    const wx = ax + 72, wy = floor - 30, spin = step === 2 && !idle && ty !== 'armor' ? t * 14 : t * 0.4;   // 숫돌
+    c.fillStyle = '#4a3420'; c.fillRect(wx - 3, wy, 6, floor - wy);
+    c.save(); c.translate(wx, wy); c.rotate(spin); c.fillStyle = '#6a6a72'; c.beginPath(); c.arc(0, 0, 18, 0, TAU); c.fill();
+    c.strokeStyle = '#4a4a52'; c.lineWidth = 2; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(i * TAU / 4) * 16, Math.sin(i * TAU / 4) * 16); c.stroke(); }
+    c.fillStyle = '#3a3a42'; c.beginPath(); c.arc(0, 0, 4, 0, TAU); c.fill(); c.restore();
+    if (idle) { sparks(c, fx + fw / 2, fy + 8, floor, 4, t, 0.8, 0, 0.6); puffs(c, fx + fw / 2, 16, 3, t, 0.3, 14, '90,80,80', 0.3); return; }
+    /* 쇠 — 재료(달군 덩이)가 두드릴수록 완성품 모양으로 바뀐다 */
+    const mat = s.mats[0] || s.out, onAnvil: [number, number] = [ax - 18, top - 26], inFire: [number, number] = [fx + fw / 2 - 14, fy - 14];
+    let x = onAnvil[0], y = onAnvil[1], heat = 0.5, form = 1, hamA = 0.9;
+    const aHit = Math.PI - 0.12, hx = ax + 58, hy = top - 22;                                             // 망치 축
+    if (step === 0) {
+      const back = (s.idx || 0) > 0 ? ease(seg(sk, 0, 0.25)) : 1;                                        // 두 번째 달굼이면 모루에서 화덕으로
+      x = lerp(onAnvil[0], inFire[0], back); y = lerp(onAnvil[1], inFire[1], back) - Math.sin(back * Math.PI) * 16;
+      const go = ease(seg(sk, 0.8, 1)); x = lerp(x, onAnvil[0], go); y = lerp(y, onAnvil[1], go) - Math.sin(go * Math.PI) * 16;
+      heat = Math.min(1, 0.2 + sk * 1.1); form = (s.idx || 0) > 0 ? 0.5 : 0;
+      if (sk < 0.8) sparks(c, inFire[0] + 14, inFire[1] + 18, floor, 5, t, 1.4, 0, 0.7);
+    } else if (step === 1) {                                                                              // 망치 셋 — 칠 때마다 불티 · 모양이 바뀐다
+      const n = 3, b = Math.min(n - 1, Math.floor(sk * n)), u = sk * n - b;
+      const sw = u < 0.6 ? ease(u / 0.6) * -0.15 : u < 0.75 ? -0.15 + 1.15 * ((u - 0.6) / 0.15) ** 2 : 1 - ease((u - 0.75) / 0.25) * 0.3;
+      hamA = aHit + 1.35 * (1 - Math.max(0, sw));
+      heat = 1 - sk * 0.5; form = (s.idx || 0) > 1 ? 0.5 + sk * 0.5 : sk * 0.5 + (b + (u > 0.75 ? 1 : 0)) / n * 0.2;
+      if (u > 0.75 && u < 0.9) { sparks(c, ax - 6, top - 6, floor, 14, t * 3 + b, 3, 0, 0.8); glow(c, ax - 6, top - 10, 34, '#ffd080', 0.6); }
+      y += u > 0.75 && u < 0.85 ? 2 : 0;
+    } else if (step === 2) {
+      form = 1; heat = 0.35;
+      if (ty === 'armor') {                                                                               // 이어 맞춘다 — 작은 망치로 리벳
+        const tap = (sk * 6) % 1; hamA = aHit + 0.5 * (tap < 0.5 ? tap * 2 : 2 - tap * 2);
+        c.fillStyle = '#c8ccd4'; for (let i = 0; i < Math.floor(sk * 6); i++) c.fillRect(x + 6 + (i % 3) * 8, y + 8 + Math.floor(i / 3) * 10, 2, 2);
+      } else {                                                                                            // 날을 세운다 — 숫돌에 대고 불티가 흐른다
+        const m = ease(seg(sk, 0, 0.2)); x = lerp(onAnvil[0], wx - 34, m); y = lerp(onAnvil[1], wy - 22, m);
+        if (sk > 0.2) { sparks(c, wx - 14, wy - 8, floor, 12, t * 2, 2.6, -0.5, 0.6); glow(c, wx - 14, wy - 8, 20, '#ffe0a0', 0.4); }
+      }
+    } else {                                                                                              // 담금질 — 통에 담그면 김 · 식어 빛나며 떠오른다
+      const from: [number, number] = ty === 'armor' ? onAnvil : [wx - 34, wy - 22];
+      const lift = ease(seg(sk, 0, 0.3)), dunk = ease(seg(sk, 0.3, 0.45)), rise = ease(seg(sk, 0.7, 1));
+      x = lerp(from[0], qx + 10, lift); y = lerp(from[1], qy - 32, lift) - Math.sin(lift * Math.PI) * 20 + dunk * 26 * (1 - rise) - rise * 30;
+      heat = 0.4 * (1 - dunk); form = 1;
+      if (dunk > 0) puffs(c, qx + 24, qy, 6, t, 0.9, 36 + 20 * (1 - rise), '220,226,236', 0.75 * (1 - rise * 0.6));
+      if (rise > 0) glow(c, x + 14, y + 14, 40, '#ffe8a0', 0.45 * rise);
+    }
+    if (step === 0 && sk < 0.8) { c.save(); c.beginPath(); c.rect(0, 0, W, fy + 6); c.clip(); }         // 숯에 묻힌 동안은 윗부분만
+    heat = Math.min(0.7, heat);                                                                           // 더 달구면 흰 네모로 보인다 — 주황까지
+    if (form < 1) { c.globalAlpha = 1 - form; hotIcon(c, mat, x, y, 28, heat); }
+    if (form > 0) { c.globalAlpha = form; hotIcon(c, s.out, x, y, 28, heat); }
+    c.globalAlpha = 1;
+    if (step === 0 && sk < 0.8) c.restore();
+    hammer(c, hx, hy, step === 1 || (step === 2 && ty === 'armor') ? hamA : aHit + 1.6, step === 2 ? 30 : 48);
+  },
+
   /* ================= 맨손 ================= */
   sceneHand(c: C2, W: number, H: number, s: SceneArg) {
     const { step, sk, t, idle } = s, floor = H - 14, cx = W / 2;
     const g = c.createRadialGradient(cx, floor - 20, 10, cx, floor - 20, W * 0.6); g.addColorStop(0, '#2e2a1c'); g.addColorStop(1, '#100e08');
     c.fillStyle = g; c.fillRect(0, 0, W, H);
-    // 모닥불 곁 가죽 깔개
+    // 가죽 깔개
     c.fillStyle = '#4a3a2a'; c.beginPath(); c.ellipse(cx, floor - 8, W * 0.34, 12, 0, 0, TAU); c.fill();
     c.fillStyle = '#5e4a34'; c.beginPath(); c.ellipse(cx, floor - 10, W * 0.32, 9, 0, 0, TAU); c.fill();
-    const fxp = W - 60;                                                                                   // 모닥불
-    c.fillStyle = '#4a3020'; c.fillRect(fxp - 16, floor - 6, 32, 5);
-    flames(c, fxp - 12, floor - 6, 24, 0.9, t); glow(c, fxp, floor - 14, 60, '#ff9a3a', 0.3);
-    if (idle) { sparks(c, fxp, floor - 14, floor, 4, t, 0.9, 0, 0.6); return; }
+    if (idle) return;                                                                                     // ★ 모닥불은 맨손 제작에 쓰이지 않아 뺐다(사용자)
     s.mats.forEach((id, i) => {
       const sx = cx - 80 + i * 44, m = step === 0 ? ease(sk) : 1, hop = step === 0 ? Math.abs(Math.sin(sk * Math.PI * 2 + i)) * 10 : 0;
       const x = lerp(sx, cx - 12 + (i - 1) * 6, m * 0.9), a = step === 2 ? 1 - sk : 1;

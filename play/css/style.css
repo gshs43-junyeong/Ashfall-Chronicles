@@ -471,7 +471,7 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 @media (prefers-reduced-motion:reduce){.bgrid::before,.bgrid::after,.bcore,.node.can .nbox,.node.maxed .nbox::before{animation:none}}
 
 /* ===== 생활 숙련 ===== */
-#prof-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 16px 16px}
+#prof-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px 16px 16px}
 .prof{background:#100f0a;border:1px solid #262418;border-radius:4px;padding:12px 13px}
 .prof .phead{display:flex;align-items:baseline;gap:7px}
 .prof .pic{font-size:15px}

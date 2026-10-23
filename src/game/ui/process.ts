@@ -8,15 +8,47 @@ import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, tr } from '../lang.js';
 import { RECIPES } from '../data/recipes.js';
+import { ITEMS } from '../data/items.js';
 import { Art } from '../itemart.js';
 import { $, UI } from '../ui.js';
 
 type C2 = CanvasRenderingContext2D;
-/** 시설마다 공정 — 이름 · 걸리는 초 */
-export function craftSteps(st: string): { n: string[]; dur: number } {
-  if (st === 'work') return { n: [tr('치수를 잰다'), tr('자른다'), tr('맞춰 붙인다'), tr('다듬는다')], dur: 2.4 };
-  if (st === 'forge') return { n: [tr('불을 지핀다'), tr('녹인다'), tr('틀에 붓는다'), tr('식힌다')], dur: 2.8 };
-  return { n: [tr('재료를 고른다'), tr('엮는다'), tr('다듬는다')], dur: 1.2 };
+export interface CraftPlan { st: string; n: string[]; v: number[]; dur: number }
+/** 제작 숙련 레벨마다 공정 시간 배수 — Lv 1 은 2배, Lv 10 은 0.7배 */
+export const craftSpeed = (lv: number) => 2 - (Math.max(1, Math.min(10, lv)) - 1) * (1.3 / 9);
+const METAL = /_bar$|_ore$|nail|rivet|plate|gear|wire|chain/;
+/** 제작 공정 — 시설 · 넣는 재료 · 숙련에 따라 단계와 걸리는 초가 달라진다. v 는 단계마다 그릴 장면 번호(ui/craft-scene)
+    ★ 용광로에서 무기 · 방어구 · 도구를 만들면 쇳물 붓기가 아니라 대장간(smith — 달구고 두드리고 담금질) */
+export function craftPlan(r: Bag, lv: number): CraftPlan {
+  const mats = Object.keys(r.need), kinds = mats.length, qty = mats.reduce((a, k) => a + r.need[k], 0);
+  const ty = ITEMS[r.out] ? ITEMS[r.out].type : '', gear = ty === 'weapon' || ty === 'armor' || ty === 'tool';
+  const metals = mats.filter(id => METAL.test(id)).length, st0 = r.station || 'hand';
+  const S: [string, number][] = [];
+  let st = st0, base: number, baseN: number;
+  if (st0 === 'forge' && gear) {
+    st = 'smith'; base = 3.4; baseN = 4;
+    S.push([tr('쇠를 달군다'), 0], [ty === 'armor' ? tr('판을 두드린다') : tr('두드려 편다'), 1]);
+    if (kinds >= 3 || qty >= 12) S.push([tr('다시 달군다'), 0], [tr('또 두드린다'), 1]);
+    S.push([ty === 'armor' ? tr('이어 맞춘다') : ty === 'tool' ? tr('자루를 박는다') : tr('날을 세운다'), 2], [tr('담금질한다'), 3]);
+  } else if (st0 === 'forge') {
+    base = 2.8; baseN = 4;
+    S.push([tr('불을 지핀다'), 0], [tr('녹인다'), 1]);
+    if (metals >= 2 || kinds >= 3) S.push([tr('섞는다'), 1]);
+    S.push([tr('틀에 붓는다'), 2], [tr('식힌다'), 3]);
+  } else if (st0 === 'work') {
+    base = 2.4; baseN = 4;
+    S.push([tr('치수를 잰다'), 0], [tr('자른다'), 1], [tr('맞춰 붙인다'), 2]);
+    if (metals) S.push([tr('못을 박는다'), 2]);
+    if (kinds >= 4) S.push([tr('조립한다'), 2]);
+    S.push([tr('다듬는다'), 3]);
+  } else {
+    base = 1.2; baseN = 3;
+    S.push([tr('재료를 고른다'), 0], [tr('엮는다'), 1]);
+    if (kinds >= 3) S.push([tr('단단히 묶는다'), 1]);
+    S.push([tr('다듬는다'), 2]);
+  }
+  const dur = Math.min(16, base * (S.length / baseN) * (1 + 0.12 * Math.log2(1 + qty)) * craftSpeed(lv));
+  return { st, n: S.map(x => x[0]), v: S.map(x => x[1]), dur };
 }
 /** 기계마다 가동 과정 */
 export function machSteps(t: string): string[] | null {
@@ -96,8 +128,10 @@ export const ProcessUIPart: Bag = {
   craftNext() {
     const q = this.craftQ;
     if (!q || !q.length || this.open !== 'craft') { this.craftEnd(); return; }
-    const i = q.shift()!, r = RECIPES[i], st = r.station || 'hand', S = craftSteps(st);
-    this.craftRun = { i, r, st, S, t0: performance.now(), step: -1, parts: [] as number[][] };
+    const i = q.shift()!, r = RECIPES[i], lv = G.player.profLv('craft'), S = craftPlan(r, lv);
+    if (lv >= 3 && this._lastCraft === r.out) S.dur *= 0.7;               // 숙련 3 — 같은 것을 잇따라 만들면 손에 익어 빠르다
+    this._lastCraft = r.out;
+    this.craftRun = { i, r, st: S.st, S, t0: performance.now(), step: -1, parts: [] as number[][] };
     const cv = this.craftStageEl(); cv.classList.add('on');
     const tick = () => {
       const R = this.craftRun; if (!R) return;
@@ -105,7 +139,7 @@ export const ProcessUIPart: Bag = {
       const k = (performance.now() - R.t0) / 1000 / R.S.dur;
       if (k >= 1) { this.craftFinish(R.i); return; }
       const step = Math.min(R.S.n.length - 1, Math.floor(k * R.S.n.length));
-      if (step !== R.step) { R.step = step; this.craftStepSfx(R.st, step); }
+      if (step !== R.step) { R.step = step; this.craftStepSfx(R.st, R.S.v[step]); }
       this.craftStageDraw(k);
       R.raf = requestAnimationFrame(tick);
     };
@@ -114,6 +148,7 @@ export const ProcessUIPart: Bag = {
   craftStepSfx(st: string, step: number) {
     if (st === 'work') G.sfx(step === 2 ? 'hit_blunt' : 'mat_wood', 1.1, 0.7);
     else if (st === 'forge') G.sfx(step === 0 ? 'fuse' : step === 3 ? 'splash' : 'smelt', 1, 0.6);
+    else if (st === 'smith') G.sfx(step === 0 ? 'fuse' : step === 3 ? 'splash' : step === 1 ? 'hit_metal' : 'mat_metal', 1, 0.6);
     else G.sfx('mat_plant', 1.2, 0.6);
   },
   craftFinish(i: number) {
@@ -135,8 +170,8 @@ export const ProcessUIPart: Bag = {
     const W = cv.clientWidth || 400, H = 176, dpr = Math.min(2, devicePixelRatio || 1);
     if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     const c = cv.getContext('2d')!; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-    const n = R.S.n.length, step = Math.min(n - 1, Math.floor(k * n)), sk = k * n - step;   // 단계 안에서 0~1
-    this.craftScene(c, W, H, { st: R.st, step, sk, k, t: performance.now() / 1000, mats: Object.keys(R.r.need).slice(0, 4), out: R.r.out, idle: false });
+    const n = R.S.n.length, idx = Math.min(n - 1, Math.floor(k * n)), sk = k * n - idx;   // 단계 안에서 0~1
+    this.craftScene(c, W, H, { st: R.st, step: R.S.v[idx], idx, names: R.S.n, sk, k, t: performance.now() / 1000, mats: Object.keys(R.r.need).slice(0, 4), out: R.r.out, idle: false });
     const left = (this.craftQ || []).length;                           // 줄 선 것
     if (left) {
       const txt = tr('줄 선 것 {n}', { n: left });

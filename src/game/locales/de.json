@@ -1185,7 +1185,20 @@
   "내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.": "Deine Figur (Stufe, Tasche, Gold) wird in deinem Einzelspieler-Platz {n} gespeichert. Das Gelände folgt der Welt des Hosts; öffnest du den Platz allein, bleibt das Gelände deiner eigenen Welt.",
   "내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다": "Mit deiner Figur der Welt des Hosts beigetreten — der Fortschritt wird in deinem Platz gespeichert",
   "새 손님 캐릭터": "Neue Gastfigur",
-  "슬롯 {n} · {name} Lv.{lv}": "Platz {n} · {name} St. {lv}"
+  "슬롯 {n} · {name} Lv.{lv}": "Platz {n} · {name} St. {lv}",
+  "날을 세운다": "Schneide schärfen",
+  "다시 달군다": "Erneut erhitzen",
+  "단단히 묶는다": "Fest verschnüren",
+  "담금질한다": "Abschrecken",
+  "두드려 편다": "Flach schmieden",
+  "또 두드린다": "Weiter schmieden",
+  "못을 박는다": "Nägel einschlagen",
+  "섞는다": "Mischen",
+  "쇠를 달군다": "Eisen erhitzen",
+  "이어 맞춘다": "Vernieten",
+  "자루를 박는다": "Griff einsetzen",
+  "조립한다": "Zusammenbauen",
+  "판을 두드린다": "Platte schmieden"
  },
  "tables": {
   "BIOMES.0.n": "Versunkenes Meer",
@@ -4808,6 +4821,16 @@
   "BOSS_MOVES.sand_guardian.moves.6.n": "Sandwirbel",
   "BOSS_MOVES.sand_guardian.ult.n": "Fristende",
   "BOSS_LINES.sand_guardian.1": "Das Stundenglas kippt um — der rieselnde Sand neigt sich zur anderen Seite.",
-  "BOSS_LINES.sand_guardian.2": "Im gesprungenen Glas fällt der letzte Sand."
+  "BOSS_LINES.sand_guardian.2": "Im gesprungenen Glas fällt der letzte Sand.",
+  "PROFS.craft.n": "Fertigung",
+  "PROFS.craft.line": "Steigt jedes Mal, wenn du an Werkbank, Hochofen oder mit bloßen Händen etwas herstellst. Je geübter die Hände, desto schneller die Arbeit.",
+  "PROFS.craft.lin.0.0": "Arbeitszeit",
+  "PROFS.craft.lin.1.0": "Chance, Material zu sparen",
+  "PROFS.craft.perks.0.1": "Geübte Hände",
+  "PROFS.craft.perks.0.2": "Dasselbe mehrmals hintereinander herzustellen geht 30 % schneller.",
+  "PROFS.craft.perks.1.1": "Sparsam",
+  "PROFS.craft.perks.1.2": "15 % Chance, ein Material zurückzuerhalten.",
+  "PROFS.craft.perks.2.1": "Meisterhand",
+  "PROFS.craft.perks.2.2": "Waffen, Rüstungen und Werkzeuge erhalten eher eine gute Stufe."
  }
 }

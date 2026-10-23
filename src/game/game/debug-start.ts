@@ -32,7 +32,7 @@ export const DebugStartPart: Bag = {
       const act = Object.keys(SKILLS).filter(id => SKILLS[id].type === 'active');
       act.slice(0, p.slots.length).forEach((id, i) => { p.slots[i] = id; });
       p.prof = p.prof || {};
-      for (const k of ['farm', 'fish']) p.prof[k] = { lv: PROF_MAX, xp: 0 };
+      for (const k of ['farm', 'fish', 'craft']) p.prof[k] = { lv: PROF_MAX, xp: 0 };
       p.base.int += 40; p.base.vit += 20; p.statPts = Math.max(0, p.statPts - 60);
       p.recalc(); p.syncBagCapacity(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
       UI.refreshSkillSlots(); UI.refreshSkillbar(); UI.refreshEquip(); UI.refreshBag(); UI.refreshStatAlloc();

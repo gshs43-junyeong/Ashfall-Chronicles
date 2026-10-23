@@ -415,7 +415,7 @@ export const TreeUIPart: Bag = {
         `<div class="pbar"><i></i></div><div class="pxp"></div>` +
         `<div class="plin"></div>` +
         `<div class="pperks"></div>`;
-      d.querySelector('.pic')!.textContent = P.i;   // 그림 아이콘을 따로 굽지 않는다 — 이 둘뿐이라 글자로 충분하다
+      d.querySelector('.pic')!.textContent = P.i;   // 그림 아이콘을 따로 굽지 않는다 — 셋뿐이라 글자로 충분하다
       w.appendChild(d);
     }
   },

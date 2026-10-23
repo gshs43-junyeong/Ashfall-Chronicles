@@ -1069,6 +1069,9 @@
   "날개가 돈다": [
    "ui/process.windmill"
   ],
+  "날을 세운다": [
+   "ui/process.craftPlan"
+  ],
   "낫 없이 거두면 다 으스러진다 — 낫이 필요하다": [
    "game/mine.mine"
   ],
@@ -1141,7 +1144,7 @@
    "game/rigs.useRig"
   ],
   "녹인다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "높음": [
    "index.html"
@@ -1190,10 +1193,13 @@
    "game/mine.rightClick"
   ],
   "다듬는다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "다섯 조각이 곁을 떠나 하늘로 돌아갔다": [
    "game/life.gainStarOrbit"
+  ],
+  "다시 달군다": [
+   "ui/process.craftPlan"
   ],
   "다시 듣기": [
    "game/talk.talkTo",
@@ -1229,6 +1235,9 @@
   "단단한 바닥 위에만 놓을 수 있다": [
    "game/mine.rightClick"
   ],
+  "단단히 묶는다": [
+   "ui/process.craftPlan"
+  ],
   "단말 읽기": [
    "game/render-world.drawCursor"
   ],
@@ -1243,6 +1252,9 @@
   ],
   "담금질": [
    "ui/process.anvilSteps"
+  ],
+  "담금질한다": [
+   "ui/process.craftPlan"
   ],
   "담이 섰어. 담이 있으면 안쪽이 생기더라. 그게 마을이지.": [
    "data/quests"
@@ -1339,6 +1351,9 @@
   "두 방을 더 열었다. 채울 사람은 아직 없지만, 열어는 뒀어.": [
    "data/quests"
   ],
+  "두드려 편다": [
+   "ui/process.craftPlan"
+  ],
   "두들길 장비를 가리켜라": [
    "ui/motion.anvilShow"
   ],
@@ -1375,6 +1390,9 @@
   ],
   "떼어 간다": [
    "ui/shop.refreshBoard"
+  ],
+  "또 두드린다": [
+   "ui/process.craftPlan"
   ],
   "뜨겁다": [
    "game/ruin-events.evProgress"
@@ -1498,7 +1516,7 @@
    "ui/process.assembler"
   ],
   "맞춰 붙인다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "맞히면 물고기가 끌려오고, 놓치면 달아난다": [
    "game/fish-duel.duelTutorial"
@@ -1572,6 +1590,9 @@
   "목표": [
    "ui/quest.refreshQuest",
    "ui/quest.refreshTracker"
+  ],
+  "못을 박는다": [
+   "ui/process.craftPlan"
   ],
   "무게": [
    "data/quests"
@@ -2013,7 +2034,7 @@
    "data/quests"
   ],
   "불을 지핀다": [
-   "ui/process.craftSteps",
+   "ui/process.craftPlan",
    "ui/process.oven"
   ],
   "불이 돌아왔다 — 도둑의 자루에서 금화 {n}": [
@@ -2196,6 +2217,9 @@
   "석판 읽기": [
    "game/render-world.drawCursor"
   ],
+  "섞는다": [
+   "ui/process.craftPlan"
+  ],
   "설계실 봉인": [
    "game/interact.openSeal"
   ],
@@ -2271,6 +2295,9 @@
   ],
   "손님 캐릭터 {n}": [
    "game/save.renderSlotScreen"
+  ],
+  "쇠를 달군다": [
+   "ui/process.craftPlan"
   ],
   "수레는 레일 위에 놓는다": [
    "game/rides.placeMount",
@@ -2349,7 +2376,7 @@
    "ui/process.smelter"
   ],
   "식힌다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "신발": [
    "index.html"
@@ -2550,7 +2577,7 @@
    "data/quests"
   ],
   "엮는다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "연료": [
    "factory",
@@ -2828,6 +2855,9 @@
   "이야기는 계속된다": [
    "game/progress.completeChapter"
   ],
+  "이어 맞춘다": [
+   "ui/process.craftPlan"
+  ],
   "이어 할 세계를 고르거나 새로 시작하면 방이 열리고 방 코드가 뜬다. 코드를 친구에게 알려 주면 된다.": [
    "index.html"
   ],
@@ -2871,8 +2901,11 @@
   "자라는 중인 작물에 우클릭": [
    "ui/tip.showTip"
   ],
+  "자루를 박는다": [
+   "ui/process.craftPlan"
+  ],
   "자른다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "작업대": [
    "game/render-world.drawCursor"
@@ -2956,7 +2989,7 @@
    "game/village.craft"
   ],
   "재료를 고른다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "재료를 앉힌다": [
    "ui/process.press",
@@ -3124,6 +3157,9 @@
   ],
   "조각을 들자 유적이 깨어났다": [
    "game/memory.memoryGot"
+  ],
+  "조립한다": [
+   "ui/process.craftPlan"
   ],
   "조작": [
    "index.html"
@@ -3385,7 +3421,7 @@
    "ui/tip.compareLine"
   ],
   "치수를 잰다": [
-   "ui/process.craftSteps"
+   "ui/process.craftPlan"
   ],
   "치유가 끊겼다": [
    "entity/boss-forms.formHurt"
@@ -3517,7 +3553,7 @@
    "game/ruin-events.evTick"
   ],
   "틀에 붓는다": [
-   "ui/process.craftSteps",
+   "ui/process.craftPlan",
    "ui/process.smelter"
   ],
   "파동이 잦아들었어. 역시 네 덕분이야.": [
@@ -3535,6 +3571,9 @@
   "판매하기 ▸": [
    "ui/shop.openShop",
    "ui/shop.refreshChest"
+  ],
+  "판을 두드린다": [
+   "ui/process.craftPlan"
   ],
   "판자 {n}장. 방은 많은데 바닥이 꺼진 방이 더 많아.": [
    "data/quests"
@@ -6175,6 +6214,16 @@
   "PROFS.fish.perks.1.2": "심해어가 걸릴 확률이 크게 오른다.",
   "PROFS.fish.perks.2.1": "물때를 안다",
   "PROFS.fish.perks.2.2": "25% 확률로 한 마리를 더 낚는다.",
+  "PROFS.craft.n": "제작",
+  "PROFS.craft.line": "작업대 · 용광로 · 맨손으로 무엇이든 만들 때마다 는다. 손이 익을수록 공정이 빨라진다.",
+  "PROFS.craft.lin.0.0": "공정 시간",
+  "PROFS.craft.lin.1.0": "재료를 아낄 확률",
+  "PROFS.craft.perks.0.1": "손에 익은 일",
+  "PROFS.craft.perks.0.2": "같은 것을 잇따라 만들면 공정이 30% 빨라진다.",
+  "PROFS.craft.perks.1.1": "아껴 쓰기",
+  "PROFS.craft.perks.1.2": "15% 확률로 재료 하나를 돌려받는다.",
+  "PROFS.craft.perks.2.1": "장인의 손",
+  "PROFS.craft.perks.2.2": "무기 · 방어구 · 도구에 좋은 등급이 붙을 확률이 오른다.",
   "PULSE.stages.0.n": "잠듦",
   "PULSE.stages.1.n": "뒤척임",
   "PULSE.stages.2.n": "깨어남",

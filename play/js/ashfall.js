@@ -9807,6 +9807,21 @@
         [6, "깊은 눈", "심해어가 걸릴 확률이 크게 오른다."],
         [10, "물때를 안다", "25% 확률로 한 마리를 더 낚는다."]
       ]
+    },
+    craft: {
+      n: "제작",
+      i: "🔨",
+      c: "#e0a85a",
+      line: "작업대 · 용광로 · 맨손으로 무엇이든 만들 때마다 는다. 손이 익을수록 공정이 빨라진다.",
+      lin: [
+        ["공정 시간", (lv) => Math.round((2 - (lv - 1) * (1.3 / 9)) * 100) + "%"],
+        ["재료를 아낄 확률", (lv) => (lv >= 6 ? 15 : 0) + "%"]
+      ],
+      perks: [
+        [3, "손에 익은 일", "같은 것을 잇따라 만들면 공정이 30% 빨라진다."],
+        [6, "아껴 쓰기", "15% 확률로 재료 하나를 돌려받는다."],
+        [10, "장인의 손", "무기 · 방어구 · 도구에 좋은 등급이 붙을 확률이 오른다."]
+      ]
     }
   };
   function profNeed(lv) {
@@ -33336,7 +33351,7 @@
       this.starOrbits = 0;
       this.starLit = 0;
       this.starFade = 0;
-      this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 } };
+      this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 }, craft: { lv: 1, xp: 0 } };
       this.charge = 200;
       this.jetHeat = 0;
       this.jetOver = false;
@@ -45198,16 +45213,50 @@
   var process_exports = {};
   __export(process_exports, {
     ProcessUIPart: () => ProcessUIPart,
-    craftSteps: () => craftSteps,
+    craftPlan: () => craftPlan,
+    craftSpeed: () => craftSpeed,
     drawIc: () => drawIc,
     glow: () => glow2,
     machSteps: () => machSteps,
     stepRow: () => stepRow
   });
-  function craftSteps(st) {
-    if (st === "work") return { n: [tr("치수를 잰다"), tr("자른다"), tr("맞춰 붙인다"), tr("다듬는다")], dur: 2.4 };
-    if (st === "forge") return { n: [tr("불을 지핀다"), tr("녹인다"), tr("틀에 붓는다"), tr("식힌다")], dur: 2.8 };
-    return { n: [tr("재료를 고른다"), tr("엮는다"), tr("다듬는다")], dur: 1.2 };
+  var craftSpeed = (lv) => 2 - (Math.max(1, Math.min(10, lv)) - 1) * (1.3 / 9);
+  var METAL = /_bar$|_ore$|nail|rivet|plate|gear|wire|chain/;
+  function craftPlan(r, lv) {
+    const mats = Object.keys(r.need), kinds = mats.length, qty = mats.reduce((a, k) => a + r.need[k], 0);
+    const ty = ITEMS[r.out] ? ITEMS[r.out].type : "", gear = ty === "weapon" || ty === "armor" || ty === "tool";
+    const metals = mats.filter((id) => METAL.test(id)).length, st0 = r.station || "hand";
+    const S = [];
+    let st = st0, base, baseN;
+    if (st0 === "forge" && gear) {
+      st = "smith";
+      base = 3.4;
+      baseN = 4;
+      S.push([tr("쇠를 달군다"), 0], [ty === "armor" ? tr("판을 두드린다") : tr("두드려 편다"), 1]);
+      if (kinds >= 3 || qty >= 12) S.push([tr("다시 달군다"), 0], [tr("또 두드린다"), 1]);
+      S.push([ty === "armor" ? tr("이어 맞춘다") : ty === "tool" ? tr("자루를 박는다") : tr("날을 세운다"), 2], [tr("담금질한다"), 3]);
+    } else if (st0 === "forge") {
+      base = 2.8;
+      baseN = 4;
+      S.push([tr("불을 지핀다"), 0], [tr("녹인다"), 1]);
+      if (metals >= 2 || kinds >= 3) S.push([tr("섞는다"), 1]);
+      S.push([tr("틀에 붓는다"), 2], [tr("식힌다"), 3]);
+    } else if (st0 === "work") {
+      base = 2.4;
+      baseN = 4;
+      S.push([tr("치수를 잰다"), 0], [tr("자른다"), 1], [tr("맞춰 붙인다"), 2]);
+      if (metals) S.push([tr("못을 박는다"), 2]);
+      if (kinds >= 4) S.push([tr("조립한다"), 2]);
+      S.push([tr("다듬는다"), 3]);
+    } else {
+      base = 1.2;
+      baseN = 3;
+      S.push([tr("재료를 고른다"), 0], [tr("엮는다"), 1]);
+      if (kinds >= 3) S.push([tr("단단히 묶는다"), 1]);
+      S.push([tr("다듬는다"), 2]);
+    }
+    const dur = Math.min(16, base * (S.length / baseN) * (1 + 0.12 * Math.log2(1 + qty)) * craftSpeed(lv));
+    return { st, n: S.map((x) => x[0]), v: S.map((x) => x[1]), dur };
   }
   function machSteps(t) {
     const S = {
@@ -45316,8 +45365,10 @@
         this.craftEnd();
         return;
       }
-      const i = q.shift(), r = RECIPES[i], st = r.station || "hand", S = craftSteps(st);
-      this.craftRun = { i, r, st, S, t0: performance.now(), step: -1, parts: [] };
+      const i = q.shift(), r = RECIPES[i], lv = app.player.profLv("craft"), S = craftPlan(r, lv);
+      if (lv >= 3 && this._lastCraft === r.out) S.dur *= 0.7;
+      this._lastCraft = r.out;
+      this.craftRun = { i, r, st: S.st, S, t0: performance.now(), step: -1, parts: [] };
       const cv = this.craftStageEl();
       cv.classList.add("on");
       const tick2 = () => {
@@ -45335,7 +45386,7 @@
         const step = Math.min(R.S.n.length - 1, Math.floor(k * R.S.n.length));
         if (step !== R.step) {
           R.step = step;
-          this.craftStepSfx(R.st, step);
+          this.craftStepSfx(R.st, R.S.v[step]);
         }
         this.craftStageDraw(k);
         R.raf = requestAnimationFrame(tick2);
@@ -45345,6 +45396,7 @@
     craftStepSfx(st, step) {
       if (st === "work") app.sfx(step === 2 ? "hit_blunt" : "mat_wood", 1.1, 0.7);
       else if (st === "forge") app.sfx(step === 0 ? "fuse" : step === 3 ? "splash" : "smelt", 1, 0.6);
+      else if (st === "smith") app.sfx(step === 0 ? "fuse" : step === 3 ? "splash" : step === 1 ? "hit_metal" : "mat_metal", 1, 0.6);
       else app.sfx("mat_plant", 1.2, 0.6);
     },
     craftFinish(i) {
@@ -45380,8 +45432,8 @@
       const c = cv.getContext("2d");
       c.setTransform(dpr, 0, 0, dpr, 0, 0);
       c.clearRect(0, 0, W, H);
-      const n = R.S.n.length, step = Math.min(n - 1, Math.floor(k * n)), sk = k * n - step;
-      this.craftScene(c, W, H, { st: R.st, step, sk, k, t: performance.now() / 1e3, mats: Object.keys(R.r.need).slice(0, 4), out: R.r.out, idle: false });
+      const n = R.S.n.length, idx = Math.min(n - 1, Math.floor(k * n)), sk = k * n - idx;
+      this.craftScene(c, W, H, { st: R.st, step: R.S.v[idx], idx, names: R.S.n, sk, k, t: performance.now() / 1e3, mats: Object.keys(R.r.need).slice(0, 4), out: R.r.out, idle: false });
       const left = (this.craftQ || []).length;
       if (left) {
         const txt = tr("줄 선 것 {n}", { n: left });
@@ -46850,8 +46902,9 @@
     craftScene(c, W, H, s) {
       if (s.st === "work") this.sceneWork(c, W, H, s);
       else if (s.st === "forge") this.sceneForge(c, W, H, s);
+      else if (s.st === "smith") this.sceneSmith(c, W, H, s);
       else this.sceneHand(c, W, H, s);
-      if (!s.idle) stepRow(c, craftSteps(s.st).n, s.step, s.sk, 8, 6, W - 16);
+      if (!s.idle && s.names) stepRow(c, s.names, s.idx ?? s.step, s.sk, 8, 6, W - 16);
     },
     /** 창이 열려 있는 동안 쉬는 무대 — 고른 탭의 시설이 숨 쉰다(공정이 돌면 공정이 그린다) */
     craftIdle() {
@@ -47330,6 +47383,174 @@
       void FONT;
       void app;
     },
+    /* ================= 대장간(용광로에서 무기 · 방어구 · 도구) ================= */
+    /** 쇳물을 틀에 붓는 게 아니라 달구고(0) · 모루에서 두드리고(1) · 날을 세우거나 이어 맞추고(2) · 담금질한다(3) */
+    sceneSmith(c, W, H, s) {
+      const { step, sk, t, idle } = s, floor = H - 12, ty = ITEMS[s.out] ? ITEMS[s.out].type : "weapon";
+      c.fillStyle = "#141012";
+      c.fillRect(0, 0, W, H);
+      bricks(c, 0, 0, W, floor, "#2c2426", "#221b1d", 26, 11);
+      c.fillStyle = "#1a1416";
+      c.fillRect(0, floor, W, H - floor);
+      c.fillStyle = "#2a2224";
+      c.fillRect(0, floor, W, 2);
+      const fx = 14, fw = 92, fy = floor - 46, heatOn = idle ? 0.5 : step === 0 ? 0.6 + 0.4 * Math.abs(Math.sin(sk * Math.PI * 4)) : 0.45;
+      c.fillStyle = "#3a3034";
+      c.fillRect(fx, fy, fw, floor - fy);
+      bricks(c, fx + 3, fy + 10, fw - 6, floor - fy - 10, "#4a3e42", "#3a3034", 16, 8);
+      c.fillStyle = "#2a2224";
+      c.fillRect(fx + fw / 2 - 10, 0, 20, fy - 16);
+      c.fillStyle = "#3a3034";
+      c.beginPath();
+      c.moveTo(fx + 6, fy);
+      c.lineTo(fx + fw / 2 - 12, fy - 18);
+      c.lineTo(fx + fw / 2 + 12, fy - 18);
+      c.lineTo(fx + fw - 6, fy);
+      c.fill();
+      c.fillStyle = "#120a08";
+      c.fillRect(fx + 10, fy + 2, fw - 20, 10);
+      for (let i = 0; i < 9; i++) {
+        c.fillStyle = hash(i * 5) > 0.5 ? "#ff7a2a" : "#c84a18";
+        c.beginPath();
+        c.arc(fx + 14 + i * (fw - 28) / 8, fy + 10, 3.5, 0, TAU);
+        c.fill();
+      }
+      flames(c, fx + 12, fy + 10, fw - 24, 0.35 + 0.5 * heatOn, t);
+      glow2(c, fx + fw / 2, fy + 6, 60, "#ff7a2a", 0.2 + 0.3 * heatOn);
+      const bw = 10 + 10 * (step === 0 && !idle ? Math.abs(Math.sin(sk * Math.PI * 4)) : 0.4);
+      c.fillStyle = "#6a4626";
+      c.beginPath();
+      c.moveTo(fx + fw + 4, fy + 22);
+      c.lineTo(fx + fw + 34, fy + 22 - bw / 2);
+      c.lineTo(fx + fw + 34, fy + 22 + bw / 2);
+      c.closePath();
+      c.fill();
+      const ax = W * 0.5, top = floor - 38;
+      c.fillStyle = "#4a3420";
+      c.fillRect(ax - 16, top + 14, 32, floor - top - 14);
+      c.fillStyle = "#2e3038";
+      c.beginPath();
+      c.moveTo(ax - 44, top);
+      c.lineTo(ax + 30, top);
+      c.lineTo(ax + 30, top + 9);
+      c.lineTo(ax + 14, top + 14);
+      c.lineTo(ax - 14, top + 14);
+      c.lineTo(ax - 24, top + 8);
+      c.lineTo(ax - 44, top + 3);
+      c.closePath();
+      c.fill();
+      c.fillStyle = "#5a5e6a";
+      c.fillRect(ax - 40, top, 70, 2);
+      const qx = W - 64, qy = floor - 34;
+      c.fillStyle = "#4a3420";
+      c.fillRect(qx, qy, 48, 34);
+      c.fillStyle = "#5e4428";
+      for (let x2 = qx; x2 < qx + 48; x2 += 8) c.fillRect(x2, qy, 7, 34);
+      c.fillStyle = "#3a3a40";
+      c.fillRect(qx - 2, qy + 5, 52, 3);
+      c.fillRect(qx - 2, qy + 24, 52, 3);
+      c.fillStyle = "#2a4a5a";
+      c.fillRect(qx + 3, qy + 3, 42, 5);
+      c.fillStyle = "#5a8aa0";
+      c.fillRect(qx + 3, qy + 3, 42, 1.5);
+      const wx = ax + 72, wy = floor - 30, spin = step === 2 && !idle && ty !== "armor" ? t * 14 : t * 0.4;
+      c.fillStyle = "#4a3420";
+      c.fillRect(wx - 3, wy, 6, floor - wy);
+      c.save();
+      c.translate(wx, wy);
+      c.rotate(spin);
+      c.fillStyle = "#6a6a72";
+      c.beginPath();
+      c.arc(0, 0, 18, 0, TAU);
+      c.fill();
+      c.strokeStyle = "#4a4a52";
+      c.lineWidth = 2;
+      for (let i = 0; i < 4; i++) {
+        c.beginPath();
+        c.moveTo(0, 0);
+        c.lineTo(Math.cos(i * TAU / 4) * 16, Math.sin(i * TAU / 4) * 16);
+        c.stroke();
+      }
+      c.fillStyle = "#3a3a42";
+      c.beginPath();
+      c.arc(0, 0, 4, 0, TAU);
+      c.fill();
+      c.restore();
+      if (idle) {
+        sparks(c, fx + fw / 2, fy + 8, floor, 4, t, 0.8, 0, 0.6);
+        puffs(c, fx + fw / 2, 16, 3, t, 0.3, 14, "90,80,80", 0.3);
+        return;
+      }
+      const mat = s.mats[0] || s.out, onAnvil = [ax - 18, top - 26], inFire = [fx + fw / 2 - 14, fy - 14];
+      let x = onAnvil[0], y = onAnvil[1], heat = 0.5, form = 1, hamA = 0.9;
+      const aHit = Math.PI - 0.12, hx = ax + 58, hy = top - 22;
+      if (step === 0) {
+        const back = (s.idx || 0) > 0 ? ease(seg(sk, 0, 0.25)) : 1;
+        x = lerp(onAnvil[0], inFire[0], back);
+        y = lerp(onAnvil[1], inFire[1], back) - Math.sin(back * Math.PI) * 16;
+        const go = ease(seg(sk, 0.8, 1));
+        x = lerp(x, onAnvil[0], go);
+        y = lerp(y, onAnvil[1], go) - Math.sin(go * Math.PI) * 16;
+        heat = Math.min(1, 0.2 + sk * 1.1);
+        form = (s.idx || 0) > 0 ? 0.5 : 0;
+        if (sk < 0.8) sparks(c, inFire[0] + 14, inFire[1] + 18, floor, 5, t, 1.4, 0, 0.7);
+      } else if (step === 1) {
+        const n = 3, b = Math.min(n - 1, Math.floor(sk * n)), u = sk * n - b;
+        const sw = u < 0.6 ? ease(u / 0.6) * -0.15 : u < 0.75 ? -0.15 + 1.15 * ((u - 0.6) / 0.15) ** 2 : 1 - ease((u - 0.75) / 0.25) * 0.3;
+        hamA = aHit + 1.35 * (1 - Math.max(0, sw));
+        heat = 1 - sk * 0.5;
+        form = (s.idx || 0) > 1 ? 0.5 + sk * 0.5 : sk * 0.5 + (b + (u > 0.75 ? 1 : 0)) / n * 0.2;
+        if (u > 0.75 && u < 0.9) {
+          sparks(c, ax - 6, top - 6, floor, 14, t * 3 + b, 3, 0, 0.8);
+          glow2(c, ax - 6, top - 10, 34, "#ffd080", 0.6);
+        }
+        y += u > 0.75 && u < 0.85 ? 2 : 0;
+      } else if (step === 2) {
+        form = 1;
+        heat = 0.35;
+        if (ty === "armor") {
+          const tap = sk * 6 % 1;
+          hamA = aHit + 0.5 * (tap < 0.5 ? tap * 2 : 2 - tap * 2);
+          c.fillStyle = "#c8ccd4";
+          for (let i = 0; i < Math.floor(sk * 6); i++) c.fillRect(x + 6 + i % 3 * 8, y + 8 + Math.floor(i / 3) * 10, 2, 2);
+        } else {
+          const m = ease(seg(sk, 0, 0.2));
+          x = lerp(onAnvil[0], wx - 34, m);
+          y = lerp(onAnvil[1], wy - 22, m);
+          if (sk > 0.2) {
+            sparks(c, wx - 14, wy - 8, floor, 12, t * 2, 2.6, -0.5, 0.6);
+            glow2(c, wx - 14, wy - 8, 20, "#ffe0a0", 0.4);
+          }
+        }
+      } else {
+        const from = ty === "armor" ? onAnvil : [wx - 34, wy - 22];
+        const lift3 = ease(seg(sk, 0, 0.3)), dunk = ease(seg(sk, 0.3, 0.45)), rise = ease(seg(sk, 0.7, 1));
+        x = lerp(from[0], qx + 10, lift3);
+        y = lerp(from[1], qy - 32, lift3) - Math.sin(lift3 * Math.PI) * 20 + dunk * 26 * (1 - rise) - rise * 30;
+        heat = 0.4 * (1 - dunk);
+        form = 1;
+        if (dunk > 0) puffs(c, qx + 24, qy, 6, t, 0.9, 36 + 20 * (1 - rise), "220,226,236", 0.75 * (1 - rise * 0.6));
+        if (rise > 0) glow2(c, x + 14, y + 14, 40, "#ffe8a0", 0.45 * rise);
+      }
+      if (step === 0 && sk < 0.8) {
+        c.save();
+        c.beginPath();
+        c.rect(0, 0, W, fy + 6);
+        c.clip();
+      }
+      heat = Math.min(0.7, heat);
+      if (form < 1) {
+        c.globalAlpha = 1 - form;
+        hotIcon(c, mat, x, y, 28, heat);
+      }
+      if (form > 0) {
+        c.globalAlpha = form;
+        hotIcon(c, s.out, x, y, 28, heat);
+      }
+      c.globalAlpha = 1;
+      if (step === 0 && sk < 0.8) c.restore();
+      hammer(c, hx, hy, step === 1 || step === 2 && ty === "armor" ? hamA : aHit + 1.6, step === 2 ? 30 : 48);
+    },
     /* ================= 맨손 ================= */
     sceneHand(c, W, H, s) {
       const { step, sk, t, idle } = s, floor = H - 14, cx = W / 2;
@@ -47346,15 +47567,7 @@
       c.beginPath();
       c.ellipse(cx, floor - 10, W * 0.32, 9, 0, 0, TAU);
       c.fill();
-      const fxp = W - 60;
-      c.fillStyle = "#4a3020";
-      c.fillRect(fxp - 16, floor - 6, 32, 5);
-      flames(c, fxp - 12, floor - 6, 24, 0.9, t);
-      glow2(c, fxp, floor - 14, 60, "#ff9a3a", 0.3);
-      if (idle) {
-        sparks(c, fxp, floor - 14, floor, 4, t, 0.9, 0, 0.6);
-        return;
-      }
+      if (idle) return;
       s.mats.forEach((id, i) => {
         const sx = cx - 80 + i * 44, m = step === 0 ? ease(sk) : 1, hop = step === 0 ? Math.abs(Math.sin(sk * Math.PI * 2 + i)) * 10 : 0;
         const x = lerp(sx, cx - 12 + (i - 1) * 6, m * 0.9), a = step === 2 ? 1 - sk : 1;
@@ -49056,6 +49269,11 @@
     /* v15 → v16 — 플레이어가 놓은 칸(world.built). 옛 세계는 어느 칸을 지었는지 모른다 — 빈 채로 시작한다. */
     (d) => {
       if (d.world && !d.world.built) d.world.built = [];
+    },
+    /* v16 → v17 — 제작 숙련(prof.craft). 옛 캐릭터는 Lv 1 부터 */
+    (d) => {
+      const pr = d.player && d.player.prof;
+      if (pr && !pr.craft) pr.craft = { lv: 1, xp: 0 };
     }
   ];
   var SAVE_VERSION = SAVE_UPGRADES.length + 1;
@@ -58986,7 +59204,14 @@
         return;
       }
       for (const k in r.need) p.removeItem(k, r.need[k]);
-      const out = isGear(makeItem(r.out)) ? rollGear(r.out, this.rng, 1) : makeItem(r.out, r.n);
+      const clv = p.profLv("craft"), mats = Object.keys(r.need);
+      if (clv >= 6 && this.rng.next() < 0.15) {
+        const k = mats[Math.floor(this.rng.next() * mats.length)];
+        p.addItem(makeItem(k, 1));
+      }
+      const gear = isGear(makeItem(r.out));
+      const out = gear ? rollGear(r.out, this.rng, clv >= 10 ? 3 : 1) : makeItem(r.out, r.n);
+      p.addProf("craft", 1 + Math.floor(mats.length / 2) + (gear ? 2 : 0));
       if (out.c !== void 0 && !isGear(out)) out.c = r.n;
       if (!p.addItem(out)) {
         this.drops.push(new Drop(p.cx, p.cy, out));
@@ -74556,7 +74781,7 @@
           p.slots[i] = id;
         });
         p.prof = p.prof || {};
-        for (const k of ["farm", "fish"]) p.prof[k] = { lv: PROF_MAX, xp: 0 };
+        for (const k of ["farm", "fish", "craft"]) p.prof[k] = { lv: PROF_MAX, xp: 0 };
         p.base.int += 40;
         p.base.vit += 20;
         p.statPts = Math.max(0, p.statPts - 60);
@@ -75491,6 +75716,7 @@
       p.gold = +qs.get("gold") || K.gold + Math.floor(this.rng.next() * K.gold * 0.2);
       p.prof.farm.lv = 1 + sess * 2;
       p.prof.fish.lv = 1 + sess * 2;
+      p.prof.craft.lv = 1 + sess * 3;
       p.recalc();
       p.hp = p.d.maxHp;
       p.mp = p.d.maxMp;

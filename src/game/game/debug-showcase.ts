@@ -105,7 +105,7 @@ export const ShowcasePart: Bag = {
     }
     for (const [id, n] of K.mats) if (ITEMS[id]) p.addItem(makeItem(id, n, 0));   // 그 구간에서 모았을 법한 재료(단축칸 뒤)
     p.gold = +qs.get('gold') || K.gold + Math.floor(this.rng.next() * K.gold * 0.2);
-    p.prof.farm.lv = 1 + sess * 2; p.prof.fish.lv = 1 + sess * 2;
+    p.prof.farm.lv = 1 + sess * 2; p.prof.fish.lv = 1 + sess * 2; p.prof.craft.lv = 1 + sess * 3;
     p.recalc(); p.hp = p.d.maxHp; p.mp = p.d.maxMp;
     // 지도 — 지금까지 걸어 다녔을 지표 띠를 밝혀 둔다(세션마다 넓게). 처음 시작한 듯한 까만 지도는 영상에서 어색하다
     const span = [0, 520, 1500, 2600][sess], cx = Math.floor(p.cx / TS);

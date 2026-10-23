@@ -112,7 +112,11 @@ export const VillagePart: Bag = {
     }
     if (!p.hasAll(r.need)) { this.toast(tr('재료가 부족하다'), 'bad'); return; }
     for (const k in r.need) p.removeItem(k, r.need[k]);
-    const out = isGear(makeItem(r.out)!) ? rollGear(r.out, this.rng, 1) : makeItem(r.out, r.n);
+    const clv = p.profLv('craft'), mats = Object.keys(r.need);
+    if (clv >= 6 && this.rng.next() < 0.15) { const k = mats[Math.floor(this.rng.next() * mats.length)]; p.addItem(makeItem(k, 1)); }   // 숙련 6 — 아껴 쓰기
+    const gear = isGear(makeItem(r.out)!);
+    const out = gear ? rollGear(r.out, this.rng, clv >= 10 ? 3 : 1) : makeItem(r.out, r.n);         // 숙련 10 — 장인의 손
+    p.addProf('craft', 1 + Math.floor(mats.length / 2) + (gear ? 2 : 0));
     if (out!.c !== undefined && !isGear(out!)) out!.c = r.n;
     if (!p.addItem(out)) { this.drops.push(new Drop(p.cx, p.cy, out!)); }
     this.crafted = this.crafted || {};

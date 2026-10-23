@@ -136,7 +136,7 @@ export class Player extends Ent {
     /* 세션 1 진행 표시 — 장을 끝낼 때마다 곁을 도는 조각이 하나씩 는다 */
     this.starOrbits = 0; this.starLit = 0; this.starFade = 0;
     /* 생활 숙련 — 포인트로 찍지 않고 하다 보면 오른다 */
-    this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 } };
+    this.prof = { farm: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 }, craft: { lv: 1, xp: 0 } };
     this.charge = 200;             // 동력 장비용 전하. 바닥나면 가방의 배터리를 자동으로 쓴다
     this.jetHeat = 0; this.jetOver = false; this.jetGap = 0;   // 제트팩의 열·높이 (저장 안 함 — 땅에 닿으면 곧 식는다)
     this.kills = {}; this.mined = {}; this.bossKilled = {}; this.gathered = {};

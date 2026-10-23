@@ -1185,7 +1185,20 @@
   "내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.": "Your character (level, bag, gold) is saved to your single-player slot {n}. The terrain follows the host's world; opening that slot alone keeps your own world's terrain.",
   "내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다": "Joined the host's world with your character — progress is saved to your slot",
   "새 손님 캐릭터": "New guest character",
-  "슬롯 {n} · {name} Lv.{lv}": "Slot {n} · {name} Lv.{lv}"
+  "슬롯 {n} · {name} Lv.{lv}": "Slot {n} · {name} Lv.{lv}",
+  "날을 세운다": "Sharpen the edge",
+  "다시 달군다": "Reheat",
+  "단단히 묶는다": "Bind tight",
+  "담금질한다": "Quench",
+  "두드려 편다": "Hammer it flat",
+  "또 두드린다": "Hammer again",
+  "못을 박는다": "Drive the nails",
+  "섞는다": "Mix",
+  "쇠를 달군다": "Heat the iron",
+  "이어 맞춘다": "Rivet together",
+  "자루를 박는다": "Fit the handle",
+  "조립한다": "Assemble",
+  "판을 두드린다": "Hammer the plate"
  },
  "tables": {
   "BIOMES.0.n": "Sunken Sea",
@@ -4808,6 +4821,16 @@
   "BOSS_MOVES.sand_guardian.moves.6.n": "Sand Whirl",
   "BOSS_MOVES.sand_guardian.ult.n": "Deadline",
   "BOSS_LINES.sand_guardian.1": "The hourglass turns over — the pouring sand leans the other way.",
-  "BOSS_LINES.sand_guardian.2": "In the cracked glass, the last sand is falling."
+  "BOSS_LINES.sand_guardian.2": "In the cracked glass, the last sand is falling.",
+  "PROFS.craft.n": "Crafting",
+  "PROFS.craft.line": "Grows each time you make anything at a workbench, furnace or by hand. The more practiced your hands, the faster the work.",
+  "PROFS.craft.lin.0.0": "Crafting time",
+  "PROFS.craft.lin.1.0": "Chance to save materials",
+  "PROFS.craft.perks.0.1": "Practiced Hands",
+  "PROFS.craft.perks.0.2": "Making the same thing back to back is 30% faster.",
+  "PROFS.craft.perks.1.1": "Thrifty",
+  "PROFS.craft.perks.1.2": "15% chance to get one material back.",
+  "PROFS.craft.perks.2.1": "Master's Touch",
+  "PROFS.craft.perks.2.2": "Weapons, armor and tools are more likely to roll a good grade."
  }
 }

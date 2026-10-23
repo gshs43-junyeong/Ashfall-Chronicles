@@ -71,7 +71,9 @@ export const SAVE_UPGRADES = [
      ★ delta 는 판올림 **전에** 풀린다(game/save.ts loadDelta — 곁 기록을 읽어야 해서 비동기) — 여기서는 할 일이 없다. */
   (d: any) => d,
   /* v15 → v16 — 플레이어가 놓은 칸(world.built). 옛 세계는 어느 칸을 지었는지 모른다 — 빈 채로 시작한다. */
-  (d: any) => { if (d.world && !d.world.built) d.world.built = []; }
+  (d: any) => { if (d.world && !d.world.built) d.world.built = []; },
+  /* v16 → v17 — 제작 숙련(prof.craft). 옛 캐릭터는 Lv 1 부터 */
+  (d: any) => { const pr = d.player && d.player.prof; if (pr && !pr.craft) pr.craft = { lv: 1, xp: 0 }; }
 ];
 export const SAVE_VERSION = SAVE_UPGRADES.length + 1;
 

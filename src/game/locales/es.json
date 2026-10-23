@@ -1185,7 +1185,20 @@
   "내 캐릭터(레벨 · 가방 · 금화)는 내 싱글플레이 슬롯 {n}에 저장된다. 지형은 호스트 세계를 따르고, 그 슬롯을 혼자 열면 내 세계 지형 그대로다.": "Tu personaje (nivel, bolsa, oro) se guarda en tu ranura de un jugador {n}. El terreno sigue el mundo del anfitrión; si abres esa ranura en solitario, se conserva el terreno de tu propio mundo.",
   "내 캐릭터로 호스트 세계에 들어왔다 — 진행은 내 슬롯에 저장된다": "Has entrado en el mundo del anfitrión con tu personaje — el progreso se guarda en tu ranura",
   "새 손님 캐릭터": "Nuevo personaje invitado",
-  "슬롯 {n} · {name} Lv.{lv}": "Ranura {n} · {name} Nv.{lv}"
+  "슬롯 {n} · {name} Lv.{lv}": "Ranura {n} · {name} Nv.{lv}",
+  "날을 세운다": "Afilar el filo",
+  "다시 달군다": "Recalentar",
+  "단단히 묶는다": "Atar bien",
+  "담금질한다": "Templar",
+  "두드려 편다": "Forjar a martillazos",
+  "또 두드린다": "Martillar otra vez",
+  "못을 박는다": "Clavar los clavos",
+  "섞는다": "Mezclar",
+  "쇠를 달군다": "Calentar el hierro",
+  "이어 맞춘다": "Remachar",
+  "자루를 박는다": "Encajar el mango",
+  "조립한다": "Montar",
+  "판을 두드린다": "Martillar la placa"
  },
  "tables": {
   "BIOMES.0.n": "Mar Hundido",
@@ -4808,6 +4821,16 @@
   "BOSS_MOVES.sand_guardian.moves.6.n": "Remolino de arena",
   "BOSS_MOVES.sand_guardian.ult.n": "Plazo cumplido",
   "BOSS_LINES.sand_guardian.1": "El reloj de arena se da la vuelta: la arena que cae se inclina hacia el otro lado.",
-  "BOSS_LINES.sand_guardian.2": "En el cristal agrietado cae la última arena."
+  "BOSS_LINES.sand_guardian.2": "En el cristal agrietado cae la última arena.",
+  "PROFS.craft.n": "Artesanía",
+  "PROFS.craft.line": "Sube cada vez que fabricas algo en el banco de trabajo, el horno o a mano. Cuanto más practicadas las manos, más rápido el trabajo.",
+  "PROFS.craft.lin.0.0": "Tiempo de trabajo",
+  "PROFS.craft.lin.1.0": "Probabilidad de ahorrar material",
+  "PROFS.craft.perks.0.1": "Manos expertas",
+  "PROFS.craft.perks.0.2": "Fabricar lo mismo seguido es un 30 % más rápido.",
+  "PROFS.craft.perks.1.1": "Ahorrador",
+  "PROFS.craft.perks.1.2": "15 % de probabilidad de recuperar un material.",
+  "PROFS.craft.perks.2.1": "Mano de maestro",
+  "PROFS.craft.perks.2.2": "Las armas, armaduras y herramientas tienen más probabilidad de salir de buen grado."
  }
 }
