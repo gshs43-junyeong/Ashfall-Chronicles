@@ -431,9 +431,8 @@ export class Enemy extends Ent {
   declare floorY: (x: number, y: number) => number; declare hz: (h: Bag) => Bag; declare strike: (x: number, y: number, o: Bag, K: Bag, dm: number) => Bag;
   declare ceilY: (x: number, fy: number) => number | undefined; declare mvFx: (d: Bag) => string;
   declare sigStart: (d: Bag, p: Player, world: World, K: Bag) => any;
-  declare organAI: (dt: number, world: World, p: Player) => void; declare organSig: (d: Bag, p: Player, world: World, K: Bag) => any; declare organOpen: () => boolean;
-  declare organSweep: (s: number, low: boolean, tele: number, m: number, K: Bag) => void; declare organNote: (pi: number, p: Player, n: number, m: number) => void;
-  declare anchored: number; declare breathCd: number; declare breathH: Bag | null; declare reqOn: number;
+  declare organAI: (dt: number, world: World, p: Player) => void; declare organSig: (d: Bag, p: Player, world: World, K: Bag) => any; declare organOpen: () => boolean; declare organSweep: (s: number, low: boolean, tele: number, m: number, K: Bag) => void; declare organNote: (pi: number, p: Player, n: number, m: number) => void; declare anchored: number; declare breathCd: number; declare breathH: Bag | null; declare reqOn: number;
+  declare cocoonAI: (dt: number, world: World, p: Player) => void; declare cocoonHang: (dt: number, world: World) => void; declare cocoonBurst: () => void; declare cocoonSig: (d: Bag, p: Player, world: World, K: Bag) => any; declare cocoonMoveTick: (dt: number) => boolean; declare mothFly: (dt: number, world: World, p: Player) => void; declare mothLight: (world: World) => Bag; declare cocMoth: number; declare hangH: Bag | null; declare cocSwing: Bag | null; declare cocTh: number; declare cocDash: Bag | null; declare lightT: number; declare lightTgt: Bag | null;
   declare poolAI: (dt: number, world: World, p: Player, dx: number) => void; declare poolSig: (d: Bag, p: Player, world: World, K: Bag) => any;
   declare poolArm: (ox: number, tx: number, ty: number, rise: number, dm: number, K: Bag) => Bag; declare sigHide: (dt: number, world: World, r: any, toX: () => number, under: number, rise: number, onRise: () => void) => void;
   declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
@@ -920,7 +919,7 @@ export const IMPACT_FX: Bag = {
   fruit: { burst: 'hit', ring: '#e8783a', rr: 20, parts: 9 },
   gel: { burst: 'frost', ring: '#6fa8ff', rr: 22, parts: 8 },
   sludge: { burst: 'hit', ring: '#8a7a68', rr: 22, parts: 8 },
-  note: { burst: 'soul', ring: '#9ff0d0', rr: 24, parts: 8 },
+  note: { burst: 'soul', ring: '#9ff0d0', rr: 24, parts: 8 }, scale: { burst: 'hit', ring: '#ff8a40', rr: 20, parts: 7 },
   drop: { burst: 'frost', ring: '#7fc8e8', rr: 20, parts: 8 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
@@ -948,8 +947,9 @@ export const PROJ_STYLE: Bag = {
   web: { c: '#eef0f4', r: 6 },           // 거미줄 덩이 — 그림은 game/boss-tell-art
   fruit: { c: '#c8641e', r: 6 },         // 원숭이가 던지는 열매
   gel: { c: '#6fa8ff', r: 7 },           // 지킴이의 물방울 — 그림은 game/boss-tell-art
-  sludge: { c: '#6a625a', r: 8 },
-  note: { c: '#9ff0d0', r: 7, glow: 1 },        // 뼈 오르간의 관이 내는 음 — 그림은 game/boss-tell-art        // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
+  sludge: { c: '#6a625a', r: 8 },        // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
+  note: { c: '#9ff0d0', r: 7, glow: 1 }, // 뼈 오르간의 관이 내는 음 — 그림은 game/boss-tell-art
+  scale: { c: '#ffb070', r: 6, glow: 1 }, // 불나방의 인분 — 그림은 game/boss-tell-art
   drop: { c: '#7fc8e8', r: 6 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */

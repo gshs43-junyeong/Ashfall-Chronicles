@@ -113,6 +113,9 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   /* 뼈 오르간 — 관 울림은 관마다 음높이를 달리 부른다(sfxAt 의 rate) */
   organ_pipe: ['sk_mark', .62, .55], organ_breath: ['sk_smoke', .6, .7], organ_lift: ['swing', .5, .8], organ_sweep: ['sk_whirl', .62, .85],
   organ_scatter: ['mat_bone', .7, 1.3], organ_requiem: ['chapter', .5, .9],
+  /* 잿빛 고치 · 불나방 — 실이 삐걱이고, 날개는 바람 소리를 낮게 늘여 빌린다 */
+  cocoon_creak: ['door_open', .55, .7], cocoon_silk: ['sk_mark', 1.3, .4], cocoon_swing: ['sk_whirl', .55, .9],
+  moth_burst: ['mat_ember', .6, 1.3], moth_gust: ['swing', .45, .85], moth_scale: ['sk_smoke', .9, .6], moth_dive: ['sk_whirl', .8, .9],
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],

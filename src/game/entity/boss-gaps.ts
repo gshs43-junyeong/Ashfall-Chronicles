@@ -25,7 +25,7 @@ export const BossGaps: Bag & ThisType<Enemy> = {
     this.gapT -= dt;
     if (this.mvCd !== undefined && this.mvCd < this.gapT + 0.4) this.mvCd = this.gapT + 0.4;
     if (this.gapK !== 'stagger') return false;
-    if (this.def.wall) return true;                         // 벽에 박힌 몸은 비틀거려도 제자리(가라앉으면 땅에 묻힌다)
+    if (this.def.wall || (this.def.ai === 'b_cocoon' && !this.cocMoth)) return true;   // 벽에 박힌 · 매달린 몸은 비틀거려도 제자리(가라앉으면 땅에 묻힌다)
     const fly = this.flies();
     this.vx *= 0.8;
     if (fly) this.vy = this.vy * 0.85 + 22;                 // 나는 보스는 힘이 빠져 조금 가라앉는다

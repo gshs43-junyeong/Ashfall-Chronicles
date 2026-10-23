@@ -65,6 +65,7 @@ export const BossSigPart: Bag = {
       } return true;
       case 'oscatter': { const b = this.hzBoss(h); if (b && !h.fx0) { h.fx0 = 1; this.organScatterFx(b); } } return true;
       case 'opipes': case 'oreq': return true;
+      case 'chang': case 'chusk': case 'cswing': case 'cthread': case 'cgust': case 'cscale': case 'cdive': case 'cdark': return this.cocoonHz(h, dt, host, me);   // 잿빛 고치(game/boss-cocoon-fx)
       case 'pulse': case 'veil': case 'rod': case 'rail': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로
         h.fired = 1;

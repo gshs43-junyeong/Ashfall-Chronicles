@@ -5863,7 +5863,7 @@
     /* --- 소환 --- */
     sum_slime: { n: "잿물 등불", i: "🏮", type: "summon", boss: "king_slime", stack: 9, d: "지상에서 사용하면 잿물 군체가 불빛을 따라 기어 온다." },
     sum_bone: { n: "저주받은 두개골", i: "💀", type: "summon", boss: "bone_lord", stack: 9, d: "깊은 곳에서만 반응한다." },
-    sum_heart: { n: "고동치는 씨앗", i: "🫀", type: "summon", boss: "corrupt_heart", stack: 9, d: "부패한 땅에서 사용하라." },
+    sum_heart: { n: "고동치는 고치", i: "🫀", type: "summon", boss: "corrupt_heart", stack: 9, d: "부패한 땅에서 사용하라." },
     sum_frost: { n: "얼어붙은 왕관", i: "🔷", type: "summon", boss: "frost_witch", stack: 9, d: "서리 지대에서 사용하라." },
     sum_void: { n: "별의 눈물", i: "💧", type: "summon", boss: "void_king", stack: 9, d: "심연 앞에서만 열린다." },
     /* ================= 유적마다 그곳에서만 나오는 전리품 둘 ================= */
@@ -8461,15 +8461,15 @@
       drops: [["bone_frag", 1, 30, 45], ["sword_bone", 1, 1, 1], ["star_heart", 1, 1, 1], ["pick_iron", 0.6, 1, 1]]
     },
     corrupt_heart: {
-      n: "부패의 심장",
+      n: "잿빛 고치",
       hp: 3600,
       dmg: 48,
       def: 18,
-      spd: 105,
-      ai: "b_heart",
-      w: 108,
-      h: 108,
-      c: "#7a3f9c",
+      spd: 150,
+      ai: "b_cocoon",
+      w: 104,
+      h: 262,
+      c: "#8a847c",
       xp: 2e3,
       gold: 900,
       boss: 1,
@@ -9146,7 +9146,7 @@
     /* --- 세션 1 --- */
     king_slime: { mat: "sludge", n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: "metal", n2: 34, at: 0.22, shake: 20 },
     bone_lord: { mat: "bone", n: 60, spd: 1.7, life: 1.6, mat2: "void", n2: 20, at: 0.26, shake: 20 },
-    corrupt_heart: { mat: "flesh", n: 54, spd: 1.1, life: 1.3, mat2: "void", n2: 40, at: 0.2, shake: 22 },
+    corrupt_heart: { mat: "ember", n: 60, spd: 1.2, vy: -40, life: 1.6, mat2: "dirt", n2: 30, at: 0.2, shake: 22 },
     frost_witch: { mat: "ice", n: 76, spd: 1.6, life: 1.4, mat2: "glass", n2: 26, at: 0.18, shake: 20 },
     void_king: {
       mat: "void",
@@ -9207,7 +9207,7 @@
     hepha: { k: "rage", t: 1.8, cd: 20, dur: 9, v: 0.35, brk: 0.04, c: "#ff9a4a", s: "sk_fire", n: "화로를 올린다", m: "달아오름" },
     restorer: { k: "mend", t: 2, cd: 22, v: 0.03, brk: 0.035, c: "#a8c8e8", s: "sk_heal", n: "되돌리려 한다" }
   };
-  var SURGE_FLY = { b_organ: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+  var SURGE_FLY = { b_organ: 1, b_cocoon: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
   var SKILLS = {
     /* ===== 검투사 — 붙어서 버티고 밀어붙인다 ===== */
     s_cleave: {
@@ -9829,7 +9829,7 @@
   var BOSS_LINES = {
     king_slime: { 1: "웅덩이가 끓는다 — 투구 밑에서 무언가 뒤척인다.", 2: "투구에 금이 간다. 등불이 붉게 탄다." },
     bone_lord: { 1: "갈비가 숨을 들이쉰다 — 관마다 바람이 찬다.", 2: "부러진 관이 운다. 음이 어긋난다." },
-    corrupt_heart: { 1: "뿌리가 바닥을 짚는다.", 2: "제단만이 아직 뛰고 있다." },
+    corrupt_heart: { 1: "고치가 갈라진다 — 불을 품은 날개가 펴진다.", 2: "찢긴 날개가 더 밝게 탄다. 빛이 있는 곳으로." },
     frost_witch: { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
     void_king: { 1: "나선이 되감긴다.", 2: "공허가 방향을 바꾼다." },
     storm_warden: { 1: "구름이 낮아진다.", 2: "내리꽂을 때만, 닿는다." },
@@ -12705,7 +12705,7 @@
       sub: "제 3 장",
       art: "chapter_3_corrupt_forest",
       line: "굶주림을 꿈꾼 것",
-      intro: "세 번째 조각은 동쪽 숲 한가운데 떨어져 굶주림을 꿈꿨다.\n그래서 숲이 먹기 시작했다. 나무가 짐승을 먹고, 짐승이 흙을 먹고,\n흙이 다시 나무를 먹는다. 멈추지 않는다. 배가 부르지 않으니까.\n\n한가운데에 심장이 하나 뛰고 있다. 그게 조각을 삼킨 자리다.",
+      intro: "세 번째 조각은 동쪽 숲 한가운데 떨어져 굶주림을 꿈꿨다.\n그래서 숲이 먹기 시작했다. 나무가 짐승을 먹고, 짐승이 흙을 먹고,\n흙이 다시 나무를 먹는다. 멈추지 않는다. 배가 부르지 않으니까.\n\n한가운데 나무 천장에 잿빛 고치가 하나 매달려 있다. 속에서 불빛이 숨 쉰다. 그게 조각을 삼킨 자리다.",
       basics: [
         { type: "collect", item: "corrupt_ess", n: 14, t: "흙까지 물든 것을 걷어 낸다", task: "부패의 정수 14개", verb: "gather" },
         { type: "kill", target: "shadoweye", n: 8, t: "보고 있는 것을 먼저 없앤다", task: "그림자 눈 8마리", verb: "kill" },
@@ -12714,9 +12714,9 @@
       ],
       needBasics: 2,
       require: ["gather"],
-      goal: { type: "boss", target: "corrupt_heart", t: "굶주림의 한가운데", task: "부패의 심장 토벌", verb: "boss" },
+      goal: { type: "boss", target: "corrupt_heart", t: "굶주림의 한가운데", task: "잿빛 고치 토벌", verb: "boss" },
       rw: { xp: 4e3, gold: 1400, items: [["mythril_ore", 20], ["potion_hp", 5]] },
-      outro: '심장이 멈추자 숲이 처음으로 숨을 뱉었다. 들이쉬는 게 아니라, 뱉는 것을.\n\n미라: "굶주림은 병이 아니야. 그냥, 아무도 먹여주지 않은 거지."'
+      outro: '나방의 불이 꺼지자 숲이 처음으로 숨을 뱉었다. 들이쉬는 게 아니라, 뱉는 것을.\n\n미라: "굶주림은 병이 아니야. 그냥, 아무도 먹여주지 않은 거지."'
     },
     {
       id: 4,
@@ -13276,7 +13276,7 @@
         "묘실의 조각은 제 꿈을 꾸지 않았어. 그 아래 잠든 것들의 꿈을 대신 꿨지.",
         "그러니 그건 악의가 아니야. 그냥… 잘못 꾼 꿈이야."
       ],
-      ["숲의 조각은 굶주림을 꿈꿨어. 심장을 멈춰야 끝나."],
+      ["숲의 조각은 굶주림을 꿈꿨어. 고치 속에서 날개가 자라기 전에 끝내야 해."],
       [
         "실비아는 내 스승이야. 조각을 재우지 않고 삼십 년을 손에 쥐고 있었어.",
         "그게 어떤 건지 너는 곧 알게 될 거야. …부탁이 있어. 이야기라도 들어 줘."
@@ -14626,18 +14626,18 @@
       ult: { k: "sig", sig: "requiem", n: "장송곡", tele: 1, m: 0.6 }
     },
     corrupt_heart: {
-      c: "#b07aff",
-      every: 6.5,
+      c: "#ff8a40",
+      every: 6,
       moves: [
-        { k: "ring", n: "고동 파문", tele: 0.6, times: 3, cnt: 22, gap: 4, spd: 230, every: 0.55, proj: "dark", m: 0.6 },
-        { k: "march", n: "혈관 가시", tele: 0.6, cnt: 7, gap: 54, every: 0.13, h: 90, fx: "flesh", m: 0.9 },
-        { k: "vortex", n: "흡혈 소용돌이", tele: 0.7, life: 2.6, r: 300, pull: 260, burst: 120, fx: "flesh", m: 1 },
-        { k: "sig", sig: "beat", n: "박동", tele: 0.7, pose: 0, m: 1 },
-        { k: "heal", n: "흡혈 박동", tele: 0.6, dur: 3, v: 0.08, brk: 0.035, fx: "flesh", ph: 1, pw: [0, 1, 1.4] },
-        { k: "beam", n: "핏줄 광선", tele: 0.8, cnt: 2, spread: 3.14, dur: 2.2, w: 24, len: 700, sweep: 1.6, fx: "void", m: 0.35, ph: 1, pw: [0, 1, 1] },
-        { k: "homing", n: "검은 피 방울", tele: 0.6, cnt: 5, spd: 200, turn: 2, proj: "dark", m: 0.5, ph: 2, pw: [0, 0, 1.4] }
+        { k: "sig", sig: "pendulum", n: "시계추", tele: 0.4, m: 1.1, pw: [1.4, 0, 0] },
+        { k: "sig", sig: "silk", n: "실 늘어뜨리기", tele: 0.5, cnt: 4, gap: 150, m: 0.9, pw: [1, 0, 0] },
+        { k: "rain", n: "타는 재 털기", tele: 0.6, form: "scatter", cnt: 6, spread: 440, delay: 0.95, r: 40, shape: "circle", fx: "fire", m: 0.8, pw: [1, 0, 0] },
+        { k: "sig", sig: "wingwind", n: "날개 바람", tele: 0.5, beats: 3, fan: 7, m: 0.8, ph: 1, pw: [0, 1.2, 1] },
+        { k: "sig", sig: "dust", n: "인분 가루", tele: 0.5, cnt: 6, span: 620, m: 0.8, ph: 1, pw: [0, 1, 1] },
+        { k: "sig", sig: "lightdive", n: "불나방", tele: 0.4, cnt: 1, m: 1.1, ph: 1, pw: [0, 1.1, 1.3] },
+        { k: "sig", sig: "wingwind", n: "불꽃 날개짓", tele: 0.4, beats: 5, fan: 9, push: 640, m: 0.7, ph: 2, pw: [0, 0, 1.2] }
       ],
-      ult: { k: "ring", n: "터지는 심장", tele: 1, times: 5, cnt: 28, gap: 5, spd: 260, every: 0.42, proj: "dark", zones: 1, m: 0.6 }
+      ult: { k: "sig", sig: "lightdive", n: "빛을 쫓는다", tele: 1, cnt: 4, m: 1 }
     },
     frost_witch: {
       c: "#a8e4ff",
@@ -34220,6 +34220,7 @@
     gel: { burst: "frost", ring: "#6fa8ff", rr: 22, parts: 8 },
     sludge: { burst: "hit", ring: "#8a7a68", rr: 22, parts: 8 },
     note: { burst: "soul", ring: "#9ff0d0", rr: 24, parts: 8 },
+    scale: { burst: "hit", ring: "#ff8a40", rr: 20, parts: 7 },
     drop: { burst: "frost", ring: "#7fc8e8", rr: 20, parts: 8 }
     /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
   };
@@ -34255,8 +34256,11 @@
     gel: { c: "#6fa8ff", r: 7 },
     // 지킴이의 물방울 — 그림은 game/boss-tell-art
     sludge: { c: "#6a625a", r: 8 },
+    // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
     note: { c: "#9ff0d0", r: 7, glow: 1 },
-    // 뼈 오르간의 관이 내는 음 — 그림은 game/boss-tell-art        // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
+    // 뼈 오르간의 관이 내는 음 — 그림은 game/boss-tell-art
+    scale: { c: "#ffb070", r: 6, glow: 1 },
+    // 불나방의 인분 — 그림은 game/boss-tell-art
     drop: { c: "#7fc8e8", r: 6 }
   };
   var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1, fruit: 1 };
@@ -36246,10 +36250,15 @@
         case "b_pool":
           app.poolPhaseFx(this);
           break;
+        // 투구가 깨지는 순간(game/boss-pool-fx)
         case "b_organ":
           app.organPhaseFx(this);
           break;
-        // 갈비 · 관이 부러지는 순간(game/boss-organ-fx)                     // 투구가 깨지는 순간(game/boss-pool-fx)
+        // 갈비 · 관이 부러지는 순간(game/boss-organ-fx)
+        case "b_cocoon":
+          app.cocoonPhaseFx(this, ph);
+          break;
+        // 고치가 터진다 · 날개가 찢긴다(game/boss-cocoon-fx)
         case "b_slime":
           if (ph >= lock) {
             this.guard = 1;
@@ -36975,6 +36984,7 @@
       if (this.phaseInv > 0) this.phaseInv -= dt;
       this.tickWeak(dt, world, p);
       this.formTick(dt, p);
+      if (AI === "b_cocoon" && !this.cocoonMoveTick(dt) && !this.cocMoth) this.cocoonHang(dt, world);
       if (this.tickGap(dt, world)) {
         this.stateT += dt;
         return;
@@ -36987,7 +36997,9 @@
         this.stateT += dt;
         return;
       }
-      if (AI === "b_organ") this.organAI(dt, world, p);
+      if (AI === "b_cocoon") {
+        if (this.cocMoth) this.cocoonAI(dt, world, p);
+      } else if (AI === "b_organ") this.organAI(dt, world, p);
       else if (AI === "b_pool") this.poolAI(dt, world, p, dx);
       else if (AI === "b_slime") {
         if (this.onGround) {
@@ -38047,6 +38059,13 @@
         case "requiem":
           return this.organSig(d, p, world, K);
         // 뼈 오르간(entity/boss-organ)
+        case "pendulum":
+        case "silk":
+        case "wingwind":
+        case "dust":
+        case "lightdive":
+          return this.cocoonSig(d, p, world, K);
+        // 잿빛 고치(entity/boss-cocoon)
         case "beat": {
           this.hz({ k: "pulse", life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
           for (let b = 0; b < 3; b++) app.after(b * 0.85, () => {
@@ -38605,6 +38624,247 @@
   };
   mixin(Enemy.prototype, BossOrgan, true);
 
+  // src/game/entity/boss-cocoon.ts
+  var boss_cocoon_exports = {};
+  __export(boss_cocoon_exports, {
+    BossCocoon: () => BossCocoon,
+    COC: () => COC,
+    TIE_OFF: () => TIE_OFF,
+    hangAt: () => hangAt,
+    swingTh: () => swingTh
+  });
+  var cid = 0;
+  var nid4 = () => 4e6 + (cid = cid % 1e6 + 1);
+  var smooth2 = (u) => {
+    const v = u < 0 ? 0 : u > 1 ? 1 : u;
+    return v * v * (3 - 2 * v);
+  };
+  var COC = {
+    FW: 184,
+    FH: 320,
+    TIE: 12,
+    CX: 92,
+    CY: 166,
+    W: 104,
+    H: 262,
+    MW: 170,
+    MH: 104,
+    MOTH_W: 400,
+    MOTH_H: 320
+  };
+  var TIE_OFF = COC.CY - COC.TIE;
+  function swingTh(h) {
+    const t = h.t, s = h.s, A = h.amp;
+    if (t < h.tele) return -s * 0.24 * smooth2(t / h.tele);
+    const u = (t - h.tele) / h.dur;
+    const th = (v) => s * A * Math.sin(Math.PI * v * 1.5) * (1 - 0.55 * v) - s * 0.24 * (1 - v) ** 3;
+    if (u <= 1) return th(u);
+    return th(1) * (1 - smooth2((t - h.tele - h.dur) / 0.6));
+  }
+  function hangAt(ax, ay, R, th) {
+    return [ax + Math.sin(th) * R, ay + Math.cos(th) * R];
+  }
+  var BossCocoon = {
+    /** 몸놀림 — 고치(매달려 흔들림) · 나방(빛을 쫓아 떠 있음) */
+    cocoonAI(dt, world, p) {
+      if (!this.cocMoth) return this.cocoonHang(dt, world);
+      this.mothFly(dt, world, p);
+      this.move(dt, world, { gravMul: 0 });
+    },
+    /** 고치 — 처음에 매달 자리를 찾고, 그다음은 시계추 각으로 자리를 매긴다 */
+    cocoonHang(dt, world) {
+      this.vx = this.vy = 0;
+      if (!this.hangH) {
+        const tx = Math.floor(this.cx / TS);
+        let fy = this.y + this.h;
+        for (let ty = Math.floor(this.cy / TS); ty < Math.floor(this.cy / TS) + 40; ty++) if (world.solid(tx, ty) && !world.solid(tx, ty - 1)) {
+          fy = ty * TS;
+          break;
+        }
+        const cy = fy - 64 - COC.H / 2;
+        let ay = cy - TIE_OFF - 260;
+        for (let ty = Math.floor((cy - TIE_OFF - 30) / TS); ty > Math.floor((cy - TIE_OFF) / TS) - 30; ty--) if (world.solid(tx, ty)) {
+          ay = (ty + 1) * TS;
+          break;
+        }
+        const R = Math.max(TIE_OFF + 40, cy - ay);
+        this.hangH = this.hz({ k: "chang", id: nid4(), ref: this, nid: this.nid, ax: this.cx, ay, R, life: 1e9, c: "#ff8a40" });
+      }
+      const H = this.hangH, sw = this.cocSwing && this.cocSwing.t < this.cocSwing.life ? this.cocSwing : null;
+      this.cocTh = sw ? swingTh(sw) : Math.sin((app.time || 0) * 0.8) * 0.06;
+      const [x, y] = hangAt(H.ax, H.ay, H.R, this.cocTh);
+      this.x = x - this.w / 2;
+      this.y = y - this.h / 2;
+    },
+    /** 막 넘김 — 고치가 갈라지고 나방이 난다(빈 허물은 실에 남는다) */
+    cocoonBurst() {
+      if (this.cocMoth) return;
+      this.cocMoth = 1;
+      const H = this.hangH;
+      if (H) {
+        H.life = H.t;
+        this.hz({ k: "chusk", id: nid4(), ref: this, nid: this.nid, ax: H.ax, ay: H.ay, R: H.R, life: 1e9, c: "#ff8a40" });
+      }
+      const cx = this.cx, cy = this.cy;
+      this.w = COC.MW;
+      this.h = COC.MH;
+      this.x = cx - this.w / 2;
+      this.y = cy - this.h / 2;
+      this.vx = 0;
+      this.vy = -120;
+      app.cocoonBurstFx && app.cocoonBurstFx(cx, cy);
+      app.sfxAt && app.sfxAt("moth_burst", cx / TS, cy / TS);
+    },
+    /** 빛 — 바닥에 놓인 횃불(미끼) > 횃불을 든 사람 > 가까운 사람. 0.5초마다 다시 잰다 */
+    mothLight(world) {
+      if (this.lightT > 0 && this.lightTgt) return this.lightTgt;
+      this.lightT = 0.5;
+      const tx0 = Math.floor(this.cx / TS), ty0 = Math.floor(this.cy / TS);
+      let best = null, bd = 1e18;
+      for (let ty = ty0 - 14; ty <= ty0 + 16; ty++) for (let tx = tx0 - 30; tx <= tx0 + 30; tx++) {
+        if (world.get(tx, ty) !== T.TORCH) continue;
+        const x = tx * TS + TS / 2, y = ty * TS + TS / 2, d = (x - this.cx) ** 2 + (y - this.cy) ** 2;
+        if (d < bd) {
+          bd = d;
+          best = { x, y, kind: "torch", tx, ty };
+        }
+      }
+      if (!best) for (const q of app.players) {
+        if (q.dead || q.hp <= 0) continue;
+        let it = null;
+        try {
+          it = q.held && q.held();
+        } catch (e) {
+          it = null;
+        }
+        const lit = it && it.id === "torch", d = (q.cx - this.cx) ** 2 + (q.cy - this.cy) ** 2 - (lit ? 1e12 : 0);
+        if (d < bd) {
+          bd = d;
+          best = { x: q.cx, y: q.cy, kind: lit ? "held" : "near", q };
+        }
+      }
+      this.lightTgt = best || { x: this.cx, y: this.cy, kind: "none" };
+      return this.lightTgt;
+    },
+    /** 나방 — 빛 위쪽에 떠서 맴돈다(날갯짓에 맞춰 오르내림) */
+    mothFly(dt, world, p) {
+      this.lightT = (this.lightT || 0) - dt;
+      const L = this.mothLight(world), T02 = app.time || 0;
+      const gx = L.x + Math.sin(T02 * 0.7) * 150, gy = L.y - 170 + Math.sin(T02 * 3.1) * 14;
+      const k = this.spd * (1 + this.pf * 0.5);
+      const dx = gx - this.cx, dy = gy - this.cy, d = Math.hypot(dx, dy) || 1;
+      this.vx += (dx / d * Math.min(k, d * 2) - this.vx) * Math.min(1, dt * 2.2);
+      this.vy += (dy / d * Math.min(k, d * 2) - this.vy) * Math.min(1, dt * 2.2);
+      this.facing = this.vx < 0 ? -1 : 1;
+      void p;
+    },
+    /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
+    cocoonSig(d, p, world, K) {
+      const m = d.m ?? 1, E = this;
+      switch (d.sig) {
+        case "pendulum": {
+          const s = Math.sign(p.cx - this.cx) || 1, tele = d.tele2 || 0.8, dur = 1.5;
+          this.cocSwing = this.hz({ k: "cswing", id: nid4(), ref: this, nid: this.nid, s, amp: d.amp || 0.95, tele, dur, life: tele + dur + 0.6, dmg: this.dmg * m, c: K.c });
+          app.sfxAt && app.sfxAt("cocoon_creak", this.cx / TS, this.cy / TS);
+          return { busy: tele + dur + 0.4 };
+        }
+        case "silk": {
+          const n = d.cnt || 4, gap = d.gap || 150, off = (Math.random() - 0.5) * gap * 0.6;
+          for (let i = 0; i < n; i++) {
+            const x = p.cx + off + (i - (n - 1) / 2) * gap, fy = app.hzFloor(x, p.y), top = this.ceilY(x, fy) ?? fy - 460;
+            app.after(i * 0.12, () => {
+              if (!E.dead) E.hz({ k: "cthread", id: nid4(), ref: E, nid: E.nid, x, top, y: fy - 14, tele: 0.7, drop: 0.35, life: d.life || 7, dmg: E.dmg * m * 0.7, c: K.c, sd: Math.random() * 99 });
+            });
+          }
+          app.sfxAt && app.sfxAt("cocoon_silk", this.cx / TS, this.cy / TS);
+          return { busy: 1 };
+        }
+        case "wingwind": {
+          const beats = d.beats || 3, every = 0.75;
+          this.hz({ k: "cgust", id: nid4(), ref: this, nid: this.nid, x: this.cx, y: this.cy, follow: 1, beats, every, tele: 0.6, push: d.push || 520, life: 0.6 + beats * every + 0.3, c: K.c });
+          for (let b = 0; b < beats; b++) app.after(0.6 + b * every, () => {
+            if (E.dead) return;
+            const n = d.fan || 7, a0 = Math.atan2(p.cy - E.cy, p.cx - E.cx);
+            for (let i = 0; i < n; i++) {
+              const a = a0 + (i - (n - 1) / 2) * 0.17, sp = 220 + i % 2 * 40;
+              const pr = new Proj(E.cx, E.cy + 10, Math.cos(a) * sp, Math.sin(a) * sp, E.dmg * m * 0.45, "enemy", "scale");
+              pr.life = 3;
+              app.projs.push(pr);
+            }
+            app.sfxAt && app.sfxAt("moth_gust", E.cx / TS, E.cy / TS);
+          });
+          return { busy: 0.6 + beats * every + 0.2 };
+        }
+        case "dust": {
+          const s = Math.sign(p.cx - this.cx) || 1, n = d.cnt || 6, span = d.span || 620, x0 = p.cx - s * span / 2;
+          for (let i = 0; i < n; i++) {
+            const x = x0 + s * (i + 0.5) * span / n + (Math.random() - 0.5) * 30, fy = app.hzFloor(x, p.y);
+            app.after(i * 0.14, () => {
+              if (!E.dead) E.hz({ k: "cscale", id: nid4(), ref: E, nid: E.nid, x, y: fy, sy: E.cy, w: span / n * 0.9, delay: 0.9, life: 0.9 + (d.life || 4.5), dmg: E.dmg * m * 0.35, c: K.c, sd: Math.random() * 99 });
+            });
+          }
+          this.cocDash = { tx: x0 + s * span, ty: this.cy - 30, t: 0, dur: n * 0.14 + 0.4 };
+          app.sfxAt && app.sfxAt("moth_scale", this.cx / TS, this.cy / TS);
+          return { busy: n * 0.14 + 0.9, tick: (dt) => this.move(dt, world, { gravMul: 0 }) };
+        }
+        case "lightdive": {
+          const n = d.cnt || 1, tele = d.tele2 || 0.75, dur = 0.42, gap = tele + dur + 0.25;
+          for (let i = 0; i < n; i++) app.after(i * gap, () => {
+            if (E.dead) return;
+            E.lightT = 0;
+            const L = E.mothLight(world);
+            const dx = L.x - E.cx, dy = L.y - E.cy, dd = Math.hypot(dx, dy) || 1, over = 160;
+            E.hz({
+              k: "cdive",
+              id: nid4(),
+              ref: E,
+              nid: E.nid,
+              x0: E.cx,
+              y0: E.cy,
+              x1: L.x + dx / dd * over,
+              y1: L.y + dy / dd * over,
+              lx: L.x,
+              ly: L.y,
+              bait: L.kind === "torch" ? 1 : 0,
+              tele,
+              dur,
+              life: tele + dur + 0.3,
+              dmg: E.dmg * m,
+              c: K.c
+            });
+            app.sfxAt && app.sfxAt("moth_dive", E.cx / TS, E.cy / TS);
+          });
+          if (n > 1) this.hz({ k: "cdark", id: nid4(), ref: this, nid: this.nid, life: n * gap + 0.4, c: K.c });
+          return { busy: n * gap + 0.2 };
+        }
+      }
+      return { busy: 0.3 };
+    },
+    /** 돌진 · 가로지르기 중에는 자리를 기술이 맡는다(호스트) — 몸놀림보다 먼저 */
+    cocoonMoveTick(dt) {
+      const D = (app.bhz || []).find((h) => h.k === "cdive" && h.ref === this && h.t >= h.tele && h.t < h.tele + h.dur);
+      if (D) {
+        const u = smooth2((D.t - D.tele) / D.dur);
+        this.x = D.x0 + (D.x1 - D.x0) * u - this.w / 2;
+        this.y = D.y0 + (D.y1 - D.y0) * u - this.h / 2;
+        this.vx = this.vy = 0;
+        this.facing = D.x1 < D.x0 ? -1 : 1;
+        return true;
+      }
+      const S = this.cocDash;
+      if (S && S.t < S.dur) {
+        S.t += dt;
+        const k = Math.min(1, dt * 3.5);
+        this.vx += ((S.tx - this.cx) / Math.max(0.2, S.dur - S.t + 0.2) - this.vx) * k;
+        this.vy += (S.ty - this.cy - this.vy) * k;
+        this.facing = this.vx < 0 ? -1 : 1;
+        return true;
+      }
+      return false;
+    }
+  };
+  mixin(Enemy.prototype, BossCocoon, true);
+
   // src/game/entity/boss-gaps.ts
   var boss_gaps_exports = {};
   __export(boss_gaps_exports, {
@@ -38633,7 +38893,7 @@
       this.gapT -= dt;
       if (this.mvCd !== void 0 && this.mvCd < this.gapT + 0.4) this.mvCd = this.gapT + 0.4;
       if (this.gapK !== "stagger") return false;
-      if (this.def.wall) return true;
+      if (this.def.wall || this.def.ai === "b_cocoon" && !this.cocMoth) return true;
       const fly = this.flies();
       this.vx *= 0.8;
       if (fly) this.vy = this.vy * 0.85 + 22;
@@ -47276,11 +47536,11 @@
         hopper(c, 10, by - 52, binW, 40);
         ins.slice(0, 3).forEach((id, i) => pile(c, id, m.in[id], 14 + i * 12 - (ins.length > 1 ? 6 : 0), by - 50 + i * 3, 16));
         belt(c, lx0 - 8, hx + 2, by, run, t);
-        const nid4 = inId || fuelId;
-        if (nid4 && run && p < IN) {
+        const nid5 = inId || fuelId;
+        if (nid5 && run && p < IN) {
           const k2 = ease(p / IN);
-          drawIc(c, nid4, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
-        } else if (nid4) drawIc(c, nid4, lx0 - 4, by - 15, 16);
+          drawIc(c, nid5, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
+        } else if (nid5) drawIc(c, nid5, lx0 - 4, by - 15, 16);
       } else if (kind === "drill" && outId) {
         c.fillStyle = "#3a2c20";
         c.fillRect(10, by - 30, binW, 50);
@@ -48267,6 +48527,14 @@
     organ_sweep: ["sk_whirl", 0.62, 0.85],
     organ_scatter: ["mat_bone", 0.7, 1.3],
     organ_requiem: ["chapter", 0.5, 0.9],
+    /* 잿빛 고치 · 불나방 — 실이 삐걱이고, 날개는 바람 소리를 낮게 늘여 빌린다 */
+    cocoon_creak: ["door_open", 0.55, 0.7],
+    cocoon_silk: ["sk_mark", 1.3, 0.4],
+    cocoon_swing: ["sk_whirl", 0.55, 0.9],
+    moth_burst: ["mat_ember", 0.6, 1.3],
+    moth_gust: ["swing", 0.45, 0.85],
+    moth_scale: ["sk_smoke", 0.9, 0.6],
+    moth_dive: ["sk_whirl", 0.8, 0.9],
     /* ★ 몹·보스가 쏘는 소리. */
     efire_phys: ["bow", 0.82, 0.5],
     efire_magic: ["magic", 0.8, 0.5],
@@ -54598,12 +54866,12 @@
             const [cx, cy] = st.pop();
             group.push([cx, cy]);
             for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-              const nx = cx + dx, ny = cy + dy, nid4 = w.get(nx, ny);
-              if (nid4 === T.WOOD) {
+              const nx = cx + dx, ny = cy + dy, nid5 = w.get(nx, ny);
+              if (nid5 === T.WOOD) {
                 touching = true;
                 continue;
               }
-              if (!leafy(nid4)) continue;
+              if (!leafy(nid5)) continue;
               const k = ny * WW2 + nx;
               if (seen.has(k)) continue;
               seen.add(k);
@@ -60780,6 +61048,11 @@
     pipes: ["ring", ""],
     scatter: ["blink", ""],
     requiem: ["ring", ""],
+    pendulum: ["leap", ""],
+    silk: ["rain", ""],
+    wingwind: ["vortex", ""],
+    dust: ["rain", "fire"],
+    lightdive: ["beam", "fire"],
     beat: ["ring", ""],
     mirrors: ["clones", ""],
     veil: ["vortex", "void"],
@@ -61275,6 +61548,30 @@
         c.restore();
         return true;
       }
+      case "scale":
+        {
+          const flip = Math.cos(T2 * 14 + sd);
+          hzGlow(c, x, y, 13, "#ff8a40", 0.5);
+          c.save();
+          c.translate(x, y);
+          c.rotate(a + T2 * 3);
+          c.scale(1, 0.35 + 0.65 * Math.abs(flip));
+          c.fillStyle = flip > 0 ? "#a0948a" : "#6e6258";
+          c.strokeStyle = "#ff9a50";
+          c.lineWidth = 1.3;
+          c.beginPath();
+          c.moveTo(-6, 0);
+          c.quadraticCurveTo(-2, -5, 5, -3);
+          c.quadraticCurveTo(7, 0, 5, 3);
+          c.quadraticCurveTo(-2, 5, -6, 0);
+          c.closePath();
+          c.fill();
+          c.stroke();
+          c.restore();
+          c.fillStyle = "rgba(255,200,140,.7)";
+          c.fillRect(x - Math.cos(a) * 9, y - Math.sin(a) * 9, 2, 2);
+        }
+        break;
       case "note": {
         const wob = Math.sin(T2 * 12 + sd) * 0.25;
         hzGlow(c, x, y, 16, "#9ff0d0", 0.55);
@@ -61373,7 +61670,7 @@
   var PART = 120, SWATCH = 6, JUNK = [7, 8, 9];
   var clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
   var easeOut2 = (u) => 1 - (1 - u) * (1 - u);
-  var smooth2 = (u) => u * u * (3 - 2 * u);
+  var smooth3 = (u) => u * u * (3 - 2 * u);
   var pats = /* @__PURE__ */ new WeakMap();
   function sludgePat(c) {
     const im = Sprites.want("king_slime_parts");
@@ -61508,7 +61805,7 @@
       } else {
         const q = (r - 0.2) / 0.8;
         lam = Math.min(1, 0.12 + 0.88 * easeOut2(Math.min(1, q / 0.65)));
-        pose = lerpPose(U, W, smooth2(q));
+        pose = lerpPose(U, W, smooth3(q));
         if (q > 0.75) {
           const tr2 = Math.sin(T2 * 40 + h.sd) * 2.5;
           pose = [pose[0], pose[1], [pose[2][0] + tr2, pose[2][1] - tr2 * 0.5]];
@@ -62057,6 +62354,470 @@
   };
   mixin(Game.prototype, BossOrganFx, true);
 
+  // src/game/game/boss-cocoon-art.ts
+  var boss_cocoon_art_exports = {};
+  __export(boss_cocoon_art_exports, {
+    BossCocoonArt: () => BossCocoonArt,
+    PUPA_H: () => PUPA_H,
+    threadPupa: () => threadPupa
+  });
+  var SILK = "#b4ada2", FIRE = "#ff8a40";
+  function hzOf2(g, e, k) {
+    for (const h of g.bhz || []) if (h.k === k && g.hzBoss(h) === e) return h;
+    return null;
+  }
+  var PUPA_H = 69;
+  var threadPupa = (h, k) => h.top + PUPA_H + (h.y - h.top - PUPA_H) * (0.15 + 0.85 * k);
+  var isCoc = (e) => e && !e.dead && e.def && e.def.ai === "b_cocoon";
+  function thread(c, x0, y0, x1, y1, sag, a = 1) {
+    const mx = (x0 + x1) / 2 + sag, my = (y0 + y1) / 2;
+    c.globalAlpha = a;
+    c.lineCap = "round";
+    c.strokeStyle = "#4a4540";
+    c.lineWidth = 4;
+    c.beginPath();
+    c.moveTo(x0, y0);
+    c.quadraticCurveTo(mx, my, x1, y1);
+    c.stroke();
+    c.strokeStyle = SILK;
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(x0 - 0.5, y0);
+    c.quadraticCurveTo(mx - 0.5, my, x1 - 0.5, y1);
+    c.stroke();
+    c.globalAlpha = 1;
+  }
+  function knot(c, x, y) {
+    c.fillStyle = "#6e6860";
+    c.beginPath();
+    c.ellipse(x, y + 2, 16, 6, 0, 0, TAU);
+    c.fill();
+    c.strokeStyle = "rgba(200,192,180,.7)";
+    c.lineWidth = 1;
+    for (let i = -2; i <= 2; i++) {
+      c.beginPath();
+      c.moveTo(x + i * 6, y);
+      c.quadraticCurveTo(x + i * 3, y + 8, x, y + 12);
+      c.stroke();
+    }
+  }
+  var BossCocoonArt = {
+    /** 고치 · 나방 몸(actors · drawEnemy 에서) */
+    drawCocoon(c, e, sx, sy) {
+      const camX = e.cx - sx - e.w / 2, camY = e.cy - sy - e.h / 2, T2 = this.time || 0;
+      if (!e.cocMoth && !this.cocMothSeen(e)) {
+        const im2 = Sprites.want("corrupt_heart");
+        const H = hzOf2(this, e, "chang");
+        const ax = H ? H.ax : e.cx, ay = H ? H.ay : e.cy - TIE_OFF - 260;
+        const th = Math.atan2(e.cx - ax, e.cy - ay);
+        const tx = e.cx - Math.sin(th) * TIE_OFF, ty = e.cy - Math.cos(th) * TIE_OFF;
+        thread(c, ax - camX, ay - camY, tx - camX, ty - camY, -th * 30);
+        knot(c, ax - camX, ay - camY);
+        if (!im2) return;
+        const hpr = e.hp / e.maxHp, st = hpr > 0.9 ? 0 : hpr > 0.78 ? 1 : 2;
+        const fr2 = st * 2 + (Math.sin(T2 * (2 + st)) > 0.3 ? 1 : 0);
+        const shiver = st === 2 ? Math.sin(T2 * 40) * 8e-3 : 0;
+        c.save();
+        c.translate(tx - camX, ty - camY);
+        c.rotate(-th + shiver);
+        c.imageSmoothingEnabled = false;
+        c.drawImage(im2, fr2 * COC.FW, 0, COC.FW, COC.FH, -COC.CX, -COC.TIE, COC.FW, COC.FH);
+        if (e.flash > 0) {
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = Math.min(0.5, e.flash * 4);
+          c.drawImage(im2, fr2 * COC.FW, 0, COC.FW, COC.FH, -COC.CX, -COC.TIE, COC.FW, COC.FH);
+        }
+        c.restore();
+        return;
+      }
+      const im = Sprites.want("corrupt_heart_parts");
+      if (!im) return;
+      const torn = e.phase >= 2, D = hzOf2(this, e, "cdive");
+      const diving = D && D.t >= D.tele * 0.6 && D.t < D.tele + D.dur;
+      const rate = torn ? 15 : 11, fr = diving ? 13 : (torn ? 6 : 0) + Math.floor(T2 * rate) % 6;
+      const tilt = diving ? Math.atan2(D.y1 - D.y0, D.x1 - D.x0) + Math.PI / 2 : Math.max(-0.25, Math.min(0.25, e.vx * 12e-4));
+      const x = e.cx - camX, y = e.cy - camY;
+      c.save();
+      c.translate(x, y);
+      c.rotate(diving ? tilt : tilt);
+      c.imageSmoothingEnabled = false;
+      c.drawImage(im, fr * COC.MOTH_W, 0, COC.MOTH_W, COC.MOTH_H, -COC.MOTH_W / 2, -COC.MOTH_H / 2, COC.MOTH_W, COC.MOTH_H);
+      if (e.flash > 0) {
+        c.globalCompositeOperation = "lighter";
+        c.globalAlpha = Math.min(0.5, e.flash * 4);
+        c.drawImage(im, fr * COC.MOTH_W, 0, COC.MOTH_W, COC.MOTH_H, -COC.MOTH_W / 2, -COC.MOTH_H / 2, COC.MOTH_W, COC.MOTH_H);
+      }
+      c.restore();
+    },
+    /** 참가자 — 고치가 터진 것은 허물 위험 지대로 안다(나방 여부 칸은 호스트 몸에만 있다) */
+    cocMothSeen(e) {
+      return !!hzOf2(this, e, "chusk");
+    },
+    /** 인물 뒤(objects) — 빈 허물 · 늘어진 실 끝의 번데기 */
+    drawCocoonBack(f) {
+      const L = this.bhz;
+      if (!L || !L.length) return;
+      const c = f.c, T2 = this.time || 0;
+      for (const h of L) {
+        if (h.k === "chusk") {
+          const im = Sprites.want("corrupt_heart"), th = Math.sin(T2 * 0.9 + 1) * 0.05;
+          const [cx, cy] = hangAt(h.ax, h.ay, h.R, th);
+          const tx = cx - Math.sin(th) * TIE_OFF - f.camX, ty = cy - Math.cos(th) * TIE_OFF - f.camY;
+          thread(c, h.ax - f.camX, h.ay - f.camY, tx, ty, -th * 30);
+          knot(c, h.ax - f.camX, h.ay - f.camY);
+          if (im) {
+            c.save();
+            c.translate(tx, ty);
+            c.rotate(-th);
+            c.drawImage(im, (6 + (Math.sin(T2 * 1.7) > 0 ? 1 : 0)) * COC.FW, 0, COC.FW, COC.FH, -COC.CX, -COC.TIE, COC.FW, COC.FH);
+            c.restore();
+          }
+        } else if (h.k === "cthread") {
+          const k = h.t < h.tele ? 0 : Math.min(1, (h.t - h.tele) / h.drop), fade = Math.min(1, (h.life - h.t) * 2);
+          if (k <= 0) continue;
+          const sway = Math.sin(T2 * 1.6 + h.sd) * 6 * k, x = h.x - f.camX, top = h.top - f.camY;
+          const py = threadPupa(h, k) - PUPA_H - f.camY;
+          thread(c, x, top, x + sway, py, sway * 0.5, fade);
+          const im = Sprites.want("corrupt_heart_parts");
+          if (im) {
+            c.save();
+            c.globalAlpha = fade;
+            c.translate(x + sway, py);
+            c.rotate(-sway * 0.012);
+            const s = 0.62;
+            c.drawImage(im, 12 * COC.MOTH_W, 0, COC.MOTH_W, COC.MOTH_H, -200 * s, -48 * s, COC.MOTH_W * s, COC.MOTH_H * s);
+            c.restore();
+          }
+        }
+      }
+    },
+    /** 빛 뒤(fx) — 고치 속불 · 나방 눈과 날개 눈 무늬 · 어두워진 방(장송) */
+    drawCocoonGlow(f) {
+      const c = f.c, T2 = this.time || 0;
+      for (const e of this.ents) {
+        if (!isCoc(e)) continue;
+        const x = e.cx - f.camX, y = e.cy - f.camY;
+        if (!e.cocMoth && !this.cocMothSeen(e)) {
+          const hpr = e.hp / e.maxHp, st = hpr > 0.9 ? 0 : hpr > 0.78 ? 1 : 2;
+          hzGlow(c, x, y + 10, 50 + st * 22 + Math.sin(T2 * (2 + st)) * 8, FIRE, 0.16 + st * 0.1);
+          continue;
+        }
+        const torn = e.phase >= 2 ? 1 : 0;
+        hzGlow(c, x, y - 34, 22, "#ffd27a", 0.5);
+        const span = 118 * (0.6 + 0.4 * Math.abs(Math.cos(T2 * (torn ? 15 : 11) * 1.05)));
+        for (const s of [-1, 1]) hzGlow(c, x + s * span, y - 36, 26 + torn * 10, FIRE, 0.35 + torn * 0.15);
+        hzGlow(c, x, y + 20, 60, FIRE, 0.12 + torn * 0.08);
+      }
+      const D = (this.bhz || []).find((h) => h.k === "cdark");
+      if (D) {
+        const k = Math.min(1, D.t * 2, (D.life - D.t) * 2) * 0.5;
+        c.fillStyle = `rgba(6,4,8,${k})`;
+        c.fillRect(0, 0, f.w || this.W, f.h || this.H);
+      }
+    },
+    /** 예고(drawSig 에서) — 그렸으면 true */
+    cocoonTell(c, h, cx0, cy0) {
+      const T2 = this.time || 0, b = this.hzBoss(h);
+      switch (h.k) {
+        case "chang":
+        case "chusk":
+        case "cdark":
+          return true;
+        case "cswing": {
+          const H = b && hzOf2(this, b, "chang");
+          if (!H || h.t > h.tele + h.dur) return true;
+          const k = Math.min(1, h.t / h.tele), fade = h.t > h.tele ? 1 - (h.t - h.tele) / h.dur : 1;
+          const fy = this.hzFloor(H.ax, H.ay + H.R), Rb = H.R + COC.H * 0.5;
+          let xa = H.ax, xb = H.ax;
+          for (let i = 0; i <= 24; i++) {
+            const th = h.s * h.amp * 0.82 * i / 24, y = H.ay + Math.cos(th) * Rb;
+            if (y < fy - 90) break;
+            const x = H.ax + Math.sin(th) * Rb;
+            xa = Math.min(xa, x - 50);
+            xb = Math.max(xb, x + 50);
+          }
+          groundZone(c, (xa + xb) / 2 - cx0, fy - cy0, (xb - xa) / 2, FIRE, k * fade, T2);
+          flowBand(c, (h.id || 3) * 0.7, xa - cx0, xb - cx0, fy - 90 - cy0, fy - cy0, h.s, FIRE, k * fade, T2);
+          return true;
+        }
+        case "cthread": {
+          if (h.t >= h.tele + h.drop) return true;
+          const k = Math.min(1, h.t / h.tele), x = h.x - cx0;
+          const g = c.createLinearGradient(0, h.top - cy0, 0, h.y - cy0);
+          g.addColorStop(0, rgba("#fff0d8", 0.5 * k));
+          g.addColorStop(1, rgba("#fff0d8", 0));
+          c.fillStyle = g;
+          c.fillRect(x - 0.75, h.top - cy0, 1.5, h.y - h.top);
+          const gy = h.top + (h.y - h.top) * ((T2 * 1.8 + hs3(h.sd, 1)) % 1);
+          hzGlow(c, x, gy - cy0, 6, "#fff0d8", 0.6 * k);
+          groundZone(c, x, h.y + 14 - cy0, 26, FIRE, k, T2);
+          return true;
+        }
+        case "cgust": {
+          if (!b) return true;
+          const fy = this.hzFloor(b.cx, b.cy), k = Math.min(1, h.t / h.tele), y0 = Math.min(b.cy, fy - 80);
+          for (const s of [-1, 1]) {
+            const xa = b.cx + s * 60, xb = b.cx + s * 560;
+            flowBand(c, (h.id || 1) * 0.3 + s, Math.min(xa, xb) - cx0, Math.max(xa, xb) - cx0, y0 - cy0, fy - cy0, s, "#ffd2a0", k * 0.8, T2);
+          }
+          return true;
+        }
+        case "cscale": {
+          const x = h.x - cx0, y = h.y - cy0;
+          if (h.t < h.delay) {
+            const u = h.t / h.delay;
+            for (let i = 0; i < 7; i++) {
+              const px = x + (hs3(h.sd, i) - 0.5) * h.w + Math.sin(T2 * 3 + i) * 8, py = h.sy - cy0 + (y - (h.sy - cy0)) * Math.min(1, u * (0.8 + hs3(h.sd, i + 4) * 0.4));
+              hzGlow(c, px, py, 5, FIRE, 0.7);
+              c.fillStyle = "#ffd8b0";
+              c.fillRect(px - 1, py - 1, 2, 2);
+            }
+            groundZone(c, x, y, h.w / 2, FIRE, u, T2);
+          } else {
+            const k = Math.min(1, (h.life - h.t) * 1.5);
+            groundZone(c, x, y, h.w / 2, FIRE, 0.65 * k, T2);
+            for (let i = 0; i < 5; i++) {
+              const px = x + (hs3(h.sd, i + 20) - 0.5) * h.w, fl = Math.abs(Math.sin(T2 * 9 + i * 2));
+              hzGlow(c, px, y - 3 - fl * 4, 6 + fl * 4, FIRE, 0.5 * k);
+            }
+          }
+          return true;
+        }
+        case "cdive": {
+          if (h.t >= h.tele + h.dur) return true;
+          const k = Math.min(1, h.t / h.tele), fade = h.t > h.tele ? 1 - (h.t - h.tele) / h.dur : 1;
+          const x0 = h.x0 - cx0, y0 = h.y0 - cy0, x1 = h.x1 - cx0, y1 = h.y1 - cy0, len = Math.hypot(x1 - x0, y1 - y0) || 1;
+          c.save();
+          c.translate(x0, y0);
+          c.rotate(Math.atan2(y1 - y0, x1 - x0));
+          c.globalCompositeOperation = "lighter";
+          const g = c.createLinearGradient(0, 0, len, 0);
+          g.addColorStop(0, rgba(FIRE, 0.05));
+          g.addColorStop(0.7, rgba(FIRE, (0.12 + 0.3 * k) * fade));
+          g.addColorStop(1, rgba(FIRE, 0));
+          c.fillStyle = g;
+          c.beginPath();
+          c.moveTo(0, -30);
+          c.lineTo(len, -10);
+          c.lineTo(len, 10);
+          c.lineTo(0, 30);
+          c.closePath();
+          c.fill();
+          for (let i = 0; i < 6; i++) {
+            const u = (hs3(h.id || 2, i) + T2 * (0.6 + k * 1.8)) % 1;
+            c.fillStyle = rgba("#ffd8a0", (0.3 + 0.6 * k) * fade * Math.sin(u * Math.PI));
+            c.fillRect(u * len, (hs3(h.id || 2, i + 6) - 0.5) * 34 * (1 - u * 0.6), 3, 1.5);
+          }
+          c.restore();
+          const pul = 0.5 + 0.5 * Math.sin(T2 * 16);
+          hzGlow(c, h.lx - cx0, h.ly - cy0, 30 + pul * 12 * k, h.bait ? "#ffe08a" : FIRE, (0.3 + 0.4 * k) * fade);
+          return true;
+        }
+      }
+      return false;
+    }
+  };
+  mixin(Game.prototype, BossCocoonArt, true);
+
+  // src/game/game/boss-cocoon-fx.ts
+  var boss_cocoon_fx_exports = {};
+  __export(boss_cocoon_fx_exports, {
+    BossCocoonFx: () => BossCocoonFx
+  });
+  var FIRE2 = "#ff8a40", ASH2 = "rgba(96,90,84,.75)", SMOKE = "rgba(160,150,140,.4)";
+  var segD = (px, py, x0, y0, x1, y1) => {
+    const dx = x1 - x0, dy = y1 - y0, L = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / L));
+    return Math.hypot(px - x0 - dx * u, py - y0 - dy * u);
+  };
+  var BossCocoonFx = {
+    /** 위험 지대 한 칸의 움직임(sigUpdate 에서) — 처리했으면 true */
+    cocoonHz(h, dt, host, me) {
+      const b = this.hzBoss(h);
+      switch (h.k) {
+        case "chang":
+        case "cdark":
+          return true;
+        case "chusk":
+          {
+            if (h.ghost && !h.fx) {
+              h.fx = 1;
+              const [x, y] = hangAt(h.ax, h.ay, h.R, 0);
+              this.cocoonBurstFx(x, y);
+            }
+          }
+          return true;
+        case "cswing":
+          {
+            if (!b || h.t < h.tele || h.t > h.tele + h.dur) return true;
+            if (Math.random() < 0.5) this.vfx.puffs(b.cx, b.cy + 60, 1, 18, ASH2, 0.8, 30);
+            if (Math.random() < 0.4) this.vfx.motes(b.cx + (Math.random() - 0.5) * 60, b.cy + 90, 1, FIRE2, 20, 40, 0.8, 4);
+            if (host) {
+              const ax = b.cx, ay = b.cy, th = b.cocTh || 0, ux = Math.sin(th), uy = Math.cos(th);
+              const nw = [];
+              for (let i = 0; i < this.players.length; i++) {
+                const q = this.players[i];
+                if (q.dead || q.hp <= 0 || h.hit && h.hit.includes(i)) continue;
+                if (segD(q.cx, q.cy, ax - ux * 110, ay - uy * 110, ax + ux * 120, ay + uy * 120) < 54 + q.w / 2) {
+                  q.hurt(h.dmg, b.cx);
+                  nw.push(i);
+                }
+              }
+              if (nw.length) {
+                h.hit = (h.hit || []).concat(nw);
+                this.cocoonHitFx(nw.map((i) => this.players[i]), Math.sign(Math.cos(th) * ux) || 1);
+              }
+            }
+            if (!h.snd && h.t > h.tele + h.dur * 0.2) {
+              h.snd = 1;
+              this.sfxAt && this.sfxAt("cocoon_swing", b.cx / TS, b.cy / TS);
+            }
+          }
+          return true;
+        case "cthread":
+          {
+            const k = h.t < h.tele ? 0 : Math.min(1, (h.t - h.tele) / h.drop);
+            if (k > 0 && !h.landFx) {
+              h.landFx = 1;
+              this.vfx.motes(h.x, h.top + 8, 6, "#e8e0d0", 30, 60, 0.8, 3);
+            }
+            if (host && k >= 1) {
+              const by = threadPupa(h, 1);
+              for (let i = 0; i < this.players.length; i++) {
+                const q = this.players[i];
+                if (q.dead || q.hp <= 0) continue;
+                h.cd = h.cd || {};
+                if ((h.cd[i] || 0) > h.t) continue;
+                if (q.x < h.x + 16 && q.x + q.w > h.x - 16 && q.y < by && q.y + q.h > by - PUPA_H + 10) {
+                  q.hurt(h.dmg, h.x);
+                  q.inflict && q.inflict("burn", 2);
+                  h.cd[i] = h.t + 0.8;
+                }
+              }
+            }
+            if (!h.popped && h.t > h.life - 0.12) {
+              h.popped = 1;
+              const by = threadPupa(h, 1);
+              this.vfx.sparks(h.x, by - 30, 10, FIRE2, 260, -Math.PI / 2, 2.4, 0.5, 600);
+              this.vfx.puffs(h.x, by - 30, 3, 14, ASH2, 0.8, 14);
+            }
+          }
+          return true;
+        case "cgust":
+          {
+            if (!b) return true;
+            h.x = b.cx;
+            h.y = b.cy;
+            const ph = h.t - h.tele;
+            if (ph < 0) return true;
+            const beat = Math.floor(ph / h.every), u = ph % h.every / h.every;
+            if (beat < h.beats && h.lastBeat !== beat) {
+              h.lastBeat = beat;
+              const fy = this.hzFloor(b.cx, b.cy);
+              for (const s of [-1, 1]) this.vfx.puffs(b.cx + s * 120, fy - 10, 4, 22, SMOKE, 1, 80);
+              this.vfx.shock(b.cx, b.cy, 260, "#ffd2a0", 0.35, 6, 0.4);
+              this.shake = Math.max(this.shake, 5);
+            }
+            if (me && !me.dead && beat < h.beats && u < 0.45) {
+              const dx = me.cx - b.cx, d = Math.abs(dx);
+              if (d < 620) me.vx += Math.sign(dx || 1) * h.push * (1 - d / 700) * dt * 3.2;
+            }
+          }
+          return true;
+        case "cscale":
+          {
+            if (h.t >= h.delay && !h.landed) {
+              h.landed = 1;
+              this.vfx.puffs(h.x, h.y - 4, 2, 12, ASH2, 0.6, h.w * 0.4);
+              this.vfx.motes(h.x, h.y - 2, 4, FIRE2, 12, 30, 0.7, 3);
+            }
+            if (host && h.t >= h.delay) {
+              h.cd = h.cd || {};
+              for (let i = 0; i < this.players.length; i++) {
+                const q = this.players[i];
+                if (q.dead || q.hp <= 0 || (h.cd[i] || 0) > h.t) continue;
+                if (Math.abs(q.cx - h.x) < h.w / 2 && Math.abs(q.y + q.h - h.y) < 12) {
+                  q.hurt(h.dmg, h.x);
+                  h.cd[i] = h.t + 0.7;
+                }
+              }
+            }
+            if (h.t >= h.delay && Math.random() < 0.06) this.vfx.motes(h.x + (Math.random() - 0.5) * h.w, h.y - 2, 1, FIRE2, 10, 30, 0.6, 3);
+          }
+          return true;
+        case "cdive":
+          {
+            if (!b) return true;
+            if (h.t >= h.tele && h.t < h.tele + h.dur) {
+              if (Math.random() < 0.8) this.vfx.motes(b.cx, b.cy, 2, FIRE2, 30, 80, 0.6, 4);
+              if (host) {
+                const nw = [];
+                for (let i = 0; i < this.players.length; i++) {
+                  const q = this.players[i];
+                  if (q.dead || q.hp <= 0 || h.hit && h.hit.includes(i)) continue;
+                  if (Math.hypot(q.cx - b.cx, q.cy - b.cy) < 70) {
+                    q.hurt(h.dmg, b.cx);
+                    q.inflict && q.inflict("burn", 3);
+                    nw.push(i);
+                  }
+                }
+                if (nw.length) {
+                  h.hit = (h.hit || []).concat(nw);
+                  this.cocoonHitFx(nw.map((i) => this.players[i]), Math.sign(h.x1 - h.x0) || 1);
+                }
+              }
+              if (!h.flash && h.t > h.tele + h.dur * 0.55) {
+                h.flash = 1;
+                this.vfx.flare(h.lx, h.ly, 70, h.bait ? "#ffe08a" : FIRE2, 0.25, "impact");
+                this.vfx.sparks(h.lx, h.ly, 16, FIRE2, 380, -Math.PI / 2, 2.8, 0.5, 600);
+              }
+            }
+          }
+          return true;
+      }
+      return false;
+    },
+    /** 고치 · 나방에 맞은 순간 — 짧은 멈춤 · 흔들림 · 재와 불티가 맞은 쪽으로 튄다 */
+    cocoonHitFx(qs, s) {
+      this.hitStop && this.hitStop(0.08);
+      this.shake = Math.max(this.shake, 8);
+      for (const q of qs) {
+        this.vfx.flare(q.cx, q.cy, 50, "#ffd2a0", 0.16, "impact");
+        this.vfx.sparks(q.cx, q.cy, 14, FIRE2, 420, s > 0 ? 0 : Math.PI, 1, 0.45, 500);
+        this.vfx.puffs(q.cx, q.cy, 3, 16, ASH2, 0.8, 16);
+      }
+    },
+    /** 고치가 갈라져 나방이 나오는 순간 — 실 조각 · 불티 · 큰 섬광 · 재 구름 */
+    cocoonBurstFx(x, y) {
+      this.vfx.flare(x, y, 200, FIRE2, 0.4, "impact");
+      this.vfx.shock(x, y, 300, "#ffb070", 0.5, 12);
+      this.vfx.sparks(x, y, 50, FIRE2, 560, -Math.PI / 2, 3.2, 0.9, 500);
+      this.vfx.shards(x, y, 22, "#8a847c", 420, 1, 7);
+      this.vfx.puffs(x, y, 14, 30, ASH2, 1.6, 90);
+      for (let i = 0; i < 24; i++) this.parts.push(new Part(x + (Math.random() - 0.5) * 80, y + (Math.random() - 0.5) * 200, "#b4ada2", -60 - Math.random() * 120, 1.4, { spd: 1.2, r: 1.4, g: 0.25, drag: 0.97 }));
+      this.shake = Math.max(this.shake, 16);
+    },
+    /** 막 넘김 — 1→2 막은 고치가 터지고(cocoonBurst), 2→3 막은 날개가 찢기며 불티가 쏟아진다 */
+    cocoonPhaseFx(e, ph) {
+      if (ph <= 1) {
+        e.cocoonBurst();
+        return;
+      }
+      this.vfx.sparks(e.cx, e.cy, 36, FIRE2, 480, -Math.PI / 2, 3, 0.8, 500);
+      this.vfx.shards(e.cx, e.cy, 14, "#6e6258", 380, 0.9, 6);
+      this.vfx.flare(e.cx, e.cy, 140, FIRE2, 0.3, "impact");
+    },
+    /** 상시 — 고치는 밑동에서 재가 드문드문 떨어지고, 나방은 날개에서 불티 · 인분이 진다 */
+    cocoonAmbient(e) {
+      if (!e.cocMoth && !this.cocMothSeen(e)) {
+        if (Math.random() < 0.05) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * 40, e.y + e.h - 10, "#8a847c", 10, 1.6, { spd: 0.4, r: 1.2, g: 0.3, drag: 0.98 }));
+        return;
+      }
+      if (Math.random() < 0.35) this.vfx.motes(e.cx + (Math.random() - 0.5) * 220, e.cy - 20 + Math.random() * 40, 1, FIRE2, 14, 50, 0.9, 3);
+      if (Math.random() < 0.15) this.parts.push(new Part(e.cx + (Math.random() - 0.5) * 200, e.cy, "#c8bcb0", 20, 1.8, { spd: 0.3, r: 1.2, g: 0.15, drag: 0.98 }));
+    }
+  };
+  mixin(Game.prototype, BossCocoonFx, true);
+
   // src/game/game/boss-sig-art.ts
   var boss_sig_art_exports = {};
   __export(boss_sig_art_exports, {
@@ -62420,6 +63181,16 @@
         case "oreq":
         case "oscatter":
           return true;
+        case "chang":
+        case "chusk":
+        case "cswing":
+        case "cthread":
+        case "cgust":
+        case "cscale":
+        case "cdive":
+        case "cdark":
+          return this.cocoonTell(c, h, cx0, cy0);
+        // 잿빛 고치(game/boss-cocoon-art)
         case "pulse": {
           if (!b) return true;
           const u = h.t % h.every / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);
@@ -62820,7 +63591,7 @@
   __export(boss_sig_exports, {
     BossSigPart: () => BossSigPart
   });
-  var segD = (px, py, x0, y0, x1, y1) => {
+  var segD2 = (px, py, x0, y0, x1, y1) => {
     const dx = x1 - x0, dy = y1 - y0, L = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / L));
     return Math.hypot(px - x0 - dx * u, py - y0 - dy * u);
   };
@@ -62919,6 +63690,16 @@
         case "opipes":
         case "oreq":
           return true;
+        case "chang":
+        case "chusk":
+        case "cswing":
+        case "cthread":
+        case "cgust":
+        case "cscale":
+        case "cdive":
+        case "cdark":
+          return this.cocoonHz(h, dt, host, me);
+        // 잿빛 고치(game/boss-cocoon-fx)
         case "pulse":
         case "veil":
         case "rod":
@@ -62944,7 +63725,7 @@
               for (let pi = 0; pi < this.players.length; pi++) {
                 const q = this.players[pi];
                 if (q.dead || q.hp <= 0 || h.hitW && h.hitW[pi] === w) continue;
-                if (segD(q.cx, q.y + q.h - 8, h.x0, h.y0, h.x1, h.y1) < 16) {
+                if (segD2(q.cx, q.y + q.h - 8, h.x0, h.y0, h.x1, h.y1) < 16) {
                   q.hurt(h.dmg, q.cx);
                   (h.hitW || (h.hitW = {}))[pi] = w;
                 }
@@ -63044,7 +63825,7 @@
               const q = this.players[pi];
               const id = pi;
               if (q.dead || q.hp <= 0 || h.hit && h.hit[id]) continue;
-              if (segD(q.cx, q.cy, b.cx, b.cy, h.ax, h.ay) < 18) {
+              if (segD2(q.cx, q.cy, b.cx, b.cy, h.ax, h.ay) < 18) {
                 q.hurt(h.dmg, b.cx);
                 (h.hit || (h.hit = {}))[id] = 1;
               }
@@ -69445,6 +70226,7 @@
       this.pipe.add("objects", (f) => this.rObjects(f));
       this.pipe.add("objects", (f) => this.rStreaks(f));
       this.pipe.add("objects", (f) => this.drawOrgans(f));
+      this.pipe.add("objects", (f) => this.drawCocoonBack(f));
       this.pipe.add("ground", (f) => this.rGround(f));
       this.pipe.add("drops", (f) => this.rDrops(f));
       this.pipe.add("drops", (f) => this.drawFormBack(f.c));
@@ -69463,6 +70245,7 @@
       this.pipe.add("fx", (f) => this.drawFormFront(f.c));
       this.pipe.add("fx", (f) => this.drawBossHazards(f.c));
       this.pipe.add("fx", (f) => this.drawOrganGlow(f));
+      this.pipe.add("fx", (f) => this.drawCocoonGlow(f));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
       this.pipe.add("screen", (f) => this.rTimeStop(f));
@@ -71957,6 +72740,11 @@
         return;
       }
       if (e.def.ai === "b_organ") return;
+      if (e.def.ai === "b_cocoon") {
+        this.drawCocoon(c, e, sx, sy);
+        if (!this.paused) this.cocoonAmbient(e);
+        return;
+      }
       if (e.def.ai === "flotsam") {
         this.drawFlotsam(c, e, sx, sy);
         return;
@@ -74592,15 +75380,15 @@
     },
     netPutEnemies(list) {
       const n = this.net, t = now();
-      for (const [nid4, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
-        let e = n.ghosts.get(nid4);
+      for (const [nid5, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
+        let e = n.ghosts.get(nid5);
         if (!e) {
           if (!ENEMIES[type]) continue;
           e = new Enemy(type, x, y);
           e.ghost = true;
-          e.nid = nid4;
+          e.nid = nid5;
           e.netBuf = new SnapBuffer(1.5 / NET_HZ);
-          n.ghosts.set(nid4, e);
+          n.ghosts.set(nid5, e);
           this.ents.push(e);
         }
         e.netBuf.push(t, { x, y });
@@ -74636,9 +75424,9 @@
         }
         e.seenAt = t;
       }
-      for (const [nid4, e] of n.ghosts) if (t - e.seenAt > 1) {
+      for (const [nid5, e] of n.ghosts) if (t - e.seenAt > 1) {
         e.dead = true;
-        n.ghosts.delete(nid4);
+        n.ghosts.delete(nid5);
       }
     },
     /** 참가자가 그림자 몹을 쳤다 — 맞는 그림은 바로(손맛), 피해는 호스트가 계산한다. */
@@ -74679,10 +75467,10 @@
     },
     netPutDeaths(list) {
       const n = this.net;
-      for (const nid4 of list) {
-        const e = n.ghosts.get(nid4);
+      for (const nid5 of list) {
+        const e = n.ghosts.get(nid5);
         if (!e) continue;
-        n.ghosts.delete(nid4);
+        n.ghosts.delete(nid5);
         e.dead = true;
         this.addCorpse(e);
         this.deathBurst(e);
@@ -74700,13 +75488,13 @@
     },
     netPutProjs(list) {
       const n = this.net, t = now();
-      for (const [nid4, x, y, vx, vy, type] of list) {
-        let q = n.gproj.get(nid4);
+      for (const [nid5, x, y, vx, vy, type] of list) {
+        let q = n.gproj.get(nid5);
         if (!q) {
           q = new Proj(x, y, vx, vy, 0, "enemy", type);
           q.ghost = true;
-          q.nid = nid4;
-          n.gproj.set(nid4, q);
+          q.nid = nid5;
+          n.gproj.set(nid5, q);
           this.projs.push(q);
         }
         q.x = x - q.w / 2;
@@ -74715,9 +75503,9 @@
         q.vy = vy;
         q.seenAt = t;
       }
-      for (const [nid4, q] of n.gproj) if (t - q.seenAt > 0.25) {
+      for (const [nid5, q] of n.gproj) if (t - q.seenAt > 0.25) {
         q.dead = true;
-        n.gproj.delete(nid4);
+        n.gproj.delete(nid5);
       }
     },
     /** 시계·날짜·세계 사건(비·붉은 달…) — 참가자는 사건을 굴리지 않고 호스트 것을 받는다. */
@@ -75364,9 +76152,9 @@
       if (tiles) {
         for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", { k: "tiles", l: tiles });
       }
-      for (const [nid4, e] of n.live) if (e.dead) {
-        n.live.delete(nid4);
-        if (!n.dead.includes(nid4)) n.dead.push(nid4);
+      for (const [nid5, e] of n.live) if (e.dead) {
+        n.live.delete(nid5);
+        if (!n.dead.includes(nid5)) n.dead.push(nid5);
       }
       for (const q of n.peers.values()) {
         if (!q.rp) continue;
@@ -76261,7 +77049,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

@@ -168,6 +168,7 @@ export const BossSigArtPart: Bag = {
       case 'parm': drawArmTell(c, h, cx0, cy0); return true;      // 잿물 팔 예고 — 팔 몸은 빛 앞에서(drawBossLit)
       case 'osweep': this.drawSweepTell(c, h, cx0, cy0); return true;   // 뼈 오르간 — 몸 · 팔 · 빛은 game/boss-organ-art
       case 'obreath': case 'opipes': case 'oreq': case 'oscatter': return true;
+      case 'chang': case 'chusk': case 'cswing': case 'cthread': case 'cgust': case 'cscale': case 'cdive': case 'cdark': return this.cocoonTell(c, h, cx0, cy0);   // 잿빛 고치(game/boss-cocoon-art)
       case 'pulse': {                                                  // 박동 — 뛸 때마다 심장 둘레가 확 부푼다
         if (!b) return true;
         const u = (h.t % h.every) / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);

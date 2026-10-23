@@ -2326,15 +2326,15 @@ window.SPRITE_MANIFEST = {
       },
       "corrupt_heart": {
         "file": "boss/corrupt_heart.png",
-        "frameW": 136,
-        "frameH": 130,
+        "frameW": 184,
+        "frameH": 320,
         "count": 8,
-        "foot": -1.5,
-        "side": 0,
-        "death": 2,
+        "foot": 7,
+        "side": 2,
+        "death": 0,
         "scale": 1,
         "gap": 0,
-        "big": 2
+        "rig": 1
       },
       "frost_witch": {
         "file": "boss/frost_witch.png",
@@ -2548,18 +2548,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "corrupt_heart_pose": {
-        "file": "boss/corrupt_heart_pose.png",
-        "frameW": 218,
-        "frameH": 176,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 0,
-        "pose": 1
       },
       "frost_witch_pose": {
         "file": "boss/frost_witch_pose.png",
@@ -2815,6 +2803,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 256,
         "frameH": 96,
         "count": 3,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "corrupt_heart_parts": {
+        "file": "boss/corrupt_heart_parts.png",
+        "frameW": 400,
+        "frameH": 320,
+        "count": 14,
         "scale": 1,
         "gap": 0,
         "rig": 1

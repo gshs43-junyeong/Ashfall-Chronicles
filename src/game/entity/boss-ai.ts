@@ -31,6 +31,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
     this.tickWeak(dt, world, p);
     this.formTick(dt, p);                              // 막의 시간 · 날아오른 몸의 높이
 
+    /* 잿빛 고치 — 매달린 자리 · 돌진은 틈 · 기술 중에도 매 프레임 매긴다(entity/boss-cocoon) */
+    if (AI === 'b_cocoon' && !this.cocoonMoveTick(dt) && !this.cocMoth) this.cocoonHang(dt, world);
     /* 틈 — 기술 뒤 비틀거리는 동안은 몸놀림을 멈춘다(entity/boss-gaps) */
     if (this.tickGap(dt, world)) { this.stateT += dt; return; }
     /* 힘 축적 — 모으는 중이면 여기서 돌아선다. */
@@ -38,7 +40,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
     /* 고유 기술 — 쓰는 동안 몸놀림은 쉰다(entity/boss-moves · data/bossmoves) */
     if (this.tickMoves(dt, world, p, dd)) { this.stateT += dt; return; }
 
-    if (AI === 'b_organ') this.organAI(dt, world, p);              // 뼈 오르간(entity/boss-organ)
+    if (AI === 'b_cocoon') { if (this.cocMoth) this.cocoonAI(dt, world, p); }
+    else if (AI === 'b_organ') this.organAI(dt, world, p);              // 뼈 오르간(entity/boss-organ)
     else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
     else if (AI === 'b_slime') {
       if (this.onGround) {

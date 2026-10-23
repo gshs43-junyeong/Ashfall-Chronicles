@@ -63,7 +63,7 @@ function underfoot(c: C2, fx: string, b: Box, k: number, T: number, sd: number) 
 
 /** 고유 기술의 예고 — 닮은 틀 기술의 소품을 빌린다 [갈래, 결] */
 const SIG_TELL: Record<string, [string, string]> = {
-  slap: ['leap', 'gel'], bubbles: ['quake', ''], sink: ['leap', 'gel'], surge: ['leap', 'gel'], sweep: ['wall', 'bone'], pipes: ['ring', ''], scatter: ['blink', ''], requiem: ['ring', ''], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
+  slap: ['leap', 'gel'], bubbles: ['quake', ''], sink: ['leap', 'gel'], surge: ['leap', 'gel'], sweep: ['wall', 'bone'], pipes: ['ring', ''], scatter: ['blink', ''], requiem: ['ring', ''], pendulum: ['leap', ''], silk: ['rain', ''], wingwind: ['vortex', ''], dust: ['rain', 'fire'], lightdive: ['beam', 'fire'], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
   scales: ['rain', 'rune'], gaze: ['rain', 'meteor'], cart: ['wall', 'metal'], snowball: ['wall', 'ice'], grapple: ['beam', 'thorn'], dune: ['wall', 'sand'],
   garden: ['zone', 'spore'], tongue: ['rain', 'bile'], anchor: ['wall', 'water'], islet: ['rain', 'boulder'], flood: ['wall', 'water'], turrets: ['wall', 'metal'],
   pour: ['rain', 'fire'], drones: ['beam', 'laser'], project: ['beam', 'blueprint'], veins: ['quake', '']
@@ -249,6 +249,16 @@ export function drawBossProjAt(c: C2, type: string, x: number, y: number, a: num
       c.fillStyle = '#ff8a40'; c.fillRect(-3 + Math.sin(T * 5 + sd) * 1.5, 1, 2, 2);
       c.restore(); return true;
     }
+    case 'scale': {                                                    // 불나방의 인분 — 잿빛 비늘 조각이 뒤집히며 날고, 가장자리가 탄다
+      const flip = Math.cos(T * 14 + sd);
+      hzGlow(c, x, y, 13, '#ff8a40', 0.5);
+      c.save(); c.translate(x, y); c.rotate(a + T * 3);
+      c.scale(1, 0.35 + 0.65 * Math.abs(flip));
+      c.fillStyle = flip > 0 ? '#a0948a' : '#6e6258'; c.strokeStyle = '#ff9a50'; c.lineWidth = 1.3;
+      c.beginPath(); c.moveTo(-6, 0); c.quadraticCurveTo(-2, -5, 5, -3); c.quadraticCurveTo(7, 0, 5, 3); c.quadraticCurveTo(-2, 5, -6, 0); c.closePath(); c.fill(); c.stroke();
+      c.restore();
+      c.fillStyle = 'rgba(255,200,140,.7)'; c.fillRect(x - Math.cos(a) * 9, y - Math.sin(a) * 9, 2, 2);
+    } break;
     case 'note': {                                                     // 관이 낸 음 — 혼불 음표(머리 · 기둥 · 깃) · 뒤로 음파 고리
       const wob = Math.sin(T * 12 + sd) * 0.25;
       hzGlow(c, x, y, 16, '#9ff0d0', 0.55);

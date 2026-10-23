@@ -34,6 +34,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
     switch (d.sig) {
       case 'slap': case 'bubbles': case 'sink': case 'surge': return this.poolSig(d, p, world, K);   // 잿물 군체(entity/boss-pool)
       case 'sweep': case 'pipes': case 'scatter': case 'requiem': return this.organSig(d, p, world, K);   // 뼈 오르간(entity/boss-organ)
+      case 'pendulum': case 'silk': case 'wingwind': case 'dust': case 'lightdive': return this.cocoonSig(d, p, world, K);   // 잿빛 고치(entity/boss-cocoon)
       case 'beat': {                                              // 박동 — 세 번 뛸 때마다 바닥을 타고 고동이 퍼진다(뛰어넘는다)
         this.hz({ k: 'pulse', life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
         for (let b = 0; b < 3; b++) G.after(b * 0.85, () => {
