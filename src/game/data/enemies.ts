@@ -211,7 +211,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 100, h: 148, c: '#3f7a34', xp: 2300, gold: 1500, ph: 2, boss: 1,
                  drops: [['heartwood', 1, 2, 3], ['vine_coil', 1, 12, 20], ['orchid', 1, 8, 14]] },
   /* rank 4 — 함정이 가장 촘촘한 유적의 주인 */
-  sand_guardian:{ n: '모래 파수꾼', hp: 5600, dmg: 92, def: 46, spd: 66, ai: 'b_bone', w: 108, h: 140, c: '#d8b878', xp: 3100, gold: 2100, ph: 2, boss: 1,
+  sand_guardian:{ n: '모래시계 거상', hp: 5600, dmg: 92, def: 46, spd: 0, ai: 'b_hourglass', w: 92, h: 140, wall: 1, c: '#c8a46a', xp: 3100, gold: 2100, ph: 2, boss: 1,
                  drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10], ['caged_sun', 1, 1, 1]] },
   /* rank 5 — 입구가 없는 굴. */
   spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 100, h: 144, c: '#6fe0c0', xp: 3600, gold: 2800, ph: 2, boss: 1,

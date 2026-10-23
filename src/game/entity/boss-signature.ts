@@ -35,6 +35,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
       case 'slap': case 'bubbles': case 'sink': case 'surge': return this.poolSig(d, p, world, K);   // 잿물 군체(entity/boss-pool)
       case 'sweep': case 'pipes': case 'scatter': case 'requiem': return this.organSig(d, p, world, K);   // 뼈 오르간(entity/boss-organ)
       case 'pendulum': case 'silk': case 'wingwind': case 'dust': case 'lightdive': return this.cocoonSig(d, p, world, K);   // 잿빛 고치(entity/boss-cocoon)
+      case 'fist': case 'sandpour': case 'quick': case 'deadline': return this.hgSig(d, p, world, K);   // 모래시계 거상(entity/boss-hourglass)
       case 'beat': {                                              // 박동 — 세 번 뛸 때마다 바닥을 타고 고동이 퍼진다(뛰어넘는다)
         this.hz({ k: 'pulse', life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
         for (let b = 0; b < 3; b++) G.after(b * 0.85, () => {
@@ -127,14 +128,6 @@ export const BossSignature: Bag & ThisType<Enemy> = {
           if (r.pt > 0.7) r.busy = r.t!;
         };
         return r;
-      }
-      case 'dune': {                                              // 사구 해일 — 바닥을 따라 밀려오는 모래 언덕
-        for (let i = 0; i < 2; i++) G.after(i * 1.4, () => {
-          if (E.dead) return;
-          const s = Math.sign(p.cx - E.cx) || 1, y = E.y + E.h;
-          E.hz({ k: 'wall', x: E.cx, vx: s * 250, top: y - 46, bot: y, w: 70, life: 4.4, dmg: E.dmg * m, c: K.c, fx: 'dune', sd: Math.random() * 99 });
-        });
-        return { busy: 1.6 };
       }
       case 'garden': {                                            // 버섯 정원 — 4초 안에 밟아 터뜨리지 않은 버섯은 포자 구름이 된다
         for (let i = 0; i < 5; i++) {

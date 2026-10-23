@@ -146,18 +146,7 @@ Object.assign(WAVE_ART, {
 });
 Object.assign(WALL_ART, {
   cart(c: C2, h: Bag, x: number, top: number, bot: number, f: number, T: number) { c.globalAlpha = f; strokePath(c, [x - 30, bot - 1, x + 30, bot - 1], '#6a6a72', 2); cart(c, x, bot, h.w, T, true); c.globalAlpha = 1; },
-  dune(c: C2, h: Bag, x: number, top: number, bot: number, f: number, T: number) {   // 사구 해일 — 모래 언덕이 굴러온다
-    const s = Math.sign(h.vx) || 1, w = h.w;
-    c.globalAlpha = f;
-    c.beginPath(); c.moveTo(x - s * w, bot); c.quadraticCurveTo(x - s * w * 0.4, top - 6, x + s * w * 0.15, top + 4);
-    c.quadraticCurveTo(x + s * w * 0.45, top + 16, x + s * w * 0.5, bot); c.closePath();
-    const g = c.createLinearGradient(0, top, 0, bot); g.addColorStop(0, '#f4d690'); g.addColorStop(1, '#b88a48');
-    c.fillStyle = g; c.fill(); c.strokeStyle = '#6a4a20'; c.lineWidth = 1.5; c.stroke();
-    c.strokeStyle = 'rgba(255,240,200,.6)'; c.lineWidth = 1;
-    for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(x - s * w * (0.8 - i * 0.2), bot - 6 - i * 8); c.quadraticCurveTo(x - s * w * 0.3, top + 8 + i * 6, x + s * w * 0.1, top + 10 + i * 8); c.stroke(); }
-    c.fillStyle = `rgba(250,220,150,${0.8 * f})`; for (let i = 0; i < 8; i++) { const u = (T * 2 + hs(h.sd, i)) % 1; c.fillRect(x + s * w * 0.2 + s * u * 20, top + 4 + hs(h.sd, i + 3) * (bot - top) - u * 12, 2, 2); }
-    c.globalAlpha = 1;
-  }
+
 });
 
 export const BossSigArtPart: Bag = {
@@ -169,6 +158,7 @@ export const BossSigArtPart: Bag = {
       case 'osweep': this.drawSweepTell(c, h, cx0, cy0); return true;   // 뼈 오르간 — 몸 · 팔 · 빛은 game/boss-organ-art
       case 'obreath': case 'opipes': case 'oreq': case 'oscatter': return true;
       case 'chang': case 'chusk': case 'cswing': case 'cthread': case 'cgust': case 'cscale': case 'cdive': case 'cdark': return this.cocoonTell(c, h, cx0, cy0);   // 잿빛 고치(game/boss-cocoon-art)
+      case 'hfist': case 'hsand': case 'hpit': case 'hdead': case 'hflip': return this.hourglassTell(c, h, cx0, cy0);   // 모래시계 거상(game/boss-hourglass-art)
       case 'pulse': {                                                  // 박동 — 뛸 때마다 심장 둘레가 확 부푼다
         if (!b) return true;
         const u = (h.t % h.every) / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);

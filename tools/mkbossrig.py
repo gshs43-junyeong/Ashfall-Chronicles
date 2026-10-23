@@ -576,10 +576,129 @@ def moth_frame(f):
     return F.render()
 
 
+# ===== 모래시계 거상(sand_guardian 자리) — 피라미드 주인 방에 앉은 사암 석상, 가슴에 박힌 모래시계가 목(약점) =====
+SANDST, SANDST_D, SANDST_L = '#c8a46a', '#8a6a3e', '#e8cc94'   # 사암 · 그늘 · 빛 받는 면
+BRONZE, BRONZE_D, AMBER = '#a8743a', '#5a3a1a', '#ffc85a'     # 청동 · 그늘 · 호박빛
+HG_C = (42, 52)                                               # 모래시계 홈 가운데(게임 HG.GLASS_Y 와 같다)
+
+
+def colossus_body(f):
+    """몸 시트 8장(84×104 설계 칸 · 바닥 101) — 0·1 멀쩡(눈이 숨 쉰다) · 2·3 금 · 4·5 깨진 왕관 · 무너진 어깨 · 6·7 쓰러짐(무너져 내린다).
+       왕좌에 앉은 거상 — 가슴 가운데 둥근 홈에 모래시계(조각 0)가 박히고 그 속 모래는 게임이 그린다 · 팔은 조각(1 · 2 · 3)으로 무릎에 얹힌다.
+       ★ fine() · F.line 은 부위 위에 덧그려진다(칠 순서와 상관없다) — 얼굴을 가로지르는 줄은 옆 자락에만 긋는다"""
+    W, H = 84, 104
+    F = ZFig(W, H)
+    cx, base = 42, 101
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    fall = 0 if f < 6 else (5 if f == 6 else 12)
+    # 왕좌 — 등판(몸 뒤로 보이는 어두운 판) · 팔걸이 · 계단진 받침
+    F.part('stone', '#7a5a32', bevel=3).poly([(cx - 33, 92), (cx - 33, 34), (cx - 26, 26), (cx + 26, 26), (cx + 33, 34), (cx + 33, 92)])
+    for s2 in (-1, 1):
+        F.part('stone', SANDST_D, bevel=3).box(cx + s2 * 34 - 5, 60, 10, 32, 2)                     # 팔걸이 기둥
+        F.part('stone', SANDST, bevel=2).box(cx + s2 * 34 - 6, 57, 12, 6, 2)                         # 팔걸이 머리
+        F.part('metal', BRONZE, bevel=1).ell(cx + s2 * 34, 60, 2.2, 2)
+    F.part('stone', SANDST_D, bevel=3).box(cx - 39, base - 8, 78, 8, 1)
+    F.part('stone', SANDST, bevel=3).box(cx - 36, base - 14, 72, 7, 1)
+    # 머리 뒤 해 고리
+    F.part('stone', SANDST_D, bevel=3).ell(cx, 20 + fall, 17, 16)
+    # 다리 — 앞으로 나온 무릎(둥근 머리) · 정강이 · 발
+    for s2 in (-1, 1):
+        x = cx + s2 * 17
+        F.part('stone', SANDST, bevel=3).poly([(x - 8, 76 + fall * 0.4), (x + 8, 76 + fall * 0.4), (x + 7, base - 16), (x - 7, base - 16)])
+        F.part('stone', SANDST_L, bevel=3).ell(x, 75 + fall * 0.4, 10, 7)                           # 무릎 — 앞으로 나와 빛을 받는다
+        F.part('stone', SANDST_D, bevel=2).poly([(x - 10, base - 17), (x + 10, base - 17), (x + 11, base - 13), (x - 11, base - 13)])   # 발
+    # 몸통 — 넓은 가슴 · 좁아지는 허리 · 허리띠
+    F.part('stone', SANDST, bevel=4).poly([(cx - 26, 34 + fall), (cx + 26, 34 + fall), (cx + 23, 50), (cx + 18, 70), (cx - 18, 70), (cx - 23, 50)])
+    F.part('stone', SANDST_L, bevel=2).poly([(cx - 24, 35 + fall), (cx - 15, 35 + fall), (cx - 17, 47), (cx - 18, 64), (cx - 21, 50)])
+    F.part('cloth', '#3a5a8a', bevel=2).poly([(cx - 19, 66), (cx + 19, 66), (cx + 23, 76), (cx - 23, 76)])
+    F.part('metal', BRONZE, bevel=1.5).box(cx - 20, 65, 40, 2.6, 1)
+    F.part('metal', BRONZE_D, bevel=2).ell(HG_C[0], HG_C[1] + fall * 0.6, 12.5, 15)              # 홈 테두리 — 청동 고리
+    F.part('stone', '#3a2c1c', flat=True).ell(HG_C[0], HG_C[1] + fall * 0.6, 10.5, 13)
+    # 어깨받이 — 청동 반원 판
+    for s2 in (-1, 1):
+        F.part('metal', BRONZE, bevel=2).poly([(cx + s2 * 15, 33 + fall), (cx + s2 * 30, 33 + fall), (cx + s2 * 32, 40 + fall), (cx + s2 * 27, 44 + fall), (cx + s2 * 17, 40 + fall)])
+        F.part('metal', '#c8925a', bevel=1).poly([(cx + s2 * 17, 34 + fall), (cx + s2 * 28, 34 + fall), (cx + s2 * 29, 37 + fall), (cx + s2 * 18, 37 + fall)])
+    # 머리 — 두건(옆 자락) · 사암 가면 · 이마 왕관
+    hy = 20 + fall
+    F.part('cloth', '#3a5a8a', bevel=2).poly([(cx - 13, hy - 8), (cx + 13, hy - 8), (cx + 17, hy + 16), (cx + 12, hy + 18), (cx - 12, hy + 18), (cx - 17, hy + 16)])
+    F.part('stone', SANDST_L, bevel=3).poly([(cx - 10, hy - 9), (cx + 10, hy - 9), (cx + 11, hy + 6), (cx + 6, hy + 14), (cx - 6, hy + 14), (cx - 11, hy + 6)])
+    for k in range(5):                                    # 두건 줄무늬 — 얼굴 밖 자락에만
+        y = hy - 4 + k * 4.2
+        for s2 in (-1, 1):
+            fine(F, (cx + s2 * 11.5, y), (cx + s2 * (13.5 + k * 0.7), y), '#d8b060', 220)
+    F.part('stone', SANDST_D, bevel=1).box(cx - 1, hy - 2, 2, 7, 1)
+    F.part('stone', SANDST_D, bevel=1).box(cx - 4, hy + 8.5, 8, 1.4, 0.5)
+    F.part('metal', BRONZE, bevel=2).poly([(cx - 10, hy - 9), (cx + 10, hy - 9), (cx + 7, hy - 14), (cx, hy - 18), (cx - 7, hy - 14)])
+    F.part('glow', AMBER, glow=True).ell(cx, hy - 13, 1.8, 1.8)
+    eye = ('#ffb040', '#ff9a30', '#ff7020')[st]
+    for s2 in (-1, 1):
+        if f >= 7:
+            F.line(cx + s2 * 5 - 1.5, hy + 1, cx + s2 * 5 + 1.5, hy + 1, '#4a3a20')
+        else:
+            F.part('glow', eye, glow=True).ell(cx + s2 * 4.6, hy + 1, 2.2, 1.0 + b * 0.3)
+            F.glow(cx + s2 * 4.6, hy + 1, 4 + st + b, eye, 0.35 + b * 0.1)
+    if st >= 1:
+        crack(F, [(cx - 6, hy - 8), (cx - 4, hy - 3), (cx - 7, hy + 3), (cx - 5, hy + 9)], 0.45, AMBER)
+        crack(F, [(cx + 19, 40 + fall), (cx + 15, 48), (cx + 17, 56), (cx + 13, 63)], 0.5, AMBER)
+    if st >= 2:
+        crack(F, [(cx - 20, 46 + fall), (cx - 15, 54), (cx - 17, 62)], 0.5, AMBER)
+        crack(F, [(cx + 17, 72), (cx + 14, 80), (cx + 18, 86)], 0.45, AMBER)
+        for (x, y) in ((cx + 7, hy - 12), (cx - 26, 38 + fall), (cx + 12, 58)):
+            F.part('stone', SANDST_D, flat=True).ell(x, y, 3, 2.2)
+            fine(F, (x - 2.6, y - 1), (x + 2.6, y + 1), SANDST_L, 220)
+    if fall:
+        for k in range(9):
+            x = cx - 34 + k * 7.6 + (k % 2) * 2
+            F.part('stone', SANDST if k % 2 else SANDST_D, bevel=2).poly([(x, base - 1), (x + 4, base - 6 - (k % 3) * 2), (x + 9, base - 3), (x + 8, base - 1)])
+    return F.render()
+
+
+def colossus_parts(f):
+    """조각 5장(40×44 설계 칸) — 0 모래시계(청동 마개 · 기둥 둘 · 유리의 빛 — 속은 비었다: 모래는 게임이 그린다) · 1 위팔 · 2 아래팔 · 3 주먹 · 4 사암 덩이"""
+    F = ZFig(40, 44)
+    cx = 20
+    if f == 0:
+        for (y0, sgn) in ((3, 1), (41, -1)):             # 위 · 아래 청동 마개
+            F.part('metal', BRONZE, bevel=2).box(cx - 13, y0 - 2 if sgn > 0 else y0 - 3, 26, 5, 2)
+            F.part('metal', BRONZE_D, bevel=1).box(cx - 11, y0 + 2 if sgn > 0 else y0 - 5, 22, 1.4, 0.5)
+            F.part('glow', AMBER, glow=True).ell(cx, y0 if sgn > 0 else y0 - 1, 1.6, 1.2)
+        for x in (cx - 12, cx + 12):                     # 기둥 — 마개 사이
+            F.part('metal', BRONZE_D, bevel=1).box(x - 1, 6, 2.2, 32, 1)
+        F.part('metal', BRONZE, bevel=1).box(cx - 1, 6, 1.4, 1, 0.3)
+        L = []                                            # 유리 — 윤곽과 빛줄만(속은 비워 둔다)
+        for k in range(41):
+            y = 6 + k * 0.8
+            u = abs(y - 22) / 16
+            L.append((cx - (1.2 + 9 * u ** 0.8), y))
+        for (a, b2) in zip(L, L[1:]):
+            fine(F, a, b2, '#f0e8d0', 200); fine(F, (2 * cx - a[0], a[1]), (2 * cx - b2[0], b2[1]), '#a89878', 170)
+        for k in range(8):                                # 유리의 빛줄 — 왼쪽 위 볼록한 데
+            fine(F, (cx - 7.5 + k * 0.2, 9 + k * 1.1), (cx - 6.8 + k * 0.2, 9.6 + k * 1.1), '#ffffff', 150)
+    elif f in (1, 2):
+        r0, r1 = (6.5, 5.5) if f == 1 else (5.5, 4.6)
+        F.part('stone', SANDST, bevel=3).cap(8, 22, 32, 22, r0, r1)
+        F.part('stone', SANDST_L, bevel=2).cap(9, 20, 30, 20.5, r0 * 0.35, r1 * 0.3)
+        fine(F, (12, 25), (28, 24.5), SANDST_D, 200)
+        F.part('metal', BRONZE, bevel=1.4).box(8 if f == 1 else 27, 16, 3, 12, 1)       # 청동 팔찌
+    elif f == 3:
+        F.part('stone', SANDST, bevel=4).box(6, 12, 26, 22, 6)                           # 주먹 — 쥔 손가락 마디가 앞
+        for k in range(4):
+            F.part('stone', SANDST_L, bevel=2).box(9 + k * 5.6, 12, 5, 7, 2)
+            fine(F, (9 + k * 5.6, 19), (14 + k * 5.6, 19), SANDST_D, 220)
+        F.part('stone', SANDST_D, bevel=2).box(4, 20, 6, 10, 2)                           # 엄지
+        F.part('metal', BRONZE, bevel=1.4).box(28, 15, 4, 16, 1)
+    else:
+        F.part('stone', SANDST, bevel=3).poly([(8, 14), (22, 9), (32, 16), (30, 30), (16, 34), (7, 26)])
+        crack(F, [(14, 18), (20, 24), (26, 21)], 0.6, AMBER)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts)},
     'corrupt_heart': {'body': (46, 80, 8, 0, cocoon_body), 'parts': (100, 80, 14, moth_frame)},
+    'sand_guardian': {'body': (84, 104, 8, 2, colossus_body), 'parts': (40, 44, 5, colossus_parts)},
 }
 
 

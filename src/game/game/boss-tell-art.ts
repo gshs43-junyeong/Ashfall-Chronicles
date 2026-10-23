@@ -63,8 +63,8 @@ function underfoot(c: C2, fx: string, b: Box, k: number, T: number, sd: number) 
 
 /** 고유 기술의 예고 — 닮은 틀 기술의 소품을 빌린다 [갈래, 결] */
 const SIG_TELL: Record<string, [string, string]> = {
-  slap: ['leap', 'gel'], bubbles: ['quake', ''], sink: ['leap', 'gel'], surge: ['leap', 'gel'], sweep: ['wall', 'bone'], pipes: ['ring', ''], scatter: ['blink', ''], requiem: ['ring', ''], pendulum: ['leap', ''], silk: ['rain', ''], wingwind: ['vortex', ''], dust: ['rain', 'fire'], lightdive: ['beam', 'fire'], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
-  scales: ['rain', 'rune'], gaze: ['rain', 'meteor'], cart: ['wall', 'metal'], snowball: ['wall', 'ice'], grapple: ['beam', 'thorn'], dune: ['wall', 'sand'],
+  slap: ['leap', 'gel'], bubbles: ['quake', ''], sink: ['leap', 'gel'], surge: ['leap', 'gel'], sweep: ['wall', 'bone'], pipes: ['ring', ''], scatter: ['blink', ''], requiem: ['ring', ''], pendulum: ['leap', ''], silk: ['rain', ''], wingwind: ['vortex', ''], dust: ['rain', 'fire'], lightdive: ['beam', 'fire'], fist: ['leap', ''], sandpour: ['rain', 'sand'], quick: ['vortex', 'sand'], deadline: ['ring', ''], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
+  scales: ['rain', 'rune'], gaze: ['rain', 'meteor'], cart: ['wall', 'metal'], snowball: ['wall', 'ice'], grapple: ['beam', 'thorn'],
   garden: ['zone', 'spore'], tongue: ['rain', 'bile'], anchor: ['wall', 'water'], islet: ['rain', 'boulder'], flood: ['wall', 'water'], turrets: ['wall', 'metal'],
   pour: ['rain', 'fire'], drones: ['beam', 'laser'], project: ['beam', 'blueprint'], veins: ['quake', '']
 };

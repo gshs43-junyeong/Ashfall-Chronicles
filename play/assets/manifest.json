@@ -2408,15 +2408,15 @@
       },
       "sand_guardian": {
         "file": "boss/sand_guardian.png",
-        "frameW": 128,
-        "frameH": 152,
-        "count": 6,
-        "gap": 0,
-        "foot": -1.5,
+        "frameW": 336,
+        "frameH": 416,
+        "count": 8,
+        "foot": 11,
         "side": 0.0,
         "death": 2,
         "scale": 1,
-        "big": 2
+        "gap": 0,
+        "rig": 1
       },
       "mine_horror": {
         "file": "boss/mine_horror.png",
@@ -2627,18 +2627,6 @@
         "side": 1.0,
         "pose": 1
       },
-      "sand_guardian_pose": {
-        "file": "boss/sand_guardian_pose.png",
-        "frameW": 206,
-        "frameH": 206,
-        "count": 18,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 0.0,
-        "pose": 1
-      },
       "mine_horror_pose": {
         "file": "boss/mine_horror_pose.png",
         "frameW": 346,
@@ -2806,6 +2794,15 @@
         "frameW": 400,
         "frameH": 320,
         "count": 14,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "sand_guardian_parts": {
+        "file": "boss/sand_guardian_parts.png",
+        "frameW": 160,
+        "frameH": 176,
+        "count": 5,
         "scale": 1,
         "gap": 0,
         "rig": 1

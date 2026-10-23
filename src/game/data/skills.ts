@@ -54,7 +54,7 @@ export const BOSS_SURGE: Bag = {
   restorer:    { k: 'mend', t: 2.0, cd: 22,         v: .03, brk: .035, c: '#a8c8e8', s: 'sk_heal',  n: '되돌리려 한다' }
 };
 /* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. */
-export const SURGE_FLY: Record<string, number> = { b_organ: 1, b_cocoon: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+export const SURGE_FLY: Record<string, number> = { b_organ: 1, b_cocoon: 1, b_hourglass: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
 
 /* ---------------- 스킬 / 특성 ---------------- */
 export const SKILLS: Record<string, SkillDef> = {
@@ -256,6 +256,7 @@ export const BOSS_LINES: Bag = {
   king_slime:   { 1: '웅덩이가 끓는다 — 투구 밑에서 무언가 뒤척인다.', 2: '투구에 금이 간다. 등불이 붉게 탄다.' },
   bone_lord:    { 1: '갈비가 숨을 들이쉰다 — 관마다 바람이 찬다.', 2: '부러진 관이 운다. 음이 어긋난다.' },
   corrupt_heart:{ 1: '고치가 갈라진다 — 불을 품은 날개가 펴진다.', 2: '찢긴 날개가 더 밝게 탄다. 빛이 있는 곳으로.' },
+  sand_guardian:{ 1: '모래시계가 뒤집힌다 — 쏟아지는 모래가 반대쪽으로 쏠린다.', 2: '금 간 유리 속에서 마지막 모래가 떨어진다.' },
   frost_witch:  { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
   void_king:    { 1: '나선이 되감긴다.', 2: '공허가 방향을 바꾼다.' },
   storm_warden: { 1: '구름이 낮아진다.', 2: '내리꽂을 때만, 닿는다.' },

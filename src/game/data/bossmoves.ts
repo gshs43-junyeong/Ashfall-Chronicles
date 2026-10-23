@@ -107,14 +107,16 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'zone', n: '가시덤불', tele: 0.5, at: 'player', n2: 3, r: 60, life: 6, dps: 0.08, slow: 0.4, fx: 'seed', pw: [0.8, 1] },
     { k: 'heal', n: '광합성', tele: 0.6, dur: 3, v: 0.08, brk: 0.04, fx: 'leaf', ph: 1, pw: [0, 1.3] }],
     ult: { k: 'march', n: '숲의 분노', tele: 1, cnt: 9, gap: 60, every: 0.12, h: 130, both: 1, fx: 'plant', homing: 4, m: 1 } },
+  /* 모래시계 거상 — 피라미드 깊은 방 왕좌에 앉은 석상. 가슴의 모래시계가 목이고 막마다 뒤집힌다(entity/boss-hourglass) */
   sand_guardian: { c: '#f0c870', every: 6.5, moves: [
-    { k: 'wall', n: '모래 폭풍', tele: 0.8, times: 2, spd: 260, gap: 120, every: 1.6, fx: 'sand', m: 0.8 },
+    { k: 'sig', sig: 'fist', n: '주먹 내리치기', tele: 0.3, m: 1.1 },
+    { k: 'sig', sig: 'sandpour', n: '모래 쏟기', tele: 0.5, m: 1 },
+    { k: 'sig', sig: 'quick', n: '유사 늪', tele: 0.4, cnt: 3, m: 0.8 },
     { k: 'march', n: '태양 광선', tele: 0.6, cnt: 6, gap: 80, every: 0.2, h: 460, from: 'sky', fx: 'sun', m: 1 },
-    { k: 'vortex', n: '유사 늪', tele: 0.6, life: 2.8, r: 260, pull: 220, floor: 1, burst: 0, fx: 'sand', m: 0 },
-    { k: 'sig', sig: 'dune', n: '사구 해일', tele: 0.7, pose: 0, m: 1 },
-    { k: 'burrow', n: '모래 잠행', tele: 0.5, under: 1.3, r: 80, m: 1.1, pw: [0.7, 1] },
-    { k: 'homing', n: '스카라브 떼', tele: 0.6, cnt: 6, spd: 190, turn: 2, proj: 'dark', m: 0.5, ph: 1, pw: [0, 1.5] }],
-    ult: { k: 'ring', n: '피라미드의 저주', tele: 1.1, times: 3, cnt: 24, gap: 4, spd: 240, every: 0.6, proj: 'fire', wall: 1, fx: 'sand', m: 0.6 } },
+    { k: 'sig', sig: 'fist', n: '두 주먹', tele: 0.3, both: 1, m: 1, ph: 1, pw: [0, 1, 1.3] },
+    { k: 'homing', n: '스카라브 떼', tele: 0.6, cnt: 6, spd: 190, turn: 2, proj: 'dark', m: 0.5, ph: 1, pw: [0, 1.2, 1] },
+    { k: 'sig', sig: 'quick', n: '모래 소용돌이', tele: 0.4, cnt: 5, gap: 160, pull: 320, m: 0.7, ph: 2, pw: [0, 0, 1.4] }],
+    ult: { k: 'sig', sig: 'deadline', n: '시간 마감', tele: 1, dur: 8, need: 0.07, m: 1 } },
   spore_queen: { c: '#8ff0c8', every: 6.5, moves: [
     { k: 'zone', n: '포자 구름', tele: 0.6, at: 'scatter', n2: 4, r: 64, life: 6, dps: 0.12, fx: 'spore', poison: 1 },
     { k: 'rain', n: '꽃 터뜨리기', tele: 0.6, form: 'scatter', cnt: 5, spread: 320, delay: 1.1, r: 40, shape: 'circle', fx: 'spore', burstRing: 8, m: 0.7 },
@@ -222,7 +224,7 @@ export const XFX_OF: Record<string, string> = { rune: 'rune', fire: 'fire', fros
    stagger 비틀거림(무거운 몸 — 멈춰 선다) · heat 과열(마법 · 원소 — 느려진다) · crack 균열(갑옷 · 껍데기 — 방어가 벌어진다). 사연: docs/code-history.md#h181 */
 /** 깨어날 때 넓혀 둘 싸움터(칸 — 너비 · 바닥에서 높이) — 몸 그림이 바위에 묻히지 않게(game/boss-arena) */
 export const BOSS_ARENA: Record<string, { w: number; h: number }> = {
-  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 50, h: 22 }
+  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }
 };
 export const BOSS_GAP: Record<string, string> = {
   king_slime: 'stagger', bone_lord: 'stagger', first_keeper: 'stagger', pursuer: 'stagger', mine_horror: 'stagger', ice_warden: 'stagger',

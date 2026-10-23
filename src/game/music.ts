@@ -117,6 +117,9 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   /* 잿빛 고치 · 불나방 — 실이 삐걱이고, 날개는 바람 소리를 낮게 늘여 빌린다 */
   cocoon_creak: ['door_open', .55, .7], cocoon_silk: ['sk_mark', 1.3, .4], cocoon_swing: ['sk_whirl', .55, .9],
   moth_burst: ['mat_ember', .6, 1.3], moth_gust: ['swing', .45, .85], moth_scale: ['sk_smoke', .9, .6], moth_dive: ['sk_whirl', .8, .9],
+  /* 모래시계 거상 — 돌 주먹은 낮게 깨는 소리, 모래는 연기 · 바람 소리를 낮춰 빌린다 */
+  hg_lift: ['door_open', .45, .8], hg_slam: ['boom_small', .5, 1.2], hg_pour: ['sk_smoke', .55, .8], hg_quick: ['drown', .55, .7],
+  hg_deadline: ['chapter', .45, .9], hg_storm: ['sk_whirl', .5, 1.1], hg_flip: ['mat_stone', .45, 1.1], hg_crack: ['mat_glass', .7, 1.3],
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],
