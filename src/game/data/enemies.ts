@@ -233,7 +233,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                 drops: [['core_shard', 1, 2, 4], ['power_core', .5, 1, 2], ['orb_core', .025, 1, 1]] },
 
   /* --- 보스 --- */
-  king_slime:  { n: '슬라임 왕', hp: 900, dmg: 24, def: 6, spd: 60, ai: 'b_slime', w: 152, h: 116, c: '#4f7fc0', xp: 590, gold: 200, boss: 1,
+  king_slime:  { n: '잿물 군체', hp: 900, dmg: 24, def: 6, spd: 46, ai: 'b_pool', w: 190, h: 150, c: '#4a4541', xp: 590, gold: 200, boss: 1,
                  drops: [['slime_gel', 1, 25, 40], ['ring_vigor', 1, 1, 1], ['star_heart', 1, 1, 1], ['sword_copper', .5, 1, 1]] },
   bone_lord:   { n: '뼈의 군주', hp: 2000, dmg: 36, def: 14, spd: 70, ai: 'b_bone', w: 104, h: 136, c: '#ded6bd', xp: 1100, gold: 480, boss: 1,
                  drops: [['bone_frag', 1, 30, 45], ['sword_bone', 1, 1, 1], ['star_heart', 1, 1, 1], ['pick_iron', .6, 1, 1]] },

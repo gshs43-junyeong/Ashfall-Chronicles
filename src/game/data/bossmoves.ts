@@ -4,19 +4,20 @@
    spiral 나선 · dash 겨눈 돌진 · blink 등 뒤로 · vortex 끌어당김 · zone 남는 바닥 · wall 틈 있는 벽 · summon 부름 · push 바람 ·
    burrow 땅속 기습 · rewind 되감기 · clones 분신 · quake 천장 무너짐 · homing 쫓는 탄.
    tele 는 예고(초) — ★ 예고 없는 기술은 만들지 말 것: 피할 길이 보여야 공략이 된다. m 은 보스 공격력에 곱하는 몫.
-   참고한 결(주석): 슬라임 왕 내려찍기(Terraria), 다가오는 기둥(Hollow Knight), 틈 있는 탄막(Touhou), 겨눈 돌진(Eye of Cthulhu),
+   참고한 결(주석): 뛰어 내려찍기(Terraria 슬라임 왕), 다가오는 기둥(Hollow Knight), 틈 있는 탄막(Touhou), 겨눈 돌진(Eye of Cthulhu),
    광선 쓸기(Moon Lord · Skeletron Prime), 땅속 기습(Dune Splicer), 되감기(Ekko · Braid) */
 
 export const BOSS_MOVES: Record<string, Bag> = {
   /* ---------------- 세션 1 ---------------- */
-  king_slime: { c: '#6fa8ff', every: 7.5, moves: [
-    { k: 'leap', n: '왕관 내려찍기', tele: 0.7, waves: 1, wspd: 360, wfx: 'gel', m: 1.1 },
-    { k: 'zone', n: '끈적이는 비', tele: 0.6, at: 'scatter', n2: 5, r: 46, life: 6, dps: 0.12, slow: 0.45, fx: 'gel' },
-    { k: 'summon', n: '신하들을 부른다', tele: 0.8, mob: 'slime', cnt: 4 },
-    { k: 'sig', sig: 'melt', n: '녹아드는 왕관', tele: 0.8, pose: 0, m: 1 },
-    { k: 'ring', n: '젤리 파문', tele: 0.5, times: 2, cnt: 16, gap: 3, spd: 200, every: 0.6, proj: 'gel', m: 0.5, pw: [1, 1, 0.8] },
-    { k: 'homing', n: '튀는 젤리', tele: 0.6, cnt: 4, spd: 200, turn: 1.6, proj: 'gel', m: 0.6, ph: 1, pw: [0, 1, 1.5] }],
-    ult: { k: 'leap', n: '왕의 무게', tele: 0.9, times: 3, waves: 1, wspd: 420, wfx: 'gel', m: 1.2 } },
+  /* 잿물 군체 — 굴 바닥 웅덩이가 몸이고 녹슨 투구만 떠 있다. 팔은 웅덩이에서 솟고(entity/boss-pool) 뛰지 않는다 — 웅덩이째 미끄러진다 */
+  king_slime: { c: '#ffb050', every: 6.5, moves: [
+    { k: 'sig', sig: 'slap', n: '잿물 팔 내리치기', tele: 0.7, m: 1.1 },
+    { k: 'sig', sig: 'bubbles', n: '끓어오르는 기둥', tele: 0.6, m: 0.9 },
+    { k: 'summon', n: '잿물 덩이를 뱉는다', tele: 0.8, mob: 'slime', cnt: 3 },
+    { k: 'sig', sig: 'sink', n: '잠겼다 솟기', tele: 0.6, m: 1 },
+    { k: 'ring', n: '기름 파문', tele: 0.5, times: 2, cnt: 16, gap: 3, spd: 200, every: 0.6, proj: 'sludge', m: 0.5, pw: [1, 1, 0.8] },
+    { k: 'sig', sig: 'slap', n: '세 팔 내리치기', tele: 0.8, arms: 3, m: 1, ph: 1, pw: [0, 1, 1.4] }],
+    ult: { k: 'sig', sig: 'surge', n: '잿물 범람', tele: 1, m: 1 } },
   bone_lord: { c: '#ede4c8', every: 7, moves: [
     { k: 'dash', n: '뼈 회전', tele: 0.55, times: 3, spd: 3.4, m: 1 },
     { k: 'homing', n: '울부짖는 해골', tele: 0.6, cnt: 4, spd: 210, turn: 2.2, proj: 'skull', m: 0.7 },
@@ -238,7 +239,6 @@ export const GAP_MISS_MUL = 0.25;  // 헛손질이면 받는 피해에 더한다
 /* 마디를 넘는 순간 몸이 바뀌는 보스(entity/boss-forms) — fly 그 마디부터 날아오른다(k 날개 그림 · game/boss-form-fx) ·
    split 그 마디에서 둘로 갈라진다(남은 체력을 반씩, 둘 다 쓰러져야 끝). 3 · 5 마디 보스만 — 두 마디는 바뀔 틈이 없다 */
 export const BOSS_FORM: Record<string, { fly?: number; k?: string; split?: number; n?: string }> = {
-  king_slime: { split: 2, n: '왕관이 둘로 쪼개진다' },
   proliferator: { split: 1, n: '스스로를 복제한다' },
   pursuer: { split: 3, n: '그림자가 떨어져 나온다' },
   tide_warden: { fly: 1, k: 'spout', n: '물기둥을 타고 오른다' },

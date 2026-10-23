@@ -35,7 +35,18 @@ export const BossSigPart: Bag = {
   /** 고유 기술 위험 지대 — 처리했으면 true */
   sigUpdate(h: Bag, dt: number, host: boolean, me: any) {
     switch (h.k) {
-      case 'shade': case 'bonepile': case 'pulse': case 'veil': case 'rod': case 'rail': case 'scales': case 'vine': case 'ghost': return true;
+      case 'parm': {                                                 // 잿물 팔 — 내리치는 순간 한 번(뿌리는 보스를 따라간다)
+        const b = this.hzBoss(h); if (b) { h.x = b.cx + h.ox; h.y = b.y + b.h; }
+        if (!h.hitDone && h.t >= h.slam) {
+          h.hitDone = 1;
+          if (host) this.hitPlayersRect(h.tx - 58, h.ty - 150, h.tx + 58, h.ty, h.dmg);
+          this.vfx.puffs(h.tx, h.ty - 6, 6, 22, 'rgba(74,69,65,.85)', 0.7, 26);
+          this.vfx.shock(h.tx, h.ty - 4, 90, '#8a7a68', 0.3, 6, 0.3);
+          this.shake = Math.max(this.shake, 9);
+          this.sfxAt && this.sfxAt('pool_slam', h.tx / TS, h.ty / TS);
+        }
+      } return true;
+      case 'bonepile': case 'pulse': case 'veil': case 'rod': case 'rail': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로
         h.fired = 1;
         const q = this.hzNear(h.x, h.y);

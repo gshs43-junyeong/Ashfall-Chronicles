@@ -46,9 +46,9 @@ export const CHAPTERS: ChapterDef[] = [
     ],
     needBasics: 2,
     require: ['dig'],
-    goal: { type: 'boss', target: 'king_slime', t: '한 덩어리가 더 갈라지지 않을 때까지', task: '슬라임 왕 토벌', verb: 'boss' },
+    goal: { type: 'boss', target: 'king_slime', t: '웅덩이가 식을 때까지', task: '잿물 군체 토벌', verb: 'boss' },
     rw: { xp: 480, gold: 180, items: [['helm_copper', 1], ['potion_hp_small', 5]] },
-    outro: '슬라임 왕이 터지자 안에서 손바닥만 한 심장이 굴러 나왔다. 아직 미지근하다.\n\n' +
+    outro: '잿물이 식어 갈라지자 녹슨 투구 밑에서 손바닥만 한 심장이 굴러 나왔다. 아직 미지근하다.\n\n' +
       '노인: "그게 무엇을 꿈꿨는지 알겠나. …외롭지 않기를 꿈꿨어."\n' +
       '미라: "하나야. 다섯 중에 하나."'
   },

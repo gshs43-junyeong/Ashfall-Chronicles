@@ -14,7 +14,7 @@ import { drawDecoy, drawTell } from './boss-tell-art.js';
 
 const FX_COL: Record<string, string> = { gel: '#6fa8ff', bone: '#ede4c8', flesh: '#c04a6a', ice: '#bfefff', frost: '#9fe0ff', rune: '#9fe8d8',
   meteor: '#ffc070', rock: '#b8a07a', plant: '#7fd06a', seed: '#a8d86a', sun: '#ffe08a', sand: '#e8c070', spore: '#8ff0c8', bile: '#a8c84a',
-  water: '#7fc8ff', fire: '#ff8a3a', metal: '#c8c8d8', bolt: '#cfe6ff' };
+  water: '#7fc8ff', fire: '#ff8a3a', metal: '#c8c8d8', bolt: '#cfe6ff', sludge: '#8a7a68' };
 
 export const BossHazardPart: Bag = {
 

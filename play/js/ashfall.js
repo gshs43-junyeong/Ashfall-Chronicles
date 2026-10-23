@@ -1906,8 +1906,8 @@
   __export(mixin_exports, {
     mixin: () => mixin
   });
-  function mixin(target, part, classLike = false) {
-    const d = Object.getOwnPropertyDescriptors(part);
+  function mixin(target, part2, classLike = false) {
+    const d = Object.getOwnPropertyDescriptors(part2);
     for (const k of Object.keys(d)) {
       if (Object.prototype.hasOwnProperty.call(target, k)) throw new Error("mixin: 이미 있는 이름 " + k);
       if (classLike) d[k].enumerable = false;
@@ -1942,13 +1942,13 @@
       this.m = o.mods || {};
       this.th = { ...DEF_THEME, ...o.theme || {} };
       this.rng = new RNG(o.seed);
-      const { ar, cs, od, hp } = this.d, ease3 = o.ease || 0;
+      const { ar, cs, od, hp } = this.d, ease4 = o.ease || 0;
       this.r = 54.4 - 4.48 * cs;
       this.pre = ar < 5 ? 1.2 + 0.6 * (5 - ar) / 5 : 1.2 - 0.75 * (ar - 5) / 5;
       this.fade = Math.min(0.4, this.pre * 2 / 3);
-      this.w300 = (80 - 6 * od) / 1e3 + ease3 * 0.5;
-      this.w100 = (140 - 8 * od) / 1e3 + ease3 * 0.75;
-      this.w50 = (200 - 10 * od) / 1e3 + ease3;
+      this.w300 = (80 - 6 * od) / 1e3 + ease4 * 0.5;
+      this.w100 = (140 - 8 * od) / 1e3 + ease4 * 0.75;
+      this.w50 = (200 - 10 * od) / 1e3 + ease4;
       this.beat = 60 / this.d.bpm;
       this.t = 0;
       this.objs = [];
@@ -5861,7 +5861,7 @@
     charm_canopy: { n: "수관의 부적", i: "🍃", type: "acc", b: { ms: 14, jump: 1, dex: 6 }, d: "나뭇가지 사이를 뛰어다니던 것의 발톱.", lvReq: 16 },
     charm_spore: { n: "포자 결정", i: "💠", type: "acc", b: { mp: 45, mpreg: 30, int: 6 }, d: "손안에서 계속 숨 쉬듯 밝아졌다 어두워진다.", lvReq: 16 },
     /* --- 소환 --- */
-    sum_slime: { n: "왕관 젤리", i: "👑", type: "summon", boss: "king_slime", stack: 9, d: "지상에서 사용하면 슬라임 왕이 온다." },
+    sum_slime: { n: "잿물 등불", i: "🏮", type: "summon", boss: "king_slime", stack: 9, d: "지상에서 사용하면 잿물 군체가 불빛을 따라 기어 온다." },
     sum_bone: { n: "저주받은 두개골", i: "💀", type: "summon", boss: "bone_lord", stack: 9, d: "깊은 곳에서만 반응한다." },
     sum_heart: { n: "고동치는 씨앗", i: "🫀", type: "summon", boss: "corrupt_heart", stack: 9, d: "부패한 땅에서 사용하라." },
     sum_frost: { n: "얼어붙은 왕관", i: "🔷", type: "summon", boss: "frost_witch", stack: 9, d: "서리 지대에서 사용하라." },
@@ -8430,15 +8430,15 @@
     },
     /* --- 보스 --- */
     king_slime: {
-      n: "슬라임 왕",
+      n: "잿물 군체",
       hp: 900,
       dmg: 24,
       def: 6,
-      spd: 60,
-      ai: "b_slime",
-      w: 152,
-      h: 116,
-      c: "#4f7fc0",
+      spd: 46,
+      ai: "b_pool",
+      w: 190,
+      h: 150,
+      c: "#4a4541",
       xp: 590,
       gold: 200,
       boss: 1,
@@ -8946,6 +8946,8 @@
     ember: { c: ["#ffe6a0", "#ff9a3c", "#e0561c"], n: 12, g: -0.3, life: 0.6, sq: 0, glow: 1, hit: "hit_ember", brk: "break_ember" },
     bone: { c: ["#f2ecd8", "#c6bda6", "#8e8574"], n: 10, g: 1, life: 0.55, sq: 1, bounce: 0.35, hit: "hit_bone", brk: "break_bone" },
     gel: { c: ["#d8f0dc", "#8ac49a", "#4f8a5e"], n: 12, g: 0.85, life: 0.42, sq: 0, hit: "hit_gel", brk: "break_flesh" },
+    sludge: { c: ["#8a8078", "#4a4541", "#2a2624"], n: 12, g: 0.9, life: 0.48, sq: 0, hit: "hit_gel", brk: "break_flesh" },
+    // 잿물 — 재와 기름
     flesh: { c: ["#e07a6a", "#b8484a", "#7a2c2e"], n: 10, g: 1.1, life: 0.42, sq: 0, hit: "hit_flesh", brk: "break_flesh" },
     void: { c: ["#d8c0ff", "#a06fff", "#5a3a86"], n: 12, g: -0.2, life: 0.78, sq: 0, glow: 1, hit: "hit_void", brk: "break_void" }
   };
@@ -9098,7 +9100,8 @@
       m[k] = mat;
     });
     put("bone", "skeleton archer bone_lord");
-    put("gel", "slime king_slime");
+    put("gel", "slime");
+    put("sludge", "king_slime");
     put("stone", "golem sandmaw mine_horror sand_guardian storm_warden shaft_maw jarhusk draft_form scribe_hand mold_walker archetype");
     put("metal", "sky_sentry ruin_guard scrapcrawler splitter weldarm coreling riveter cartwraith first_keeper proliferator hepha orbit_sentry ballast_form restorer overseer meridian_eye");
     put("ice", "frostling icewolf ice_warden frost_witch frostbound");
@@ -9140,7 +9143,7 @@
   });
   var BOSS_DIE = {
     /* --- 세션 1 --- */
-    king_slime: { mat: "gel", n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: "gel", n2: 34, at: 0.22, shake: 20 },
+    king_slime: { mat: "sludge", n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: "metal", n2: 34, at: 0.22, shake: 20 },
     bone_lord: { mat: "bone", n: 60, spd: 1.7, life: 1.6, mat2: "void", n2: 20, at: 0.26, shake: 20 },
     corrupt_heart: { mat: "flesh", n: 54, spd: 1.1, life: 1.3, mat2: "void", n2: 40, at: 0.2, shake: 22 },
     frost_witch: { mat: "ice", n: 76, spd: 1.6, life: 1.4, mat2: "glass", n2: 26, at: 0.18, shake: 20 },
@@ -9823,7 +9826,7 @@
     tide_warden: 1
   };
   var BOSS_LINES = {
-    king_slime: { 1: "갈라져도 갈라져도, 아직 혼자다.", 2: "껍데기가 굳는다 — 안쪽이 뛴다." },
+    king_slime: { 1: "웅덩이가 끓는다 — 투구 밑에서 무언가 뒤척인다.", 2: "투구에 금이 간다. 등불이 붉게 탄다." },
     bone_lord: { 1: "뼈가 일어선다.", 2: "기둥이 저를 대신 든다." },
     corrupt_heart: { 1: "뿌리가 바닥을 짚는다.", 2: "제단만이 아직 뛰고 있다." },
     frost_witch: { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
@@ -12672,9 +12675,9 @@
       ],
       needBasics: 2,
       require: ["dig"],
-      goal: { type: "boss", target: "king_slime", t: "한 덩어리가 더 갈라지지 않을 때까지", task: "슬라임 왕 토벌", verb: "boss" },
+      goal: { type: "boss", target: "king_slime", t: "웅덩이가 식을 때까지", task: "잿물 군체 토벌", verb: "boss" },
       rw: { xp: 480, gold: 180, items: [["helm_copper", 1], ["potion_hp_small", 5]] },
-      outro: '슬라임 왕이 터지자 안에서 손바닥만 한 심장이 굴러 나왔다. 아직 미지근하다.\n\n노인: "그게 무엇을 꿈꿨는지 알겠나. …외롭지 않기를 꿈꿨어."\n미라: "하나야. 다섯 중에 하나."'
+      outro: '잿물이 식어 갈라지자 녹슨 투구 밑에서 손바닥만 한 심장이 굴러 나왔다. 아직 미지근하다.\n\n노인: "그게 무엇을 꿈꿨는지 알겠나. …외롭지 않기를 꿈꿨어."\n미라: "하나야. 다섯 중에 하나."'
     },
     {
       id: 2,
@@ -14593,18 +14596,19 @@
   });
   var BOSS_MOVES = {
     /* ---------------- 세션 1 ---------------- */
+    /* 잿물 군체 — 굴 바닥 웅덩이가 몸이고 녹슨 투구만 떠 있다. 팔은 웅덩이에서 솟고(entity/boss-pool) 뛰지 않는다 — 웅덩이째 미끄러진다 */
     king_slime: {
-      c: "#6fa8ff",
-      every: 7.5,
+      c: "#ffb050",
+      every: 6.5,
       moves: [
-        { k: "leap", n: "왕관 내려찍기", tele: 0.7, waves: 1, wspd: 360, wfx: "gel", m: 1.1 },
-        { k: "zone", n: "끈적이는 비", tele: 0.6, at: "scatter", n2: 5, r: 46, life: 6, dps: 0.12, slow: 0.45, fx: "gel" },
-        { k: "summon", n: "신하들을 부른다", tele: 0.8, mob: "slime", cnt: 4 },
-        { k: "sig", sig: "melt", n: "녹아드는 왕관", tele: 0.8, pose: 0, m: 1 },
-        { k: "ring", n: "젤리 파문", tele: 0.5, times: 2, cnt: 16, gap: 3, spd: 200, every: 0.6, proj: "gel", m: 0.5, pw: [1, 1, 0.8] },
-        { k: "homing", n: "튀는 젤리", tele: 0.6, cnt: 4, spd: 200, turn: 1.6, proj: "gel", m: 0.6, ph: 1, pw: [0, 1, 1.5] }
+        { k: "sig", sig: "slap", n: "잿물 팔 내리치기", tele: 0.7, m: 1.1 },
+        { k: "sig", sig: "bubbles", n: "끓어오르는 기둥", tele: 0.6, m: 0.9 },
+        { k: "summon", n: "잿물 덩이를 뱉는다", tele: 0.8, mob: "slime", cnt: 3 },
+        { k: "sig", sig: "sink", n: "잠겼다 솟기", tele: 0.6, m: 1 },
+        { k: "ring", n: "기름 파문", tele: 0.5, times: 2, cnt: 16, gap: 3, spd: 200, every: 0.6, proj: "sludge", m: 0.5, pw: [1, 1, 0.8] },
+        { k: "sig", sig: "slap", n: "세 팔 내리치기", tele: 0.8, arms: 3, m: 1, ph: 1, pw: [0, 1, 1.4] }
       ],
-      ult: { k: "leap", n: "왕의 무게", tele: 0.9, times: 3, waves: 1, wspd: 420, wfx: "gel", m: 1.2 }
+      ult: { k: "sig", sig: "surge", n: "잿물 범람", tele: 1, m: 1 }
     },
     bone_lord: {
       c: "#ede4c8",
@@ -14943,7 +14947,6 @@
   var GAP_BRACE = 0.45;
   var GAP_MISS_MUL = 0.25;
   var BOSS_FORM = {
-    king_slime: { split: 2, n: "왕관이 둘로 쪼개진다" },
     proliferator: { split: 1, n: "스스로를 복제한다" },
     pursuer: { split: 3, n: "그림자가 떨어져 나온다" },
     tide_warden: { fly: 1, k: "spout", n: "물기둥을 타고 오른다" },
@@ -27321,7 +27324,7 @@
     soul_shard: { k: "wisp", c: "#c49fff", glow: 1 },
     star_heart: { k: "star", c: "#ffe58a", glow: "#ffd24a", big: 1 },
     /* 소환 */
-    sum_slime: { k: "crown", c: "#d8b13d", gem: "#4f7fc0" },
+    sum_slime: { k: "lantern", c: "#ffb050" },
     sum_bone: { k: "skull" },
     sum_heart: { k: "heart", c: "#a03f6c" },
     sum_frost: { k: "crown", c: "#9fe0ff", gem: "#ffffff", glow: "#9fe0ff" },
@@ -30223,6 +30226,22 @@
           return;
         }
       }
+    },
+    lantern(H) {
+      const { P: P2, poly: poly2, circ: circ2, ell, glow: glow4 } = H, s = H.s;
+      glow4(16, 16, 12, s.c, 0.3);
+      P2(11, 4, 10, 2.4, "#4e3c2c");
+      P2(15, 2, 2, 3, "#4e3c2c");
+      poly2([[9, 7], [23, 7], [24, 22], [8, 22]], "#5e4632");
+      P2(11, 9, 10, 11, s.c);
+      P2(11, 9, 4, 11, sh2(s.c, 1.25));
+      P2(15.2, 9, 1.6, 11, "#4e3c2c");
+      P2(11, 14, 10, 1.4, "#4e3c2c");
+      P2(8, 21, 16, 3, "#3e342c");
+      ell(16, 25.5, 9, 3.2, "#4a4541");
+      circ2(10, 28, 1.8, "#4a4541");
+      circ2(21, 28.5, 1.4, "#4a4541");
+      circ2(13, 25, 0.9, "#ff8a40");
     },
     skull(H) {
       const { g, s, rng, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H;
@@ -33523,10 +33542,10 @@
         if (!it || idef(it).type !== "pet") continue;
         it.lv = it.lv || 1;
         it.xp = (it.xp || 0) + n;
-        const pid = idef(it).pet, max = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
-        while (it.lv < max && it.xp >= petXpNext(it.lv, pid)) {
+        const pid2 = idef(it).pet, max = petMaxLv(pid2), dragon = PETS[pid2] && PETS[pid2].dragon;
+        while (it.lv < max && it.xp >= petXpNext(it.lv, pid2)) {
           if (dragon && DRAGON_GATES.includes(it.lv + 1)) {
-            it.xp = petXpNext(it.lv, pid);
+            it.xp = petXpNext(it.lv, pid2);
             if (!it.hungry) {
               it.hungry = 1;
               const food = DRAGON_FOOD[DRAGON_GATES.indexOf(it.lv + 1)];
@@ -33534,7 +33553,7 @@
             }
             break;
           }
-          it.xp -= petXpNext(it.lv, pid);
+          it.xp -= petXpNext(it.lv, pid2);
           it.lv++;
           up = true;
           app.toast(tr("{idef} — {lv}레벨이 되었다", { idef: idef(it).n, lv: it.lv }), "good");
@@ -34193,6 +34212,7 @@
     web: { burst: "frost", ring: "#eef0f4", rr: 22, parts: 6 },
     fruit: { burst: "hit", ring: "#e8783a", rr: 20, parts: 9 },
     gel: { burst: "frost", ring: "#6fa8ff", rr: 22, parts: 8 },
+    sludge: { burst: "hit", ring: "#8a7a68", rr: 22, parts: 8 },
     drop: { burst: "frost", ring: "#7fc8e8", rr: 20, parts: 8 }
     /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
   };
@@ -34226,7 +34246,9 @@
     fruit: { c: "#c8641e", r: 6 },
     // 원숭이가 던지는 열매
     gel: { c: "#6fa8ff", r: 7 },
-    // 슬라임 왕의 젤리 덩이 · 지킴이의 물방울 — 그림은 game/boss-tell-art
+    // 지킴이의 물방울 — 그림은 game/boss-tell-art
+    sludge: { c: "#6a625a", r: 8 },
+    // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
     drop: { c: "#7fc8e8", r: 6 }
   };
   var PHYS_PROJ = { arrow: 1, bone: 1, star: 1, bullet: 1, rivet: 1, fruit: 1 };
@@ -36950,7 +36972,8 @@
         this.stateT += dt;
         return;
       }
-      if (AI === "b_slime") {
+      if (AI === "b_pool") this.poolAI(dt, world, p, dx);
+      else if (AI === "b_slime") {
         if (this.onGround) {
           this.vx *= 0.86;
           if (this.lastPh() && this.landT !== 1) {
@@ -37962,7 +37985,7 @@
   var hid = 1;
   var nid = () => hid = hid % 1e6 + 1;
   var BossSignature = {
-    /** 숨었다 다른 자리에서 솟는 몸(녹아드는 왕관 · 흩어졌다 맞추기) — 숨는 동안 맞지 않는다 */
+    /** 숨었다 다른 자리에서 솟는 몸(잠겼다 솟기 · 흩어졌다 맞추기) — 숨는 동안 맞지 않는다 */
     sigHide(dt, world, r, toX, under, rise, onRise) {
       r.pt += dt;
       if (r.ph === 0) {
@@ -37996,16 +38019,12 @@
     sigStart(d, p, world, K) {
       const m = d.m ?? 1, E = this, fy = this.floorY(p.cx, p.y), side = Math.sign(p.cx - this.cx) || 1;
       switch (d.sig) {
-        case "melt": {
-          this.hz({ k: "shade", fx: "gel", life: 3.3, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1 });
-          const r = { busy: 99, ph: 0, pt: 0 };
-          r.rise = () => this.strike(this.cx, this.y + this.h, { r: Math.max(70, this.w * 0.55), delay: 0.5, fx: "gel", dir: "up" }, K, m);
-          r.tick = (dt, r2) => this.sigHide(dt, world, r2, () => p.cx, 1.6, 0.5, () => {
-            this.vy = -900;
-            for (const s of [-1, 1]) this.hz({ k: "wave", x: this.cx + s * this.w / 2, y: this.y + this.h, vx: s * 380, w: 26, hh: 28, life: 2.2, dmg: this.dmg * m * 0.6, c: K.c, fx: "gel", sd: Math.random() * 99 });
-          });
-          return r;
-        }
+        case "slap":
+        case "bubbles":
+        case "sink":
+        case "surge":
+          return this.poolSig(d, p, world, K);
+        // 잿물 군체(entity/boss-pool)
         case "reform": {
           this.hz({ k: "bonepile", life: 2.9, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, sd: Math.random() * 99 });
           const tx = p.cx + side * 170, r = { busy: 99, ph: 0, pt: 0 };
@@ -38261,6 +38280,129 @@
     }
   };
   mixin(Enemy.prototype, BossSignature, true);
+
+  // src/game/entity/boss-pool.ts
+  var boss_pool_exports = {};
+  __export(boss_pool_exports, {
+    BossPool: () => BossPool,
+    poolHalf: () => poolHalf
+  });
+  var pid = 0;
+  var nid2 = () => 2e6 + (pid = pid % 1e6 + 1);
+  var poolHalf = (e) => e.w * 0.5 + 120;
+  var BossPool = {
+    /** 몸놀림 — 미끄러져 다가오고, 틈틈이 잿물 덩이를 포물선으로 뱉는다 */
+    poolAI(dt, world, p, dx) {
+      const near = Math.abs(dx) < this.w * 0.3;
+      this.vx = lerp(this.vx, near ? 0 : Math.sign(dx) * this.spd * (0.8 + this.pf * 0.5), dt * 1.2);
+      if (this.atkCd <= 0 && Math.abs(dx) < 720) {
+        this.atkCd = 2.6 - this.pf * 0.8;
+        const n = this.lastPh() ? 5 : 3, sy = this.y + this.h * 0.25;
+        for (let i = 0; i < n; i++) {
+          const tx = p.cx + (i - (n - 1) / 2) * 64, t = 0.95 + i * 0.04, g = 900;
+          const pr = new Proj(this.cx, sy, (tx - this.cx) / t, (p.y + p.h - 8 - sy) / t - 0.5 * g * t, this.dmg * 0.55, "enemy", "sludge");
+          pr.grav = g;
+          pr.life = 3;
+          app.projs.push(pr);
+        }
+        app.sfxAt && app.sfxAt("pool_spit", this.cx / TS, this.cy / TS);
+      }
+      this.move(dt, world);
+    },
+    /** 팔 하나 — 뿌리(보스 기준 ox) · 내리칠 자리 · 솟는 시간 */
+    poolArm(ox, tx, ty, rise, dm, K) {
+      const hold = 0.55, back = 0.45;
+      return this.hz({
+        k: "parm",
+        id: nid2(),
+        ref: this,
+        nid: this.nid,
+        ox,
+        x: this.cx + ox,
+        y: this.y + this.h,
+        tx,
+        ty,
+        rise,
+        slam: rise + 0.14,
+        life: rise + 0.14 + hold + back,
+        back,
+        dmg: this.dmg * dm,
+        c: K.c,
+        sd: Math.random() * 99
+      });
+    },
+    /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
+    poolSig(d, p, world, K) {
+      const m = d.m ?? 1, E = this, half = poolHalf(this);
+      switch (d.sig) {
+        case "slap": {
+          const n = d.arms || 2, gap = 0.55;
+          for (let i = 0; i < n; i++) app.after(i * gap, () => {
+            if (E.dead) return;
+            const side = i % 2 === 0 ? Math.sign(p.cx - E.cx) || 1 : -(Math.sign(p.cx - E.cx) || 1);
+            const ox = side * E.w * 0.42, rx = E.cx + ox;
+            const tx = clamp(p.cx + p.vx * 0.25, rx - 430, rx + 430);
+            E.poolArm(ox, tx, E.floorY(tx, p.y), 0.9, m, K);
+            app.sfxAt && app.sfxAt("pool_rise", rx / TS, (E.y + E.h) / TS);
+          });
+          return { busy: (n - 1) * gap + 1.5 };
+        }
+        case "bubbles": {
+          const s = Math.sign(p.cx - this.cx) || 1, n = 7;
+          for (let w = 0; w < 2; w++) app.after(w * 1.05, () => {
+            if (E.dead) return;
+            const gapI = 1 + Math.floor(Math.random() * (n - 2));
+            for (let i = 0; i < n; i++) {
+              if (i === gapI) continue;
+              const x = E.cx + s * (E.w * 0.3 + i * 72);
+              E.strike(x, E.y + E.h, { shape: "col", w: 58, h: 230, delay: 0.85, fx: "sludge", dir: "up" }, K, m);
+            }
+            app.sfxAt && app.sfxAt("pool_bubble", E.cx / TS, E.cy / TS);
+          });
+          return { busy: 2.1 };
+        }
+        case "sink": {
+          const r = { busy: 99, ph: 0, pt: 0 };
+          app.sfxAt && app.sfxAt("pool_sink", this.cx / TS, this.cy / TS);
+          r.rise = () => {
+            this.strike(this.cx, this.y + this.h, { r: Math.max(90, this.w * 0.5), delay: 0.55, fx: "sludge", dir: "up" }, K, m);
+            app.sfxAt && app.sfxAt("pool_bubble", this.cx / TS, this.cy / TS);
+          };
+          r.tick = (dt, r2) => this.sigHide(dt, world, r2, () => p.cx, 1.5, 0.55, () => {
+            this.vy = -620;
+            const ring = this.lastPh() ? 14 : 10, g0 = Math.floor(Math.random() * ring);
+            for (let i = 0; i < ring; i++) {
+              if ((i - g0 + ring) % ring < 2) continue;
+              const a = -Math.PI + (i + 0.5) / ring * Math.PI;
+              const pr = new Proj(this.cx, this.y + this.h * 0.4, Math.cos(a) * 300, Math.sin(a) * 420, this.dmg * m * 0.5, "enemy", "sludge");
+              pr.grav = 700;
+              pr.life = 3;
+              app.projs.push(pr);
+            }
+            app.sfxAt && app.sfxAt("pool_geyser", this.cx / TS, this.cy / TS);
+          });
+          return r;
+        }
+        case "surge": {
+          const W = (half + 300) * 2;
+          for (let b = 0; b < 3; b++) app.after(b * 1.35, () => {
+            if (E.dead) return;
+            E.strike(E.cx, E.y + E.h, { shape: "col", w: W, h: 70, delay: 0.9, fx: "sludge", dir: "up" }, K, m * 0.9);
+            if (b < 2) app.after(0.95, () => {
+              if (E.dead) return;
+              const side = b % 2 ? -1 : 1, rx = E.cx + side * E.w * 0.42, tx = clamp(p.cx, rx - 430, rx + 430);
+              E.poolArm(side * E.w * 0.42, tx, E.floorY(tx, p.y), 0.75, m * 0.9, K);
+            });
+            app.sfxAt && app.sfxAt("pool_bubble", E.cx / TS, E.cy / TS);
+          });
+          app.shake = Math.max(app.shake, 6);
+          return { busy: 4.3 };
+        }
+      }
+      return { busy: 0.3 };
+    }
+  };
+  mixin(Enemy.prototype, BossPool, true);
 
   // src/game/entity/boss-gaps.ts
   var boss_gaps_exports = {};
@@ -43374,12 +43516,12 @@
       if (d.def) h += `<div class="tstat">${tr("방어 <b>{n}</b>", { n: Math.round(d.def * enhMul(it)) })}</div>`;
       if (it.e) h += `<div class="tstat">${tr("강화 <b>+{e}</b>", { e: it.e })} <span class="thint">${tr("(공격·방어 +{n}%p)", { n: it.e * 5 })}</span></div>`;
       if (d.type === "pet") {
-        const pid = d.pet, lvMax = petMaxLv(pid), dragon = PETS[pid] && PETS[pid].dragon;
+        const pid2 = d.pet, lvMax = petMaxLv(pid2), dragon = PETS[pid2] && PETS[pid2].dragon;
         const lv = it.lv || 1, max = lv >= lvMax;
         if (dragon) h += `<div class="tstat">${tr("단계 <b>{stage}</b>", { stage: tr(DRAGON_STAGE_N[dragonStage(lv)]) })}</div>`;
         h += `<div class="tstat">${tr("레벨 <b>{lv}</b> / {petLvMax}", { lv, petLvMax: lvMax })}` + (max ? ` <span class="thint">${tr("(끝까지 키웠다)")}</span>` : ` <span class="thint">${tr("패시브 ×{petLvMul} · 공격 ×{petAtkMul}", { petLvMul: petLvMul(lv).toFixed(2), petAtkMul: petAtkMul(lv).toFixed(2) })}</span>`) + `</div>`;
         if (!max) {
-          const need = petXpNext(lv, pid), cur = it.xp || 0;
+          const need = petXpNext(lv, pid2), cur = it.xp || 0;
           h += `<div class="petxp"><i style="width:${Math.round(clamp(cur / need, 0, 1) * 100)}%"></i></div>` + (it.hungry ? `<div class="thint">${tr("진화를 기다린다 — {food|을} 먹여야 한다", { food: ITEMS[DRAGON_FOOD[DRAGON_GATES.indexOf(lv + 1)]].n })}</div>` : `<div class="thint">${tr("다음 레벨까지 {n}", { n: fmt(need - cur) })}</div>`);
         }
       }
@@ -46932,11 +47074,11 @@
         hopper(c, 10, by - 52, binW, 40);
         ins.slice(0, 3).forEach((id, i) => pile(c, id, m.in[id], 14 + i * 12 - (ins.length > 1 ? 6 : 0), by - 50 + i * 3, 16));
         belt(c, lx0 - 8, hx + 2, by, run, t);
-        const nid2 = inId || fuelId;
-        if (nid2 && run && p < IN) {
+        const nid3 = inId || fuelId;
+        if (nid3 && run && p < IN) {
           const k2 = ease(p / IN);
-          drawIc(c, nid2, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
-        } else if (nid2) drawIc(c, nid2, lx0 - 4, by - 15, 16);
+          drawIc(c, nid3, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
+        } else if (nid3) drawIc(c, nid3, lx0 - 4, by - 15, 16);
       } else if (kind === "drill" && outId) {
         c.fillStyle = "#3a2c20";
         c.fillRect(10, by - 30, binW, 50);
@@ -47909,6 +48051,13 @@
     break_machine: ["mat_metal", 0.66, 1.5],
     /* ★ 내가 맞는 소리 — 제 파일 없이 hit_flesh 를 **빌려서** 음높이를 낮추고 음량을 크게 줄인다 — 사연: docs/code-history.md#h79 */
     hurt_player: ["hit_flesh", 0.88, 0.42],
+    /* 잿물 군체 — 무거운 잿물이 끓고 철썩인다(물 소리를 낮게 늘여 빌린다) */
+    pool_spit: ["splash", 1.3, 0.45],
+    pool_rise: ["bubble", 0.55, 0.8],
+    pool_slam: ["boom_small", 0.62, 0.9],
+    pool_bubble: ["bubble", 0.75, 0.7],
+    pool_sink: ["drown", 0.7, 0.75],
+    pool_geyser: ["splash", 0.6, 1],
     /* ★ 몹·보스가 쏘는 소리. */
     efire_phys: ["bow", 0.82, 0.5],
     efire_magic: ["magic", 0.8, 0.5],
@@ -54240,12 +54389,12 @@
             const [cx, cy] = st.pop();
             group.push([cx, cy]);
             for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-              const nx = cx + dx, ny = cy + dy, nid2 = w.get(nx, ny);
-              if (nid2 === T.WOOD) {
+              const nx = cx + dx, ny = cy + dy, nid3 = w.get(nx, ny);
+              if (nid3 === T.WOOD) {
                 touching = true;
                 continue;
               }
-              if (!leafy(nid2)) continue;
+              if (!leafy(nid3)) continue;
               const k = ny * WW2 + nx;
               if (seen.has(k)) continue;
               seen.add(k);
@@ -60338,7 +60487,10 @@
     }
   }
   var SIG_TELL = {
-    melt: ["zone", "gel"],
+    slap: ["leap", "gel"],
+    bubbles: ["quake", ""],
+    sink: ["leap", "gel"],
+    surge: ["leap", "gel"],
     reform: ["blink", ""],
     beat: ["ring", ""],
     mirrors: ["clones", ""],
@@ -60810,6 +60962,31 @@
         c.restore();
         return true;
       }
+      case "sludge": {
+        const sq = 1 + Math.sin(T2 * 9 + sd) * 0.1;
+        c.save();
+        c.translate(x, y);
+        c.rotate(a);
+        c.scale(sq, 2 - sq);
+        c.fillStyle = "#4a4541";
+        c.strokeStyle = "#1c1a18";
+        c.lineWidth = 1.4;
+        c.beginPath();
+        c.moveTo(9, 0);
+        c.quadraticCurveTo(2, -8, -6, -5);
+        c.arc(-5, 0, 5, -Math.PI / 2, Math.PI / 2, true);
+        c.quadraticCurveTo(2, 8, 9, 0);
+        c.fill();
+        c.stroke();
+        c.fillStyle = "rgba(200,190,176,.6)";
+        c.beginPath();
+        c.ellipse(-1, -3, 2.6, 1.2, -0.3, 0, TAU);
+        c.fill();
+        c.fillStyle = "#ff8a40";
+        c.fillRect(-3 + Math.sin(T2 * 5 + sd) * 1.5, 1, 2, 2);
+        c.restore();
+        return true;
+      }
       case "drop": {
         c.save();
         c.translate(x, y);
@@ -60866,6 +61043,243 @@
     }
     return false;
   }
+
+  // src/game/game/boss-pool-art.ts
+  var boss_pool_art_exports = {};
+  __export(boss_pool_art_exports, {
+    drawArm: () => drawArm,
+    drawPool: () => drawPool
+  });
+  var SL = "#4a4541", SL_D = "#2f2b29", SL_L = "#7a716a", EMB = "#ff8a40";
+  var PART = 120;
+  var clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
+  var ease3 = (u) => 1 - (1 - u) * (1 - u);
+  function part(c, im, fr, x, y, size2, a, flipY = false) {
+    if (!im) {
+      glob(c, x, y, size2 * 0.36, SL, SL_D);
+      return;
+    }
+    c.save();
+    c.translate(x, y);
+    c.rotate(a);
+    if (flipY) c.scale(1, -1);
+    c.drawImage(im, fr * PART, 0, PART, PART, -size2 / 2, -size2 / 2, size2, size2);
+    c.restore();
+  }
+  function drawPool(c, e, sx, sy, T2) {
+    const x = sx + e.w / 2, y = sy + e.h, half = poolHalf(e), fade = e.dead ? 0 : 1;
+    if (fade <= 0) return;
+    c.save();
+    c.globalAlpha = fade;
+    const g = c.createRadialGradient(x, y - 2, 4, x, y - 2, half);
+    g.addColorStop(0, SL_D);
+    g.addColorStop(0.8, "rgba(47,43,41,.92)");
+    g.addColorStop(1, "rgba(47,43,41,0)");
+    c.fillStyle = g;
+    c.beginPath();
+    c.ellipse(x, y - 2, half, 13, 0, 0, TAU);
+    c.fill();
+    c.strokeStyle = "rgba(138,128,120,.45)";
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.ellipse(x, y - 4, half * 0.92, 9, 0, Math.PI * 1.05, Math.PI * 1.95);
+    c.stroke();
+    for (let i = 0; i < 3; i++) {
+      const u = (T2 * 0.45 + i / 3) % 1;
+      c.strokeStyle = `rgba(160,150,140,${0.35 * (1 - u)})`;
+      c.lineWidth = 1;
+      c.beginPath();
+      c.ellipse(x, y - 3, e.w * 0.45 + u * (half - e.w * 0.45), 4 + u * 7, 0, Math.PI, TAU);
+      c.stroke();
+    }
+    const boil = e.burrowT > 0 ? 3 : 1;
+    for (let i = 0; i < 7 * boil; i++) {
+      const per = 1.3 + hs3(i, 1) * 1.2, u = (T2 + hs3(i, 2) * 9) / per % 1;
+      const bx = x + (hs3(i, 3) - 0.5) * 2 * half * (boil > 1 && i % 2 ? 0.25 : 0.88), by = y - 4 - hs3(i, 4) * 5;
+      if (u < 0.8) {
+        const r = 1.5 + u * (3 + hs3(i, 5) * 4) * (boil > 1 ? 1.6 : 1);
+        c.fillStyle = SL;
+        c.strokeStyle = SL_L;
+        c.lineWidth = 1;
+        c.beginPath();
+        c.arc(bx, by - r * 0.6, r, Math.PI, TAU);
+        c.fill();
+        c.stroke();
+        c.fillStyle = "rgba(220,210,200,.5)";
+        c.fillRect(bx - r * 0.4, by - r * 1.1, 1.5, 1.5);
+      } else {
+        c.strokeStyle = `rgba(160,150,140,${(1 - u) * 3})`;
+        c.beginPath();
+        c.ellipse(bx, by, 4 + (u - 0.8) * 30, 2, 0, 0, TAU);
+        c.stroke();
+      }
+    }
+    for (let i = 0; i < 6; i++) {
+      const bx = x + (hs3(i, 7) - 0.5) * 1.7 * half, a = 0.4 + 0.4 * Math.sin(T2 * 2 + i);
+      c.fillStyle = EMB;
+      c.globalAlpha = fade * a;
+      c.fillRect(bx, y - 3 - hs3(i, 8) * 4, 2, 2);
+    }
+    c.restore();
+  }
+  function drawArm(c, h, b, cx0, cy0, T2) {
+    const rx = (b ? b.cx + h.ox : h.x) - cx0, ry = (b ? b.y + b.h : h.y) - cy0 - 6;
+    const tx = h.tx - cx0, ty = h.ty - cy0 - 10, t = h.t;
+    const u = ease3(clamp01(t / h.rise)), s = clamp01((t - h.rise) / (h.slam - h.rise)), k = clamp01((t - (h.life - h.back)) / h.back);
+    if (s < 1) {
+      const a = 0.2 + 0.5 * u;
+      c.fillStyle = `rgba(20,16,14,${a})`;
+      c.beginPath();
+      c.ellipse(tx, ty + 9, 40 + 30 * u, 8, 0, 0, TAU);
+      c.fill();
+      c.strokeStyle = h.c;
+      c.globalAlpha = 0.35 + 0.4 * u;
+      c.setLineDash([6, 5]);
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.ellipse(tx, ty + 9, 62, 12, 0, 0, TAU);
+      c.stroke();
+      c.setLineDash([]);
+      c.globalAlpha = 1;
+    }
+    const wob = Math.sin(T2 * 7 + h.sd) * 10 * (1 - s);
+    const upX = rx + (tx - rx) * 0.18 + wob, upY = ry - 260 * u;
+    const ss = s * s;
+    let ex = upX + (tx - upX) * ss, ey = upY + (ty - upY) * ss - Math.sin(s * Math.PI) * 60;
+    ex += (rx - ex) * k;
+    ey += (ry - ey) * k;
+    const lift2 = (130 + 100 * Math.max(u, s)) * (1 - k);
+    const cpx = rx + (ex - rx) * 0.25, cpy = Math.min(ry, ey) - lift2;
+    const im = Sprites.want("king_slime_parts");
+    const N = 26, grow = 0.55 + 0.45 * u, L = [], R = [], mid = [];
+    for (let i = 0; i <= N; i++) {
+      const q = i / N, iq = 1 - q;
+      const x = iq * iq * rx + 2 * iq * q * cpx + q * q * ex, y = iq * iq * ry + 2 * iq * q * cpy + q * q * ey;
+      const dx = 2 * iq * (cpx - rx) + 2 * q * (ex - cpx), dy = 2 * iq * (cpy - ry) + 2 * q * (ey - cpy), dl = Math.hypot(dx, dy) || 1;
+      const r = (36 - 22 * q) * grow * (1 - k * 0.45) * (1 + Math.sin(q * 9 - T2 * 6 + h.sd) * 0.08);
+      L.push([x - dy / dl * r, y + dx / dl * r]);
+      R.push([x + dy / dl * r, y - dx / dl * r]);
+      mid.push([x, y, r, Math.atan2(dy, dx)]);
+    }
+    const g = c.createLinearGradient(rx - 40, 0, rx + 40, 0);
+    g.addColorStop(0, SL_D);
+    g.addColorStop(0.45, SL);
+    g.addColorStop(1, SL_D);
+    c.beginPath();
+    c.moveTo(L[0][0], L[0][1]);
+    for (const q of L) c.lineTo(q[0], q[1]);
+    for (let i = R.length - 1; i >= 0; i--) c.lineTo(R[i][0], R[i][1]);
+    c.closePath();
+    c.fillStyle = g;
+    c.fill();
+    c.strokeStyle = "#1c1a18";
+    c.lineWidth = 2;
+    c.stroke();
+    c.strokeStyle = "rgba(170,160,150,.45)";
+    c.lineWidth = 3;
+    c.beginPath();
+    for (let i = 1; i < N - 2; i++) {
+      const [x, y, r, a] = mid[i];
+      const hx2 = x + Math.cos(a - 1.57) * r * 0.5, hy2 = y + Math.sin(a - 1.57) * r * 0.5;
+      if (i === 1) c.moveTo(hx2, hy2);
+      else c.lineTo(hx2, hy2);
+    }
+    c.stroke();
+    for (let i = 3; i < N - 3; i += 4) {
+      const [x, y, r] = mid[i];
+      c.fillStyle = EMB;
+      c.fillRect(x + Math.sin(i * 7.3) * r * 0.4, y + Math.cos(i * 3.1) * r * 0.3, 3, 3);
+      const dr = (T2 * 0.9 + i * 0.37) % 1;
+      if (r > 14) glob(c, x + Math.sin(i) * r * 0.5, y + r * 0.6 + dr * 30, 3.2, SL, SL_D);
+    }
+    const [hx, hy, , ha] = mid[N];
+    part(c, im, 3, hx, hy, PART * 0.95 * grow, ha, Math.cos(ha) < 0);
+    if (s >= 1 && t < h.slam + 0.35) {
+      const f = (t - h.slam) / 0.35;
+      c.globalAlpha = 1 - f;
+      part(c, im, 5, tx, ty - 10 - f * 8, PART * (1 + f * 0.6), 0);
+      c.globalAlpha = 1;
+    }
+  }
+  STRIKE_ART.sludge = {
+    tell(c, h, x, y, k, T2) {
+      const w = h.shape === "col" ? h.w : h.r * 2, n = Math.max(3, Math.floor(w / 22));
+      c.fillStyle = `rgba(30,26,24,${0.25 + 0.45 * k})`;
+      c.fillRect(x - w / 2, y - 4, w, 4);
+      for (let i = 0; i < n; i++) {
+        const bx = x - w / 2 + (i + 0.5) / n * w + (hs3(h.sd, i) - 0.5) * 10, ph = (T2 * (2 + k * 4) + hs3(h.sd, i + 9)) % 1;
+        const r = (1.5 + ph * (2 + k * 5)) * (0.6 + hs3(h.sd, i + 3) * 0.6);
+        c.fillStyle = SL;
+        c.strokeStyle = SL_L;
+        c.lineWidth = 1;
+        c.beginPath();
+        c.arc(bx, y - 3 - ph * 3 * k, r, Math.PI, TAU);
+        c.fill();
+        c.stroke();
+      }
+    },
+    hit(c, h, x, y, f, T2) {
+      const wide = h.shape === "col" && h.w > 160, w = h.shape === "col" ? h.w : h.r * 1.6;
+      const tall = h.shape === "col" ? h.hh : h.r * 1.8;
+      const up = Math.min(1, f * 5) * (f > 0.6 ? 1 - (f - 0.6) / 0.4 : 1), hh = tall * up;
+      if (hh < 2) return;
+      const g = c.createLinearGradient(0, y - hh, 0, y);
+      g.addColorStop(0, SL_L);
+      g.addColorStop(0.2, SL);
+      g.addColorStop(1, SL_D);
+      c.fillStyle = g;
+      c.strokeStyle = "#1c1a18";
+      c.lineWidth = 1.5;
+      c.beginPath();
+      if (wide) {
+        c.moveTo(x - w / 2, y);
+        const steps = Math.floor(w / 10);
+        for (let i = 0; i <= steps; i++) {
+          const xx = x - w / 2 + i / steps * w;
+          c.lineTo(xx, y - hh * (0.8 + 0.2 * Math.sin(xx * 0.05 + T2 * 9)));
+        }
+        c.lineTo(x + w / 2, y);
+      } else {
+        const n = 14, side = (sg) => {
+          for (let i = 0; i <= n; i++) {
+            const q = sg < 0 ? i / n : 1 - i / n, yy = y - q * hh, ww = w * (0.5 - 0.22 * q) * (1 + 0.1 * Math.sin(yy * 0.09 + T2 * 14 * sg));
+            c.lineTo(x + sg * ww, yy);
+          }
+        };
+        c.moveTo(x - w * 0.62, y);
+        side(-1);
+        side(1);
+        c.lineTo(x + w * 0.62, y);
+      }
+      c.closePath();
+      c.fill();
+      c.stroke();
+      if (!wide) {
+        c.fillStyle = "rgba(210,200,190,.3)";
+        c.fillRect(x - w * 0.18, y - hh * 0.85, 3, hh * 0.65);
+        const im = Sprites.want("king_slime_parts");
+        if (im) c.drawImage(im, 5 * PART, 0, PART, PART, x - w * 0.6, y - hh - w * 0.75, w * 1.2, w * 1.2);
+      } else {
+        c.strokeStyle = "rgba(190,180,170,.55)";
+        c.lineWidth = 2;
+        c.beginPath();
+        for (let xx = x - w / 2; xx < x + w / 2; xx += 6) {
+          const yy = y - hh * (0.8 + 0.2 * Math.sin(xx * 0.05 + T2 * 9)) + 3;
+          if (xx === x - w / 2) c.moveTo(xx, yy);
+          else c.lineTo(xx, yy);
+        }
+        c.stroke();
+      }
+      for (let i = 0; i < (wide ? 12 : 5); i++) {
+        const q = hs3(h.sd, i), bx = x + (q - 0.5) * w * 1.1, by = y - hh - 6 - Math.sin(f * Math.PI) * (20 + 30 * hs3(h.sd, i + 5));
+        glob(c, bx, by, 3 + hs3(h.sd, i + 2) * 3, SL, SL_D);
+      }
+      for (let i = 0; i < 4; i++) {
+        c.fillStyle = EMB;
+        c.fillRect(x + (hs3(h.sd, i + 11) - 0.5) * w * 0.6, y - hh * hs3(h.sd, i + 13), 2, 2);
+      }
+    }
+  };
 
   // src/game/game/boss-sig-art.ts
   var boss_sig_art_exports = {};
@@ -61217,30 +61631,10 @@
     drawSig(c, h, cx0, cy0, T2) {
       const b = this.hzBoss(h), f = Math.min(1, h.t * 4, Math.max(0, h.life - h.t) * 3);
       switch (h.k) {
-        case "shade": {
-          if (!b || h.t < 0.35) return true;
-          const x = b.cx - cx0, y = b.y + b.h - cy0, r = b.w * 0.6;
-          c.globalAlpha = f;
-          c.fillStyle = "rgba(80,130,230,.65)";
-          c.strokeStyle = "#1e3a7a";
-          c.lineWidth = 1.5;
-          c.beginPath();
-          c.ellipse(x, y - 2, r * (1 + Math.sin(T2 * 6) * 0.05), 7, 0, 0, TAU);
-          c.fill();
-          c.stroke();
-          c.fillStyle = "rgba(255,255,255,.5)";
-          c.beginPath();
-          c.ellipse(x - r * 0.3, y - 4, r * 0.25, 1.5, 0, 0, TAU);
-          c.fill();
-          const cy = y - 12 + Math.sin(T2 * 4) * 3;
-          poly(c, [x - 12, cy, x - 12, cy - 9, x - 6, cy - 4, x, cy - 12, x + 6, cy - 4, x + 12, cy - 9, x + 12, cy]);
-          c.fillStyle = "#f0c040";
-          c.fill();
-          c.strokeStyle = "#6a4a08";
-          c.stroke();
-          c.globalAlpha = 1;
+        case "parm":
+          drawArm(c, h, b, cx0, cy0, T2);
           return true;
-        }
+        // 잿물 군체의 팔(game/boss-pool-art)
         case "bonepile": {
           if (!b || h.t < 0.3) return true;
           const x = b.cx - cx0, y = b.y + b.h - cy0, up = b.burrowT > 0 ? 0 : 1;
@@ -61697,7 +62091,23 @@
     /** 고유 기술 위험 지대 — 처리했으면 true */
     sigUpdate(h, dt, host, me) {
       switch (h.k) {
-        case "shade":
+        case "parm":
+          {
+            const b = this.hzBoss(h);
+            if (b) {
+              h.x = b.cx + h.ox;
+              h.y = b.y + b.h;
+            }
+            if (!h.hitDone && h.t >= h.slam) {
+              h.hitDone = 1;
+              if (host) this.hitPlayersRect(h.tx - 58, h.ty - 150, h.tx + 58, h.ty, h.dmg);
+              this.vfx.puffs(h.tx, h.ty - 6, 6, 22, "rgba(74,69,65,.85)", 0.7, 26);
+              this.vfx.shock(h.tx, h.ty - 4, 90, "#8a7a68", 0.3, 6, 0.3);
+              this.shake = Math.max(this.shake, 9);
+              this.sfxAt && this.sfxAt("pool_slam", h.tx / TS, h.ty / TS);
+            }
+          }
+          return true;
         case "bonepile":
         case "pulse":
         case "veil":
@@ -61925,7 +62335,8 @@
     water: "#7fc8ff",
     fire: "#ff8a3a",
     metal: "#c8c8d8",
-    bolt: "#cfe6ff"
+    bolt: "#cfe6ff",
+    sludge: "#8a7a68"
   };
   var BossHazardPart = {
     /** 위험 지대를 놓는다(호스트) — 참가자에게도 보낸다. ref 는 따라다닐 보스(보내지 않는다) */
@@ -62824,9 +63235,9 @@
         let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
         if (this.starGain && i === n - 1) {
           const gk = Math.min(1, this.starGain.t / this.starGain.dur);
-          const ease3 = 1 - Math.pow(1 - gk, 3);
-          y -= (1 - ease3) * 240;
-          x += (1 - ease3) * 40;
+          const ease4 = 1 - Math.pow(1 - gk, 3);
+          y -= (1 - ease4) * 240;
+          x += (1 - ease4) * 40;
         }
         const back = riseK > 0.9 || Math.sin(a) >= 0 ? 1 : 0.45;
         const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));
@@ -66447,9 +66858,9 @@
       const site = (w.ruinSites || []).find((s) => s.id === id);
       const r = (w.ruins || []).find((q) => q.id === id);
       const idx = RUIN_SPEC.findIndex((s) => s.id === id);
-      const part = {};
+      const part2 = {};
       const nRooms = site ? site.rooms.length : 0;
-      part.rooms = nRooms ? [Object.keys(sv.rooms || {}).length, nRooms] : null;
+      part2.rooms = nRooms ? [Object.keys(sv.rooms || {}).length, nRooms] : null;
       let chests = 0, opened = 0, code = null;
       if (r) {
         const x0 = r.x - r.w / 2, x1 = r.x + r.w / 2, y0 = r.y - r.h / 2, y1 = r.y + r.h / 2;
@@ -66463,31 +66874,31 @@
           }
         }
       }
-      part.chests = chests ? [opened, chests] : null;
-      part.lore = RUIN_LORE[id] ? [(this.loreRead || {})[id] ? 1 : 0, 1] : null;
+      part2.chests = chests ? [opened, chests] : null;
+      part2.lore = RUIN_LORE[id] ? [(this.loreRead || {})[id] ? 1 : 0, 1] : null;
       const spec = this.ruinSpec(id), story = spec && spec.story !== void 0;
-      part.boss = story ? [(this.tabletsRead || {})[spec.story] ? 1 : 0, 1] : [idx >= 0 && (this.lairs || {})[idx] ? 1 : 0, 1];
-      part.code = code;
-      part.rage = [(sv.peak || 0) >= 3 ? 1 : 0, 1];
-      part.events = [sv.ev || 0, 5];
-      part.kinds = [
+      part2.boss = story ? [(this.tabletsRead || {})[spec.story] ? 1 : 0, 1] : [idx >= 0 && (this.lairs || {})[idx] ? 1 : 0, 1];
+      part2.code = code;
+      part2.rage = [(sv.peak || 0) >= 3 ? 1 : 0, 1];
+      part2.events = [sv.ev || 0, 5];
+      part2.kinds = [
         Object.keys(sv.evk || {}).filter((k) => PULSE_EVENTS[k] && PULSE_EVENTS[k].ruin === id).length,
         Object.keys(PULSE_EVENTS).filter((k) => PULSE_EVENTS[k].ruin === id).length
       ];
-      part.echo = story ? null : [sv.echo || 0, ECHO.max];
+      part2.echo = story ? null : [sv.echo || 0, ECHO.max];
       const nPuz = site ? this.puzzleRooms(site).length : 0;
-      part.puz = nPuz ? [Object.keys(sv.puz || {}).length, nPuz] : null;
+      part2.puz = nPuz ? [Object.keys(sv.puz || {}).length, nPuz] : null;
       const dMax = site ? this.deepMax(site) : 0;
-      part.deep = dMax ? [Math.min(sv.deepDone || 0, dMax), dMax] : null;
+      part2.deep = dMax ? [Math.min(sv.deepDone || 0, dMax), dMax] : null;
       let got = 0, max = 0;
       for (const k in SURVEY_W) {
-        if (!part[k]) continue;
-        got += SURVEY_W[k] * Math.min(1, part[k][0] / part[k][1]);
+        if (!part2[k]) continue;
+        got += SURVEY_W[k] * Math.min(1, part2[k][0] / part2[k][1]);
         max += SURVEY_W[k];
       }
       const score = max ? Math.floor(got / max * 100) : 0;
       const meets = (k, v) => {
-        const q = part[k];
+        const q = part2[k];
         if (!q) return true;
         if (k === "rooms" || k === "chests" || k === "puz" || k === "deep") return q[0] / q[1] >= v - 1e-9;
         if (k === "events" || k === "kinds" || k === "echo") return q[0] >= v;
@@ -66504,7 +66915,7 @@
       }
       const label = (k) => story && k === "boss" ? tr("석판") : SURVEY_LABEL[k];
       if (next) missing = Object.keys(next.need).filter((k) => !meets(k, next.need[k])).map((k) => {
-        const v = next.need[k], q = part[k];
+        const v = next.need[k], q = part2[k];
         if (k === "rooms" || k === "chests" || k === "puz" || k === "deep") return tr("{label} {n}% (지금 {n2}%)", { label: label(k), n: Math.round(v * 100), n2: Math.floor(q[0] / q[1] * 100) });
         if (k === "events" || k === "kinds" || k === "echo") return tr("{label} {v} (지금 {q})", { label: label(k), v, q: q[0] });
         return label(k);
@@ -66515,7 +66926,7 @@
         col: tier.c,
         next: next && next.r,
         missing,
-        part,
+        part: part2,
         sv,
         story,
         seen: !!(this.seenRuins || {})[id]
@@ -70740,6 +71151,7 @@
         this.drawBuried(c, e, sx, sy);
         return;
       }
+      if (e.def.ai === "b_pool") drawPool(c, e, sx, sy, this.time);
       if (e.burrowT > 0) return;
       const pose = this.poseKey(e);
       const key0 = pose || (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type);
@@ -70810,7 +71222,7 @@
       if (e.flash > 0) col = "#ffffff";
       c.save();
       const t = e.type;
-      if (e.def.ai === "jumper" || t === "king_slime") {
+      if (e.def.ai === "jumper") {
         const sq = e.onGround ? 1 : 0.86;
         const hh = e.h * sq, ww = e.w * (2 - sq);
         c.fillStyle = col;
@@ -70822,10 +71234,6 @@
         c.fillStyle = "#1a1a22";
         c.fillRect(sx + ww * 0.26, sy + e.h - hh * 0.62, 4, 5);
         c.fillRect(sx + ww * 0.62, sy + e.h - hh * 0.62, 4, 5);
-        if (t === "king_slime") {
-          c.fillStyle = shade("#d8b13d", f);
-          c.fillRect(sx + e.w * 0.3, sy + e.h - hh - 8, e.w * 0.4, 8);
-        }
       } else if (e.def.ai === "flyer") {
         c.fillStyle = col;
         const flap = Math.sin(this.time * 18) * 6;
@@ -71690,9 +72098,9 @@
           c.stroke();
           c.setLineDash([]);
         }
-        const lock = Math.min(1, pa / 0.35), ease3 = 1 - Math.pow(1 - lock, 3);
-        const pad = 3 + (1 - ease3) * 22 + beat * 2.5, rot = (1 - ease3) * 1.6;
-        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease3) * 4;
+        const lock = Math.min(1, pa / 0.35), ease4 = 1 - Math.pow(1 - lock, 3);
+        const pad = 3 + (1 - ease4) * 22 + beat * 2.5, rot = (1 - ease4) * 1.6;
+        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease4) * 4;
         c.save();
         c.translate(x + ew / 2, y + eh / 2);
         c.rotate(rot);
@@ -73363,15 +73771,15 @@
     },
     netPutEnemies(list) {
       const n = this.net, t = now();
-      for (const [nid2, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
-        let e = n.ghosts.get(nid2);
+      for (const [nid3, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
+        let e = n.ghosts.get(nid3);
         if (!e) {
           if (!ENEMIES[type]) continue;
           e = new Enemy(type, x, y);
           e.ghost = true;
-          e.nid = nid2;
+          e.nid = nid3;
           e.netBuf = new SnapBuffer(1.5 / NET_HZ);
-          n.ghosts.set(nid2, e);
+          n.ghosts.set(nid3, e);
           this.ents.push(e);
         }
         e.netBuf.push(t, { x, y });
@@ -73407,9 +73815,9 @@
         }
         e.seenAt = t;
       }
-      for (const [nid2, e] of n.ghosts) if (t - e.seenAt > 1) {
+      for (const [nid3, e] of n.ghosts) if (t - e.seenAt > 1) {
         e.dead = true;
-        n.ghosts.delete(nid2);
+        n.ghosts.delete(nid3);
       }
     },
     /** 참가자가 그림자 몹을 쳤다 — 맞는 그림은 바로(손맛), 피해는 호스트가 계산한다. */
@@ -73450,10 +73858,10 @@
     },
     netPutDeaths(list) {
       const n = this.net;
-      for (const nid2 of list) {
-        const e = n.ghosts.get(nid2);
+      for (const nid3 of list) {
+        const e = n.ghosts.get(nid3);
         if (!e) continue;
-        n.ghosts.delete(nid2);
+        n.ghosts.delete(nid3);
         e.dead = true;
         this.addCorpse(e);
         this.deathBurst(e);
@@ -73471,13 +73879,13 @@
     },
     netPutProjs(list) {
       const n = this.net, t = now();
-      for (const [nid2, x, y, vx, vy, type] of list) {
-        let q = n.gproj.get(nid2);
+      for (const [nid3, x, y, vx, vy, type] of list) {
+        let q = n.gproj.get(nid3);
         if (!q) {
           q = new Proj(x, y, vx, vy, 0, "enemy", type);
           q.ghost = true;
-          q.nid = nid2;
-          n.gproj.set(nid2, q);
+          q.nid = nid3;
+          n.gproj.set(nid3, q);
           this.projs.push(q);
         }
         q.x = x - q.w / 2;
@@ -73486,9 +73894,9 @@
         q.vy = vy;
         q.seenAt = t;
       }
-      for (const [nid2, q] of n.gproj) if (t - q.seenAt > 0.25) {
+      for (const [nid3, q] of n.gproj) if (t - q.seenAt > 0.25) {
         q.dead = true;
-        n.gproj.delete(nid2);
+        n.gproj.delete(nid3);
       }
     },
     /** 시계·날짜·세계 사건(비·붉은 달…) — 참가자는 사건을 굴리지 않고 호스트 것을 받는다. */
@@ -73668,7 +74076,7 @@
     },
     netSend(t, ch, msg) {
       const text = JSON.stringify(msg);
-      if (text.length > 15e3) for (const part of chunkText(++this.net.chunkId, text)) t.send("rel", part);
+      if (text.length > 15e3) for (const part2 of chunkText(++this.net.chunkId, text)) t.send("rel", part2);
       else t.send(ch, text);
     },
     /** 중개 — ?sig=tab 이면 같은 브라우저 탭끼리(null), ?sig=<ws 주소> 면 자체 중개만 · ?sig=peer:<주소> 면 PeerJS 만(시험용). */
@@ -74135,9 +74543,9 @@
       if (tiles) {
         for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", { k: "tiles", l: tiles });
       }
-      for (const [nid2, e] of n.live) if (e.dead) {
-        n.live.delete(nid2);
-        if (!n.dead.includes(nid2)) n.dead.push(nid2);
+      for (const [nid3, e] of n.live) if (e.dead) {
+        n.live.delete(nid3);
+        if (!n.dead.includes(nid3)) n.dead.push(nid3);
       }
       for (const q of n.peers.values()) {
         if (!q.rp) continue;
@@ -74338,8 +74746,8 @@
       return this.settings.mpId;
     },
     /** 호스트 — 그 손님의 기록(없으면 null). */
-    netGuestRec(pid) {
-      return pid && this.mpGuests && this.mpGuests[pid] || null;
+    netGuestRec(pid2) {
+      return pid2 && this.mpGuests && this.mpGuests[pid2] || null;
     },
     /** 호스트 — 손님의 마지막 자리(1초마다 · 나갈 때)와 캐릭터(손님이 보낸 것)를 세계 기록에. */
     netGuestKeep(peer, char) {
@@ -75032,7 +75440,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

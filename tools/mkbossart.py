@@ -206,6 +206,7 @@ def main():
     moves = boss_moves()
     for bid, m in list(B['sheets'].items()):
         if bid.endswith('_pose'): continue
+        if m.get('rig') or bid.endswith('_parts'): continue          # 부위 리그 보스(tools/mkbossrig.py)는 여기서 굽지 않는다
         if bid in BIG:
             sm = src_meta['sheets'][bid]; k = BIG[bid]
             fr = frames_of(os.path.join(SRC, bid + '.png'), sm['frameW'], sm['frameH'], sm['count'], sm.get('gap', src_meta['gap']), src_meta['scale'])

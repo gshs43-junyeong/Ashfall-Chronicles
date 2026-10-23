@@ -430,7 +430,9 @@ export class Enemy extends Ent {
   declare tickMoves: (dt: number, world: World, p: Player, dd: number) => boolean; declare mvHist: (dt: number) => void; declare mvStart: (d: Bag, p: Player, world: World, K: Bag) => any;
   declare floorY: (x: number, y: number) => number; declare hz: (h: Bag) => Bag; declare strike: (x: number, y: number, o: Bag, K: Bag, dm: number) => Bag;
   declare ceilY: (x: number, fy: number) => number | undefined; declare mvFx: (d: Bag) => string;
-  declare sigStart: (d: Bag, p: Player, world: World, K: Bag) => any; declare sigHide: (dt: number, world: World, r: any, toX: () => number, under: number, rise: number, onRise: () => void) => void;
+  declare sigStart: (d: Bag, p: Player, world: World, K: Bag) => any;
+  declare poolAI: (dt: number, world: World, p: Player, dx: number) => void; declare poolSig: (d: Bag, p: Player, world: World, K: Bag) => any;
+  declare poolArm: (ox: number, tx: number, ty: number, rise: number, dm: number, K: Bag) => Bag; declare sigHide: (dt: number, world: World, r: any, toX: () => number, under: number, rise: number, onRise: () => void) => void;
   declare sgTook: number; declare slowFx: Timed; declare slowF: number; declare slowT: number; declare sparkT: number; declare spd: number | undefined; declare state: number;
   declare stateT: number; declare think: number; declare type: string; declare weatherBuffed: boolean; declare xp: number;
   /* 몹 스킬 · 걸린 것(entity/enemy-skills) */
@@ -909,6 +911,7 @@ export const IMPACT_FX: Bag = {
   web: { burst: 'frost', ring: '#eef0f4', rr: 22, parts: 6 },
   fruit: { burst: 'hit', ring: '#e8783a', rr: 20, parts: 9 },
   gel: { burst: 'frost', ring: '#6fa8ff', rr: 22, parts: 8 },
+  sludge: { burst: 'hit', ring: '#8a7a68', rr: 22, parts: 8 },
   drop: { burst: 'frost', ring: '#7fc8e8', rr: 20, parts: 8 }
   /* arrow · bone · star 는 물리라 예전 금빛 hit 그대로다. */
 };
@@ -935,7 +938,8 @@ export const PROJ_STYLE: Bag = {
   cagebub: { c: '#bfe6ff', r: 9 },
   web: { c: '#eef0f4', r: 6 },           // 거미줄 덩이 — 그림은 game/boss-tell-art
   fruit: { c: '#c8641e', r: 6 },         // 원숭이가 던지는 열매
-  gel: { c: '#6fa8ff', r: 7 },           // 슬라임 왕의 젤리 덩이 · 지킴이의 물방울 — 그림은 game/boss-tell-art
+  gel: { c: '#6fa8ff', r: 7 },           // 지킴이의 물방울 — 그림은 game/boss-tell-art
+  sludge: { c: '#6a625a', r: 8 },        // 잿물 군체가 뱉는 덩이 — 그림은 game/boss-tell-art
   drop: { c: '#7fc8e8', r: 6 }
 };
 /* 몹이 쏘는 것 중 **물리**인 것. */

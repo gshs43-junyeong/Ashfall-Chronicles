@@ -19,6 +19,17 @@ export const ItemPaintLoot: Bag = {
       }
     }
   },
+  lantern(H: ItemPaintKit) {                       // 잿물 등불 — 녹슨 광부 등불 · 밑에 잿물이 엉겨 붙었다
+    const { P, poly, circ, ell, glow } = H, s = H.s;
+    glow(16, 16, 12, s.c, .3);
+    P(11, 4, 10, 2.4, '#4e3c2c'); P(15, 2, 2, 3, '#4e3c2c');
+    poly([[9, 7], [23, 7], [24, 22], [8, 22]], '#5e4632');
+    P(11, 9, 10, 11, s.c); P(11, 9, 4, 11, sh2(s.c, 1.25));
+    P(15.2, 9, 1.6, 11, '#4e3c2c'); P(11, 14, 10, 1.4, '#4e3c2c');
+    P(8, 21, 16, 3, '#3e342c');
+    ell(16, 25.5, 9, 3.2, '#4a4541'); circ(10, 28, 1.8, '#4a4541'); circ(21, 28.5, 1.4, '#4a4541');
+    circ(13, 25, 0.9, '#ff8a40');
+  },
   skull(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {

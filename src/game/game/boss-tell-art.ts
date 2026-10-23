@@ -63,7 +63,7 @@ function underfoot(c: C2, fx: string, b: Box, k: number, T: number, sd: number) 
 
 /** 고유 기술의 예고 — 닮은 틀 기술의 소품을 빌린다 [갈래, 결] */
 const SIG_TELL: Record<string, [string, string]> = {
-  melt: ['zone', 'gel'], reform: ['blink', ''], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
+  slap: ['leap', 'gel'], bubbles: ['quake', ''], sink: ['leap', 'gel'], surge: ['leap', 'gel'], reform: ['blink', ''], beat: ['ring', ''], mirrors: ['clones', ''], veil: ['vortex', 'void'], rods: ['rain', 'bolt'],
   scales: ['rain', 'rune'], gaze: ['rain', 'meteor'], cart: ['wall', 'metal'], snowball: ['wall', 'ice'], grapple: ['beam', 'thorn'], dune: ['wall', 'sand'],
   garden: ['zone', 'spore'], tongue: ['rain', 'bile'], anchor: ['wall', 'water'], islet: ['rain', 'boulder'], flood: ['wall', 'water'], turrets: ['wall', 'metal'],
   pour: ['rain', 'fire'], drones: ['beam', 'laser'], project: ['beam', 'blueprint'], veins: ['quake', '']
@@ -238,6 +238,15 @@ export function drawBossProjAt(c: C2, type: string, x: number, y: number, a: num
       c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill(); c.stroke();
       c.fillStyle = 'rgba(220,240,255,.9)'; c.beginPath(); c.ellipse(-2.5, -2.5, 2.6, 1.6, -0.6, 0, TAU); c.fill();
       c.fillStyle = 'rgba(200,230,255,.6)'; c.beginPath(); c.arc(Math.cos(T * 4 + sd) * 3, Math.sin(T * 4 + sd) * 3, 1.5, 0, TAU); c.fill();
+      c.restore(); return true;
+    }
+    case 'sludge': {                                                   // 잿물 덩이 — 무겁게 처진 방울 · 속에 불씨
+      const sq = 1 + Math.sin(T * 9 + sd) * 0.1;
+      c.save(); c.translate(x, y); c.rotate(a); c.scale(sq, 2 - sq);
+      c.fillStyle = '#4a4541'; c.strokeStyle = '#1c1a18'; c.lineWidth = 1.4;
+      c.beginPath(); c.moveTo(9, 0); c.quadraticCurveTo(2, -8, -6, -5); c.arc(-5, 0, 5, -Math.PI / 2, Math.PI / 2, true); c.quadraticCurveTo(2, 8, 9, 0); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(200,190,176,.6)'; c.beginPath(); c.ellipse(-1, -3, 2.6, 1.2, -0.3, 0, TAU); c.fill();
+      c.fillStyle = '#ff8a40'; c.fillRect(-3 + Math.sin(T * 5 + sd) * 1.5, 1, 2, 2);
       c.restore(); return true;
     }
     case 'drop': {                                                     // 물방울 — 나는 쪽으로 뾰족한 방울, 뒤로 잔물방울

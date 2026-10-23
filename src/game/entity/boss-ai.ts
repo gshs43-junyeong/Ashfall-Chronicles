@@ -38,7 +38,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
     /* 고유 기술 — 쓰는 동안 몸놀림은 쉰다(entity/boss-moves · data/bossmoves) */
     if (this.tickMoves(dt, world, p, dd)) { this.stateT += dt; return; }
 
-    if (AI === 'b_slime') {
+    if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
+    else if (AI === 'b_slime') {
       if (this.onGround) {
         this.vx *= 0.86;
         /* 2페이즈 — 껍데기가 굳는다(onPhaseChange 에서 guard=1). */

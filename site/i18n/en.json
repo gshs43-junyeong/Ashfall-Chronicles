@@ -234,7 +234,6 @@
  "수집": "Gathering",
  "스물세 종": "Twenty-three",
  "스킬 슬롯": "Skill slots",
- "슬라임 왕": "Slime King",
  "슬롯당 압축해서 약 0.3 MB(소형 세계) · 0.6 MB(중형) · 1 MB(대형) — 탐험할수록 조금씩 늡니다. 브라우저의 <code>IndexedDB</code> 에 담겨 자리가 넉넉하고, 그것을 못 쓰는 브라우저에서만 약 5 MB 인 저장 공간으로 떨어집니다(그때 「저장 실패」가 뜨면 설정의 <strong>저장 내보내기</strong>로 빼 두세요)": "About 0.3 MB (small world) · 0.6 MB (medium) · 1 MB (large) per slot, compressed — it grows a little as you explore. Saves live in the browser's <code>IndexedDB</code>, which has plenty of room; only browsers that can't use it fall back to storage of about 5 MB (if \"Save failed\" appears there, move them out with <strong>Export saves</strong> in Settings)",
  "시스템 요구사항": "System requirements",
  "실행 방법": "How to run",
@@ -401,5 +400,6 @@
  "4코어 1.6 GHz (Core i5-8250U · Ryzen 5 3500U 급) — 절약 화질. Celeron N4500 같은 2코어 저전력 칩은 가장 낮은 화질에서도 몇 프레임밖에 안 나와 지원하지 않습니다": "Quad-core 1.6 GHz (Core i5-8250U · Ryzen 5 3500U class) — Low quality. Dual-core low-power chips such as the Celeron N4500 only reach a few frames per second even at the lowest quality and are not supported",
  "4코어 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U 급)": "Quad-core 2.4 GHz (Core i5-1135G7 · Ryzen 5 5500U class)",
  "Intel Iris Xe · Radeon Vega 7 급 이상": "Intel Iris Xe · Radeon Vega 7 class or better",
- "하드웨어 가속 2D (Intel UHD Graphics 620 급)": "Hardware-accelerated 2D (Intel UHD Graphics 620 class)"
+ "하드웨어 가속 2D (Intel UHD Graphics 620 급)": "Hardware-accelerated 2D (Intel UHD Graphics 620 class)",
+ "잿물 군체": "Ashpool Colony"
 }

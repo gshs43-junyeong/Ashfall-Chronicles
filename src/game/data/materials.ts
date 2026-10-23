@@ -17,6 +17,7 @@ export const MAT: Bag = {
   ember: { c: ['#ffe6a0', '#ff9a3c', '#e0561c'], n: 12, g: -.30, life: .60, sq: 0, glow: 1, hit: 'hit_ember', brk: 'break_ember' },
   bone:  { c: ['#f2ecd8', '#c6bda6', '#8e8574'], n: 10, g: 1.0, life: .55, sq: 1, bounce: 0.35, hit: 'hit_bone', brk: 'break_bone' },
   gel:   { c: ['#d8f0dc', '#8ac49a', '#4f8a5e'], n: 12, g: .85, life: .42, sq: 0, hit: 'hit_gel', brk: 'break_flesh' },
+  sludge: { c: ['#8a8078', '#4a4541', '#2a2624'], n: 12, g: .9, life: .48, sq: 0, hit: 'hit_gel', brk: 'break_flesh' },   // 잿물 — 재와 기름
   flesh: { c: ['#e07a6a', '#b8484a', '#7a2c2e'], n: 10, g: 1.10, life: .42, sq: 0, hit: 'hit_flesh', brk: 'break_flesh' },
   void:  { c: ['#d8c0ff', '#a06fff', '#5a3a86'], n: 12, g: -.20, life: .78, sq: 0, glow: 1, hit: 'hit_void', brk: 'break_void' },
 };
@@ -132,7 +133,8 @@ export const MOB_MAT = (() => {
   const m: Bag = {};
   const put = (mat: any, keys: any) => keys.split(' ').forEach((k: any) => { m[k] = mat; });
   put('bone', 'skeleton archer bone_lord');
-  put('gel', 'slime king_slime');
+  put('gel', 'slime');
+  put('sludge', 'king_slime');
   put('stone', 'golem sandmaw mine_horror sand_guardian storm_warden shaft_maw '
     + 'jarhusk draft_form scribe_hand mold_walker archetype');
   put('metal', 'sky_sentry ruin_guard scrapcrawler splitter weldarm coreling riveter '

@@ -1,10 +1,11 @@
-/* ===== game/boss-sig-art.js — 보스 고유 기술의 그림 — 웅덩이 · 뼈 무더기 · 얼음 거울 · 어둠 장막 · 피뢰침 · 저울 · 눈 · 레일 · 덩굴 · 버섯 · 혀 · 사슬 · 밀물 · 포탑 · 도가니 · 드론 · 설계 유령 ===== */
+/* ===== game/boss-sig-art.js — 보스 고유 기술의 그림 — 잿물 팔 · 뼈 무더기 · 얼음 거울 · 어둠 장막 · 피뢰침 · 저울 · 눈 · 레일 · 덩굴 · 버섯 · 혀 · 사슬 · 밀물 · 포탑 · 도가니 · 드론 · 설계 유령 ===== */
 import { TAU } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { Sprites } from '../sprites.js';
 import { Game } from '../game.js';
 import { STRIKE_ART, bone, cracks, glob, glyph, hs, hzGlow, jag, poly, rgba, rock, strokePath } from './boss-hazard-art.js';
 import { WALL_ART, WAVE_ART } from './boss-field-art.js';
+import { drawArm } from './boss-pool-art.js';
 /* 고유 기술은 그 보스만의 물건을 보여야 한다 — 이름이 '광차 돌진'이면 레일과 광차가, '피뢰침'이면 꽂힌 쇠막대와 그 사이 전류가 보인다. */
 
 type C2 = CanvasRenderingContext2D;
@@ -164,16 +165,7 @@ export const BossSigArtPart: Bag = {
   drawSig(c: C2, h: Bag, cx0: number, cy0: number, T: number) {
     const b = this.hzBoss(h), f = Math.min(1, h.t * 4, Math.max(0, h.life - h.t) * 3);
     switch (h.k) {
-      case 'shade': {                                                  // 녹은 왕 — 젤 웅덩이와 떠도는 왕관
-        if (!b || h.t < 0.35) return true;
-        const x = b.cx - cx0, y = b.y + b.h - cy0, r = b.w * 0.6;
-        c.globalAlpha = f; c.fillStyle = 'rgba(80,130,230,.65)'; c.strokeStyle = '#1e3a7a'; c.lineWidth = 1.5;
-        c.beginPath(); c.ellipse(x, y - 2, r * (1 + Math.sin(T * 6) * 0.05), 7, 0, 0, TAU); c.fill(); c.stroke();
-        c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(x - r * 0.3, y - 4, r * 0.25, 1.5, 0, 0, TAU); c.fill();
-        const cy = y - 12 + Math.sin(T * 4) * 3;                       // 왕관만 웅덩이 위에 떠서 따라간다
-        poly(c, [x - 12, cy, x - 12, cy - 9, x - 6, cy - 4, x, cy - 12, x + 6, cy - 4, x + 12, cy - 9, x + 12, cy]); c.fillStyle = '#f0c040'; c.fill(); c.strokeStyle = '#6a4a08'; c.stroke();
-        c.globalAlpha = 1; return true;
-      }
+      case 'parm': drawArm(c, h, b, cx0, cy0, T); return true;    // 잿물 군체의 팔(game/boss-pool-art)
       case 'bonepile': {                                               // 흩어진 뼈 — 굴러가다 다시 솟아 맞춰진다
         if (!b || h.t < 0.3) return true;
         const x = b.cx - cx0, y = b.y + b.h - cy0, up = b.burrowT > 0 ? 0 : 1;

@@ -803,7 +803,7 @@ export const ITEMS: Record<string, ItemDef> = {
   charm_spore: { n: '포자 결정', i: '💠', type: 'acc', b: { mp: 45, mpreg: 30, int: 6 }, d: '손안에서 계속 숨 쉬듯 밝아졌다 어두워진다.' , lvReq: 16 },
 
   /* --- 소환 --- */
-  sum_slime:   { n: '왕관 젤리', i: '👑', type: 'summon', boss: 'king_slime', stack: 9, d: '지상에서 사용하면 슬라임 왕이 온다.' },
+  sum_slime:   { n: '잿물 등불', i: '🏮', type: 'summon', boss: 'king_slime', stack: 9, d: '지상에서 사용하면 잿물 군체가 불빛을 따라 기어 온다.' },
   sum_bone:    { n: '저주받은 두개골', i: '💀', type: 'summon', boss: 'bone_lord', stack: 9, d: '깊은 곳에서만 반응한다.' },
   sum_heart:   { n: '고동치는 씨앗', i: '🫀', type: 'summon', boss: 'corrupt_heart', stack: 9, d: '부패한 땅에서 사용하라.' },
   sum_frost:   { n: '얼어붙은 왕관', i: '🔷', type: 'summon', boss: 'frost_witch', stack: 9, d: '서리 지대에서 사용하라.' },

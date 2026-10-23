@@ -17,6 +17,7 @@ import { Art } from '../itemart.js';
 import { Sprites } from '../sprites.js';
 import { Part } from '../entity.js';
 import { Game } from '../game.js';
+import { drawPool } from './boss-pool-art.js';
 /* game.js 의 G 에서 나눈 조각 — 읽히는 순간 G 에 붙는다(main.js 가 game.js 다음에 읽는다). */
 
 /** 걷기 장(0~3) 가운데 발이 땅에 닿는 장 */
@@ -328,6 +329,7 @@ export const RenderActorsPart: Bag = {
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     if (e.def.tame) { this.drawWildHorse(c, e, sx, sy); return; }
     if (e.hide > 0 || e.amb) { this.drawBuried(c, e, sx, sy); return; }
+    if (e.def.ai === 'b_pool') drawPool(c, e, sx, sy, this.time);         // 잿물 군체 — 몸 밑 웅덩이(잠겨도 남는다)
     if (e.burrowT > 0) return;                                              // 땅속을 기는 보스 — 흙먼지만(entity/boss-moves)   // 모래 · 바닥 밑 — 땅만 들썩인다
     /* 손그림 스프라이트 우선. */
     /* 개조된 개체는 원래 시트를 강철로 눕힌 사본으로 그린다(Sprites.mechSheet). */
@@ -411,14 +413,13 @@ export const RenderActorsPart: Bag = {
     if (e.flash > 0) col = '#ffffff';
     c.save();
     const t = e.type;
-    if (e.def.ai === 'jumper' || t === 'king_slime') {
+    if (e.def.ai === 'jumper') {
       const sq = e.onGround ? 1 : 0.86;
       const hh = e.h * sq, ww = e.w * (2 - sq);
       c.fillStyle = col; c.globalAlpha = .88;
       c.beginPath(); c.roundRect(sx - (ww - e.w) / 2, sy + (e.h - hh), ww, hh, 8); c.fill();
       c.globalAlpha = 1; c.fillStyle = '#1a1a22';
       c.fillRect(sx + ww * .26, sy + e.h - hh * .62, 4, 5); c.fillRect(sx + ww * .62, sy + e.h - hh * .62, 4, 5);
-      if (t === 'king_slime') { c.fillStyle = shade('#d8b13d', f); c.fillRect(sx + e.w * .3, sy + e.h - hh - 8, e.w * .4, 8); }
     } else if (e.def.ai === 'flyer') {
       c.fillStyle = col;
       const flap = Math.sin(this.time * 18) * 6;

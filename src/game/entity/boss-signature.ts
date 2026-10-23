@@ -15,7 +15,7 @@ const nid = () => (hid = hid % 1e6 + 1);
 
 export const BossSignature: Bag & ThisType<Enemy> = {
 
-  /** 숨었다 다른 자리에서 솟는 몸(녹아드는 왕관 · 흩어졌다 맞추기) — 숨는 동안 맞지 않는다 */
+  /** 숨었다 다른 자리에서 솟는 몸(잠겼다 솟기 · 흩어졌다 맞추기) — 숨는 동안 맞지 않는다 */
   sigHide(dt: number, world: World, r: Run, toX: () => number, under: number, rise: number, onRise: () => void) {
     r.pt += dt;
     if (r.ph === 0) { this.burrowT = 1; this.guard = 1; this.vx = 0; if (r.pt > 0.45) { r.ph = 1; r.pt = 0; } }
@@ -32,16 +32,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
   sigStart(d: Bag, p: Player, world: World, K: Bag): Run {
     const m = d.m ?? 1, E = this, fy = this.floorY(p.cx, p.y), side = Math.sign(p.cx - this.cx) || 1;
     switch (d.sig) {
-      case 'melt': {                                              // 녹아드는 왕관 — 웅덩이로 녹아 발밑으로 기어 와 솟는다
-        this.hz({ k: 'shade', fx: 'gel', life: 3.3, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1 });
-        const r: Run = { busy: 99, ph: 0, pt: 0 };
-        r.rise = () => this.strike(this.cx, this.y + this.h, { r: Math.max(70, this.w * 0.55), delay: 0.5, fx: 'gel', dir: 'up' }, K, m);
-        r.tick = (dt, r) => this.sigHide(dt, world, r, () => p.cx, 1.6, 0.5, () => {
-          this.vy = -900;
-          for (const s of [-1, 1]) this.hz({ k: 'wave', x: this.cx + s * this.w / 2, y: this.y + this.h, vx: s * 380, w: 26, hh: 28, life: 2.2, dmg: this.dmg * m * 0.6, c: K.c, fx: 'gel', sd: Math.random() * 99 });
-        });
-        return r;
-      }
+      case 'slap': case 'bubbles': case 'sink': case 'surge': return this.poolSig(d, p, world, K);   // 잿물 군체(entity/boss-pool)
       case 'reform': {                                            // 흩어졌다 맞추기 — 뼈 무더기로 굴러가 등 뒤에서 다시 선다
         this.hz({ k: 'bonepile', life: 2.9, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, sd: Math.random() * 99 });
         const tx = p.cx + side * 170, r: Run = { busy: 99, ph: 0, pt: 0 };

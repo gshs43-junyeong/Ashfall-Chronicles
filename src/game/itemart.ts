@@ -225,7 +225,7 @@ export const ISPEC: Bag = {
   star_heart: { k: 'star', c: '#ffe58a', glow: '#ffd24a', big: 1 },
 
   /* 소환 */
-  sum_slime: { k: 'crown', c: '#d8b13d', gem: '#4f7fc0' },
+  sum_slime: { k: 'lantern', c: '#ffb050' },
   sum_bone: { k: 'skull' },
   sum_heart: { k: 'heart', c: '#a03f6c' },
   sum_frost: { k: 'crown', c: '#9fe0ff', gem: '#ffffff', glow: '#9fe0ff' },

@@ -2302,15 +2302,15 @@ window.SPRITE_MANIFEST = {
     "sheets": {
       "king_slime": {
         "file": "boss/king_slime.png",
-        "frameW": 172,
-        "frameH": 128,
-        "count": 8,
-        "foot": -1.5,
+        "frameW": 256,
+        "frameH": 224,
+        "count": 6,
+        "foot": 7,
         "side": 0,
         "death": 2,
         "scale": 1,
         "gap": 0,
-        "big": 2
+        "rig": 1
       },
       "bone_lord": {
         "file": "boss/bone_lord.png",
@@ -2548,18 +2548,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "king_slime_pose": {
-        "file": "boss/king_slime_pose.png",
-        "frameW": 276,
-        "frameH": 173,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 0,
-        "pose": 1
       },
       "bone_lord_pose": {
         "file": "boss/bone_lord_pose.png",
@@ -2824,6 +2812,15 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "pose": 1
+      },
+      "king_slime_parts": {
+        "file": "boss/king_slime_parts.png",
+        "frameW": 120,
+        "frameH": 120,
+        "count": 6,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
       }
     },
     "frames5": [

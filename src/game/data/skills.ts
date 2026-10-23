@@ -4,7 +4,7 @@
 /* ================= 보스가 무너지는 방식 ================= */
 export const BOSS_DIE: Bag = {
   /* --- 세션 1 --- */
-  king_slime:    { mat: 'gel', n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: 'gel', n2: 34, at: .22, shake: 20 },
+  king_slime:    { mat: 'sludge', n: 70, spd: 1.3, vy: -60, life: 1.5, mat2: 'metal', n2: 34, at: .22, shake: 20 },
   bone_lord:     { mat: 'bone', n: 60, spd: 1.7, life: 1.6, mat2: 'void', n2: 20, at: .26, shake: 20 },
   corrupt_heart: { mat: 'flesh', n: 54, spd: 1.1, life: 1.3, mat2: 'void', n2: 40, at: .20, shake: 22 },
   frost_witch:   { mat: 'ice', n: 76, spd: 1.6, life: 1.4, mat2: 'glass', n2: 26, at: .18, shake: 20 },
@@ -253,7 +253,7 @@ export const STORY_BOSSES: Record<string, number> = {
 /* ---------------- 보스 페이즈 대사 ---------------- */
 /* 페이즈가 넘어갈 때 뜨는 한 줄. */
 export const BOSS_LINES: Bag = {
-  king_slime:   { 1: '갈라져도 갈라져도, 아직 혼자다.', 2: '껍데기가 굳는다 — 안쪽이 뛴다.' },
+  king_slime:   { 1: '웅덩이가 끓는다 — 투구 밑에서 무언가 뒤척인다.', 2: '투구에 금이 간다. 등불이 붉게 탄다.' },
   bone_lord:    { 1: '뼈가 일어선다.', 2: '기둥이 저를 대신 든다.' },
   corrupt_heart:{ 1: '뿌리가 바닥을 짚는다.', 2: '제단만이 아직 뛰고 있다.' },
   frost_witch:  { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
