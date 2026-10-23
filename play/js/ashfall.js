@@ -27140,8 +27140,8 @@
   var sh2 = (c, m) => shade(c, m);
   var ISPEC = {
     /* 근접 */
-    sword_wood: { k: "sword", c: "#a3814f", g: "#6a4a28", grip: "#4a3122", w: 3 },
-    sword_copper: { k: "sword", c: "#c0762f", g: "#8a5520", grip: "#4a3122", w: 3.5 },
+    sword_wood: { k: "blade", f: "wood", c: "#a3814f", g: "#6a4a28", grip: "#4a3122", w: 3 },
+    sword_copper: { k: "blade", f: "leaf", c: "#c0762f", g: "#8a5520", grip: "#4a3122", w: 3.5 },
     weird_claw: { k: "claw" },
     weird_boomerang: { k: "boomerang", c: "#b07a3e" },
     weird_leafsword: { k: "leafsword" },
@@ -27154,15 +27154,15 @@
     stop_glass: { k: "hourglass" },
     sword_iron: { k: "sword", c: "#b8bcc4", g: "#6a6e76", grip: "#4a3122", w: 4 },
     sword_bone: { k: "sword", c: "#e0d8bd", g: "#9c9280", grip: "#5a4a3a", w: 4, jag: 1 },
-    sword_mythril: { k: "sword", c: "#5fd0c0", g: "#2a8a80", grip: "#3a4a52", w: 4, glow: "#5fd0c0", orn: 1 },
-    sword_dawn: { k: "sword", c: "#ffd98a", g: "#d89428", grip: "#7a4a1a", w: 5.5, glow: "#ffb24a", orn: 2, gem: "#ff6a3a" },
+    sword_mythril: { k: "blade", f: "long", c: "#5fd0c0", g: "#2a8a80", grip: "#3a4a52", w: 4, glow: "#5fd0c0", orn: 1 },
+    sword_dawn: { k: "blade", f: "sun", c: "#ffd98a", g: "#d89428", grip: "#7a4a1a", w: 5.5, glow: "#ffb24a", orn: 2, gem: "#ff6a3a" },
     scythe_void: { k: "scythe", c: "#b48aff", shaft: "#2e2438", glow: "#a06fff" },
     /* 원거리 */
-    bow_hunt: { k: "bow", c: "#7a5734", s: "#d8cbb0" },
-    bow_copper: { k: "bow", c: "#c0762f", s: "#e0d5b8" },
-    bow_iron: { k: "bow", c: "#b8bcc4", s: "#e8e0c8" },
-    bow_storm: { k: "bow", c: "#7fd0e8", s: "#ffffff", glow: "#7fd0e8" },
-    bow_starfall: { k: "bow", c: "#ffe08a", s: "#fff6d0", glow: "#ffd24a" },
+    bow_hunt: { k: "bowf", f: "short", c: "#7a5734", s: "#d8cbb0" },
+    bow_copper: { k: "bowf", f: "recurve", c: "#c0762f", s: "#e0d5b8" },
+    bow_iron: { k: "bowf", f: "long", c: "#b8bcc4", s: "#e8e0c8" },
+    bow_storm: { k: "bowf", f: "wing", c: "#7fd0e8", s: "#ffffff", glow: "#7fd0e8" },
+    bow_starfall: { k: "bowf", f: "long", star: 1, c: "#ffe08a", s: "#fff6d0", glow: "#ffd24a" },
     /* 마법 */
     staff_branch: { k: "staff", c: "#6a4a28", head: "#8fbf5a", style: "orb" },
     staff_flame: { k: "staff", c: "#5a3c22", head: "#ff8a3a", style: "orb", glow: "#ff8a3a" },
@@ -27187,10 +27187,10 @@
     knot_angler: { k: "amulet", c: "#c8b08a", gem: "#5fc4c4" },
     /* 물에서만 나오는 무기·장신구 열둘 (세션마다 여섯) — 기존 그림에 색만 갈아 끼운다. */
     /* ★ 칸 이름을 그림 쪽이 쓰는 것과 맞춰야 한다 — staff 는 head + style('orb'|'crystal'|'claw'), bow 는 c + s(시위 색)다. */
-    spear_river: { k: "spear", c: "#7fc8d8", glow: "#a8e8f0" },
-    bow_reed: { k: "bow", c: "#a8b878", s: "#e8e0c0" },
+    spear_river: { k: "spearf", f: "barb", c: "#7fc8d8", glow: "#a8e8f0" },
+    bow_reed: { k: "bowf", f: "reed", c: "#a8b878", s: "#e8e0c0" },
     staff_current: { k: "staff", c: "#5a7a6a", head: "#9fe0ff", style: "crystal", glow: "#9fe0ff" },
-    harpoon_cool: { k: "spear", c: "#8fd0e0", glow: "#bfeaf5" },
+    harpoon_cool: { k: "spearf", f: "harpoon", c: "#8fd0e0", glow: "#bfeaf5" },
     gun_pressure: { k: "bow", c: "#6fb8d8", s: "#d8f4ff", glow: "#9fe0ff" },
     staff_deluge: { k: "staff", c: "#2e4458", head: "#7fe0ff", style: "claw", glow: "#7fe0ff" },
     charm_float: { k: "sigil", c: "#e8c86a", glow: "#ffe08a" },
@@ -27207,22 +27207,22 @@
     pick_soul: { k: "pick", c: "#c49fff", glow: "#c49fff", orn: 3 },
     axe_iron: { k: "axe", c: "#b8bcc4" },
     /* 방어구 */
-    helm_cloth: { k: "helm", c: "#9c8a68", soft: 1 },
-    helm_copper: { k: "helm", c: "#c0762f" },
-    helm_iron: { k: "helm", c: "#b8bcc4" },
-    helm_mythril: { k: "helm", c: "#5fd0c0", crest: "#2a8a80", glow: "#5fd0c0" },
-    helm_soul: { k: "helm", c: "#c9a9ff", crest: "#ffe08a", glow: "#c49fff" },
-    chest_cloth: { k: "chest", c: "#9c8a68", soft: 1 },
-    chest_copper: { k: "chest", c: "#c0762f" },
+    helm_cloth: { k: "helmf", f: "hood", c: "#9c8a68", soft: 1 },
+    helm_copper: { k: "helmf", f: "kettle", c: "#c0762f" },
+    helm_iron: { k: "helmf", f: "visor", c: "#b8bcc4" },
+    helm_mythril: { k: "helmf", f: "crest", c: "#5fd0c0", crest: "#2a8a80", glow: "#5fd0c0" },
+    helm_soul: { k: "helmf", f: "halo", c: "#c9a9ff", crest: "#ffe08a", glow: "#c49fff" },
+    chest_cloth: { k: "chestf", f: "robe", c: "#9c8a68", soft: 1 },
+    chest_copper: { k: "chestf", f: "lamellar", c: "#c0762f" },
     chest_iron: { k: "chest", c: "#b8bcc4" },
-    chest_river: { k: "chest", c: "#7fc8b0", glow: "#a8e8d0" },
-    chest_mythril: { k: "chest", c: "#5fd0c0", glow: "#5fd0c0" },
-    chest_soul: { k: "chest", c: "#c9a9ff", glow: "#c49fff" },
-    boots_cloth: { k: "boots", c: "#9c8a68", soft: 1 },
+    chest_river: { k: "chestf", f: "scale", c: "#7fc8b0", glow: "#a8e8d0" },
+    chest_mythril: { k: "chestf", f: "ornate", c: "#5fd0c0", glow: "#5fd0c0" },
+    chest_soul: { k: "chestf", f: "robe", rune: "#c49fff", belt: "#4a3a6a", c: "#c9a9ff", glow: "#c49fff" },
+    boots_cloth: { k: "bootsf", f: "shoe", c: "#9c8a68", soft: 1 },
     boots_copper: { k: "boots", c: "#c0762f" },
-    boots_iron: { k: "boots", c: "#b8bcc4" },
-    boots_mythril: { k: "boots", c: "#5fd0c0", glow: "#5fd0c0" },
-    boots_soul: { k: "boots", c: "#c9a9ff", glow: "#c49fff" },
+    boots_iron: { k: "bootsf", f: "greave", c: "#b8bcc4" },
+    boots_mythril: { k: "bootsf", f: "greave", c: "#5fd0c0", glow: "#5fd0c0" },
+    boots_soul: { k: "bootsf", f: "wing", trim: "#ffe08a", c: "#c9a9ff", glow: "#c49fff" },
     /* 장신구 */
     band_worn: { k: "ring", c: "#8a6a4a", gem: "#5a4530" },
     ring_vigor: { k: "ring", c: "#d8b13d", gem: "#e05050" },
@@ -27371,23 +27371,23 @@
     cloud_jelly: { k: "gel", c: "#dfe9f5" },
     archive_seal: { k: "runefrag", c: "#c8b98a" },
     /* --- 전리품 무기 --- */
-    bow_crow: { k: "bow", c: "#5a5a62", s: "#c8c8d0" },
-    dagger_venom: { k: "sword", c: "#8fd06a", g: "#4a6a32", grip: "#3a3a2a", w: 2.6 },
-    bow_silk: { k: "bow", c: "#b8b0c8", s: "#f0ecf8" },
+    bow_crow: { k: "bowf", f: "feather", c: "#5a5a62", s: "#c8c8d0" },
+    dagger_venom: { k: "blade", f: "dagger", drip: "#c8f07a", c: "#8fd06a", g: "#4a6a32", grip: "#3a3a2a", w: 2.6 },
+    bow_silk: { k: "bowf", f: "long", tassel: "#e8c8f0", c: "#b8b0c8", s: "#f0ecf8" },
     axe_frost: { k: "axe", c: "#a8dcf0" },
     staff_moss: { k: "staff", c: "#4a3a22", head: "#7fc45a", style: "orb" },
-    hammer_lava: { k: "hammer", c: "#e0703a", glow: "#ff8a3a" },
+    hammer_lava: { k: "mace", f: "lava", c: "#e0703a", glow: "#ff8a3a" },
     staff_archive: { k: "staff", c: "#7a6a4a", head: "#e8d8a0", style: "crystal", glow: "#ffe08a" },
     charm_prism: { k: "shard", c: "#9fd8f0", glow: 1 },
     charm_lamp: { k: "torchitem" },
     /* --- 2부 --- */
-    sword_aether: { k: "sword", c: "#9fe8dc", g: "#3f8f86", grip: "#3a4a52", w: 4.5, glow: "#8fe0d8", orn: 2 },
-    bow_gale: { k: "bow", c: "#bcd8f0", s: "#ffffff", glow: "#bcd8f0" },
+    sword_aether: { k: "blade", f: "curve", c: "#9fe8dc", g: "#3f8f86", grip: "#3a4a52", w: 4.5, glow: "#8fe0d8", orn: 2 },
+    bow_gale: { k: "bowf", f: "wing", c: "#bcd8f0", s: "#ffffff", glow: "#bcd8f0" },
     staff_storm: { k: "staff", c: "#4a5a6e", head: "#9fd8ff", style: "claw", glow: "#9fd8ff" },
     sword_first: { k: "sword", c: "#fff0b8", g: "#d8a94b", grip: "#7a5a28", w: 6, glow: "#ffe08a", orn: 3, gem: "#ff5a7a" },
-    helm_aether: { k: "helm", c: "#9fe8dc", crest: "#d8a94b", glow: "#8fe0d8" },
-    chest_aether: { k: "chest", c: "#9fe8dc", glow: "#8fe0d8" },
-    boots_aether: { k: "boots", c: "#9fe8dc", glow: "#8fe0d8" },
+    helm_aether: { k: "helmf", f: "wing", c: "#9fe8dc", crest: "#d8a94b", glow: "#8fe0d8" },
+    chest_aether: { k: "chestf", f: "wingp", c: "#9fe8dc", glow: "#8fe0d8" },
+    boots_aether: { k: "bootsf", f: "wing", c: "#9fe8dc", glow: "#8fe0d8" },
     charm_feather: { k: "feather", c: "#dfe9f5" },
     charm_rune: { k: "rune", c: "#8fe0d8" },
     cloud_block: { k: "block", tile: T.CLOUD },
@@ -27499,7 +27499,7 @@
     charm_delver: { k: "sigil", c: "#8a8478" },
     /* --- 폭주로 --- */
     core_shard: { k: "shard", c: "#e8b04a", glow: 1 },
-    sword_arc: { k: "sword", c: "#3a3a44", g: "#e0d030", grip: "#2a2a30", w: 4.2, glow: "#f0e070" },
+    sword_arc: { k: "blade", f: "arc", c: "#3a3a44", g: "#e0d030", grip: "#2a2a30", w: 4.2, glow: "#f0e070" },
     stop_core: { k: "stopcore", c: "#c03a30" },
     hepha_heart: { k: "heart", c: "#c8a05a" },
     charm_govern: { k: "ring", c: "#c8ccd4", gem: "#e8b04a" },
@@ -27510,7 +27510,7 @@
     proto_ash: { k: "sigil", c: "#b8b0a0" },
     atelier_key: { k: "sigil", c: "#e0c878" },
     arche_core: { k: "heart", c: "#e8dcc0" },
-    blade_arche: { k: "sword", c: "#f0e8d0", g: "#c8a05a", grip: "#8a7a5a", w: 5.5, glow: "#ffe8a0", orn: 3, gem: "#7ad8ff" },
+    blade_arche: { k: "blade", f: "wave", c: "#f0e8d0", g: "#c8a05a", grip: "#8a7a5a", w: 5.5, glow: "#ffe8a0", orn: 3, gem: "#7ad8ff" },
     tome_origin: { k: "staff", c: "#8a7a5a", head: "#e8dcc0", style: "crystal", glow: "#ffe8a0" },
     charm_maker: { k: "rune", c: "#e8dcc0" },
     /* --- 특별 유적 ① 부유 성채 --- */
@@ -27518,7 +27518,7 @@
     orbit_gear: { k: "ring", c: "#8fa8c8", gem: "#7fe0ff" },
     void_lens: { k: "crystal", c: "#7fe0ff", glow: 1 },
     star_ash: { k: "star", c: "#dfe9f5", glow: "#bfe4ff" },
-    lance_orbit: { k: "spear", c: "#bcd8f0", glow: "#7fe0ff" },
+    lance_orbit: { k: "spearf", f: "lance", c: "#bcd8f0", glow: "#7fe0ff" },
     bow_meridian: { k: "bow", c: "#8fa8c8", s: "#dfe9f5" },
     charm_orbit: { k: "sigil", c: "#7fe0ff" },
     /* --- 특별 유적 ② 무너진 갱 --- */
@@ -27527,28 +27527,28 @@
     miner_tag: { k: "sigil", c: "#8a7a58" },
     gloom_pearl: { k: "shard", c: "#1a1820" },
     drill_abyss: { k: "pick", c: "#4a4a52", glow: "#8a6ad0" },
-    hammer_cave: { k: "hammer", c: "#4a4238" },
+    hammer_cave: { k: "mace", f: "sledge", c: "#4a4238" },
     charm_lamp2: { k: "torchitem" },
     /* --- 제트팩 --- */
     jetpack: { k: "cell", c: "#c86a3a", fill: 1, glow: "#ffb04a" },
     /* --- 무기 다양화 (몬스터 전리품 위주로 늘린 것들) --- */
-    spear_reed: { k: "spear", c: "#8a9a6a" },
-    mace_iron: { k: "hammer", c: "#8a8a92" },
-    dagger_frost: { k: "sword", c: "#bfe8ff", g: "#5a8aa0", grip: "#3a4a52", w: 2.4, glow: "#9fe0ff" },
-    spear_venom: { k: "spear", c: "#7a9c4a", glow: "#a8d060" },
-    mace_thorn: { k: "hammer", c: "#6a3a54", glow: "#c85a9a" },
-    mace_lava: { k: "hammer", c: "#c85a2a", glow: "#ff8a3a" },
-    dagger_void: { k: "sword", c: "#7a5aa8", g: "#3a2a52", grip: "#241c30", w: 2.6, glow: "#a06fff" },
-    spear_storm: { k: "spear", c: "#dce8f4", glow: "#bcd8f0" },
-    mace_ruin: { k: "hammer", c: "#8a7a5a", glow: "#e8d8a0" },
-    crossbow_bone: { k: "bow", c: "#d8d0b8", s: "#8a8270" },
-    bow_venom: { k: "bow", c: "#7a9c4a", s: "#c8e090", glow: "#a8d060" },
-    crossbow_iron: { k: "bow", c: "#8a8a92", s: "#c8c8d0" },
-    bow_ash: { k: "bow", c: "#8a5a3a", s: "#ff8a3a", glow: "#ff8a3a" },
-    crossbow_mythril: { k: "bow", c: "#7fd0c0", s: "#c8f0e8", glow: "#7fd0c0" },
-    bow_void: { k: "bow", c: "#6a4a8a", s: "#b48aff", glow: "#a06fff" },
+    spear_reed: { k: "spearf", f: "reed", c: "#8a9a6a" },
+    mace_iron: { k: "mace", f: "flange", c: "#8a8a92" },
+    dagger_frost: { k: "blade", f: "dagger", ice: 1, c: "#bfe8ff", g: "#5a8aa0", grip: "#3a4a52", w: 2.4, glow: "#9fe0ff" },
+    spear_venom: { k: "spearf", f: "hook", drip: "#c8f07a", c: "#7a9c4a", glow: "#a8d060" },
+    mace_thorn: { k: "mace", f: "spike", c: "#6a3a54", glow: "#c85a9a" },
+    mace_lava: { k: "mace", f: "lava", c: "#c85a2a", glow: "#ff8a3a" },
+    dagger_void: { k: "blade", f: "kris", gem: "#c49fff", c: "#7a5aa8", g: "#3a2a52", grip: "#241c30", w: 2.6, glow: "#a06fff" },
+    spear_storm: { k: "spearf", f: "bolt", c: "#dce8f4", glow: "#bcd8f0" },
+    mace_ruin: { k: "mace", f: "ruin", c: "#8a7a5a", glow: "#e8d8a0" },
+    crossbow_bone: { k: "bowf", f: "cross", stock: "#8a8270", c: "#d8d0b8", s: "#8a8270" },
+    bow_venom: { k: "bowf", f: "thorn", c: "#7a9c4a", s: "#c8e090", glow: "#a8d060" },
+    crossbow_iron: { k: "bowf", f: "cross", stock: "#5a4030", c: "#8a8a92", s: "#c8c8d0" },
+    bow_ash: { k: "bowf", f: "recurve", ember: 1, c: "#8a5a3a", s: "#ff8a3a", glow: "#ff8a3a" },
+    crossbow_mythril: { k: "bowf", f: "cross", stock: "#3a4a52", c: "#7fd0c0", s: "#c8f0e8", glow: "#7fd0c0" },
+    bow_void: { k: "bowf", f: "void", c: "#6a4a8a", s: "#b48aff", glow: "#a06fff" },
     gun_scrap: { k: "railgun", c: "#7a7268", glow: "#e0b93d" },
-    crossbow_first: { k: "bow", c: "#fff0b8", s: "#ffe08a", glow: "#ffe08a" },
+    crossbow_first: { k: "bowf", f: "cross", stock: "#7a5a28", c: "#fff0b8", s: "#ffe08a", glow: "#ffe08a" },
     orb_ember: { k: "staff", c: "#6a4a28", head: "#ff8a3a", style: "orb", glow: "#ff8a3a" },
     tome_bone: { k: "staff", c: "#5a5248", head: "#d8d0b8", style: "crystal" },
     orb_venom: { k: "staff", c: "#3a4a2a", head: "#a8d060", style: "orb", glow: "#a8d060" },
@@ -27621,19 +27621,19 @@
     m_belt_f: { k: "machine", tile: T.M_BELT_F, glow: "#bfe8ff" },
     m_battery_hi: { k: "machine", tile: T.M_BATTERY_HI, glow: "#6fe0c0" },
     /* 바다 무기 */
-    spear_tide: { k: "spear", c: "#7fc8e8", shaft: "#4a5a62", glow: "#8fd4ef" },
-    blade_shark: { k: "sword", c: "#d8d0bd", g: "#8a8270", grip: "#3a4a52", w: 4, jag: 1 },
-    bow_harpoon: { k: "bow", c: "#5a6a72", s: "#cfe0e8" },
+    spear_tide: { k: "spearf", f: "trident", c: "#7fc8e8", shaft: "#4a5a62", glow: "#8fd4ef" },
+    blade_shark: { k: "blade", f: "cleaver", c: "#d8d0bd", g: "#8a8270", grip: "#3a4a52", w: 4, jag: 1 },
+    bow_harpoon: { k: "bowf", f: "cross", harpoon: 1, stock: "#3a4a52", c: "#5a6a72", s: "#cfe0e8" },
     orb_abyss: { k: "staff", c: "#3a4a5a", head: "#7fb8e8", style: "orb", glow: "#7fb8e8" },
-    hammer_tide: { k: "hammer", c: "#5f9cc0", glow: "#8fd4ef" },
+    hammer_tide: { k: "mace", f: "tide", c: "#5f9cc0", glow: "#8fd4ef" },
     gun_harpoon: { k: "railgun", c: "#5a6a72", glow: "#8fd0e8" },
     tome_abyss: { k: "staff", c: "#2e3a4a", head: "#8fb8e8", style: "crystal", glow: "#7fb8e8" },
     pick_abyss: { k: "pick", c: "#5f9cc0", glow: "#8fd4ef", orn: 3, gem: "#bfefff" },
     /* 바다 방어구·장신구 */
-    helm_diver: { k: "helm", c: "#7fa8c0" },
-    chest_scale: { k: "chest", c: "#6a9ab0" },
-    chest_abyss: { k: "chest", c: "#4a6a8a" },
-    boots_fin: { k: "boots", c: "#5f9cc0" },
+    helm_diver: { k: "helmf", f: "diver", c: "#7fa8c0" },
+    chest_scale: { k: "chestf", f: "scale", c: "#6a9ab0" },
+    chest_abyss: { k: "chestf", f: "spiked", gem: "#7fe0ff", c: "#4a6a8a" },
+    boots_fin: { k: "bootsf", f: "fin", c: "#5f9cc0" },
     ring_pearl: { k: "ring", c: "#c8c0a8", gem: "#dff2ff" },
     charm_ink: { k: "sigil", c: "#3a2e44", glow: "#7a4a7a" },
     charm_core: { k: "cell", c: "#8fd0e8", fill: 1, glow: "#bfe8ff" },
@@ -27662,8 +27662,8 @@
     charm_bell: { k: "sigil", c: "#c8b06a", glow: "#ffe08a" },
     ring_deep: { k: "ring", c: "#4a6a8a", gem: "#8fd4ef" },
     sigil_current: { k: "whirl", c: "#5f9cc0", glow: "#8fd4ef" },
-    mace_bell: { k: "hammer", c: "#c8b06a", glow: "#ffe08a" },
-    harpoon_lamp: { k: "bow", c: "#5a6a72", s: "#ffe08a", glow: "#ffe08a" }
+    mace_bell: { k: "mace", f: "bell", c: "#c8b06a", glow: "#ffe08a" },
+    harpoon_lamp: { k: "bowf", f: "cross", harpoon: 1, lamp: "#ffe08a", stock: "#3a4a52", c: "#5a6a72", s: "#ffe08a", glow: "#ffe08a" }
   };
   var SKSPEC = {
     s_cleave: { k: "slash", c: "#ff9a4a" },
@@ -28553,7 +28553,8 @@
   // src/game/art/items/gear.ts
   var gear_exports = {};
   __export(gear_exports, {
-    ItemPaintGear: () => ItemPaintGear
+    ItemPaintGear: () => ItemPaintGear,
+    orn: () => orn
   });
   function orn(H, kind, s) {
     const { g, P: P2, poly: poly2, circ: circ2, stroke, glow: glow4 } = H, n = s.orn, gl = s.glow || sh2(s.c, 1.5), gem = s.gem || gl, gold = "#ffd86a";
@@ -29100,6 +29101,803 @@
   };
   Object.assign(ITEM_PAINT, ItemPaintGear);
 
+  // src/game/art/items/forms.ts
+  var forms_exports = {};
+  __export(forms_exports, {
+    ItemPaintForms: () => ItemPaintForms
+  });
+  var mir = (L) => L.map((p) => [32 - p[0], p[1]]);
+  function blade(H, L, R, c) {
+    const { g, poly: poly2, stroke } = H, M2 = L.map((p, i) => [(p[0] + R[i][0]) / 2, (p[1] + R[i][1]) / 2]);
+    poly2([...L, ...R.slice().reverse()], c);
+    poly2([...L, ...M2.slice().reverse()], sh2(c, 1.28));
+    poly2([...R, ...M2.slice().reverse()], sh2(c, 0.72));
+    stroke(sh2(c, 1.65), 0.7, () => {
+      g.moveTo(M2[0][0], M2[0][1] + 1);
+      for (const p of M2.slice(1)) g.lineTo(p[0], p[1]);
+    });
+  }
+  function grip(H, y, len, c, w = 3.2) {
+    const { P: P2 } = H;
+    P2(16 - w / 2, y, w, len, c);
+    for (let k = y + 1; k < y + len - 0.5; k += 2) P2(16 - w / 2, k, w, 0.9, sh2(c, 0.55));
+    P2(16 - w / 2, y, 0.9, len, sh2(c, 1.3));
+  }
+  function bar(H, y, half, c, h = 2.4) {
+    const { P: P2 } = H;
+    P2(16 - half, y, half * 2, h, c);
+    P2(16 - half, y, half * 2, 0.8, sh2(c, 1.35));
+    P2(16 - half, y + h - 0.7, half * 2, 0.7, sh2(c, 0.65));
+  }
+  function shaft(H, x0, y0, x1, y1, c = "#6a4a28") {
+    const { g, stroke } = H;
+    stroke(c, 2.6, () => {
+      g.moveTo(x0, y0);
+      g.lineTo(x1, y1);
+    });
+    stroke(sh2(c, 1.35), 0.9, () => {
+      g.moveTo(x0 - 0.7, y0);
+      g.lineTo(x1 - 0.7, y1);
+    });
+  }
+  var ItemPaintForms = {
+    /* ---------------- 검 ---------------- */
+    blade(H) {
+      const { g, s, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H, c = s.c, gd = s.g, gr = s.grip;
+      if (s.glow) glow4(16, 11, 11, s.glow, 0.22);
+      switch (s.f) {
+        case "wood": {
+          ell(16, 4.5, 3, 2.8, c);
+          P2(13, 4.5, 6, 15.5, c);
+          P2(13, 4.5, 2.6, 15.5, sh2(c, 1.2));
+          P2(17.6, 4.5, 1.4, 15.5, sh2(c, 0.75));
+          stroke(sh2(c, 0.7), 0.6, () => {
+            g.moveTo(15.2, 7);
+            g.lineTo(15.6, 18);
+            g.moveTo(17, 9);
+            g.lineTo(16.8, 16);
+          });
+          bar(H, 20, 7, gd, 2.8);
+          circ2(10.5, 21.4, 0.6, "#c8c0a8");
+          circ2(21.5, 21.4, 0.6, "#c8c0a8");
+          grip(H, 22.8, 5.6, "#8a7a5a");
+          P2(13.6, 28.4, 4.8, 2.4, gd);
+          break;
+        }
+        case "leaf": {
+          const L = [[16, 1], [14, 5], [12.3, 10.5], [12.8, 15.5], [14.4, 20]];
+          blade(H, L, mir(L), c);
+          bar(H, 20, 5.5, gd);
+          circ2(10.5, 21.2, 1.4, gd);
+          circ2(21.5, 21.2, 1.4, gd);
+          grip(H, 22.4, 5.6, gr);
+          circ2(16, 29.6, 2.2, gd);
+          circ2(15.3, 29, 0.7, sh2(gd, 1.5));
+          break;
+        }
+        case "long": {
+          blade(H, [[16, 0.5], [14.5, 3.5], [14.5, 20.5]], [[16, 0.5], [17.5, 3.5], [17.5, 20.5]], c);
+          bar(H, 20.5, 8.5, gd, 1.8);
+          poly2([[7.5, 20.5], [6, 23.5], [8.6, 22.3]], gd);
+          poly2([[24.5, 20.5], [26, 23.5], [23.4, 22.3]], gd);
+          grip(H, 22.3, 6, gr, 2.8);
+          poly2([[16, 28], [18, 29.8], [16, 31.6], [14, 29.8]], gd);
+          P2(15.4, 29.2, 0.9, 0.9, "#ffffff");
+          break;
+        }
+        case "curve": {
+          const L = [[21.5, 0.5], [17.5, 5], [15, 10], [14.2, 15], [14.2, 20]], R = [[21.5, 0.5], [19.7, 5.6], [17.8, 10.6], [17.5, 15.2], [17.8, 20]];
+          blade(H, L, R, c);
+          stroke(sh2(c, 1.8), 0.9, () => {
+            g.moveTo(21, 1.5);
+            g.quadraticCurveTo(15.5, 8, 14.6, 19.5);
+          });
+          ell(16, 21, 5.6, 1.9, gd);
+          ell(16, 20.6, 5.6, 0.7, sh2(gd, 1.35));
+          P2(14.3, 22.4, 3.4, 6.4, gr);
+          for (let k = 0; k < 3; k++) poly2([[16, 23 + k * 2.1], [17.4, 24 + k * 2.1], [16, 25 + k * 2.1], [14.6, 24 + k * 2.1]], sh2(gr, 1.7));
+          P2(14, 28.8, 4, 1.8, gd);
+          break;
+        }
+        case "sun": {
+          const bw = s.w || 5;
+          blade(H, [[16, 1], [16 - bw, 8], [16 - bw + 0.5, 20]], [[16, 1], [16 + bw, 8], [16 + bw - 0.5, 20]], c);
+          for (let i = 0; i < 10; i++) {
+            const a = i / 10 * TAU;
+            poly2([[16 + Math.cos(a) * 3.4, 21.5 + Math.sin(a) * 3.4], [16 + Math.cos(a + 0.16) * 7.5, 21.5 + Math.sin(a + 0.16) * 5.5], [16 + Math.cos(a + 0.32) * 3.4, 21.5 + Math.sin(a + 0.32) * 3.4]], gd);
+          }
+          circ2(16, 21.5, 3.6, gd);
+          circ2(16, 21.5, 2.4, sh2(gd, 1.3));
+          grip(H, 24.6, 4.4, gr);
+          circ2(16, 29.8, 1.8, gd);
+          break;
+        }
+        case "wave": {
+          const L = [[16, 0.5]], R = [[16, 0.5]];
+          for (let y = 3; y <= 20; y += 1.7) {
+            const w = Math.sin(y * 0.95) * 1.1;
+            L.push([13 + w, y]);
+            R.push([19 + w, y]);
+          }
+          blade(H, L, R, c);
+          bar(H, 20.2, 9, gd, 2.4);
+          poly2([[7, 20.2], [5, 17.5], [8.4, 20.2]], gd);
+          poly2([[25, 20.2], [27, 17.5], [23.6, 20.2]], gd);
+          grip(H, 22.6, 6, gr);
+          circ2(16, 29.8, 2, gd);
+          break;
+        }
+        case "dagger": {
+          blade(H, [[16, 7], [13.3, 12.5], [12.8, 19.6]], [[16, 7], [18.7, 12.5], [19.2, 19.6]], c);
+          bar(H, 19.6, 6.5, gd, 2.2);
+          poly2([[9.5, 19.6], [8, 16.4], [10.8, 19.6]], gd);
+          poly2([[22.5, 19.6], [24, 16.4], [21.2, 19.6]], gd);
+          grip(H, 21.8, 4.8, gr, 2.8);
+          stroke(gd, 1.3, () => {
+            g.arc(16, 28.6, 1.9, 0, TAU);
+          });
+          if (s.drip) {
+            circ2(17.2, 15.5, 1.1, s.drip);
+            P2(16.7, 16.4, 1, 2, s.drip);
+            circ2(17.2, 18.6, 0.8, s.drip);
+          }
+          if (s.ice) for (const [x, y] of [[12.4, 14], [19.6, 11.5], [12.2, 18]]) poly2([[x, y], [x + (x < 16 ? -1.6 : 1.6), y + 0.7], [x, y + 1.6]], "#e8f8ff");
+          break;
+        }
+        case "kris": {
+          const L = [[16, 4.5], [14, 7.5], [15, 10.2], [13.4, 13], [14.6, 15.6], [13, 18], [13.2, 20]];
+          const R = [[16, 4.5], [18.4, 7.6], [19.2, 10.4], [17.8, 13.1], [19, 15.7], [17.6, 18.1], [19, 20]];
+          blade(H, L, R, c);
+          poly2([[11, 20], [21.5, 20], [21.5, 22], [12.5, 22.4], [10.4, 21.6]], gd);
+          stroke(gr, 3, () => {
+            g.moveTo(16, 22.4);
+            g.quadraticCurveTo(14.6, 25.8, 16.6, 29);
+          });
+          circ2(16.8, 29.6, 2, s.gem || gd);
+          circ2(16.2, 29, 0.7, "#ffffff");
+          break;
+        }
+        case "cleaver": {
+          blade(H, [[12, 5], [12, 12.5], [13.6, 20]], [[21.4, 2], [21.6, 12.5], [18.8, 20]], c);
+          for (let y = 4; y < 18; y += 3) poly2([[21.4, y], [23.8, y + 1.2], [21.4, y + 2.2]], "#f4efe0");
+          bar(H, 20, 6.8, gd, 2.6);
+          grip(H, 22.6, 6, gr, 3.4);
+          P2(13.6, 28.6, 4.8, 2, gd);
+          break;
+        }
+        case "arc": {
+          const L = [[17, 0.5], [13.6, 6], [16, 8], [13, 14], [15.6, 16], [14, 20]], R = [[17, 0.5], [17.6, 5], [19.2, 7.6], [17.6, 13], [19.2, 15], [18.2, 20]];
+          blade(H, L, R, c);
+          stroke(s.edge || "#f0e070", 0.8, () => {
+            g.moveTo(L[0][0], L[0][1]);
+            for (const p of L.slice(1)) g.lineTo(p[0], p[1]);
+            g.moveTo(R[0][0], R[0][1]);
+            for (const p of R.slice(1)) g.lineTo(p[0], p[1]);
+          });
+          bar(H, 20, 7.5, gd, 2.4);
+          stroke(sh2(gd, 1.3), 0.9, () => {
+            for (let k = 0; k < 3; k++) {
+              g.moveTo(14.2, 23.5 + k * 1.8);
+              g.lineTo(17.8, 22.8 + k * 1.8);
+            }
+          });
+          grip(H, 22.4, 6, gr);
+          circ2(16, 29.6, 2, gd);
+          break;
+        }
+        default:
+          return ITEM_PAINT.sword(H);
+      }
+      if (s.orn) orn(H, "sword", s);
+    },
+    /* ---------------- 활 · 쇠뇌 ---------------- */
+    bowf(H) {
+      const { g, s, P: P2, poly: poly2, circ: circ2, stroke, glow: glow4 } = H, c = s.c;
+      if (s.glow) glow4(14, 16, 13, s.glow, 0.2);
+      const arrow2 = (x0) => {
+        stroke("#8a6a45", 1.6, () => {
+          g.moveTo(x0 - 1, 16);
+          g.lineTo(27, 16);
+        });
+        poly2([[30.5, 16], [25.5, 13.6], [25.5, 18.4]], s.tip || "#d0d4dc");
+        poly2([[x0 - 1, 16], [x0 + 3.5, 13.2], [x0 + 3.5, 18.8]], s.fl || sh2(c, 1.5));
+      };
+      if (s.f === "cross") {
+        shaft(H, 16, 30, 16, 9, s.stock || "#6a4a28");
+        P2(14.4, 14, 3.2, 14, s.stock || "#6a4a28");
+        P2(14.4, 14, 1, 14, sh2(s.stock || "#6a4a28", 1.35));
+        stroke(c, 3, () => {
+          g.arc(16, 23, 14, Math.PI + 0.52, TAU - 0.52);
+        });
+        stroke(sh2(c, 1.45), 1, () => {
+          g.arc(16, 23, 13, Math.PI + 0.6, TAU - 0.8);
+        });
+        const ex2 = 16 - 14 * Math.cos(0.52), ey = 23 - 14 * Math.sin(0.52);
+        stroke(s.s, 1, () => {
+          g.moveTo(ex2, ey);
+          g.lineTo(16, 17.5);
+          g.lineTo(32 - ex2, ey);
+        });
+        P2(15.2, 24.5, 1.6, 3, "#2a2a30");
+        if (s.harpoon) {
+          P2(15.4, 2, 1.2, 16, "#9aa4ac");
+          poly2([[16, 0.5], [18.4, 5], [16, 4], [13.6, 5]], "#c8d0d8");
+          poly2([[16, 6], [18, 8.6], [16, 7.6]], "#c8d0d8");
+          stroke("#d8c890", 0.7, () => {
+            for (let y = 18; y < 27; y += 2) {
+              g.moveTo(17.6, y);
+              g.lineTo(19.4, y + 1);
+            }
+          });
+        } else {
+          P2(15.4, 4, 1.2, 14, "#8a6a45");
+          poly2([[16, 1], [18, 5], [14, 5]], s.tip || "#d0d4dc");
+        }
+        if (s.lamp) {
+          glow4(23, 21, 8, s.lamp, 0.5);
+          circ2(23, 21, 2.4, "#3a3a40");
+          circ2(23, 21, 1.5, s.lamp);
+        }
+        return;
+      }
+      if (s.f === "long") {
+        const R = 22, a2 = 0.78, cx2 = 32;
+        stroke(c, 2.6, () => {
+          g.arc(cx2, 16, R, Math.PI - a2, Math.PI + a2);
+        });
+        stroke(sh2(c, 1.5), 0.9, () => {
+          g.arc(cx2, 16, R - 1, Math.PI - a2 * 0.85, Math.PI + a2 * 0.85);
+        });
+        const ex2 = cx2 - R * Math.cos(a2), e1 = 16 - R * Math.sin(a2), e2 = 16 + R * Math.sin(a2);
+        stroke(s.s, 1, () => {
+          g.moveTo(ex2, e1);
+          g.lineTo(ex2, e2);
+        });
+        P2(cx2 - R - 1.3, 13.4, 3, 5.2, "#4a3122");
+        arrow2(ex2);
+        if (s.tassel) {
+          stroke(s.tassel, 0.9, () => {
+            g.moveTo(cx2 - R + 0.5, 18.6);
+            g.quadraticCurveTo(cx2 - R - 1, 24, cx2 - R + 1, 27);
+          });
+          circ2(cx2 - R + 1, 27.4, 1.1, s.tassel);
+        }
+        if (s.star) {
+          glow4(ex2, e1, 6, "#ffe08a", 0.5);
+          poly2([[ex2, e1 - 3], [ex2 + 0.8, e1 - 0.8], [ex2 + 3, e1], [ex2 + 0.8, e1 + 0.8], [ex2, e1 + 3], [ex2 - 0.8, e1 + 0.8], [ex2 - 3, e1], [ex2 - 0.8, e1 - 0.8]], "#fff6d0");
+        }
+        return;
+      }
+      const sm = s.f === "short", a = sm ? 0.95 : 1, cx = sm ? 21 : 23, r = sm ? 11.5 : 15;
+      if (s.f === "wing") {
+        for (let i = 0; i < 7; i++) {
+          const t = -a + (i + 0.5) / 7 * a * 2, x = cx - r * Math.cos(t), y = 16 + r * Math.sin(t), d = Math.sign(t) || 1;
+          poly2([[x, y], [x - 4.5, y + d * 1.6 - 1.2], [x - 3.6, y + d * 3]], i % 2 ? sh2(c, 1.25) : c);
+        }
+      }
+      stroke(c, sm ? 3 : 3.4, () => {
+        g.arc(cx, 16, r, Math.PI - a, Math.PI + a);
+      });
+      stroke(sh2(c, 1.45), 1.1, () => {
+        g.arc(cx, 16, r - 1.4, Math.PI - a * 0.88, Math.PI + a * 0.88);
+      });
+      const ex = cx - r * Math.cos(a), ey1 = 16 - r * Math.sin(a), ey2 = 16 + r * Math.sin(a);
+      if (s.f === "recurve" || s.f === "thorn" || s.f === "feather") for (const d of [-1, 1])
+        stroke(c, 2.2, () => {
+          g.moveTo(ex, d < 0 ? ey1 : ey2);
+          g.quadraticCurveTo(ex + 1, (d < 0 ? ey1 : ey2) + d * 2.6, ex + 3.6, (d < 0 ? ey1 : ey2) + d * 2.4);
+        });
+      if (s.f === "reed") for (let i = 1; i < 6; i++) {
+        const t = -a + i / 6 * a * 2;
+        P2(cx - r * Math.cos(t) - 1.8, 16 + r * Math.sin(t) - 0.4, 3.6, 0.9, sh2(c, 0.6));
+      }
+      if (s.f === "thorn") for (let i = 0; i < 6; i++) {
+        const t = -a * 0.8 + i / 5 * a * 1.6;
+        const x = cx - (r + 1.5) * Math.cos(t), y = 16 + (r + 1.5) * Math.sin(t);
+        poly2([[x, y - 0.8], [x - 2.4, y], [x, y + 0.8]], sh2(c, 1.4));
+      }
+      if (s.f === "feather") for (const d of [-1, 1]) {
+        const y = d < 0 ? ey1 : ey2;
+        poly2([[ex + 3.6, y + d * 2.4], [ex + 7, y + d * 5], [ex + 2.2, y + d * 4]], "#2a2a32");
+      }
+      if (s.f === "void") {
+        glow4(cx - r, 16, 6, "#a06fff", 0.5);
+        circ2(cx - r + 0.6, 16, 2.4, "#1a1024");
+        circ2(cx - r + 0.6, 16, 1.2, "#c49fff");
+      }
+      stroke(s.s, 1.3, () => {
+        g.moveTo(ex, ey1);
+        g.lineTo(ex, ey2);
+      });
+      if (s.f !== "void") P2(cx - r - 1.4, 13, 3.4, 6, s.f === "short" ? "#7a5a3a" : "#4a3122");
+      if (s.ember) for (const y of [ey1, ey2]) {
+        glow4(ex, y, 5, "#ff8a3a", 0.6);
+        circ2(ex, y, 1.2, "#ffc070");
+      }
+      arrow2(ex);
+    },
+    /* ---------------- 창 ---------------- */
+    spearf(H) {
+      const { g, s, P: P2, poly: poly2, circ: circ2, stroke, glow: glow4 } = H, c = s.c, lt = sh2(c, 1.4), dk = sh2(c, 0.7);
+      if (s.glow) glow4(16, 9, 11, s.glow, 0.22);
+      if (s.f === "lance") {
+        poly2([[16, 0.5], [19.5, 19], [12.5, 19]], c);
+        poly2([[16, 0.5], [16, 19], [12.5, 19]], lt);
+        poly2([[16, 0.5], [19.5, 19], [17.5, 19]], dk);
+        stroke(sh2(c, 1.7), 0.7, () => {
+          for (let y = 5; y < 18; y += 3.5) {
+            g.moveTo(16 - (y - 0.5) * 0.19, y);
+            g.lineTo(16 + (y - 0.5) * 0.19, y + 1.2);
+          }
+        });
+        g.fillStyle = sh2(c, 0.85);
+        g.beginPath();
+        g.ellipse(16, 20, 7, 2.6, 0, 0, TAU);
+        g.fill();
+        P2(9, 19.2, 14, 0.8, lt);
+        shaft(H, 16, 31, 16, 22, s.shaft || "#4a4a6a");
+        return;
+      }
+      const sc = s.shaft || (s.f === "reed" ? "#8a9a5a" : "#6a4a28");
+      shaft(H, 16, 31, 16, 9, sc);
+      if (s.f === "reed") for (let y = 13; y < 30; y += 5) P2(14.4, y, 3.2, 1, sh2(sc, 0.6));
+      switch (s.f) {
+        case "trident": {
+          P2(9, 10, 14, 2.2, dk);
+          P2(9, 10, 14, 0.8, lt);
+          poly2([[16, 0.5], [17.6, 5], [16.8, 10], [15.2, 10], [14.4, 5]], c);
+          for (const d of [-1, 1]) {
+            stroke(c, 1.8, () => {
+              g.moveTo(16 + d * 6.2, 10);
+              g.quadraticCurveTo(16 + d * 7, 6, 16 + d * 6, 2.5);
+            });
+            poly2([[16 + d * 6, 1], [16 + d * 7.4, 4], [16 + d * 4.8, 4]], lt);
+          }
+          break;
+        }
+        case "barb":
+        case "harpoon": {
+          poly2([[16, 0.5], [19, 7], [16, 10], [13, 7]], c);
+          poly2([[16, 0.5], [16, 10], [13, 7]], lt);
+          poly2([[13, 7], [11, 11.5], [14.4, 8.8]], dk);
+          if (s.f === "barb") poly2([[19, 7], [21, 11.5], [17.6, 8.8]], dk);
+          if (s.f === "harpoon") {
+            stroke("#d8c890", 1, () => {
+              for (let y = 14; y < 26; y += 2) {
+                g.moveTo(14.2, y);
+                g.lineTo(17.8, y + 1);
+              }
+            });
+            stroke("#d8c890", 0.8, () => {
+              g.moveTo(17.8, 25);
+              g.quadraticCurveTo(23, 27, 22, 31);
+            });
+          }
+          break;
+        }
+        case "bolt": {
+          poly2([[17.5, 0.5], [13, 6.5], [16, 6.8], [13.5, 11], [19, 4.6], [16.2, 4.5]], c);
+          poly2([[17.5, 0.5], [13, 6.5], [16, 6.8]], lt);
+          glow4(16, 5, 6, s.glow || c, 0.4);
+          break;
+        }
+        case "hook": {
+          g.fillStyle = c;
+          g.beginPath();
+          g.moveTo(16, 11);
+          g.quadraticCurveTo(11, 8, 13.5, 1);
+          g.quadraticCurveTo(19.5, 5, 17.6, 11);
+          g.closePath();
+          g.fill();
+          g.fillStyle = lt;
+          g.beginPath();
+          g.moveTo(15.4, 10.4);
+          g.quadraticCurveTo(12, 8, 13.6, 2.2);
+          g.quadraticCurveTo(14.6, 6, 16.2, 10);
+          g.closePath();
+          g.fill();
+          poly2([[17.6, 7], [21, 6], [18.2, 9.4]], dk);
+          if (s.drip) {
+            circ2(13, 10, 1, s.drip);
+            P2(12.5, 10.8, 1, 1.6, s.drip);
+          }
+          break;
+        }
+        default: {
+          poly2([[16, 1], [19.4, 8], [16, 12], [12.6, 8]], c);
+          poly2([[16, 1], [16, 12], [12.6, 8]], lt);
+          stroke(s.cord || "#c8b080", 0.9, () => {
+            for (let y = 12; y < 15.5; y += 1.4) {
+              g.moveTo(14.4, y);
+              g.lineTo(17.6, y + 0.6);
+            }
+          });
+        }
+      }
+    },
+    /* ---------------- 둔기(철퇴 · 망치) ---------------- */
+    mace(H) {
+      const { g, s, rng, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H, c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
+      if (s.glow) glow4(16, 10, 12, s.glow, 0.26);
+      shaft(H, 16, 31, 16, 14, s.shaft || "#6a4a28");
+      P2(14.2, 26.5, 3.6, 4, "#3a2a1c");
+      switch (s.f) {
+        case "flange": {
+          for (const [x, y, w, h] of [[8, 7, 4, 8], [20, 7, 4, 8], [14, 1.5, 4, 5]]) {
+            P2(x, y, w, h, c);
+            P2(x, y, w, 1, lt);
+          }
+          poly2([[9.5, 4], [12.5, 6], [11, 8]], c);
+          poly2([[22.5, 4], [19.5, 6], [21, 8]], c);
+          circ2(16, 11, 5, c);
+          circ2(14.6, 9.6, 2, lt);
+          circ2(16, 11, 2, dk);
+          P2(13, 15.5, 6, 1.6, dk);
+          break;
+        }
+        case "spike": {
+          for (let i = 0; i < 10; i++) {
+            const a = i / 10 * TAU;
+            poly2([[16 + Math.cos(a - 0.25) * 5.2, 9.5 + Math.sin(a - 0.25) * 5.2], [16 + Math.cos(a) * 9.6, 9.5 + Math.sin(a) * 9.6], [16 + Math.cos(a + 0.25) * 5.2, 9.5 + Math.sin(a + 0.25) * 5.2]], i % 2 ? lt : sh2(c, 1.1));
+          }
+          circ2(16, 9.5, 6, c);
+          circ2(14.4, 8, 2.4, lt);
+          circ2(17.6, 11.4, 2.2, dk);
+          break;
+        }
+        case "lava": {
+          poly2([[6, 7], [10, 3], [18, 2], [25, 5], [27, 11], [23, 16], [12, 16.5], [5.5, 13]], c);
+          poly2([[6, 7], [10, 3], [18, 2], [17, 7], [9, 10]], lt);
+          stroke("#ffb040", 1.2, () => {
+            g.moveTo(9, 9);
+            g.lineTo(13, 11);
+            g.lineTo(16, 8);
+            g.lineTo(21, 12);
+            g.moveTo(16, 8);
+            g.lineTo(17.6, 4);
+          });
+          glow4(15, 10, 8, "#ff7a2a", 0.45);
+          break;
+        }
+        case "bell": {
+          g.fillStyle = c;
+          g.beginPath();
+          g.moveTo(9, 15);
+          g.quadraticCurveTo(10, 3, 16, 2.5);
+          g.quadraticCurveTo(22, 3, 23, 15);
+          g.closePath();
+          g.fill();
+          g.fillStyle = lt;
+          g.beginPath();
+          g.moveTo(10.5, 14);
+          g.quadraticCurveTo(11, 4.5, 15, 4);
+          g.lineTo(13.5, 14);
+          g.closePath();
+          g.fill();
+          P2(8, 14, 16, 2.4, dk);
+          P2(8, 14, 16, 0.8, lt);
+          circ2(16, 17.6, 1.6, sh2(c, 1.5));
+          stroke(sh2(c, 0.5), 0.7, () => {
+            g.moveTo(10.6, 9);
+            g.lineTo(21.4, 9);
+          });
+          break;
+        }
+        case "ruin": {
+          P2(6, 3, 20, 13, c);
+          P2(6, 3, 20, 2.4, lt);
+          P2(6, 13.6, 20, 2.4, dk);
+          P2(6, 3, 2.4, 13, sh2(c, 1.15));
+          poly2([[6, 3], [9, 3], [6, 6]], "#00000000");
+          P2(23, 3, 3, 3, sh2(c, 0.8));
+          stroke(s.glow || "#e8d8a0", 1, () => {
+            g.moveTo(13, 6);
+            g.lineTo(16, 12);
+            g.lineTo(19, 6);
+            g.moveTo(14.2, 9);
+            g.lineTo(17.8, 9);
+          });
+          break;
+        }
+        case "sledge": {
+          P2(5, 5, 15, 10, c);
+          P2(5, 5, 15, 2.6, lt);
+          P2(5, 12.4, 15, 2.6, dk);
+          P2(5, 5, 2.4, 10, sh2(c, 1.15));
+          poly2([[20, 6.5], [29.5, 9.5], [20, 13]], dk);
+          poly2([[20, 6.5], [29.5, 9.5], [20, 9]], c);
+          for (let i = 0; i < 4; i++) P2(rng.range(7, 18), rng.range(7, 12), 1.6, 1.6, rng.chance(0.5) ? lt : dk);
+          break;
+        }
+        case "tide": {
+          P2(6, 5, 20, 11, c);
+          P2(6, 5, 20, 2.4, lt);
+          P2(6, 13.6, 20, 2.4, dk);
+          stroke(sh2(c, 1.6), 1, () => {
+            for (let k = 0; k < 2; k++) {
+              g.moveTo(7, 8 + k * 3);
+              for (let x = 7; x <= 25; x += 3) g.quadraticCurveTo(x + 1.5, 6.5 + k * 3, x + 3, 8 + k * 3);
+            }
+          });
+          circ2(6, 10.5, 3, sh2(c, 1.2));
+          stroke(dk, 0.8, () => {
+            g.arc(6, 10.5, 1.6, 0, 4.5);
+          });
+          break;
+        }
+        default:
+          return ITEM_PAINT.hammer(H);
+      }
+    },
+    /* ---------------- 투구 ---------------- */
+    helmf(H) {
+      const { g, s, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H, c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.65);
+      if (s.glow) glow4(16, 15, 12, s.glow, 0.18);
+      switch (s.f) {
+        case "hood": {
+          g.fillStyle = c;
+          g.beginPath();
+          g.moveTo(5, 27);
+          g.quadraticCurveTo(4, 6, 16, 4);
+          g.quadraticCurveTo(28, 6, 27, 27);
+          g.closePath();
+          g.fill();
+          g.fillStyle = lt;
+          g.beginPath();
+          g.moveTo(6, 25);
+          g.quadraticCurveTo(5.5, 8, 15, 5.5);
+          g.lineTo(11, 25);
+          g.closePath();
+          g.fill();
+          ell(16, 17, 6, 7, "#1a1612");
+          ell(16, 18.5, 4, 4.5, "#2a241c");
+          stroke(dk, 1, () => {
+            g.moveTo(5, 27);
+            g.lineTo(27, 27);
+          });
+          break;
+        }
+        case "kettle": {
+          g.fillStyle = c;
+          g.beginPath();
+          g.arc(16, 15, 8.5, Math.PI, 0);
+          g.fill();
+          g.fillStyle = lt;
+          g.beginPath();
+          g.arc(16, 15, 8.5, Math.PI, Math.PI * 1.45);
+          g.lineTo(16, 15);
+          g.fill();
+          ell(16, 15.5, 14, 3, dk);
+          ell(16, 14.8, 14, 2.2, c);
+          P2(2.5, 14.4, 27, 0.8, lt);
+          P2(9, 17, 14, 5, "#1e1a16");
+          P2(9, 21, 14, 1.6, dk);
+          circ2(16, 7, 1.4, lt);
+          break;
+        }
+        case "crest":
+        case "wing":
+        case "visor": {
+          if (s.f === "crest") {
+            g.fillStyle = s.crest || "#c84a3a";
+            g.beginPath();
+            g.moveTo(16, 7);
+            g.quadraticCurveTo(14, -1, 26, 1);
+            g.quadraticCurveTo(20, 3, 18, 8);
+            g.closePath();
+            g.fill();
+          }
+          if (s.f === "wing") for (const d of [-1, 1]) {
+            poly2([[16 + d * 9, 14], [16 + d * 15.5, 4], [16 + d * 14, 10], [16 + d * 15.5, 9], [16 + d * 11, 17]], s.crest || "#f0e8d0");
+            poly2([[16 + d * 9, 14], [16 + d * 15.5, 4], [16 + d * 12, 12]], sh2(s.crest || "#f0e8d0", 1.2));
+          }
+          g.fillStyle = c;
+          g.beginPath();
+          g.arc(16, 15, 9.5, Math.PI, 0);
+          g.fill();
+          P2(6.5, 15, 19, 9, c);
+          g.fillStyle = lt;
+          g.beginPath();
+          g.arc(16, 15, 9.5, Math.PI, Math.PI * 1.45);
+          g.lineTo(16, 15);
+          g.fill();
+          P2(6.5, 15, 4, 9, lt);
+          P2(15.2, 6, 1.6, 18, sh2(c, 1.2));
+          P2(8.5, 14.5, 15, 2.4, "#14141a");
+          P2(8.5, 18.6, 15, 1.2, "#14141a");
+          for (let x = 10; x < 23; x += 3) P2(x, 20.6, 1.2, 1.2, "#14141a");
+          P2(6.5, 23, 19, 1.4, dk);
+          break;
+        }
+        case "halo": {
+          stroke(sh2(s.crest || "#ffe08a", 1.2), 1.4, () => {
+            g.ellipse(16, 5, 9, 2.4, 0, 0, TAU);
+          });
+          glow4(16, 5, 9, s.crest || "#ffe08a", 0.3);
+          g.fillStyle = c;
+          g.beginPath();
+          g.arc(16, 17, 9, Math.PI, 0);
+          g.fill();
+          P2(7, 17, 18, 6, c);
+          g.fillStyle = lt;
+          g.beginPath();
+          g.arc(16, 17, 9, Math.PI, Math.PI * 1.45);
+          g.lineTo(16, 17);
+          g.fill();
+          P2(7, 13, 18, 3, s.crest || "#ffe08a");
+          poly2([[16, 11], [18.6, 14.5], [16, 18], [13.4, 14.5]], s.gem || "#c49fff");
+          P2(15.2, 12.6, 1, 1.4, "#ffffff");
+          ell(16, 20.5, 6.5, 2.4, "#1a1424");
+          break;
+        }
+        case "diver": {
+          circ2(16, 15, 11, c);
+          circ2(13, 11.5, 5, lt);
+          circ2(16, 16, 6.5, sh2(c, 0.6));
+          circ2(16, 16, 5.2, "#2a4a5a");
+          circ2(14.4, 14.4, 1.8, "#9fd8f0");
+          P2(10.8, 15.6, 10.4, 0.8, sh2(c, 0.6));
+          P2(15.6, 10.8, 0.8, 10.4, sh2(c, 0.6));
+          for (let i = 0; i < 6; i++) {
+            const a = i / 6 * TAU;
+            circ2(16 + Math.cos(a) * 8.4, 16 + Math.sin(a) * 8.4, 0.9, sh2(c, 1.5));
+          }
+          P2(6, 25, 20, 3, dk);
+          break;
+        }
+        default:
+          return ITEM_PAINT.helm(H);
+      }
+    },
+    /* ---------------- 갑옷 ---------------- */
+    chestf(H) {
+      const { g, s, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H, c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.66);
+      if (s.glow) glow4(16, 17, 13, s.glow, 0.18);
+      const torso = () => {
+        poly2([[9, 8], [23, 8], [25, 14], [23, 27], [9, 27], [7, 14]], c);
+        poly2([[9, 8], [16, 8], [16, 27], [9, 27], [7, 14]], lt);
+      };
+      switch (s.f) {
+        case "robe": {
+          poly2([[11, 6], [21, 6], [24, 13], [27, 29], [5, 29], [8, 13]], c);
+          poly2([[11, 6], [16, 6], [16, 29], [5, 29], [8, 13]], lt);
+          poly2([[13, 6], [19, 6], [16, 12]], dk);
+          P2(7.4, 17, 17.2, 2.4, s.belt || "#5a3a20");
+          P2(14.6, 16.6, 2.8, 3.2, "#c8a050");
+          stroke(dk, 0.7, () => {
+            g.moveTo(11, 21);
+            g.lineTo(9, 29);
+            g.moveTo(21, 21);
+            g.lineTo(23, 29);
+          });
+          if (s.rune) {
+            glow4(16, 23.5, 5, s.rune, 0.5);
+            circ2(16, 23.5, 1.8, s.rune);
+          }
+          break;
+        }
+        case "lamellar": {
+          torso();
+          for (let y = 10; y < 27; y += 3) {
+            P2(8, y, 16, 2.4, y % 2 ? c : sh2(c, 0.9));
+            P2(8, y, 16, 0.7, lt);
+            for (let x = 9; x < 24; x += 3.5) P2(x, y + 0.8, 0.8, 0.8, dk);
+          }
+          circ2(8, 10, 3.4, dk);
+          circ2(24, 10, 3.4, dk);
+          break;
+        }
+        case "scale": {
+          torso();
+          for (let r = 0; r < 6; r++) for (let k = 0; k < 5; k++) {
+            const x = 9.5 + k * 3.4 + (r % 2 ? 1.7 : 0), y = 10 + r * 3;
+            if (x > 23) continue;
+            g.fillStyle = (r + k) % 2 ? lt : sh2(c, 0.85);
+            g.beginPath();
+            g.arc(x, y, 1.9, 0, Math.PI);
+            g.fill();
+          }
+          circ2(8, 10.5, 3.6, dk);
+          circ2(24, 10.5, 3.6, dk);
+          break;
+        }
+        case "ornate":
+        case "wingp":
+        case "spiked": {
+          torso();
+          P2(15.4, 9, 1.2, 18, dk);
+          P2(8, 17, 16, 1.4, dk);
+          P2(8, 22, 16, 1.4, dk);
+          if (s.f === "wingp") for (const d of [-1, 1]) {
+            poly2([[16 + d * 7, 9], [16 + d * 15.5, 4], [16 + d * 13, 9], [16 + d * 15, 9.5], [16 + d * 10, 13]], s.trim || "#f0e8d0");
+          }
+          else if (s.f === "spiked") for (const d of [-1, 1]) {
+            circ2(16 + d * 8, 10.5, 4, dk);
+            for (const a of [-1.9, -1.4, -0.9]) {
+              const aa = d > 0 ? a : -Math.PI - a;
+              poly2([[16 + d * 8 + Math.cos(aa - 0.25) * 3.6, 10.5 + Math.sin(aa - 0.25) * 3.6], [16 + d * 8 + Math.cos(aa) * 7.5, 10.5 + Math.sin(aa) * 7.5], [16 + d * 8 + Math.cos(aa + 0.25) * 3.6, 10.5 + Math.sin(aa + 0.25) * 3.6]], sh2(c, 1.25));
+            }
+          }
+          else {
+            circ2(8, 10.5, 4, c);
+            circ2(24, 10.5, 4, sh2(c, 0.8));
+            circ2(7.2, 9.4, 1.6, lt);
+          }
+          stroke(s.trim || "#ffd86a", 0.9, () => {
+            g.moveTo(9, 8.4);
+            g.lineTo(23, 8.4);
+            g.moveTo(9.2, 26.5);
+            g.lineTo(22.8, 26.5);
+          });
+          const gem = s.gem || s.glow || "#7fe0ff";
+          if (s.f === "spiked") {
+            ell(16, 15, 3.4, 2, "#140a14");
+            circ2(16, 15, 1.4, gem);
+            glow4(16, 15, 6, gem, 0.5);
+          } else {
+            poly2([[16, 11.5], [18.4, 14.5], [16, 17.5], [13.6, 14.5]], gem);
+            P2(15, 12.8, 1, 1.4, "#ffffff");
+            glow4(16, 14.5, 6, gem, 0.35);
+          }
+          break;
+        }
+        default:
+          return ITEM_PAINT.chest(H);
+      }
+    },
+    /* ---------------- 장화 ---------------- */
+    bootsf(H) {
+      const { g, s, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H, c = s.c, lt = sh2(c, 1.3), dk = sh2(c, 0.6);
+      if (s.glow) glow4(16, 18, 12, s.glow, 0.18);
+      const one = (bx) => {
+        switch (s.f) {
+          case "shoe":
+            poly2([[bx, 15], [bx + 8, 15], [bx + 8, 21], [bx + 12.5, 22], [bx + 12.5, 26], [bx, 26]], c);
+            P2(bx, 15, 3.4, 11, lt);
+            for (let y = 16; y < 22; y += 2) stroke(sh2(c, 0.5), 0.8, () => {
+              g.moveTo(bx, y);
+              g.lineTo(bx + 8, y + 1);
+            });
+            P2(bx, 24.5, 12.5, 1.5, dk);
+            break;
+          case "greave":
+            poly2([[bx, 6], [bx + 8.4, 6], [bx + 8.4, 21], [bx + 12.5, 21], [bx + 12.5, 26], [bx, 26]], c);
+            P2(bx, 6, 3.4, 20, lt);
+            circ2(bx + 4.2, 9, 3.4, sh2(c, 1.1));
+            circ2(bx + 3.4, 8.2, 1.2, sh2(c, 1.6));
+            P2(bx, 14, 8.4, 1.2, dk);
+            P2(bx, 18, 8.4, 1.2, dk);
+            P2(bx, 24, 12.5, 2, dk);
+            break;
+          case "fin":
+            poly2([[bx, 10], [bx + 7.6, 10], [bx + 7.6, 20], [bx + 14, 22], [bx + 15, 27], [bx, 26]], c);
+            P2(bx, 10, 3.2, 16, lt);
+            stroke(dk, 0.8, () => {
+              for (let k = 0; k < 3; k++) {
+                g.moveTo(bx + 8, 21.4 + k);
+                g.lineTo(bx + 14.4, 23 + k * 1.6);
+              }
+            });
+            P2(bx, 13, 7.6, 1.4, dk);
+            break;
+          default: {
+            poly2([[bx, 9], [bx + 8, 9], [bx + 8, 21], [bx + 12, 21], [bx + 12, 26], [bx, 26]], c);
+            P2(bx, 9, 3.5, 17, lt);
+            P2(bx, 23.5, 12, 2.5, dk);
+            P2(bx, 12.5, 8, 1.6, dk);
+            if (s.f === "wing") {
+              const w = s.trim || "#f0e8d0";
+              poly2([[bx + 7, 14], [bx + 14, 7], [bx + 12, 12], [bx + 14.5, 12.5], [bx + 8, 17]], w);
+            }
+          }
+        }
+      };
+      one(2);
+      one(17);
+    }
+  };
+  Object.assign(ITEM_PAINT, ItemPaintForms);
+
   // src/game/art/items/weird.ts
   var weird_exports = {};
   __export(weird_exports, {
@@ -29636,12 +30434,25 @@
       const { g, s, rng, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H;
       {
         {
-          const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.65);
-          P2(17, 4, 3, 22, "#6a4a28");
-          P2(17, 4, 1.2, 22, "#8f6740");
-          poly2([[6, 5], [19, 5], [19, 9], [10, 9], [10, 13], [6, 13]], c);
-          poly2([[6, 5], [19, 5], [19, 6.4], [7.4, 6.4]], lt);
-          P2(7, 11, 3, 2, dk);
+          const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.62);
+          stroke("#6a4a28", 2.6, () => {
+            g.moveTo(5, 30);
+            g.lineTo(23.5, 6);
+          });
+          stroke("#9a7248", 0.9, () => {
+            g.moveTo(4.4, 29.2);
+            g.lineTo(22.8, 5.6);
+          });
+          stroke(dk, 2.4, () => {
+            g.moveTo(23.5, 6);
+            g.quadraticCurveTo(25.5, 3.5, 22, 4.2);
+            g.lineTo(17, 8.5);
+          });
+          poly2([[10.5, 6], [20, 5.5], [19, 17.5], [7, 18.5]], c);
+          poly2([[10.5, 6], [13.5, 5.8], [11, 18.2], [7, 18.5]], lt);
+          P2(7, 17.2, 12, 1.4, sh2(c, 1.7));
+          circ2(23.6, 5.6, 1.6, sh2(c, 0.8));
+          circ2(23.2, 5.2, 0.6, lt);
           return;
         }
       }
@@ -29782,15 +30593,22 @@
       const { g, s, rng, P: P2, poly: poly2, circ: circ2, ell, stroke, glow: glow4 } = H;
       {
         {
-          const c = s.c, lt = sh2(c, 1.28), dk = sh2(c, 0.68);
-          ell(16, 19, 12, 8.5, c);
-          ell(16, 17, 11, 7, lt);
-          for (let k = 0; k < 3; k++)
-            stroke(dk, 1.8, () => {
-              g.moveTo(9 + k * 5, 15);
-              g.lineTo(13 + k * 5, 11);
+          const c = s.c, lt = sh2(c, 1.25), dk = sh2(c, 0.62), crumb = "#f0d8a8";
+          ell(16, 24.5, 12.5, 3, "rgba(0,0,0,.25)");
+          ell(16, 18.5, 13, 7.5, dk);
+          ell(16, 17.4, 12.4, 6.6, c);
+          ell(13.5, 15.2, 8, 3.4, lt);
+          for (let k = 0; k < 3; k++) {
+            const x = 9.5 + k * 6;
+            g.fillStyle = crumb;
+            g.beginPath();
+            g.ellipse(x, 16.4, 2.6, 1, -0.6, 0, Math.PI * 2);
+            g.fill();
+            stroke(sh2(c, 0.5), 0.7, () => {
+              g.ellipse(x, 16.4, 2.6, 1, -0.6, Math.PI * 0.1, Math.PI * 0.9);
             });
-          ell(16, 26, 11, 3, dk);
+          }
+          for (let i = 0; i < 7; i++) P2(7 + rng.range(0, 18), 13 + rng.range(0, 6), 0.8, 0.8, "#fff6e6");
           return;
         }
       }
@@ -30442,7 +31260,7 @@
       {
         {
           const c = s.c, dk = sh2(c, 0.62), lt = sh2(c, 1.22), stem = s.st || sh2(c, 0.5);
-          const blade = (pts) => {
+          const blade2 = (pts) => {
             poly2(pts, dk);
             poly2(pts.map(([x, y]) => [x + (16 - x) * 0.12, y + (16 - y) * 0.12]), c);
           };
@@ -30485,7 +31303,7 @@
               pts.push([16 + Math.cos(a) * r, 15 + Math.sin(a) * r]);
             }
             glow4(16, 15, 12, c, 0.2);
-            blade(pts);
+            blade2(pts);
             for (let i = 0; i < 5; i++) {
               const a = -Math.PI / 2 + i * TAU / 5;
               stroke(lt, 1, () => {
@@ -30510,7 +31328,7 @@
               const cx = 9 + t * 16, cy = 25 - t * 20 + (s.sh === "curl" ? Math.sin(t * 5) * 2.5 : 0);
               pts.push([cx + w * 0.78, cy + w * 0.62]);
             }
-            blade(pts);
+            blade2(pts);
             stroke(stem, 1.6, () => {
               g.moveTo(5, 29);
               g.lineTo(10, 24);
@@ -42007,16 +42825,16 @@
     },
     /* ---- 화면 아래 탭 단추 ---- */
     bindTabBar() {
-      const bar = $("#tabbar");
-      if (!bar) return;
-      const chatBtn = bar.querySelector('[data-tab="chat"]');
+      const bar2 = $("#tabbar");
+      if (!bar2) return;
+      const chatBtn = bar2.querySelector('[data-tab="chat"]');
       if (chatBtn) chatBtn.addEventListener("mousedown", (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (app.chatOpen) app.closeChat();
         else app.openChat();
       });
-      bar.querySelectorAll(".tb").forEach((b) => b.addEventListener("click", (e) => {
+      bar2.querySelectorAll(".tb").forEach((b) => b.addEventListener("click", (e) => {
         e.stopPropagation();
         const t = b.dataset.tab;
         if (t === "chat") return;
@@ -42038,9 +42856,9 @@
       this.refreshTabBar();
     },
     refreshTabBar() {
-      const bar = $("#tabbar");
-      if (!bar) return;
-      bar.querySelectorAll(".tb").forEach((b) => {
+      const bar2 = $("#tabbar");
+      if (!bar2) return;
+      bar2.querySelectorAll(".tb").forEach((b) => {
         const t = b.dataset.tab, kb = b.querySelector("kbd");
         if (t !== "menu" && kb) kb.textContent = app.keysFor(t).slice(0, 1).map((c) => this.keyLabel(c)).join("");
         const open = { inv: "inv", skills: "skill", quest: "quest", craft: "craft", map: "fullmap" }[t];
@@ -42381,14 +43199,14 @@
     },
     /* ---------------- 스킬바 ---------------- */
     buildSkillbar() {
-      const bar = $("#skillbar");
-      bar.innerHTML = "";
+      const bar2 = $("#skillbar");
+      bar2.innerHTML = "";
       const keys = ["Q", "E", "R", "F", "G", "V"];
       for (let i = 0; i < 6; i++) {
         const d = document.createElement("div");
         d.className = "sk empty";
         d.innerHTML = `<span class="key">${keys[i]}</span><span class="ic"></span><span class="cdnum"></span>`;
-        bar.appendChild(d);
+        bar2.appendChild(d);
       }
       for (let i = 0; i < 2; i++) {
         const d = document.createElement("div");
@@ -42399,7 +43217,7 @@
           e.preventDefault();
           app.useUtil(i);
         });
-        bar.appendChild(d);
+        bar2.appendChild(d);
       }
     },
     refreshUtilbar() {
@@ -50934,7 +51752,7 @@
       if (this.touch) document.body.classList.add("touch");
       if (this.touch) {
         const lift3 = () => {
-          const bar = $("#tabbar"), r = bar && bar.getBoundingClientRect();
+          const bar2 = $("#tabbar"), r = bar2 && bar2.getBoundingClientRect();
           this.touch.el.style.setProperty("--ti-bottom", (r && r.height ? innerHeight - r.top + 14 : 24) + "px");
         };
         lift3();
@@ -53386,8 +54204,8 @@
     c.lineTo(L * 0.8, 0);
     c.stroke();
   }
-  function arrow(c, L, shaft, fl) {
-    c.strokeStyle = shaft;
+  function arrow(c, L, shaft2, fl) {
+    c.strokeStyle = shaft2;
     c.lineWidth = 2;
     c.beginPath();
     c.moveTo(0, 0);
@@ -73613,8 +74431,8 @@
         return;
       }
       const hand0 = this.spritesOn ? this.playerHand(key, fr, sx, sy, p.facing < 0) : null;
+      if (this.spritesOn) this.drawOffHand(c, p, sx, sy, hand0);
       if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
-        this.drawOffHand(c, p, sx, sy, hand0);
         this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
         c.restore();
         return;
@@ -74041,7 +74859,8 @@
       return angleTo(p.cx, p.cy, i.wx, i.wy);
     },
     /** 뒷손(왼손) — 핫바에서 고른 것. 앞손(drawHeldWeapon)이 이미 그것(도구 · 낚싯대)을 쥐고 있으면 빈손.
-        몸 뒤로 그리면 망토에 통째로 가려 안 보였다 — 등 쪽 가장자리에서 몸 위에 얹는다 */
+        ★ 몸 **뒤**에 그린다(사용자 2026-10-23 — 몸 앞으로 나와 보였다). 망토에 다 묻히지 않게 등 뒤쪽으로 기울여 든다:
+        긴 것(횃불 · 무기 · 지팡이)은 뒤로 비스듬히, 작은 것(블록 · 물약 · 재료)은 손바닥에 낮게. 손은 몸 그림이 그 위를 덮는다 */
     drawOffHand(c, p, sx, sy, hand) {
       const hi = p.held();
       if (!hi || p.fish || p.swimming || p.channel || p.ride) return;
@@ -74054,11 +74873,19 @@
       const key = "player_" + CHAR_OF(p.charId).id, back = this.spritesOn ? this.playerHand(key, this.playerFrame(p), sx, sy, f < 0, true) : null;
       const sw = !back && p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
       const gx = back ? back.pt[0] : sx + p.w / 2 - f * 9 - sw * f, gy = back ? back.pt[1] : hand ? hand.pt[1] + 1 : sy + 22;
+      const long = hi.id === "torch" || hd.type === "weapon" || hd.type === "util" || hd.type === "bomb";
+      const swing = Math.sin(this.time * 7) * (p.onGround && Math.abs(p.vx) > 20 ? 0.12 : 0.02);
       c.save();
       c.translate(gx, gy);
       c.scale(f, 1);
-      c.rotate(-0.2);
-      Art.drawItem(c, hi.id, -9, -14, 18);
+      if (long) {
+        c.rotate(-0.95 + swing);
+        Art.drawItem(c, hi.id, -9, -15, 18);
+      } else {
+        c.translate(-7, 1);
+        c.rotate(-0.15 + swing * 0.5);
+        Art.drawItem(c, hi.id, -7, -9, 13);
+      }
       if (hi.id === "torch") {
         const fl = 0.7 + 0.3 * Math.sin(this.time * 17) * Math.sin(this.time * 7.3);
         c.globalCompositeOperation = "lighter";
@@ -74071,14 +74898,6 @@
         c.fill();
       }
       c.restore();
-      if (back) {
-        c.save();
-        c.beginPath();
-        c.rect(back.box[0], back.box[1], back.box[2], back.box[3]);
-        c.clip();
-        Sprites.draw(c, back.key, back.fr, sx, sy, back.flip);
-        c.restore();
-      }
     },
     drawHeldWeapon(c, p, sx, sy, bob, hand) {
       const hi = p.held(), hd = hi && idef(hi);
@@ -78054,7 +78873,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

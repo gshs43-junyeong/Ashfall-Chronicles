@@ -5,7 +5,7 @@ import { ITEM_PAINT, sh2 } from '../../itemart.js';
 
 /** 높은 등급 장식 — s.orn 1~3. 1 = 보석 박기, 2 = 빛나는 룬 · 금테, 3 = 날개 가드 · 별빛.
     같은 틀(검 · 곡괭이)이라 등급이 그림에서 안 보였다 — 장식이 겹겹이 늘어야 한눈에 '좋은 것'으로 읽힌다 */
-function orn(H: ItemPaintKit, kind: 'sword' | 'pick', s: Bag) {
+export function orn(H: ItemPaintKit, kind: 'sword' | 'pick', s: Bag) {
   const { g, P, poly, circ, stroke, glow } = H, n = s.orn, gl = s.glow || sh2(s.c, 1.5), gem = s.gem || gl, gold = '#ffd86a';
   const jewel = (x: number, y: number, r: number) => { circ(x, y, r + .7, '#2a1a10'); circ(x, y, r, sh2(gem, .8)); circ(x - r * .3, y - r * .3, r * .45, '#ffffff'); glow(x, y, r * 3, gem, .35); };
   const spark = (x: number, y: number, r: number) => { g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * .25, y - r * .25); g.lineTo(x + r, y); g.lineTo(x + r * .25, y + r * .25); g.lineTo(x, y + r); g.lineTo(x - r * .25, y + r * .25); g.lineTo(x - r, y); g.lineTo(x - r * .25, y - r * .25); g.closePath(); g.fill(); };

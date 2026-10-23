@@ -13,12 +13,15 @@ export const ItemPaintFarm: Bag = {
   hoe(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
-        const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .65);
-        P(17, 4, 3, 22, '#6a4a28');                        // 자루
-        P(17, 4, 1.2, 22, '#8f6740');
-        poly([[6, 5], [19, 5], [19, 9], [10, 9], [10, 13], [6, 13]], c);   // 날
-        poly([[6, 5], [19, 5], [19, 6.4], [7.4, 6.4]], lt);
-        P(7, 11, 3, 2, dk);
+        /* 비스듬한 긴 자루 · 끝의 쇠 고리 · 거기서 꺾여 내려온 넓적한 날(날끝이 아래) — 총처럼 보이던 그림을 갈았다(사용자) */
+        const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, .62);
+        stroke('#6a4a28', 2.6, () => { g.moveTo(5, 30); g.lineTo(23.5, 6); });
+        stroke('#9a7248', .9, () => { g.moveTo(4.4, 29.2); g.lineTo(22.8, 5.6); });
+        stroke(dk, 2.4, () => { g.moveTo(23.5, 6); g.quadraticCurveTo(25.5, 3.5, 22, 4.2); g.lineTo(17, 8.5); });   // 목 — 고리에서 꺾여 날로
+        poly([[10.5, 6], [20, 5.5], [19, 17.5], [7, 18.5]], c);                 // 날
+        poly([[10.5, 6], [13.5, 5.8], [11, 18.2], [7, 18.5]], lt);
+        P(7, 17.2, 12, 1.4, sh2(c, 1.7));                                      // 날끝 — 갈아 둔 쇠
+        circ(23.6, 5.6, 1.6, sh2(c, .8)); circ(23.2, 5.2, .6, lt);
         return;
       }
     }
@@ -139,12 +142,18 @@ export const ItemPaintFarm: Bag = {
   bread(H: ItemPaintKit) {
     const { g, s, rng, P, poly, circ, ell, stroke, glow } = H;
     { {
-        const c = s.c, lt = sh2(c, 1.28), dk = sh2(c, .68);
-        ell(16, 19, 12, 8.5, c);
-        ell(16, 17, 11, 7, lt);
-        for (let k = 0; k < 3; k++)                          // 칼집
-          stroke(dk, 1.8, () => { g.moveTo(9 + k * 5, 15); g.lineTo(13 + k * 5, 11); });
-        ell(16, 26, 11, 3, dk);
+        /* 길쭉한 빵 한 덩이 — 둥근 윤곽 안에서 끝난다(위로 튀어나온 혹이 없게, 사용자) · 칼집 자리엔 속살 · 밀가루 */
+        const c = s.c, lt = sh2(c, 1.25), dk = sh2(c, .62), crumb = '#f0d8a8';
+        ell(16, 24.5, 12.5, 3, 'rgba(0,0,0,.25)');
+        ell(16, 18.5, 13, 7.5, dk);
+        ell(16, 17.4, 12.4, 6.6, c);
+        ell(13.5, 15.2, 8, 3.4, lt);
+        for (let k = 0; k < 3; k++) {                        // 칼집 — 갈라진 틈에 하얀 속살
+          const x = 9.5 + k * 6;
+          g.fillStyle = crumb; g.beginPath(); g.ellipse(x, 16.4, 2.6, 1, -.6, 0, Math.PI * 2); g.fill();
+          stroke(sh2(c, .5), .7, () => { g.ellipse(x, 16.4, 2.6, 1, -.6, Math.PI * .1, Math.PI * .9); });
+        }
+        for (let i = 0; i < 7; i++) P(7 + rng.range(0, 18), 13 + rng.range(0, 6), .8, .8, '#fff6e6');   // 밀가루
         return;
       }
     }

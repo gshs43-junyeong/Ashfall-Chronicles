@@ -7,8 +7,8 @@
 import { app as G } from '../ctx.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT, tr } from '../lang.js';
-import { RECIPES } from '../data/recipes.js';
 import { ITEMS } from '../data/items.js';
+import { RECIPES } from '../data/recipes.js';
 import { Art } from '../itemart.js';
 import { $, UI } from '../ui.js';
 

@@ -6,9 +6,9 @@ import { app as G } from '../ctx.js';
 import { TAU, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
 import { FONT } from '../lang.js';
+import { ITEMS } from '../data/items.js';
 import { Art } from '../itemart.js';
 import { UI } from '../ui.js';
-import { ITEMS } from '../data/items.js';
 import { drawIc, glow, stepRow } from './process.js';
 import { ease, flames, hash, hotCol, puffs, seg, sparks } from './mach-kit.js';
 
