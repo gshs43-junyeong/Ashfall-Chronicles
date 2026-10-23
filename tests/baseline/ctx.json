@@ -51,6 +51,8 @@
       "pathBudget",
       "player",
       "players",
+      "poolPhaseFx",
+      "poolSinkFx",
       "projs",
       "pvpHit",
       "pvpTargets",

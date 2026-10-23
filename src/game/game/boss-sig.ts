@@ -37,12 +37,11 @@ export const BossSigPart: Bag = {
     switch (h.k) {
       case 'parm': {                                                 // 잿물 팔 — 내리치는 순간 한 번(뿌리는 보스를 따라간다)
         const b = this.hzBoss(h); if (b) { h.x = b.cx + h.ox; h.y = b.y + b.h; }
+        if (h.t < h.slam) this.poolRiseFx(h.x, h.y, Math.min(1, h.t / h.rise));
         if (!h.hitDone && h.t >= h.slam) {
           h.hitDone = 1;
           if (host) this.hitPlayersRect(h.tx - 58, h.ty - 150, h.tx + 58, h.ty, h.dmg);
-          this.vfx.puffs(h.tx, h.ty - 6, 6, 22, 'rgba(74,69,65,.85)', 0.7, 26);
-          this.vfx.shock(h.tx, h.ty - 4, 90, '#8a7a68', 0.3, 6, 0.3);
-          this.shake = Math.max(this.shake, 9);
+          this.poolSlamFx(h.tx, h.ty);
           this.sfxAt && this.sfxAt('pool_slam', h.tx / TS, h.ty / TS);
         }
       } return true;

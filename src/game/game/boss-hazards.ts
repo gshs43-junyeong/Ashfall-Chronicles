@@ -70,6 +70,7 @@ export const BossHazardPart: Bag = {
       switch (h.k) {
         case 'strike': if (!h.done && h.t >= h.delay) {
           h.done = 1;
+          if (h.fx === 'sludge') this.poolGeyserFx(h);                  // 잿물 기둥 · 범람 물보라(game/boss-pool-fx)
           const col = FX_COL[h.fx] || h.c;
           const art = !!STRIKE_ART[h.fx];
           if (h.shape === 'col') {

@@ -73,12 +73,14 @@ export const BossPool: Bag & ThisType<Enemy> = {
       case 'sink': {                                         // 투구째 잠겨 웅덩이로 기어 와 발밑에서 솟는다 — 잠긴 동안은 맞지 않는다
         const r: Run = { busy: 99, ph: 0, pt: 0 };
         G.sfxAt && G.sfxAt('pool_sink', this.cx / TS, this.cy / TS);
+        G.poolSinkFx(this.cx, this.y + this.h, false);
         r.rise = () => {
           this.strike(this.cx, this.y + this.h, { r: Math.max(90, this.w * 0.5), delay: 0.55, fx: 'sludge', dir: 'up' }, K, m);
           G.sfxAt && G.sfxAt('pool_bubble', this.cx / TS, this.cy / TS);
         };
         r.tick = (dt, r) => this.sigHide(dt, world, r, () => p.cx, 1.5, 0.55, () => {
           this.vy = -620;
+          G.poolSinkFx(this.cx, this.y + this.h, true);
           const ring = this.lastPh() ? 14 : 10, g0 = Math.floor(Math.random() * ring);
           for (let i = 0; i < ring; i++) {
             if (((i - g0 + ring) % ring) < 2) continue;

@@ -239,6 +239,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
     /* 보스마다 이 순간에 켜지는 규칙. */
     const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
     switch (this.def.ai) {
+      case 'b_pool': G.poolPhaseFx(this); break;                     // 투구가 깨지는 순간(game/boss-pool-fx)
       case 'b_slime':
         // 2페이즈 — 껍데기가 굳는다.
         if (ph >= lock) { this.guard = 1; this.openT = 0; }

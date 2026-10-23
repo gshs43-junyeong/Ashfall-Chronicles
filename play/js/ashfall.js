@@ -18700,8 +18700,8 @@
           for (let m = 0; m < want; m++) {
             const nb = put.flatMap((i) => [i + 1, i - 1, i + WW2, i - WW2]).filter((j) => ok(j, t) && !put.includes(j));
             if (!nb.length) break;
-            const best = Math.max(...nb.map((j) => dist3.get(j))), pick = [...new Set(nb.filter((j) => dist3.get(j) === best))].sort((a, b) => a - b);
-            put.push(pick[r.int(0, pick.length - 1)]);
+            const best = Math.max(...nb.map((j) => dist3.get(j))), pick2 = [...new Set(nb.filter((j) => dist3.get(j) === best))].sort((a, b) => a - b);
+            put.push(pick2[r.int(0, pick2.length - 1)]);
           }
           for (const i of put) {
             this.set(i % WW2, i / WW2 | 0, RICH[t]);
@@ -21220,22 +21220,22 @@
           traps: (sp.traps || ["dart", "crumble"]).slice()
         });
       });
-      const pick = this.ruinSpec.map((_, i) => i);
-      for (let i = pick.length - 1; i > 0; i--) {
+      const pick2 = this.ruinSpec.map((_, i) => i);
+      for (let i = pick2.length - 1; i > 0; i--) {
         const j = rng.int(0, i);
-        [pick[i], pick[j]] = [pick[j], pick[i]];
+        [pick2[i], pick2[j]] = [pick2[j], pick2[i]];
       }
       const mrng = new RNG(this.seed + "_mystic");
-      pick.slice(0, 3).forEach((ri) => {
+      pick2.slice(0, 3).forEach((ri) => {
         delete this.ruinSpec[ri].mystic;
       });
-      pick.slice(0, 3).forEach((ri) => {
-        const pool = Object.keys(MYSTIC_W).filter((id) => id === "none" || !pick.slice(0, 3).some((o) => this.ruinSpec[o].mystic === id));
+      pick2.slice(0, 3).forEach((ri) => {
+        const pool = Object.keys(MYSTIC_W).filter((id) => id === "none" || !pick2.slice(0, 3).some((o) => this.ruinSpec[o].mystic === id));
         const got = weightedKey(Object.fromEntries(pool.map((id) => [id, MYSTIC_W[id]])), () => mrng.next());
         if (got === "none") delete this.ruinSpec[ri].mystic;
         else this.ruinSpec[ri].mystic = got;
       });
-      pick.slice(3).forEach((ri) => {
+      pick2.slice(3).forEach((ri) => {
         delete this.ruinSpec[ri].mystic;
       });
       this.ruinSpec.forEach((spec, i) => {
@@ -21350,8 +21350,8 @@
         }
         const cav = (this.caverns || []).filter((c) => Math.abs(c.cx - spec.x) > 500);
         if (!cav.length) continue;
-        const pick = cav[rng.int(0, cav.length - 1)];
-        let px = clamp(pick.cx + rng.int(-6, 6), 40, WW2 - 40), py = pick.cy;
+        const pick2 = cav[rng.int(0, cav.length - 1)];
+        let px = clamp(pick2.cx + rng.int(-6, 6), 40, WW2 - 40), py = pick2.cy;
         for (let k = 0; k < 40 && py < WH2 - 8; k++) {
           if (this.get(px, py) === T.AIR && TILE_DEF[this.get(px, py + 1)].solid === 1) break;
           py++;
@@ -33024,11 +33024,11 @@
     return dmg;
   }
   var Timed = class {
-    constructor(rest, pick) {
+    constructor(rest, pick2) {
       this.rest = rest;
       this.v = rest;
       this.t = 0;
-      this.pick = pick;
+      this.pick = pick2;
     }
     set(v, t) {
       this.v = this.t > 0 ? this.pick === "min" ? Math.min(this.v, v) : Math.max(this.v, v) : v;
@@ -36235,6 +36235,10 @@
       if (line4) app.bossLine(this.def.n, line4);
       const lock = this.phases >= 5 ? this.phases - 2 : this.phases - 1;
       switch (this.def.ai) {
+        case "b_pool":
+          app.poolPhaseFx(this);
+          break;
+        // 투구가 깨지는 순간(game/boss-pool-fx)
         case "b_slime":
           if (ph >= lock) {
             this.guard = 1;
@@ -38364,12 +38368,14 @@
         case "sink": {
           const r = { busy: 99, ph: 0, pt: 0 };
           app.sfxAt && app.sfxAt("pool_sink", this.cx / TS, this.cy / TS);
+          app.poolSinkFx(this.cx, this.y + this.h, false);
           r.rise = () => {
             this.strike(this.cx, this.y + this.h, { r: Math.max(90, this.w * 0.5), delay: 0.55, fx: "sludge", dir: "up" }, K, m);
             app.sfxAt && app.sfxAt("pool_bubble", this.cx / TS, this.cy / TS);
           };
           r.tick = (dt, r2) => this.sigHide(dt, world, r2, () => p.cx, 1.5, 0.55, () => {
             this.vy = -620;
+            app.poolSinkFx(this.cx, this.y + this.h, true);
             const ring = this.lastPh() ? 14 : 10, g0 = Math.floor(Math.random() * ring);
             for (let i = 0; i < ring; i++) {
               if ((i - g0 + ring) % ring < 2) continue;
@@ -39436,7 +39442,7 @@
     runProc(w, m, s) {
       const cap = s.cap || 40;
       if (m.rec < 0) {
-        let pick = -1;
+        let pick2 = -1;
         for (let i = 0; i < MRECIPES.length; i++) {
           const r3 = MRECIPES[i];
           if (r3.m !== s.proc) continue;
@@ -39446,24 +39452,24 @@
             break;
           }
           if (ok) {
-            pick = i;
+            pick2 = i;
             break;
           }
         }
-        if (pick < 0) {
+        if (pick2 < 0) {
           m.st = s.store ? m.e >= s.store ? N_("가득 참") : N_("축전 중") : N_("재료 없음");
           m.prog = 0;
           m.act = 0;
           return;
         }
-        const r2 = MRECIPES[pick];
+        const r2 = MRECIPES[pick2];
         if (this.outFull(m, r2, cap)) {
           m.st = N_("출력 가득");
           m.act = 0;
           return;
         }
         for (const k in r2.in) this.bufTake(m.in, k, r2.in[k]);
-        m.rec = pick;
+        m.rec = pick2;
         m.prog = 0;
       }
       const r = MRECIPES[m.rec];
@@ -42998,8 +43004,8 @@
       }
       const bag = $("#mg-bag");
       const order = p.bag.map((it, i) => i).filter((i) => p.bag[i]);
-      const pick = m.t === "sorter" || m.t === "converter" || m.t === "gate_if" || m.t === "gate_or";
-      const yes = (i) => pick || Factory11.accepts(m, p.bag[i].id);
+      const pick2 = m.t === "sorter" || m.t === "converter" || m.t === "gate_if" || m.t === "gate_or";
+      const yes = (i) => pick2 || Factory11.accepts(m, p.bag[i].id);
       order.sort((a2, b2) => (yes(b2) ? 1 : 0) - (yes(a2) ? 1 : 0) || a2 - b2);
       for (const i of order) {
         const it = p.bag[i];
@@ -43016,7 +43022,7 @@
             app.sfx("place");
             return;
           }
-          if (pick) {
+          if (pick2) {
             if (!this.logicPick(m, it.id)) this.toast(tr("셋까지만 고를 수 있다"), "bad");
             this.refreshMachine(true);
             app.sfx("place");
@@ -57623,9 +57629,9 @@
     /** 대화창 아래의 선택지 = [상황 대답] + 늘 있는 것들(rest).
         대답을 고르면 대꾸를 보여 주고 rest 로 돌아온다 — 대답 한 번 했다고
         가게나 의뢰가 사라지면 안 되니까. */
-    talkMenu(id, pick, rest) {
-      if (!(pick && pick.re)) return rest;
-      const re = pick.re;
+    talkMenu(id, pick2, rest) {
+      if (!(pick2 && pick2.re)) return rest;
+      const re = pick2.re;
       return [{ t: re.t, say: 1, fn: () => {
         UI5.closeDialogue();
         this.talkAnswer(id, re, rest);
@@ -57680,11 +57686,11 @@
       this.storyHeard = this.storyHeard || {};
       const fresh = this.storyHeard[id] !== this.chapter;
       this.storyHeard[id] = this.chapter;
-      const pick = first && this.chapter === 0 ? null : this.talkPick(id);
+      const pick2 = first && this.chapter === 0 ? null : this.talkPick(id);
       const lines = fresh ? story.slice() : [];
-      const call = pick && !fresh ? this.nameCall(id) : null;
+      const call = pick2 && !fresh ? this.nameCall(id) : null;
       if (call) lines.push(call);
-      if (pick) lines.push(pick.say);
+      if (pick2) lines.push(pick2.say);
       if (!lines.length) lines.push(story[story.length - 1]);
       const rest = [];
       if (!fresh) rest.push({ t: tr("다시 듣기"), replay: 1, fn: () => {
@@ -57707,7 +57713,7 @@
       if (id === "elara" && this.chapter === 0) rest.push({ t: tr("(여정을 시작한다)"), quest: 1, fn: () => {
         UI5.closeDialogue();
       } });
-      UI5.openDialogue(id, lines, this.talkMenu(id, pick, rest));
+      UI5.openDialogue(id, lines, this.talkMenu(id, pick2, rest));
     },
     /** 그 사람이 이 장에 할 이야기. */
     storyOf(id, ch) {
@@ -57723,13 +57729,13 @@
       this.storyHeard = this.storyHeard || {};
       const fresh = !!story && this.storyHeard[id] !== this.chapter;
       if (story) this.storyHeard[id] = this.chapter;
-      const pick = first || fresh ? null : this.talkPick(id);
+      const pick2 = first || fresh ? null : this.talkPick(id);
       const lines = [];
       if (first) lines.push(d.line);
       if (fresh) lines.push(...story);
-      const call = pick ? this.nameCall(id) : null;
+      const call = pick2 ? this.nameCall(id) : null;
       if (call) lines.push(call);
-      if (pick) lines.push(pick.say);
+      if (pick2) lines.push(pick2.say);
       this.villageSeen = this.villageSeen || {};
       const lv = this.villageLv(), vt = VILLAGE_TALK[id];
       if (vt && vt[lv] && this.villageSeen[id] !== lv) {
@@ -57754,7 +57760,7 @@
         UI5.closeDialogue();
         this.tellQuest();
       } });
-      UI5.openDialogue(id, lines, this.talkMenu(id, pick, rest));
+      UI5.openDialogue(id, lines, this.talkMenu(id, pick2, rest));
     }
   };
   mixin(Game.prototype, TalkPart, true);
@@ -57969,8 +57975,8 @@
       if (st.complete) this.toast(tr("할 일은 모두 끝냈다."));
       else if (st.ready) this.toast(tr("{session} · 목표 — {v}", { session, v: st.goal ? st.goal.o.t : tr("이 장의 마지막") }));
       else {
-        const pick = st.basics.find((b) => !b.p.done && st.missing.includes(b.o.verb)) || st.basics.find((b) => !b.p.done);
-        this.toast(tr("{session} · 준비 {done}/{need}", { session, done: st.done, need: st.need }) + (pick ? ` · ${pick.o.t} (${pick.p.label || pick.p.cur + "/" + pick.p.max})` : ""));
+        const pick2 = st.basics.find((b) => !b.p.done && st.missing.includes(b.o.verb)) || st.basics.find((b) => !b.p.done);
+        this.toast(tr("{session} · 준비 {done}/{need}", { session, done: st.done, need: st.need }) + (pick2 ? ` · ${pick2.o.t} (${pick2.p.label || pick2.p.cur + "/" + pick2.p.max})` : ""));
       }
       UI5.togglePanel("quest");
     }
@@ -61433,6 +61439,75 @@
     }
   };
 
+  // src/game/game/boss-pool-fx.ts
+  var boss_pool_fx_exports = {};
+  __export(boss_pool_fx_exports, {
+    BossPoolFx: () => BossPoolFx
+  });
+  var SLUDGE = ["#4a4541", "#3a3532", "#5a544e"], EMB2 = "#ff8a40", ASH = "rgba(86,80,74,.75)", STEAM = "rgba(206,200,192,.45)";
+  var pick = (a) => a[Math.random() * a.length | 0];
+  var BossPoolFx = {
+    /** 잿물 방울 n 개 — 위로 튀어 떨어져 바닥에 눕는다 */
+    sludgeDrops(x, y, n, up = 320, spd = 1.2, r = 1.6) {
+      for (let i = 0; i < n; i++) this.parts.push(new Part(x + (Math.random() - 0.5) * 16, y, pick(SLUDGE), -up * (0.5 + Math.random() * 0.7), 0.9, { spd, r, g: 1.6, bounce: 0.18, drag: 0.985 }));
+    },
+    /** 팔이 내리친 자리 — 왕관 물보라 · 불씨 · 재 구름 · 땅 금 */
+    poolSlamFx(x, y) {
+      this.sludgeDrops(x, y - 8, 26, 420, 1.6, 1.9);
+      this.vfx.sparks(x, y - 10, 16, EMB2, 380, -Math.PI / 2, 2.2, 0.55, 700);
+      this.vfx.puffs(x, y - 8, 7, 26, ASH, 1.1, 46);
+      this.vfx.shock(x, y - 4, 110, "#8a7a68", 0.35, 7, 0.3);
+      this.vfx.flare(x, y - 12, 60, "#ffb070", 0.18, "impact");
+      this.vfx.crack(x, y, -1, 90, "#2a2018", 0.9);
+      this.vfx.crack(x, y, 1, 90, "#2a2018", 0.9);
+      this.shake = Math.max(this.shake, 10);
+    },
+    /** 팔이 솟는 동안(매 프레임 가끔) — 뿌리에서 흘러내리는 방울 · 거품 */
+    poolRiseFx(x, y, k) {
+      if (Math.random() < 0.35 + k * 0.4) this.sludgeDrops(x + (Math.random() - 0.5) * 60, y - 40 - Math.random() * 120 * k, 1, 30, 0.4, 1.4);
+      if (Math.random() < 0.25) this.vfx.motes(x + (Math.random() - 0.5) * 50, y - 6, 1, EMB2, 14, 50, 0.8, 4);
+    },
+    /** 잿물 기둥 · 범람이 솟은 순간 — 꼭대기 물보라 · 넓으면 마루를 따라 */
+    poolGeyserFx(h) {
+      const wide = h.shape === "col" && h.w > 160, w = h.shape === "col" ? h.w : h.r * 1.6, top = h.y - (h.shape === "col" ? h.hh : h.r * 1.8);
+      if (wide) {
+        for (let x = h.x - w / 2; x < h.x + w / 2; x += 34) this.sludgeDrops(x, h.y - 60, 2, 260, 0.8, 1.6);
+        this.vfx.puffs(h.x, h.y - 30, 10, 30, STEAM, 1.2, w * 0.45);
+        this.shake = Math.max(this.shake, 7);
+      } else {
+        this.sludgeDrops(h.x, top, 10, 300, 1.3, 1.8);
+        this.vfx.sparks(h.x, top, 8, EMB2, 320, -Math.PI / 2, 1.6, 0.6, 600);
+        this.vfx.puffs(h.x, h.y - 10, 2, 16, ASH, 0.9, 18);
+      }
+    },
+    /** 잠길 때 · 솟을 때 — 투구가 잿물을 가르며 들어가고 나온다 */
+    poolSinkFx(x, y, out) {
+      this.sludgeDrops(x, y - 6, out ? 30 : 16, out ? 520 : 220, out ? 1.8 : 1, 2);
+      this.vfx.puffs(x, y - 10, out ? 8 : 5, 24, STEAM, 1, 60);
+      if (out) {
+        this.vfx.sparks(x, y - 20, 22, EMB2, 460, -Math.PI / 2, 2, 0.7, 650);
+        this.vfx.shock(x, y - 4, 160, "#8a7a68", 0.4, 9, 0.3);
+      }
+    },
+    /** 막 넘김 — 투구가 깨지는 순간: 녹슨 쇠 조각 · 속불이 터지는 불씨 · 김 */
+    poolPhaseFx(e) {
+      const x = e.cx - 14, y = e.y + e.h * 0.25;
+      this.vfx.shards(x, y, 18, "#7a5a40", 420, 0.9, 7);
+      this.vfx.shards(x, y, 8, "#4e3c2c", 360, 0.8, 5);
+      this.vfx.sparks(x, y, 34, EMB2, 520, -Math.PI / 2, 2.6, 0.8, 500);
+      this.vfx.flare(x, y, 110, "#ff7a30", 0.3, "impact");
+      this.vfx.shock(e.cx, e.cy, e.w * 0.9, "#ff9a50", 0.45, 10);
+      this.vfx.puffs(x, y, 9, 26, STEAM, 1.4, 40);
+      this.sludgeDrops(x, y + 20, 14, 360, 1.4, 1.8);
+    },
+    /** 웅덩이 상시 — 불씨가 드문드문 피어오르고, 몸 둘레에 김이 맺힌다 */
+    poolAmbient(e, half) {
+      if (Math.random() < 0.08) this.vfx.motes(e.cx + (Math.random() - 0.5) * 2 * half, e.y + e.h - 6, 1, EMB2, 10, 60, 1.2, 4);
+      if (Math.random() < 0.02) this.vfx.puffs(e.cx + (Math.random() - 0.5) * e.w, e.y + e.h - 20, 1, 18, STEAM, 1.6, 20);
+    }
+  };
+  mixin(Game.prototype, BossPoolFx, true);
+
   // src/game/game/boss-sig-art.ts
   var boss_sig_art_exports = {};
   __export(boss_sig_art_exports, {
@@ -62250,12 +62325,11 @@
               h.x = b.cx + h.ox;
               h.y = b.y + b.h;
             }
+            if (h.t < h.slam) this.poolRiseFx(h.x, h.y, Math.min(1, h.t / h.rise));
             if (!h.hitDone && h.t >= h.slam) {
               h.hitDone = 1;
               if (host) this.hitPlayersRect(h.tx - 58, h.ty - 150, h.tx + 58, h.ty, h.dmg);
-              this.vfx.puffs(h.tx, h.ty - 6, 6, 22, "rgba(74,69,65,.85)", 0.7, 26);
-              this.vfx.shock(h.tx, h.ty - 4, 90, "#8a7a68", 0.3, 6, 0.3);
-              this.shake = Math.max(this.shake, 9);
+              this.poolSlamFx(h.tx, h.ty);
               this.sfxAt && this.sfxAt("pool_slam", h.tx / TS, h.ty / TS);
             }
           }
@@ -62553,6 +62627,7 @@
           case "strike":
             if (!h.done && h.t >= h.delay) {
               h.done = 1;
+              if (h.fx === "sludge") this.poolGeyserFx(h);
               const col = FX_COL[h.fx] || h.c;
               const art = !!STRIKE_ART[h.fx];
               if (h.shape === "col") {
@@ -71317,7 +71392,10 @@
         this.drawBuried(c, e, sx, sy);
         return;
       }
-      if (e.def.ai === "b_pool") drawPool(c, e, sx, sy, this.time, this.world);
+      if (e.def.ai === "b_pool") {
+        drawPool(c, e, sx, sy, this.time, this.world);
+        if (!this.paused) this.poolAmbient(e, poolHalf(e));
+      }
       if (e.burrowT > 0) return;
       const pose = this.poseKey(e);
       const key0 = pose || (e.mech && this.spritesOn && Sprites.mechSheet && Sprites.mechSheet(e.type) ? "mech_" + e.type : e.type);
@@ -74886,9 +74964,9 @@
         this.netSay(tr("방 코드는 영문·숫자 5~6자다"));
         return;
       }
-      const pick = $("#mp-char").value;
-      if (pick !== "") {
-        const slot = +pick;
+      const pick2 = $("#mp-char").value;
+      if (pick2 !== "") {
+        const slot = +pick2;
         this.netSay(tr("방을 찾는 중…"), true);
         this.netReadSlot(slot).then((d) => {
           if (!d || !d.p) {
@@ -75606,7 +75684,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
