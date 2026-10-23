@@ -207,9 +207,17 @@ export const RenderActorsPart: Bag = {
       drawOutlined(c, (ox, oy) => swim ? this.drawSwimPlayer(c, p, sx + ox, sy + oy, key) : Sprites.draw(c, key, fr, sx + ox, sy + oy, p.facing < 0));
     if (swim && this.drawSwimPlayer(c, p, sx, sy, key)) { c.restore(); return; }
     const hand0 = this.spritesOn ? this.playerHand(key, fr, sx, sy, p.facing < 0) : null;
-    if (this.spritesOn) this.drawOffHand(c, p, sx, sy, hand0);          // 뒷손 물건은 몸 뒤 — 손이 자루를 앞에서 쥔다
+    /* ★ 시트는 좌우를 거울로 뒤집어 쓴다 — 오른쪽을 보면 앞손 = 오른손 · 뒷손 = 왼손이지만, 왼쪽을 보면 앞손이 곧 **왼손**이다.
+       그래서 왼쪽을 볼 때 왼손 물건이 있으면 손을 맞바꾼다: 왼손 물건은 앞손(몸 앞), 무기는 뒷손(몸 뒤).
+       휘두르기 · 시전 · 활 겨누기는 앞손 동작으로 그려 두었으니 그동안은 맞바꾸지 않는다. 사연: docs/code-history.md#h221 */
+    const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(key, fr, sx, sy, p.facing < 0, true) : null;
+    const wd = p.equip && p.equip.weapon ? idef(p.equip.weapon) : null;
+    const swap = !!(off && p.facing < 0 && hand0 && handB && !(p.swing > 0) && !(wd && wd.wc === 'ranged') && this.time - (p.castAt ?? -9) >= 0.35);
+    if (swap) this.drawHeldWeapon(c, p, sx, sy, 0, handB);              // 오른손 무기 — 몸 뒤
+    else if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, false);   // 왼손 물건 — 몸 뒤
     if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
-      this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
+      if (swap) this.drawOffHand(c, p, sx, sy, hand0, hand0, true);      // 왼쪽을 볼 땐 왼손이 앞 — 몸 앞
+      else this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
       c.restore();
       return;
     }
@@ -574,27 +582,29 @@ export const RenderActorsPart: Bag = {
     return angleTo(p.cx, p.cy, i.wx, i.wy);
   },
 
-  /** 뒷손(왼손) — 핫바에서 고른 것. 앞손(drawHeldWeapon)이 이미 그것(도구 · 낚싯대)을 쥐고 있으면 빈손.
-      ★ 몸 **뒤**에 그린다(사용자 2026-10-23 — 몸 앞으로 나와 보였다). 망토에 다 묻히지 않게 등 뒤쪽으로 기울여 든다:
-      긴 것(횃불 · 무기 · 지팡이)은 뒤로 비스듬히, 작은 것(블록 · 물약 · 재료)은 손바닥에 낮게. 손은 몸 그림이 그 위를 덮는다 */
-  drawOffHand(c: CanvasRenderingContext2D, p: any, sx: number, sy: number, hand: any) {
-    const hi = p.held(); if (!hi || p.fish || p.swimming || p.channel || p.ride) return;
-    const hd = idef(hi); if (!hd) return;
-    if (hd.type === 'tool' || hd.type === 'rod') return;                   // 앞손이 쥔 것과 같다
+  /** 왼손에 들 핫바 물건 — 앞손(drawHeldWeapon)이 이미 그것(도구 · 낚싯대 · 장착 무기)을 쥐고 있으면 없음 */
+  offItem(p: any) {
+    const hi = p.held(); if (!hi || p.fish || p.swimming || p.channel || p.ride) return null;
+    const hd = idef(hi); if (!hd || hd.type === 'tool' || hd.type === 'rod') return null;
     const eq = p.equip && p.equip.weapon;
-    if (eq && eq.id === hi.id && hd.type === 'weapon') return;            // 장착 무기를 고른 칸 — 앞손에 이미 있다
-    const f = p.facing < 0 ? -1 : 1;
-    /* ★ 뒷손 자리(매니페스트 hand2 — 원본 그늘 살색 칸)에 쥐인다. 몸 옆 어림 자리에 두면 손과 자루가 따로 놀았다(사용자 지적 · 횃불).
-       뒷손이 안 보이는 장(뛰기 · 떨어지기 · 대시)만 어림 자리. 사연: docs/code-history.md#h211 */
-    const key = 'player_' + CHAR_OF(p.charId).id, back = this.spritesOn ? this.playerHand(key, this.playerFrame(p), sx, sy, f < 0, true) : null;
-    const sw = !back && p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
-    const gx = back ? back.pt[0] : sx + p.w / 2 - f * 9 - sw * f, gy = back ? back.pt[1] : (hand ? hand.pt[1] + 1 : sy + 22);
+    if (eq && eq.id === hi.id && hd.type === 'weapon') return null;
+    return hi;
+  },
+  /** 왼손 물건 — grip 손 칸(hand2 · 맞바꿨으면 앞손)에 쥔다. front 면 몸 앞(손가락을 위에 다시), 아니면 몸 뒤(몸 그림이 손을 덮는다).
+      몸 뒤일 땐 망토에 다 묻히지 않게 등 뒤로 비켜 든다 — 긴 것은 뒤로 눕히고, 작은 것은 손에서 등 뒤로 반쯤. 사연: docs/code-history.md#h211 · #h220 */
+  drawOffHand(c: CanvasRenderingContext2D, p: any, sx: number, sy: number, hand: any, grip: any, front: boolean) {
+    const hi = this.offItem(p); if (!hi) return;
+    const hd = idef(hi)!, f = p.facing < 0 ? -1 : 1;
+    const sw = !grip && p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
+    const gx = grip ? grip.pt[0] : sx + p.w / 2 - f * 9 - sw * f, gy = grip ? grip.pt[1] : (hand ? hand.pt[1] + 1 : sy + 22);
     const long = hi.id === 'torch' || hd.type === 'weapon' || hd.type === 'util' || hd.type === 'bomb';
     const swing = Math.sin(this.time * 7) * (p.onGround && Math.abs(p.vx) > 20 ? 0.12 : 0.02);   // 걸으면 팔 따라 흔들린다
     c.save(); c.translate(gx, gy);
     c.scale(f, 1);
-    /* 몸에 다 가리지 않게 등 뒤로 비켜 든다 — 긴 것은 뒤로 눕히고(자루 끝이 손), 작은 것은 손에서 등 뒤로 반쯤 나오게 */
-    if (long) { c.rotate(-0.95 + swing); Art.drawItem(c, hi.id, -9, -15, 18); }
+    if (front) {                                                             // 앞손 — 세워 들고 조금 앞으로
+      if (long) { c.rotate(-0.3 + swing); Art.drawItem(c, hi.id, -9, -15, 18); }
+      else { c.translate(2, 1); c.rotate(0.1 + swing * 0.5); Art.drawItem(c, hi.id, -7, -9, 13); }
+    } else if (long) { c.rotate(-0.95 + swing); Art.drawItem(c, hi.id, -9, -15, 18); }
     else { c.translate(-7, 1); c.rotate(-0.15 + swing * 0.5); Art.drawItem(c, hi.id, -7, -9, 13); }
     if (hi.id === 'torch') {                                                 // 든 횃불은 불꽃이 일렁인다
       const fl = 0.7 + 0.3 * Math.sin(this.time * 17) * Math.sin(this.time * 7.3);
@@ -603,6 +613,10 @@ export const RenderActorsPart: Bag = {
       c.fillStyle = g; c.beginPath(); c.arc(0, -12, 12 * fl, 0, TAU); c.fill();
     }
     c.restore();
+    if (front && grip) {                                                     // 손가락이 자루를 감싸게 — 손 칸만 다시
+      c.save(); c.beginPath(); c.rect(grip.box[0], grip.box[1], grip.box[2], grip.box[3]); c.clip();
+      Sprites.draw(c, grip.key, grip.fr, sx, sy, grip.flip); c.restore();
+    }
   },
   drawHeldWeapon(c: any, p: any, sx: any, sy: any, bob: any, hand: any) {
     /* 손에 그려지는 것은 "지금 실제로 쓰는 것"이어야 한다 — 핫바에 도구·낚싯대가 있으면 그것을, 아니면 장착 무기를. */

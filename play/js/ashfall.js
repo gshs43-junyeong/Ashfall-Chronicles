@@ -30435,24 +30435,16 @@
       {
         {
           const c = s.c, lt = sh2(c, 1.35), dk = sh2(c, 0.62);
-          stroke("#6a4a28", 2.6, () => {
-            g.moveTo(5, 30);
-            g.lineTo(23.5, 6);
-          });
-          stroke("#9a7248", 0.9, () => {
-            g.moveTo(4.4, 29.2);
-            g.lineTo(22.8, 5.6);
-          });
-          stroke(dk, 2.4, () => {
-            g.moveTo(23.5, 6);
-            g.quadraticCurveTo(25.5, 3.5, 22, 4.2);
-            g.lineTo(17, 8.5);
-          });
-          poly2([[10.5, 6], [20, 5.5], [19, 17.5], [7, 18.5]], c);
-          poly2([[10.5, 6], [13.5, 5.8], [11, 18.2], [7, 18.5]], lt);
-          P2(7, 17.2, 12, 1.4, sh2(c, 1.7));
-          circ2(23.6, 5.6, 1.6, sh2(c, 0.8));
-          circ2(23.2, 5.2, 0.6, lt);
+          P2(14.6, 6, 2.8, 25, "#6a4a28");
+          P2(14.6, 6, 1, 25, "#9a7248");
+          P2(14.4, 26, 3.2, 1, "#4a3220");
+          P2(13.8, 4, 4.4, 4.4, dk);
+          P2(13.8, 4, 4.4, 1.2, lt);
+          poly2([[18, 4.6], [21.5, 5], [21.5, 7.4], [18, 7.6]], dk);
+          poly2([[21, 3.5], [29.5, 5.5], [29.5, 15], [21, 13]], c);
+          poly2([[21, 3.5], [29.5, 5.5], [29.5, 7.2], [21, 5.6]], lt);
+          P2(28.4, 5.6, 1.4, 9.4, sh2(c, 1.7));
+          P2(21, 11.8, 8.5, 1.4, dk);
           return;
         }
       }
@@ -74431,9 +74423,14 @@
         return;
       }
       const hand0 = this.spritesOn ? this.playerHand(key, fr, sx, sy, p.facing < 0) : null;
-      if (this.spritesOn) this.drawOffHand(c, p, sx, sy, hand0);
+      const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(key, fr, sx, sy, p.facing < 0, true) : null;
+      const wd = p.equip && p.equip.weapon ? idef(p.equip.weapon) : null;
+      const swap = !!(off && p.facing < 0 && hand0 && handB && !(p.swing > 0) && !(wd && wd.wc === "ranged") && this.time - (p.castAt ?? -9) >= 0.35);
+      if (swap) this.drawHeldWeapon(c, p, sx, sy, 0, handB);
+      else if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, false);
       if (this.spritesOn && Sprites.draw(c, key, fr, sx, sy, p.facing < 0)) {
-        this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
+        if (swap) this.drawOffHand(c, p, sx, sy, hand0, hand0, true);
+        else this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
         c.restore();
         return;
       }
@@ -74858,27 +74855,39 @@
       if (!i || i.wx === void 0 || i.wy === void 0) return p.facing > 0 ? 0 : Math.PI;
       return angleTo(p.cx, p.cy, i.wx, i.wy);
     },
-    /** 뒷손(왼손) — 핫바에서 고른 것. 앞손(drawHeldWeapon)이 이미 그것(도구 · 낚싯대)을 쥐고 있으면 빈손.
-        ★ 몸 **뒤**에 그린다(사용자 2026-10-23 — 몸 앞으로 나와 보였다). 망토에 다 묻히지 않게 등 뒤쪽으로 기울여 든다:
-        긴 것(횃불 · 무기 · 지팡이)은 뒤로 비스듬히, 작은 것(블록 · 물약 · 재료)은 손바닥에 낮게. 손은 몸 그림이 그 위를 덮는다 */
-    drawOffHand(c, p, sx, sy, hand) {
+    /** 왼손에 들 핫바 물건 — 앞손(drawHeldWeapon)이 이미 그것(도구 · 낚싯대 · 장착 무기)을 쥐고 있으면 없음 */
+    offItem(p) {
       const hi = p.held();
-      if (!hi || p.fish || p.swimming || p.channel || p.ride) return;
+      if (!hi || p.fish || p.swimming || p.channel || p.ride) return null;
       const hd = idef(hi);
-      if (!hd) return;
-      if (hd.type === "tool" || hd.type === "rod") return;
+      if (!hd || hd.type === "tool" || hd.type === "rod") return null;
       const eq = p.equip && p.equip.weapon;
-      if (eq && eq.id === hi.id && hd.type === "weapon") return;
-      const f = p.facing < 0 ? -1 : 1;
-      const key = "player_" + CHAR_OF(p.charId).id, back = this.spritesOn ? this.playerHand(key, this.playerFrame(p), sx, sy, f < 0, true) : null;
-      const sw = !back && p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
-      const gx = back ? back.pt[0] : sx + p.w / 2 - f * 9 - sw * f, gy = back ? back.pt[1] : hand ? hand.pt[1] + 1 : sy + 22;
+      if (eq && eq.id === hi.id && hd.type === "weapon") return null;
+      return hi;
+    },
+    /** 왼손 물건 — grip 손 칸(hand2 · 맞바꿨으면 앞손)에 쥔다. front 면 몸 앞(손가락을 위에 다시), 아니면 몸 뒤(몸 그림이 손을 덮는다).
+        몸 뒤일 땐 망토에 다 묻히지 않게 등 뒤로 비켜 든다 — 긴 것은 뒤로 눕히고, 작은 것은 손에서 등 뒤로 반쯤. 사연: docs/code-history.md#h211 · #h220 */
+    drawOffHand(c, p, sx, sy, hand, grip2, front) {
+      const hi = this.offItem(p);
+      if (!hi) return;
+      const hd = idef(hi), f = p.facing < 0 ? -1 : 1;
+      const sw = !grip2 && p.onGround && Math.abs(p.vx) > 20 ? Math.sin(this.time * 14) * 2 : 0;
+      const gx = grip2 ? grip2.pt[0] : sx + p.w / 2 - f * 9 - sw * f, gy = grip2 ? grip2.pt[1] : hand ? hand.pt[1] + 1 : sy + 22;
       const long = hi.id === "torch" || hd.type === "weapon" || hd.type === "util" || hd.type === "bomb";
       const swing = Math.sin(this.time * 7) * (p.onGround && Math.abs(p.vx) > 20 ? 0.12 : 0.02);
       c.save();
       c.translate(gx, gy);
       c.scale(f, 1);
-      if (long) {
+      if (front) {
+        if (long) {
+          c.rotate(-0.3 + swing);
+          Art.drawItem(c, hi.id, -9, -15, 18);
+        } else {
+          c.translate(2, 1);
+          c.rotate(0.1 + swing * 0.5);
+          Art.drawItem(c, hi.id, -7, -9, 13);
+        }
+      } else if (long) {
         c.rotate(-0.95 + swing);
         Art.drawItem(c, hi.id, -9, -15, 18);
       } else {
@@ -74898,6 +74907,14 @@
         c.fill();
       }
       c.restore();
+      if (front && grip2) {
+        c.save();
+        c.beginPath();
+        c.rect(grip2.box[0], grip2.box[1], grip2.box[2], grip2.box[3]);
+        c.clip();
+        Sprites.draw(c, grip2.key, grip2.fr, sx, sy, grip2.flip);
+        c.restore();
+      }
     },
     drawHeldWeapon(c, p, sx, sy, bob, hand) {
       const hi = p.held(), hd = hi && idef(hi);

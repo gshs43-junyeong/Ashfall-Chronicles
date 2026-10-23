@@ -767,13 +767,16 @@ body.touch #skillbar .usl{min-width:44px;min-height:44px;touch-action:none}
 body:has(#dialogue.open) #tabbar{visibility:hidden}
 .dlg-main{position:relative;flex:1;min-width:0;margin-bottom:22px;padding:4px 10px 6px;color:#33281b;
   border:16px solid transparent;border-image:url(../assets/ui/bubble.png?v=a39091d9) 16 fill / 16px stretch;image-rendering:pixelated;
-  transform-origin:0 100%;animation:dlgPop .34s cubic-bezier(.2,1.45,.45,1)}
+  transform-origin:0 100%;animation:dlgPop .34s cubic-bezier(.2,1.45,.45,1);
+}
 /* 꼬리 — 오른쪽 두 칸이 말풍선 왼쪽 테를 덮는다 */
 .dlg-main::before{content:'';position:absolute;left:-42px;bottom:2px;width:30px;height:32px;
   background:url(../assets/ui/bubble_tail.png?v=e7c0d738) 0 0/100% 100% no-repeat;image-rendering:pixelated}
 .dlg-main.bump{animation:dlgBump .2s ease-out}
-@keyframes dlgPop{0%{opacity:0;transform:scale(.82) translate(-10px,10px)}100%{opacity:1;transform:none}}
-@keyframes dlgBump{40%{transform:translateY(-2px) scale(1.008)}}
+/* ★ 9조각 테(border-image)는 키우거나(scale) 반 픽셀씩 움직이면(translate) 조각 경계마다 실금이 그어진다(사용자 지적) —
+   제자리에 둔 채 꼬리 쪽 모서리에서 펼쳐 보인다(clip-path · 바깥 이름표 · 꼬리까지 들어오게 음수 inset). 사연: docs/code-history.md#h221 */
+@keyframes dlgPop{0%{opacity:0;clip-path:inset(45% 75% -12px -50px round 22px)}55%{opacity:1}100%{opacity:1;clip-path:inset(-44px -12px -12px -50px round 0)}}
+@keyframes dlgBump{40%{opacity:.86}}
 .dlg-head{position:absolute;left:-2px;right:-2px;top:-36px;display:flex;align-items:flex-end;gap:10px}
 /* 이름표 — 말풍선 위 모서리에 걸린 금빛 띠 */
 .dlg-name{font-size:12.5px;font-weight:700;letter-spacing:.05em;color:#2a1c0b;background:#d8a94b;padding:3px 12px 2px;
