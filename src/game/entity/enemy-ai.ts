@@ -243,6 +243,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       case 'b_organ': G.organPhaseFx(this); break;                   // 갈비 · 관이 부러지는 순간(game/boss-organ-fx)
       case 'b_cocoon': G.cocoonPhaseFx(this, ph); break;             // 고치가 터진다 · 날개가 찢긴다(game/boss-cocoon-fx)
       case 'b_hourglass': G.hourglassPhaseFx(this); break;           // 모래시계가 뒤집힌다(game/boss-hourglass-fx)
+      case 'b_hive': G.hivePhaseFx(this); break;                     // 벌집이 몸서리친다(game/boss-hive-fx)
       case 'b_slime':
         // 2페이즈 — 껍데기가 굳는다.
         if (ph >= lock) { this.guard = 1; this.openT = 0; }

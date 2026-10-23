@@ -2438,15 +2438,15 @@ window.SPRITE_MANIFEST = {
       },
       "blight_maw": {
         "file": "boss/blight_maw.png",
-        "frameW": 240,
-        "frameH": 201,
-        "count": 6,
-        "gap": 0,
-        "foot": -2.25,
-        "side": 1.5,
+        "frameW": 480,
+        "frameH": 360,
+        "count": 8,
+        "foot": 7,
+        "side": 4.5,
         "death": 2,
         "scale": 1,
-        "big": 3
+        "gap": 0,
+        "rig": 1
       },
       "vine_lord": {
         "file": "boss/vine_lord.png",
@@ -2645,18 +2645,6 @@ window.SPRITE_MANIFEST = {
         "side": 0,
         "pose": 1
       },
-      "blight_maw_pose": {
-        "file": "boss/blight_maw_pose.png",
-        "frameW": 384,
-        "frameH": 272,
-        "count": 18,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -2.25,
-        "side": 1.5,
-        "pose": 1
-      },
       "vine_lord_pose": {
         "file": "boss/vine_lord_pose.png",
         "frameW": 218,
@@ -2809,6 +2797,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 160,
         "frameH": 176,
         "count": 8,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "blight_maw_parts": {
+        "file": "boss/blight_maw_parts.png",
+        "frameW": 160,
+        "frameH": 144,
+        "count": 5,
         "scale": 1,
         "gap": 0,
         "rig": 1

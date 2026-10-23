@@ -217,7 +217,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 100, h: 144, c: '#6fe0c0', xp: 3600, gold: 2800, ph: 2, boss: 1,
                  drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25], ['cap_signet', 1, 1, 1]] },
   /* rank 6 — 동쪽 끝, 가장 깊은 곳 */
-  blight_maw:   { n: '부패한 아가리', hp: 9400, dmg: 132, def: 58, spd: 88, ai: 'b_heart', w: 198, h: 174, c: '#7a3f9c', xp: 4200, gold: 4000, ph: 2, boss: 1,
+  blight_maw:   { n: '곪은 벌집 어미', hp: 9400, dmg: 132, def: 58, spd: 0, ai: 'b_hive', w: 76, h: 70, wall: 1, c: '#7a3f9c', ph: 3, xp: 4200, gold: 4000, boss: 1,
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
   /* ★ 다른 보스 열여섯은 전부 0.49~1.12배다 — 보스는 한 대가 센 것이 아니라 체력과 마디로 버티는 것이 이 게임의 규칙이다. */

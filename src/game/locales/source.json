@@ -1475,7 +1475,8 @@
    "game/netui.refreshPauseSave"
   ],
   "막혔다": [
-   "entity.hurt"
+   "entity.hurt",
+   "entity/boss-hive.hvHurt"
   ],
   "막힌 칸 위: {slotKey}가 {x}칸(벽/기둥) 위에 있음": [
    "world/village.checkDawnLayout"
@@ -4000,6 +4001,8 @@
   "BOSS_LINES.corrupt_heart.2": "찢긴 날개가 더 밝게 탄다. 빛이 있는 곳으로.",
   "BOSS_LINES.sand_guardian.1": "모래시계가 뒤집힌다 — 쏟아지는 모래가 반대쪽으로 쏠린다.",
   "BOSS_LINES.sand_guardian.2": "금 간 유리 속에서 마지막 모래가 떨어진다.",
+  "BOSS_LINES.blight_maw.1": "벌집이 몸서리친다 — 닫힌 방마다 무언가 꿈틀거린다.",
+  "BOSS_LINES.blight_maw.2": "곪은 벽이 터진다. 어미가 더 빨리 기어 다닌다.",
   "BOSS_LINES.frost_witch.1": "실비아: \"…아직도 따뜻하구나.\"",
   "BOSS_LINES.frost_witch.2": "실비아: \"불 옆에 서. 거기 말고는 없어.\"",
   "BOSS_LINES.void_king.1": "나선이 되감긴다.",
@@ -4130,12 +4133,13 @@
   "BOSS_MOVES.spore_queen.moves.4.n": "포자 고리",
   "BOSS_MOVES.spore_queen.moves.5.n": "균사 흡수",
   "BOSS_MOVES.spore_queen.ult.n": "포자 폭풍",
-  "BOSS_MOVES.blight_maw.moves.0.n": "집어삼키기",
-  "BOSS_MOVES.blight_maw.moves.1.n": "담즙 비",
-  "BOSS_MOVES.blight_maw.moves.2.n": "이빨 갈기",
-  "BOSS_MOVES.blight_maw.moves.3.n": "포식자의 혀",
-  "BOSS_MOVES.blight_maw.moves.4.n": "썩은 송곳니 줄",
-  "BOSS_MOVES.blight_maw.moves.5.n": "구더기 토하기",
+  "BOSS_MOVES.blight_maw.moves.0.n": "방이 열린다",
+  "BOSS_MOVES.blight_maw.moves.1.n": "담즙이 흐른다",
+  "BOSS_MOVES.blight_maw.moves.2.n": "담즙 침",
+  "BOSS_MOVES.blight_maw.moves.3.n": "담즙 비",
+  "BOSS_MOVES.blight_maw.moves.4.n": "여러 방이 열린다",
+  "BOSS_MOVES.blight_maw.moves.5.n": "날벌레 떼",
+  "BOSS_MOVES.blight_maw.moves.6.n": "벽을 타는 담즙",
   "BOSS_MOVES.blight_maw.ult.n": "둥지 개화",
   "BOSS_MOVES.drowned_keeper.moves.0.n": "역류",
   "BOSS_MOVES.drowned_keeper.moves.1.n": "거품 감옥",
@@ -5024,7 +5028,7 @@
   "ENEMIES.vine_lord.n": "덩굴 군주",
   "ENEMIES.sand_guardian.n": "모래시계 거상",
   "ENEMIES.spore_queen.n": "포자 여왕",
-  "ENEMIES.blight_maw.n": "부패한 아가리",
+  "ENEMIES.blight_maw.n": "곪은 벌집 어미",
   "ENEMIES.drowned_keeper.n": "가라앉은 지킴이",
   "ENEMIES.splitter.n": "증식 기계",
   "ENEMIES.splitter.cw": "기",

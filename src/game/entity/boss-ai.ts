@@ -43,6 +43,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
     if (AI === 'b_cocoon') { if (this.cocMoth) this.cocoonAI(dt, world, p); }
     else if (AI === 'b_organ') this.organAI(dt, world, p);              // 뼈 오르간(entity/boss-organ)
     else if (AI === 'b_hourglass') this.hgAI(dt, world);              // 모래시계 거상(entity/boss-hourglass)
+    else if (AI === 'b_hive') this.hvAI(dt, world, p);                // 곪은 벌집 어미(entity/boss-hive)
     else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
     else if (AI === 'b_slime') {
       if (this.onGround) {

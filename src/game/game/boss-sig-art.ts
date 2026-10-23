@@ -159,6 +159,7 @@ export const BossSigArtPart: Bag = {
       case 'obreath': case 'opipes': case 'oreq': case 'oscatter': return true;
       case 'chang': case 'chusk': case 'cswing': case 'cthread': case 'cgust': case 'cscale': case 'cdive': case 'cdark': return this.cocoonTell(c, h, cx0, cy0);   // 잿빛 고치(game/boss-cocoon-art)
       case 'hfist': case 'hsand': case 'hpit': case 'hdead': case 'hflip': return this.hourglassTell(c, h, cx0, cy0);   // 모래시계 거상(game/boss-hourglass-art)
+      case 'hvmove': case 'hvbrood': case 'hvbile': case 'hvspit': case 'hvbloom': return this.hiveTell(c, h, cx0, cy0);   // 곪은 벌집 어미(game/boss-hive-art)
       case 'pulse': {                                                  // 박동 — 뛸 때마다 심장 둘레가 확 부푼다
         if (!b) return true;
         const u = (h.t % h.every) / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);
@@ -244,16 +245,6 @@ export const BossSigArtPart: Bag = {
         if (h.boom) { hzGlow(c, x, y - 18, 40, '#8ff0c8', f); return true; }
         shroom(c, x, y, k, wob, k > 0.75 ? '#c86aa8' : '#9a5ab8');
         if (k > 0.75) hzGlow(c, x, y - 18, 22, '#8ff0c8', (k - 0.75) * 2);
-        return true;
-      }
-      case 'tongue': {                                                 // 포식자의 혀
-        if (h.px === undefined) return true;
-        const mx = h.mx - cx0, my = h.my - cy0, px = h.px - cx0, py = h.py - cy0;
-        c.strokeStyle = '#4a1030'; c.lineWidth = 11; c.lineCap = 'round'; c.beginPath(); c.moveTo(mx, my); c.quadraticCurveTo((mx + px) / 2, (my + py) / 2 + 20, px, py); c.stroke();
-        c.strokeStyle = '#c84a7a'; c.lineWidth = 7; c.stroke();
-        c.strokeStyle = 'rgba(255,170,200,.6)'; c.lineWidth = 1.5; c.stroke();
-        c.fillStyle = '#e06a9a'; c.beginPath(); c.ellipse(px, py, 9, 7, 0, 0, TAU); c.fill(); c.strokeStyle = '#4a1030'; c.lineWidth = 1.5; c.stroke();
-        if (h.cut) { c.fillStyle = '#ffffff'; c.fillRect(px - 2, py - 8, 4, 16); }
         return true;
       }
       case 'chain': {                                                  // 닻 사슬 — 고리 줄

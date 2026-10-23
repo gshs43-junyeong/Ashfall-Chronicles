@@ -36,6 +36,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
       case 'sweep': case 'pipes': case 'scatter': case 'requiem': return this.organSig(d, p, world, K);   // 뼈 오르간(entity/boss-organ)
       case 'pendulum': case 'silk': case 'wingwind': case 'dust': case 'lightdive': return this.cocoonSig(d, p, world, K);   // 잿빛 고치(entity/boss-cocoon)
       case 'fist': case 'sandpour': case 'quick': case 'deadline': return this.hgSig(d, p, world, K);   // 모래시계 거상(entity/boss-hourglass)
+      case 'brood': case 'bilefall': case 'spit': case 'bloom': return this.hvSig(d, p, world, K);   // 곪은 벌집 어미(entity/boss-hive)
       case 'beat': {                                              // 박동 — 세 번 뛸 때마다 바닥을 타고 고동이 퍼진다(뛰어넘는다)
         this.hz({ k: 'pulse', life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
         for (let b = 0; b < 3; b++) G.after(b * 0.85, () => {
@@ -135,10 +136,6 @@ export const BossSignature: Bag & ThisType<Enemy> = {
           this.hz({ k: 'shroom', x, y: this.floorY(x, p.y - TS * 2), life: 4.3, pop: 3.8, dmg: this.dmg * m * 0.1, burst: this.dmg * m * 0.5, c: K.c, id: nid(), sd: i });
         }
         return { busy: 1.0 };
-      }
-      case 'tongue': {                                            // 포식자의 혀 — 붙잡아 아가리로 끌어간다(대시로 끊는다)
-        this.hz({ k: 'tongue', tx: p.cx, ty: p.cy, life: 1.25, dmg: this.dmg * m * 0.5, bite: this.dmg * m * 1.2, ref: this, nid: this.nid, c: K.c });
-        return { busy: 1.3 };
       }
       case 'anchor': {                                            // 닻 사슬 — 닻을 박고 사슬을 당겨 그 자리로 날아든다
         const ax = p.cx + (Math.random() - 0.5) * 80, ay = this.floorY(ax, p.y - TS * 2);

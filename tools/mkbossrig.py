@@ -707,11 +707,122 @@ def colossus_parts(f):
     return F.render()
 
 
+# ===== 곪은 벌집 어미(blight_maw 자리) — 둥지 뒷벽 전체가 육각 방 벌집, 어미 머리가 아랫줄 방 다섯 중 하나에서 내민다 =====
+HIVE_W, HIVE_H, HIVE_R = 120, 90, 11
+HIVE_CELLS = [(41, 16), (60, 16), (79, 16),
+              (31.5, 33), (50.5, 33), (69.5, 33), (88.5, 33),
+              (22, 50), (41, 50), (60, 50), (79, 50), (98, 50),
+              (31.5, 67), (50.5, 67), (69.5, 67), (88.5, 67)]     # game/boss-hive.ts HIVE.CELLS 와 같게
+WAX, WAX_D, WAX_L = '#9a7a44', '#5e4424', '#c8a868'
+HIVE_M, HIVE_MD = '#4a2a3e', '#2a1422'                              # 곪은 벌집 살 · 그늘
+BILE, BILE_D = '#b8c83a', '#6a7a20'
+
+
+def hexpts(cx, cy, r, rot=0.0):
+    return [(cx + r * math.cos(-math.pi / 2 + k * math.pi / 3 + rot), cy + r * math.sin(-math.pi / 2 + k * math.pi / 3 + rot)) for k in range(6)]
+
+
+def hive_body(f):
+    """몸 시트 8장(120×90 설계 칸 · 바닥 88) — 0·1 1막(핏줄이 숨 쉰다) · 2·3 곪은 반점 · 4·5 갈라짐 · 6·7 쓰러짐(벌집이 내려앉는다).
+       방은 모두 열린 구멍으로 그린다 — 밀랍 뚜껑(조각 2 · 3)과 어미 머리(조각 0 · 1)는 게임이 얹는다"""
+    F = ZFig(HIVE_W, HIVE_H)
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    sag = 0 if f < 6 else (3 if f == 6 else 7)
+    # 벌집 덩어리 — 방들을 감싸는 울퉁불퉁한 살
+    hull = []
+    for k in range(48):
+        a = k / 48 * math.tau
+        rx, ry = 55, 41
+        j = 2.0 * math.sin(a * 7 + 1.3) + 1.2 * math.sin(a * 13)
+        hull.append((60 + math.cos(a) * (rx + j), 45 + sag * 0.5 + math.sin(a) * (ry + j)))
+    hull = [(x, min(y, 86)) for (x, y) in hull]
+    F.part('flesh', HIVE_MD, bevel=4).poly(hull)
+    F.part('flesh', HIVE_M, bevel=3).poly([(60 + (x - 60) * 0.94, 45 + sag * 0.5 + (y - 45 - sag * 0.5) * 0.92) for (x, y) in hull])
+    # 핏줄 — 살 위를 기는 보랏빛 줄(숨 쉴 때 밝다)
+    vein = ('#8a4a9a', '#b06ac0')[b]
+    for (x0, y0, x1, y1) in ((8, 40, 20, 30), (112, 44, 100, 30), (14, 70, 24, 58), (106, 72, 96, 60), (60, 2, 52, 8), (60, 2, 70, 8)):
+        F.line(x0, y0 + sag, (x0 + x1) / 2 + 2, (y0 + y1) / 2 + sag, vein); F.line((x0 + x1) / 2 + 2, (y0 + y1) / 2 + sag, x1, y1 + sag, vein)
+    # 방 — 밀랍 테 · 깊은 구멍 · 테의 빛 받는 윗면
+    for i, (cx, cy) in enumerate(HIVE_CELLS):
+        cy += sag * (0.3 + cy / 90)
+        F.part('clay', WAX_D, bevel=2).poly(hexpts(cx, cy, HIVE_R - 0.3))
+        F.part('clay', WAX, bevel=2).poly(hexpts(cx, cy, HIVE_R - 1.4))
+        F.part('stone', '#140a12', flat=True).poly(hexpts(cx, cy + 0.6, HIVE_R - 3.4))
+        F.part('stone', '#24121e', flat=True).poly(hexpts(cx, cy + 2.2, HIVE_R - 5.4))
+        a, c2 = hexpts(cx, cy, HIVE_R - 1.6)[5], hexpts(cx, cy, HIVE_R - 1.6)[0]
+        fine(F, a, c2, WAX_L, 220); fine(F, c2, hexpts(cx, cy, HIVE_R - 1.6)[1], WAX_L, 160)
+    # 담즙 자국 — 방 밑으로 흘러내린 얼룩
+    for (cx, cy, L) in ((41, 50, 12), (79, 50, 9), (50.5, 67, 10), (98, 50, 14), (31.5, 33, 8), (69.5, 33, 11)):
+        y0 = cy + HIVE_R - 2 + sag * 0.6
+        F.part('glow' if b else 'flesh', BILE_D if not b else '#8a9a2a', glow=bool(b)).poly([(cx - 1.6, y0), (cx + 1.6, y0), (cx + 0.9, y0 + L), (cx, y0 + L + 2), (cx - 0.9, y0 + L)])
+    # 밑동 — 바닥에 고인 곪은 진액
+    F.part('flesh', '#3a2a24', bevel=3).poly([(6, 88), (10, 80), (22, 78), (40, 81), (60, 79), (82, 81), (100, 78), (114, 81), (116, 88)])
+    F.part('glow', BILE_D, glow=False).poly([(18, 88), (24, 84), (44, 85), (58, 83), (76, 85), (96, 83), (104, 88)])
+    # 손상 — 곪은 반점 · 갈라짐
+    if st >= 1:
+        for (x, y, r) in ((24, 30, 3.2), (96, 26, 2.6), (12, 58, 2.8), (108, 64, 3), (60, 80, 2.4)):
+            F.part('flesh', '#6a3a4a', bevel=1).ell(x, y + sag, r, r * 0.8)
+            F.part('glow', '#c8e050', glow=True).ell(x - 0.4, y - 0.3 + sag, r * 0.45, r * 0.35)
+    if st >= 2:
+        crack(F, [(30, 8 + sag), (34, 18 + sag), (28, 26 + sag)], 0.6, '#c8e050')
+        crack(F, [(92, 10 + sag), (88, 22 + sag), (94, 28 + sag)], 0.6, '#c8e050')
+        crack(F, [(112, 40 + sag), (106, 52 + sag)], 0.5, '#c8e050')
+    return F.render()
+
+
+def hive_parts(f):
+    """조각 5장(40×36 설계 칸) — 0 어미 머리(턱 닫힘) · 1 머리(턱 벌림 · 목구멍 빛) · 2 밀랍 뚜껑 · 3 금 간 뚜껑 · 4 기어 나오는 애벌레"""
+    F = ZFig(40, 36)
+    cx, cy = 20, 18
+    if f in (0, 1):
+        opn = f == 1
+        for d in (-1, 1):                                             # 더듬이
+            F.line(cx + d * 4, cy - 9, cx + d * 10, cy - 15, '#2a1424'); F.line(cx + d * 10, cy - 15, cx + d * 15, cy - 14, '#2a1424')
+            F.part('glow', '#d8f060', glow=True).ell(cx + d * 15, cy - 14, 1, 1)
+        F.part('chitin', '#3a1e3e', bevel=4).ell(cx, cy, 14, 11)       # 머리 껍질
+        F.part('chitin', '#5a2e5a', bevel=3).ell(cx, cy - 2.5, 12, 7.5)
+        for k in range(3):                                            # 등판 마디
+            fine(F, (cx - 11 + k * 0.5, cy - 4 + k * 3.2), (cx + 11 - k * 0.5, cy - 4 + k * 3.2), '#2a1424', 200)
+        F.part('chitin', '#7a3e7a', bevel=2).poly([(cx - 4, cy - 10.5), (cx, cy - 13), (cx + 4, cy - 10.5), (cx, cy - 8)])   # 이마 뿔
+        for (x, y, r) in ((-6, -3, 1.8), (6, -3, 1.8), (-9.5, 0, 1.3), (9.5, 0, 1.3), (-3.2, 1.5, 1.1), (3.2, 1.5, 1.1)):   # 눈 여섯
+            F.part('glow', '#d8f060', glow=True).ell(cx + x, cy + y, r, r * 0.8)
+            F.glow(cx + x, cy + y, r * 2.2, '#c8e050', 0.3)
+        sp = 5 if opn else 1.5
+        for d in (-1, 1):                                             # 큰 턱 — 낫처럼 휜 집게
+            F.part('chitin', '#2a1424', bevel=2).poly([(cx + d * 3, cy + 6), (cx + d * (6 + sp), cy + 9), (cx + d * (4 + sp), cy + 15), (cx + d * (1 + sp * 0.3), cy + 13.5), (cx + d * 2.5, cy + 9)])
+            F.part('chitin', '#c8b890', bevel=1).poly([(cx + d * (4 + sp), cy + 15), (cx + d * (2 + sp * 0.4), cy + 14), (cx + d * (3 + sp * 0.6), cy + 12)])
+        if opn:
+            F.part('flesh', '#5a1a2a', bevel=2).ell(cx, cy + 9, 4, 3.4)
+            F.part('glow', BILE, glow=True).ell(cx, cy + 9.5, 2.6, 2)
+            F.part('glow', BILE, glow=True).poly([(cx - 0.8, cy + 11), (cx + 0.8, cy + 11), (cx + 0.4, cy + 16), (cx, cy + 17), (cx - 0.4, cy + 16)])
+    elif f in (2, 3):
+        F.part('clay', '#b8954e', bevel=3).poly(hexpts(cx, cy, 9.6))
+        for r2 in (7, 4.4):
+            pts = hexpts(cx, cy, r2)
+            for a, b2 in zip(pts, pts[1:] + pts[:1]):
+                fine(F, a, b2, '#7a5a2a', 200)
+        F.part('clay', '#e0c888', bevel=1).ell(cx - 2.5, cy - 3, 3, 2)
+        if f == 3:
+            crack(F, [(cx - 6, cy - 5), (cx - 1, cy), (cx - 3, cy + 6)], 0.55, BILE)
+            crack(F, [(cx - 1, cy), (cx + 5, cy - 2), (cx + 7, cy + 4)], 0.5, BILE)
+    else:
+        for k in range(5):                                            # 애벌레 — 둥글게 말린 마디
+            a = math.pi * 0.9 - k * 0.5
+            F.part('flesh', '#e8dcc0' if k % 2 else '#d8c8a8', bevel=2).ell(cx + math.cos(a) * 7, cy + 4 + math.sin(a) * 6, 4.4 - k * 0.3, 4 - k * 0.3)
+        F.part('flesh', '#c8a888', bevel=2).ell(cx - 7, cy + 2, 4.6, 4.2)
+        F.part('stone', '#1a0e14', flat=True).ell(cx - 8.6, cy + 2.6, 1.6, 1.2)
+        for d in (-1, 1):
+            F.part('glow', '#d8f060', glow=True).ell(cx - 8 + d * 1.6, cy + 0.6, 0.6, 0.6)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts)},
     'corrupt_heart': {'body': (46, 80, 8, 0, cocoon_body), 'parts': (100, 80, 14, moth_frame)},
     'sand_guardian': {'body': (84, 104, 8, 2, colossus_body), 'parts': (40, 44, 8, colossus_parts)},
+    'blight_maw': {'body': (HIVE_W, HIVE_H, 8, 2, hive_body), 'parts': (40, 36, 5, hive_parts)},
 }
 
 

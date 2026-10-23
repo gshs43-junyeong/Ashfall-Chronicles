@@ -120,6 +120,9 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   /* 모래시계 거상 — 돌 주먹은 낮게 깨는 소리, 모래는 연기 · 바람 소리를 낮춰 빌린다 */
   hg_lift: ['door_open', .45, .8], hg_slam: ['boom_small', .5, 1.2], hg_pour: ['sk_smoke', .55, .8], hg_quick: ['drown', .55, .7],
   hg_deadline: ['chapter', .45, .9], hg_storm: ['sk_whirl', .5, 1.1], hg_flip: ['mat_stone', .45, 1.1], hg_crack: ['mat_glass', .7, 1.3],
+  /* 곪은 벌집 어미 — 젖은 살 · 거품 · 밀랍이 깨지는 소리를 낮춰 빌린다 */
+  hive_crawl: ['mat_flesh', .55, .6], hive_pop: ['bubble', .6, .8], hive_bulge: ['mat_flesh', .7, .7], hive_crack: ['mat_wood', .8, 1.1],
+  hive_ooze: ['bubble', .5, .8], hive_splash: ['splash', .6, .9], hive_hiss: ['sk_smoke', .8, .7], hive_spit: ['splash', 1.1, .7], hive_roar: ['chapter', .4, 1],
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],

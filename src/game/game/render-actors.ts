@@ -335,7 +335,7 @@ export const RenderActorsPart: Bag = {
       try { this.drawEnemy(c, e, sx, sy); } finally { e._shading = 0; c.restore(); }
       return;
     }
-    if (e.def.ai === 'b_organ' || e.def.ai === 'b_hourglass') return;                                  // 뒷벽의 오르간 — 몸은 objects · 팔은 actors 단계에서(game/boss-organ-art)
+    if (e.def.ai === 'b_organ' || e.def.ai === 'b_hourglass' || e.def.ai === 'b_hive') return;                                  // 뒷벽의 오르간 — 몸은 objects · 팔은 actors 단계에서(game/boss-organ-art)
     if (e.def.ai === 'b_cocoon') { this.drawCocoon(c, e, sx, sy); if (!this.paused) this.cocoonAmbient(e); return; }   // 잿빛 고치 · 불나방(game/boss-cocoon-art)
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     if (e.def.tame) { this.drawWildHorse(c, e, sx, sy); return; }

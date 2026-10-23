@@ -67,6 +67,7 @@ export const BossSigPart: Bag = {
       case 'opipes': case 'oreq': return true;
       case 'chang': case 'chusk': case 'cswing': case 'cthread': case 'cgust': case 'cscale': case 'cdive': case 'cdark': return this.cocoonHz(h, dt, host, me);   // 잿빛 고치(game/boss-cocoon-fx)
       case 'hfist': case 'hsand': case 'hpit': case 'hdead': case 'hflip': return this.hourglassHz(h, dt, host, me);   // 모래시계 거상(game/boss-hourglass-fx)
+      case 'hvmove': case 'hvbrood': case 'hvbile': case 'hvspit': case 'hvbloom': return this.hiveHz(h, dt, host, me);   // 곪은 벌집 어미(game/boss-hive-fx)
       case 'pulse': case 'veil': case 'rod': case 'rail': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로
         h.fired = 1;
@@ -110,25 +111,6 @@ export const BossSigPart: Bag = {
           this.bossHazard({ k: 'zone', x: h.x, y: h.y, r: 60, life: 5, dmg: h.dmg, poison: 1, c: h.c, fx: 'spore', sd: Math.random() * 99 });
           for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + (i - 2.5) * 0.45; this.projs.push(new Proj(h.x, h.y - 18, Math.cos(a) * 200, Math.sin(a) * 200, h.burst, 'enemy', 'poison')); }
           this.hzPatch(h, { boom: 1, life: h.t + 0.35 });
-        }
-      } return true;
-      case 'tongue': {                                                // 혀 — 뻗었다 감긴다. 끝에 걸리면 끌려간다
-        const b = this.hzBoss(h); if (!b) { h.t = h.life; return true; }
-        const mx = b.cx + (b.facing < 0 ? -1 : 1) * b.w * 0.35, my = b.cy;
-        const u = h.t < 0.45 ? h.t / 0.45 : Math.max(0, 1 - (h.t - 0.45) / 0.6);
-        h.px = mx + (h.tx - mx) * u; h.py = my + (h.ty - my) * u; h.mx = mx; h.my = my;
-        if (me && !me.dead) {
-          if (!h.grab && h.t < 0.5 && Math.hypot(me.cx - h.px, me.cy - h.py) < 26) h.grab = 1;
-          if (h.grab) {
-            if (me.dashV > 0) { h.grab = 0; h.cut = 1; this.vfx.puffs(me.cx, me.cy, 6, 10, '#c07aff', 0.5, 12); }   // 대시로 끊는다
-            else { me.x += (h.px - me.cx) * Math.min(1, dt * 14); me.y += (h.py - me.cy) * Math.min(1, dt * 14); me.vx = 0; me.vy = 0; }
-          }
-        }
-        if (host) for (let pi = 0; pi < this.players.length; pi++) { const q = this.players[pi];
-          if (q.dead || q.hp <= 0) continue;
-          const id = pi;
-          if (h.t < 0.5 && !(h.hitT && h.hitT[id]) && Math.hypot(q.cx - h.px, q.cy - h.py) < 26) { q.hurt(h.dmg, mx); (h.hitT || (h.hitT = {}))[id] = 1; }
-          if (h.t > 0.95 && !(h.bit && h.bit[id]) && Math.hypot(q.cx - mx, q.cy - my) < b.w * 0.5 + 24) { q.hurt(h.bite, mx); (h.bit || (h.bit = {}))[id] = 1; this.shake = Math.max(this.shake, 8); }
         }
       } return true;
       case 'chain': {                                                 // 닻 사슬 — 보스와 닻 사이 줄이 위험하다

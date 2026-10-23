@@ -125,14 +125,16 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'ring', n: '포자 고리', tele: 0.5, times: 2, cnt: 20, gap: 4, spd: 200, every: 0.6, proj: 'poison', m: 0.5, pw: [1, 0.8] },
     { k: 'heal', n: '균사 흡수', tele: 0.6, dur: 2.6, v: 0.07, brk: 0.04, fx: 'spore', ph: 1, pw: [0, 1.3] }],
     ult: { k: 'spiral', n: '포자 폭풍', tele: 1.1, arms: 3, dur: 4.5, every: 0.1, spd: 220, proj: 'poison', turn: 1.6, m: 0.45 } },
-  blight_maw: { c: '#c07aff', every: 6, moves: [
-    { k: 'vortex', n: '집어삼키기', tele: 0.7, life: 2, r: 300, pull: 380, burst: 110, then: 'dash', fx: 'maw', m: 1.2 },
+  /* 곪은 벌집 어미 — 둥지 뒷벽 전체가 육각 방 벌집. 어미 머리가 아랫줄 방 다섯 중 하나에서만 내밀고 그때만 제대로 맞는다(entity/boss-hive) */
+  blight_maw: { c: '#c8e050', every: 5.5, moves: [
+    { k: 'sig', sig: 'brood', n: '방이 열린다', tele: 0.4, cnt: 2, m: 1 },
+    { k: 'sig', sig: 'bilefall', n: '담즙이 흐른다', tele: 0.4, cnt: 2, m: 1 },
+    { k: 'sig', sig: 'spit', n: '담즙 침', tele: 0.3, cnt: 3, m: 0.9 },
     { k: 'rain', n: '담즙 비', tele: 0.6, form: 'scatter', cnt: 6, spread: 360, delay: 0.9, r: 46, shape: 'circle', fx: 'bile', zone: { r: 46, life: 5, dps: 0.1 }, m: 0.8 },
-    { k: 'dash', n: '이빨 갈기', tele: 0.35, times: 2, spd: 4, m: 1.1 },
-    { k: 'sig', sig: 'tongue', n: '포식자의 혀', tele: 0.5, pose: 0, m: 1 },
-    { k: 'march', n: '썩은 송곳니 줄', tele: 0.5, cnt: 7, gap: 56, every: 0.13, h: 100, fx: 'flesh', m: 0.9, pw: [1, 1] },
-    { k: 'summon', n: '구더기 토하기', tele: 0.7, mob: 'sacling', cnt: 3, ring: 12, ph: 1, pw: [0, 1.4] }],
-    ult: { k: 'ring', n: '둥지 개화', tele: 1, times: 4, cnt: 24, gap: 4, spd: 250, every: 0.5, proj: 'dark', summon: 'sacling', m: 0.6 } },
+    { k: 'sig', sig: 'brood', n: '여러 방이 열린다', tele: 0.4, cnt: 3, m: 1, ph: 1, pw: [0, 1.2, 1] },
+    { k: 'homing', n: '날벌레 떼', tele: 0.6, cnt: 6, spd: 170, turn: 2.2, proj: 'dark', m: 0.5, ph: 1, pw: [0, 1, 1] },
+    { k: 'sig', sig: 'bilefall', n: '벽을 타는 담즙', tele: 0.4, cnt: 4, low: 1, r: 90, m: 0.9, ph: 2, pw: [0, 0, 1.4] }],
+    ult: { k: 'sig', sig: 'bloom', n: '둥지 개화', tele: 1, m: 1 } },
   drowned_keeper: { c: '#7fc8e8', every: 7, moves: [
     { k: 'wall', n: '역류', tele: 0.8, times: 1, spd: 300, gap: 110, fx: 'water', m: 0.9 },
     { k: 'homing', n: '거품 감옥', tele: 0.6, cnt: 5, spd: 150, turn: 1.6, proj: 'cagebub', m: 0.5 },
@@ -224,7 +226,7 @@ export const XFX_OF: Record<string, string> = { rune: 'rune', fire: 'fire', fros
    stagger 비틀거림(무거운 몸 — 멈춰 선다) · heat 과열(마법 · 원소 — 느려진다) · crack 균열(갑옷 · 껍데기 — 방어가 벌어진다). 사연: docs/code-history.md#h181 */
 /** 깨어날 때 넓혀 둘 싸움터(칸 — 너비 · 바닥에서 높이) — 몸 그림이 바위에 묻히지 않게(game/boss-arena) */
 export const BOSS_ARENA: Record<string, { w: number; h: number }> = {
-  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }
+  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }
 };
 export const BOSS_GAP: Record<string, string> = {
   king_slime: 'stagger', bone_lord: 'stagger', first_keeper: 'stagger', pursuer: 'stagger', mine_horror: 'stagger', ice_warden: 'stagger',
