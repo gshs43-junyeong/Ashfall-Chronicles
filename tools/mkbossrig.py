@@ -403,7 +403,8 @@ def organ_parts(f):
 
 # ===== 잿빛 고치(corrupt_heart 자리) — 천장에 실로 매달린 거대 번데기 → 2막에 갈라져 불나방이 난다 =====
 SILK, SILK_D, SILK_L = '#8a847c', '#5e5952', '#b4ada2'      # 재가 엉긴 실
-MOTH, MOTH_D, MOTH_L = '#6e6258', '#3e3630', '#a0948a'      # 잿빛 날개
+MOTH, MOTH_D, MOTH_L = '#7a2e1a', '#3e1a12', '#c8582a'      # 불나방 앞날개 — 그을린 붉은 갈색 · 그늘 · 불꽃 띠
+HINDC, HINDC_L = '#e0561c', '#ff9a3a'                       # 뒷날개 — 타오르는 주홍
 FIRE, FIRE_H = '#ff7a2a', '#ffd27a'                          # 날개 눈 무늬 · 속불
 
 
@@ -491,6 +492,17 @@ def wing_pts(pts, hx, hy, a, side):
     return out
 
 
+def spline(pts, n=6):
+    """닫힌 캣멀롬 곡선 — 날개 윤곽을 꺾인 점이 아니라 매끄러운 곡선으로(곧은 날개 끝이 각져 보였다)"""
+    out, m = [], len(pts)
+    for i in range(m):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % m], pts[(i + 2) % m]
+        for k in range(n):
+            t = k / n; t2, t3 = t * t, t * t * t
+            out.append(tuple(0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3) for j in (0, 1)))
+    return out
+
+
 FORE = [(0, 0), (8, -10), (22, -18), (38, -22), (46, -19), (44, -12), (34, -4), (20, 3), (6, 5)]        # 앞날개(오른쪽 · 경첩 (0, 0) 기준)
 HIND = [(0, 2), (10, 6), (24, 8), (32, 14), (30, 22), (20, 25), (10, 21), (3, 12)]                        # 뒷날개
 
@@ -511,46 +523,53 @@ def moth_frame(f):
     a = -0.15 if dive else (0.95, 0.55, 0.05, -0.45, -0.1, 0.5)[f % 6]
     fold = 0.55 if dive else 1.0
     for side in (-1, 1):
-        def tr(pts, dx=0, dy=0):
-            return wing_pts([(cx + side * (x * fold + dx), cy + y * (0.8 if dive else 1) + dy) for (x, y) in pts], cx, cy, a, side)
-        hind = HIND if not torn else [(0, 2), (10, 6), (19, 7), (23, 12), (27, 13), (30, 22), (22, 23), (18, 19), (10, 21), (3, 12)]
-        fore = FORE if not torn else [(0, 0), (8, -10), (22, -18), (30, -20), (33, -15), (38, -21), (46, -19), (43, -13), (37, -11), (34, -4), (20, 3), (6, 5)]
-        F.part('cloth', MOTH_D, bevel=3).poly(tr(hind))
-        F.part('cloth', '#8a5234', bevel=2).poly(tr([(6, 6), (16, 9), (24, 12), (26, 18), (18, 20), (8, 15)]))   # 뒷날개 안쪽 — 그을린 주홍
+        def tr(pts, smooth=True):
+            q = wing_pts([(cx + side * x * fold, cy + y * (0.8 if dive else 1)) for (x, y) in pts], cx, cy, a, side)
+            return spline(q) if smooth else q
+        hind = HIND if not torn else [(0, 2), (10, 6), (19, 7), (22, 11), (27, 12), (31, 18), (29, 23), (22, 24), (17, 20), (10, 22), (3, 12)]
+        fore = FORE if not torn else [(0, 0), (8, -10), (22, -18), (30, -20), (33, -15), (38, -21), (46, -19), (43, -13), (38, -10), (34, -4), (20, 3), (6, 5)]
+        F.glow(*tr([(26, 14)], False)[0], 10, HINDC_L, 0.25 + torn * 0.1)                 # 뒷날개가 안에서 비친다
+        F.part('cloth', HINDC, bevel=3).poly(tr(hind))
+        F.part('cloth', '#8a2414', bevel=2).poly(tr([(5, 6), (13, 10), (19, 13), (16, 19), (8, 16)]))      # 뒷날개 밑동 — 그을린 붉음
+        for (x, y, r) in ((22, 17, 2.4), (28, 19, 1.6), (15, 21, 1.4)):                    # 뒷날개 검은 점
+            px, py = tr([(x, y)], False)[0]; F.part('cloth', '#2a120c', flat=True).ell(px, py, r * fold * (0.55 + 0.45 * math.cos(a)), r * 0.85)
         F.part('cloth', MOTH, bevel=3).poly(tr(fore))
-        F.part('cloth', MOTH_L, bevel=2).poly(tr([(6, -3), (16, -11), (28, -16), (36, -17), (30, -11), (18, -5), (8, 0)]))   # 앞날개 앞 가장자리 — 빛 받는 결
-        for (x0, y0, x1, y1) in ((4, 0, 40, -18), (6, 2, 34, -6), (8, 3, 22, 2)):   # 날개맥 — 속불이 비친다
-            p0, p1 = tr([(x0, y0)])[0], tr([(x1, y1)])[0]
-            fine(F, p0, p1, '#ff9a50' if torn else '#c8784a', 220 if torn else 150)
-        ex, ey = tr([(27, -9)])[0]                           # 눈 무늬 — 불씨 눈
-        F.part('cloth', '#2a1e18', flat=True).ell(ex, ey, 5.2 * fold * (0.55 + 0.45 * math.cos(a)), 4.2)
-        F.part('glow', FIRE, glow=True).ell(ex, ey, 3.4 * fold * (0.55 + 0.45 * math.cos(a)), 2.8)
+        for band in ([(6, -2), (15, -9), (26, -14), (33, -16), (27, -10), (16, -4), (8, 1)],      # 불꽃 띠 — 앞 가장자리에서 날개 끝으로 번진다
+                     [(20, -3), (30, -8), (40, -15), (43, -14), (35, -6), (24, 0)]):
+            F.part('cloth', MOTH_L, bevel=2).poly(tr(band))
+        F.part('glow', '#ffb060', glow=True).poly(tr([(36, -18), (44, -18.5), (42.5, -14), (37, -15)]))   # 날개 끝 — 불이 타오르는 가장자리
+        F.glow(*tr([(41, -16.5)], False)[0], 5 + torn * 2, FIRE, 0.45)
+        for (x0, y0, x1, y1) in ((4, 0, 40, -18), (6, 2, 34, -6), (8, 3, 22, 2), (4, 4, 26, 20)):   # 날개맥 — 속불이 비친다
+            p0, p1 = tr([(x0, y0)], False)[0], tr([(x1, y1)], False)[0]
+            fine(F, p0, p1, '#ffb070' if torn else '#ff8a4a', 230 if torn else 170)
+        ex, ey = tr([(27, -9)], False)[0]                       # 눈 무늬 — 불씨 눈
+        sq = fold * (0.55 + 0.45 * math.cos(a))
+        F.part('cloth', '#1e0c08', flat=True).ell(ex, ey, 5.2 * sq, 4.2)
+        F.part('glow', FIRE, glow=True).ell(ex, ey, 3.4 * sq, 2.8)
         F.part('glow', FIRE_H, glow=True).ell(ex - 0.6, ey - 0.5, 1.4 * fold, 1.1)
-        F.glow(ex, ey, 6 + torn * 3, FIRE, 0.35 + torn * 0.15)
-        hx2, hy2 = tr([(22, 15)])[0]
-        F.part('glow', '#ff9a40', glow=True).ell(hx2, hy2, 1.8 * fold, 1.6)
-        for (x, y) in ((12, -6), (20, -12), (33, -14), (14, 14)):   # 인분 — 잿빛 위 밝은 점
-            px, py = tr([(x, y)])[0]; F.px(px, py, '#c8bcb0', 200)
+        F.glow(ex, ey, 7 + torn * 3, FIRE, 0.4 + torn * 0.15)
+        for (x, y) in ((12, -6), (20, -12), (33, -14), (14, 14)):   # 인분 — 반짝이는 점
+            px, py = tr([(x, y)], False)[0]; F.px(px, py, '#ffd8a0', 210)
         if torn:                                             # 찢긴 자리 끝에서 불씨가 샌다
-            for (x, y) in ((33, -15), (23, 12)):
-                px, py = tr([(x, y)])[0]; F.glow(px, py, 3, FIRE, 0.5); F.px(px, py, FIRE_H)
+            for (x, y) in ((33, -15), (22, 11)):
+                px, py = tr([(x, y)], False)[0]; F.glow(px, py, 3, FIRE, 0.55); F.px(px, py, FIRE_H)
     # 몸통 — 털 많은 가슴 · 마디진 배 · 깃털 더듬이
-    F.part('flesh', '#4a3e36', bevel=3).ell(cx, cy + 9, 4.2, 10)                     # 배
+    F.part('flesh', '#5a2414', bevel=3).ell(cx, cy + 9, 4.2, 10)                     # 배
     for k in range(4):
-        fine(F, (cx - 3.6 + k * 0.3, cy + 4 + k * 3.4), (cx + 3.6 - k * 0.3, cy + 4.6 + k * 3.4), '#2a221c', 220)
-    F.part('flesh', '#7a6a5c', bevel=3).ell(cx, cy - 1, 6, 6.5)                      # 털 많은 가슴
-    F.part('flesh', '#9a8a7a', bevel=2).ell(cx - 1.4, cy - 3, 2.6, 2.4)
-    F.part('flesh', '#5a4c40', bevel=2).ell(cx, cy - 8, 4.2, 3.4)                    # 머리
+        fine(F, (cx - 3.6 + k * 0.3, cy + 4 + k * 3.4), (cx + 3.6 - k * 0.3, cy + 4.6 + k * 3.4), '#ff8a40', 200)
+    F.part('flesh', '#c8642a', bevel=3).ell(cx, cy - 1, 6, 6.5)                      # 털 많은 가슴 — 불티 색 털
+    F.part('flesh', '#f0a050', bevel=2).ell(cx - 1.4, cy - 3, 2.6, 2.4)
+    F.part('flesh', '#6a2a16', bevel=2).ell(cx, cy - 8, 4.2, 3.4)                    # 머리
     for s2 in (-1, 1):
         F.part('glow', FIRE_H if torn else '#ffb060', glow=True).ell(cx + s2 * 2.4, cy - 8.4, 1.6, 1.4)   # 겹눈 — 불빛을 쫓는 눈
         F.glow(cx + s2 * 2.4, cy - 8.4, 3, FIRE, 0.4)
         ax0, ay0 = cx + s2 * 1.6, cy - 10.5
         ax1, ay1 = cx + s2 * 9, cy - 21
-        F.part('cloth', '#8a7a6a', bevel=0.8).cap(ax0, ay0, ax1, ay1, 0.6, 0.4)
+        F.part('cloth', '#a0502a', bevel=0.8).cap(ax0, ay0, ax1, ay1, 0.6, 0.4)
         for k in range(1, 6):                                # 깃털 더듬이의 빗살
             t = k / 6
             px, py = ax0 + (ax1 - ax0) * t, ay0 + (ay1 - ay0) * t
-            fine(F, (px, py), (px + s2 * 2.2 * (1 - t * 0.5), py + 1.2), '#a0907e', 210)
+            fine(F, (px, py), (px + s2 * 2.2 * (1 - t * 0.5), py + 1.2), '#e0884a', 210)
     if torn:
         crack(F, [(cx - 1, cy + 3), (cx + 1, cy + 8), (cx - 0.5, cy + 13)], 0.5, FIRE)
         F.glow(cx, cy + 4, 8, FIRE, 0.35)
