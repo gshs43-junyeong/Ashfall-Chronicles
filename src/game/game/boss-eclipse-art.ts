@@ -40,11 +40,12 @@ function lookAt(E: Bag, dx: number, dy: number, dt: number, mx: number, my: numb
 /** 눈 하나 — 작은 판(설계 칸)에 그린 뒤 P 배로 키운다(원판과 같은 굵은 칸).
     아몬드 눈꺼풀 · 속눈썹 · 그늘진 흰자 · 핏줄 · 결이 도는 홍채 · 동공은 그 자체로 개기일식(검은 원 + 코로나 고리 + 다이아몬드 한 점) */
 function drawEye(c: C2, x: number, y: number, P: number, w: number, h: number, o: number, lx: number, ly: number, T: number, sd: number, dil: number) {
-  const Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
+  /* ★ 판은 원판 시트와 같은 결(시트 한 칸 = 화면 S 칸)로 — 설계 칸(P)째 키우면 눈만 굵은 픽셀이 져 원판과 따로 놀았다 */
+  const F = Math.max(1, Math.round(P / 1.25)), Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
   if (!EYE) EYE = document.createElement('canvas');
-  if (EYE.width < Wc || EYE.height < Hc) { EYE.width = Math.max(EYE.width, Wc); EYE.height = Math.max(EYE.height, Hc); }
+  if (EYE.width < Wc * F || EYE.height < Hc * F) { EYE.width = Math.max(EYE.width, Wc * F); EYE.height = Math.max(EYE.height, Hc * F); }
   const d = EYE.getContext('2d')!;
-  d.clearRect(0, 0, Wc, Hc);
+  d.setTransform(1, 0, 0, 1, 0, 0); d.clearRect(0, 0, Wc * F, Hc * F); d.setTransform(F, 0, 0, F, 0, 0);
   const cx = Wc / 2, cy = Hc / 2, a = w / 2, b = h / 2, bo = b * o, u = Math.max(1, w / 46);   // u — 큰 눈은 선도 같은 비로 굵게
   const almond = (ax: number, up: number, dn: number) => {
     d.beginPath(); d.moveTo(cx - ax, cy); d.quadraticCurveTo(cx, cy - up * 2, cx + ax, cy); d.quadraticCurveTo(cx, cy + dn * 2, cx - ax, cy); d.closePath();
@@ -106,10 +107,10 @@ function drawEye(c: C2, x: number, y: number, P: number, w: number, h: number, o
     d.lineCap = 'round';
     d.strokeStyle = '#06020c'; d.lineWidth = 1.5 * u; d.beginPath(); d.moveTo(cx - a, cy); d.quadraticCurveTo(cx, cy - bo * 2, cx + a, cy); d.stroke();
     d.strokeStyle = '#2a1644'; d.lineWidth = 0.8 * u; d.beginPath(); d.moveTo(cx - a, cy); d.quadraticCurveTo(cx, cy + bo * 1.7, cx + a, cy); d.stroke();
-    lashes(bo, Math.max(5, Math.round(w / 6)), Math.max(1.8, h * 0.2), '#0b0516');
+    lashes(bo, Math.max(5, Math.round(w / 6)), Math.max(1.8, h * (w > 60 ? 0.13 : 0.2)), '#0b0516');
   }
   c.save(); c.imageSmoothingEnabled = false;
-  c.drawImage(EYE, 0, 0, Wc, Hc, Math.round(x - Wc * P / 2), Math.round(y - Hc * P / 2), Wc * P, Hc * P);
+  c.drawImage(EYE, 0, 0, Wc * F, Hc * F, Math.round(x - Wc * P / 2), Math.round(y - Hc * P / 2), Wc * P, Hc * P);
   c.restore();
 }
 

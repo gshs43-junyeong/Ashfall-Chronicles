@@ -43007,9 +43007,11 @@
       clearTimeout(r.t2);
       r.el.style.transition = "";
       r.el.style.opacity = "";
+      r.el.classList.remove("out");
       r.t1 = setTimeout(() => {
         r.el.style.transition = `opacity ${fade}s`;
         r.el.style.opacity = "0";
+        r.el.classList.add("out");
       }, life * 1e3);
       r.t2 = setTimeout(() => drop(r), (life + fade) * 1e3);
     };
@@ -43022,6 +43024,9 @@
           last.n++;
           last.el.textContent = `${msg} ×${last.n}`;
           arm(last);
+          last.el.classList.remove("bump");
+          void last.el.offsetWidth;
+          last.el.classList.add("bump");
           return;
         }
         const el = document.createElement("div");
@@ -43031,7 +43036,15 @@
         const r = { el, msg, kind, n: 1, t1: 0, t2: 0 };
         rows.push(r);
         arm(r);
-        while (rows.length > max) drop(rows[0]);
+        while (rows.length > max) {
+          const o = rows.shift();
+          clearTimeout(o.t1);
+          clearTimeout(o.t2);
+          o.el.classList.add("out");
+          o.el.style.transition = `opacity ${fade}s`;
+          o.el.style.opacity = "0";
+          setTimeout(() => o.el.remove(), fade * 1e3);
+        }
       },
       clear() {
         while (rows.length) drop(rows[0]);
@@ -66564,14 +66577,16 @@
     E.ly = ease5(E.ly, dy / d * my * k, dt, 4);
   }
   function drawEye(c, x, y, P2, w, h, o, lx, ly, T2, sd, dil) {
-    const Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
+    const F = Math.max(1, Math.round(P2 / 1.25)), Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
     if (!EYE2) EYE2 = document.createElement("canvas");
-    if (EYE2.width < Wc || EYE2.height < Hc) {
-      EYE2.width = Math.max(EYE2.width, Wc);
-      EYE2.height = Math.max(EYE2.height, Hc);
+    if (EYE2.width < Wc * F || EYE2.height < Hc * F) {
+      EYE2.width = Math.max(EYE2.width, Wc * F);
+      EYE2.height = Math.max(EYE2.height, Hc * F);
     }
     const d = EYE2.getContext("2d");
-    d.clearRect(0, 0, Wc, Hc);
+    d.setTransform(1, 0, 0, 1, 0, 0);
+    d.clearRect(0, 0, Wc * F, Hc * F);
+    d.setTransform(F, 0, 0, F, 0, 0);
     const cx = Wc / 2, cy = Hc / 2, a = w / 2, b = h / 2, bo = b * o, u = Math.max(1, w / 46);
     const almond = (ax, up, dn) => {
       d.beginPath();
@@ -66707,11 +66722,11 @@
       d.moveTo(cx - a, cy);
       d.quadraticCurveTo(cx, cy + bo * 1.7, cx + a, cy);
       d.stroke();
-      lashes(bo, Math.max(5, Math.round(w / 6)), Math.max(1.8, h * 0.2), "#0b0516");
+      lashes(bo, Math.max(5, Math.round(w / 6)), Math.max(1.8, h * (w > 60 ? 0.13 : 0.2)), "#0b0516");
     }
     c.save();
     c.imageSmoothingEnabled = false;
-    c.drawImage(EYE2, 0, 0, Wc, Hc, Math.round(x - Wc * P2 / 2), Math.round(y - Hc * P2 / 2), Wc * P2, Hc * P2);
+    c.drawImage(EYE2, 0, 0, Wc * F, Hc * F, Math.round(x - Wc * P2 / 2), Math.round(y - Hc * P2 / 2), Wc * P2, Hc * P2);
     c.restore();
   }
   function eyeGlow(c, e, T2, boost) {
@@ -81065,10 +81080,11 @@
       let prev = null;
       const html = log.map((l) => {
         const fade = open ? 1 : clamp((CHAT_FADE * 1e3 - (now2 - l.t)) / 2e3, 0, 1);
-        const st = fade < 1 ? `opacity:${fade.toFixed(2)};` : "";
+        const age = now2 - l.t, nw = age < 420 ? " new" : "", fd = fade < 1 ? " fading" : "";
+        const st = (fade < 1 ? `opacity:${fade.toFixed(2)};` : "") + (nw ? `--age:${Math.round(age)};` : "");
         if (l.sys) {
           prev = null;
-          return `<div class="ch-line ch-sys${l.sys === 2 ? " mine" : ""}" style="${st}"><b>${l.sys === 2 ? tr("알림") : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`;
+          return `<div class="ch-line ch-sys${l.sys === 2 ? " mine" : ""}${nw}${fd}" style="${st}"><b>${l.sys === 2 ? tr("알림") : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`;
         }
         const me = l.n === meName, solo = soloEmoji(l.s);
         const cont = prev && prev.n === l.n && l.t - prev.t < 6e4;
@@ -81076,7 +81092,7 @@
         let h = 0;
         for (const ch of l.n) h = h * 31 + ch.charCodeAt(0) | 0;
         const col = me ? "var(--gold)" : CHAT_NAME_COL[Math.abs(h) % CHAT_NAME_COL.length];
-        return `<div class="ch-line${me ? " me" : ""}${cont ? " cont" : ""}${solo ? " solo" : ""}" style="${st}--nc:${col}"><b>${escHtml(l.n)}</b><span class="ch-msg">${solo ? emojiHtml(solo, 40) : emojify(escHtml(l.s))}</span></div>`;
+        return `<div class="ch-line${me ? " me" : ""}${cont ? " cont" : ""}${solo ? " solo" : ""}${nw}${fd}" style="${st}--nc:${col}"><b>${escHtml(l.n)}</b><span class="ch-msg">${solo ? emojiHtml(solo, 40) : emojify(escHtml(l.s))}</span></div>`;
       }).join("");
       const el = $("#chat-log");
       if (el._html !== html) {
