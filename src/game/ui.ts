@@ -209,7 +209,7 @@ export const UI: Bag = {
     const off = (G.settings && G.settings.notice) || {};
     box.innerHTML = NOTICE_KINDS.map(k =>
       `<label class="set-row chk"><span>${k.n}</span>` +
-      `<input type="checkbox" data-notice="${k.id}"${off[k.id] === 0 ? '' : ' checked'}></label>`).join('');
+      `<input type="checkbox" data-notice="${k.id}"${(off[k.id] ?? k.def) === 0 ? '' : ' checked'}></label>`).join('');
     box.querySelectorAll('[data-notice]').forEach((el: any) => el.addEventListener('change', () => {
       const n = Object.assign({}, (G.settings && G.settings.notice) || {});
       n[el.dataset.notice] = el.checked ? 1 : 0;

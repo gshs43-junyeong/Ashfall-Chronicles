@@ -181,14 +181,15 @@ export const NetChatPart: Bag = {
     let prev: any = null;
     const html = log.map((l: any) => {
       const fade = open ? 1 : clamp((CHAT_FADE * 1000 - (now - l.t)) / 2000, 0, 1);
-      const st = fade < 1 ? `opacity:${fade.toFixed(2)};` : '';
-      if (l.sys) { prev = null; return `<div class="ch-line ch-sys${l.sys === 2 ? ' mine' : ''}" style="${st}"><b>${l.sys === 2 ? tr('알림') : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`; }
+      const age = now - l.t, nw = age < 420 ? ' new' : '', fd = fade < 1 ? ' fading' : '';
+      const st = (fade < 1 ? `opacity:${fade.toFixed(2)};` : '') + (nw ? `--age:${Math.round(age)};` : '');
+      if (l.sys) { prev = null; return `<div class="ch-line ch-sys${l.sys === 2 ? ' mine' : ''}${nw}${fd}" style="${st}"><b>${l.sys === 2 ? tr('알림') : escHtml(l.n)}</b> ${escHtml(l.s)}</div>`; }
       const me = l.n === meName, solo = soloEmoji(l.s);
       const cont = prev && prev.n === l.n && l.t - prev.t < 60000;                         // 한 사람이 잇달아 쓴 줄은 이름을 한 번만
       prev = l;
       let h = 0; for (const ch of l.n) h = (h * 31 + ch.charCodeAt(0)) | 0;
       const col = me ? 'var(--gold)' : CHAT_NAME_COL[Math.abs(h) % CHAT_NAME_COL.length];
-      return `<div class="ch-line${me ? ' me' : ''}${cont ? ' cont' : ''}${solo ? ' solo' : ''}" style="${st}--nc:${col}">` +
+      return `<div class="ch-line${me ? ' me' : ''}${cont ? ' cont' : ''}${solo ? ' solo' : ''}${nw}${fd}" style="${st}--nc:${col}">` +
         `<b>${escHtml(l.n)}</b><span class="ch-msg">${solo ? emojiHtml(solo, 40) : emojify(escHtml(l.s))}</span></div>`;
     }).join('');
     const el = $('#chat-log');

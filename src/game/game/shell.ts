@@ -3,6 +3,7 @@ import { mixin } from '../../engine/core/mixin.js';
 import { createSettingsStore } from '../../engine/save/settings.js';
 import { confirmBox, createModalStack } from '../../engine/ui/modal.js';
 import { tr } from '../lang.js';
+import { NOTICE_KINDS } from '../data/start.js';
 import { SET_DEFAULT } from '../data/values.js';
 import { Art } from '../itemart.js';
 import { $, UI } from '../ui.js';
@@ -87,8 +88,8 @@ export const ShellPart: Bag = {
   /* 설정에서 끈 갈래는 띄우지 않는다. */
   toast(m: any, k: any) {
     if (k && k !== 'bad') {
-      const n = this.settings && this.settings.notice;
-      if (n && n[k] === 0) return;
+      const n = (this.settings && this.settings.notice) || {}, kd = NOTICE_KINDS.find(q => q.id === k);
+      if ((n[k] ?? (kd ? kd.def : 1)) === 0) return;
     }
     UI.toast(m, k);
     if (this.net && this.noteLine) this.noteLine('', m, true);   // 함께하는 판 — 내 알림은 모두 채팅 기록에도

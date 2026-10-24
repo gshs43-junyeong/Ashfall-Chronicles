@@ -934,14 +934,38 @@ body.q-low .dlg-main,body.q-low .dlg-portrait.talk,body.q-low #dialogue.open .dl
   background:#d89cf0;box-shadow:0 0 10px #c86ce899}
 
 #toasts{position:absolute;left:50%;transform:translateX(-50%);top:120px;display:flex;flex-direction:column;
-  align-items:center;gap:6px;pointer-events:none}
-.toast{background:#0e0d0ae8;border:1px solid var(--frame);border-left:2px solid var(--gold);
-  padding:8px 16px;border-radius:2px;font-size:12.5px;animation:tin .3s ease-out;box-shadow:0 6px 24px #000a}
-.toast.good{border-left-color:#5fc45f}.toast.bad{border-left-color:#c8433c}
+  align-items:center;gap:2px;pointer-events:none}
+/* 알림 — 상자 없이(사용자 결정): 글 + 가운데에서 양옆으로 그어져 끝이 사라지는 금빛 실선 + 갈래 색 마름모 하나.
+   읽히게 하는 것은 글 그림자와 위아래로도 흐려지는 옅은 띠뿐(가장자리가 보이지 않는다) */
+.toast{--tk:#d8a94b;position:relative;display:flex;align-items:center;gap:9px;padding:6px 40px 8px;font-size:13px;letter-spacing:.03em;color:#f4ecd8;
+  max-height:80px;overflow:visible;text-shadow:0 1px 2px #000,0 0 12px #000;
+  background:radial-gradient(50% 60% at 50% 50%,#0a090766,transparent);
+  animation:tin .55s cubic-bezier(.16,1,.3,1) both}
+.toast::before{content:'';flex:none;width:6px;height:6px;background:var(--tk);transform:rotate(45deg);box-shadow:0 0 8px var(--tk);
+  animation:tgem .6s cubic-bezier(.2,1.6,.4,1) both}
+.toast::after{content:'';position:absolute;left:12%;right:12%;bottom:2px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--tk) 30%,#fff2c8 50%,var(--tk) 70%,transparent);opacity:.7;
+  transform:scaleX(0);animation:tline .7s .08s cubic-bezier(.16,1,.3,1) forwards}
+.toast.good{--tk:#7fd27a}.toast.bad{--tk:#e0584e;color:#ffe0d8}.toast.quest{--tk:#8fc8e8}.toast.craft{--tk:#e0b070}
+.toast.loot{--tk:#b8ab8a;font-size:12px}
+.toast.bad{animation:tin .55s cubic-bezier(.16,1,.3,1) both,tshake .32s .1s}
+.toast.bump::before{animation:tgem .4s cubic-bezier(.2,1.6,.4,1)}
+.toast.bump{animation:tbump .28s ease-out}
+.toast.out{animation:tout .4s ease-in forwards}
+.toast.out::after{animation:tlineout .3s ease-in forwards}
 /* 패널이 열려 있으면 알림이 패널 내용(스탯·탭 줄)을 덮는다 — 화면 맨 위로 올리고 가장 새 것 하나만 */
 #app:has(.panel.open) #toasts{top:8px}
 #app:has(.panel.open) #toasts .toast:not(:last-child){display:none}
-@keyframes tin{from{opacity:0;transform:translateY(-10px)}}
+@keyframes tin{0%{opacity:0;transform:translateY(-8px);max-height:0;padding-block:0;margin-top:-2px;filter:blur(4px);letter-spacing:.22em}
+  45%{max-height:80px;padding-block:6px 8px;margin-top:0}100%{opacity:1;transform:none;filter:none;letter-spacing:.03em}}
+@keyframes tout{0%{opacity:1;transform:none;filter:none}60%{opacity:0;transform:translateY(-6px);filter:blur(3px);max-height:80px;padding-block:6px 8px;margin-top:0}
+  100%{opacity:0;transform:translateY(-8px);max-height:0;padding-block:0;margin-top:-2px}}
+@keyframes tbump{0%{transform:scale(1)}35%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes tgem{0%{transform:rotate(-135deg) scale(0);opacity:0}100%{transform:rotate(45deg) scale(1);opacity:1}}
+@keyframes tline{to{transform:scaleX(1)}}
+@keyframes tlineout{from{transform:scaleX(1)}to{transform:scaleX(0);opacity:0}}
+@keyframes tshake{20%{transform:translateX(-4px)}45%{transform:translateX(3px)}70%{transform:translateX(-2px)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.toast,.toast.out,.toast.bump,.ch-line.new,#chat.open{animation-duration:.01s}}
 
 #tooltip{position:absolute;display:none;width:270px;background:#0b0a07f5;border:1px solid var(--frame);
   border-radius:4px;padding:11px 13px;font-size:12px;line-height:1.65;pointer-events:none;z-index:99;
@@ -1544,24 +1568,36 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .pt-hp{grid-column:1/-1;height:3px;background:#2a1412;border-radius:2px;overflow:hidden}
 .pt-hp i{display:block;height:100%;background:#b8433c}
 /* 채팅 — 핫바 위 왼쪽. HUD 는 클릭을 안 받으니 연 창만 받는다 */
-#chat{position:absolute;left:14px;bottom:96px;width:400px;max-width:calc(100% - 28px);display:flex;flex-direction:column}
+#chat{position:absolute;left:14px;bottom:96px;width:400px;max-width:calc(100% - 28px);display:flex;flex-direction:column;border:1px solid transparent;border-radius:5px;
+  background-color:transparent;transition:background-color .25s,border-color .25s,box-shadow .25s}
 #chat-head{display:none}
 /* 연 채팅 — 다른 창과 같은 틀(테 · 짙은 갈색 판 · 금빛 제목 띠) */
-#chat.open{pointer-events:auto;border:1px solid var(--frame);border-radius:5px;background:linear-gradient(#16150ff0,#0e0d0af0);
-  box-shadow:0 14px 40px #000c,0 0 0 1px #000 inset;overflow:hidden}
-#chat.open #chat-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:6px 10px;background:#100f0b;border-bottom:1px solid var(--frame)}
+/* 연 채팅도 틀 없이 — 왼쪽에서 번지는 그늘 판(테두리 · 제목 띠 없음) */
+#chat.open{pointer-events:auto;background-color:#0d0c09c8;border-radius:10px;
+  box-shadow:0 0 40px 10px #0d0c09a0;overflow:hidden;animation:chOpen .24s cubic-bezier(.2,1.2,.4,1);transform-origin:0 100%}
+#chat.open #chat-head,#chat.open #chat-row{animation:chPart .3s ease-out both}
+#chat.open #chat-row{animation-delay:.05s}
+@keyframes chOpen{from{transform:scale(.96) translateY(6px)}}
+@keyframes chPart{from{opacity:0;transform:translateY(4px)}}
+#chat.open #chat-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:8px 10px 2px}
 .ch-title{color:var(--gold);font-size:12px;font-weight:600;letter-spacing:.06em}
 .ch-hint{color:#77715f;font-size:10.5px;white-space:nowrap}
 #chat-log{display:flex;flex-direction:column;gap:2px}
 #chat.open #chat-log{max-height:min(210px,34vh);overflow-y:auto;padding:6px 8px 4px;gap:1px;scrollbar-width:thin;scrollbar-color:#3b3527 transparent}
 #chat-log::-webkit-scrollbar{width:6px}#chat-log::-webkit-scrollbar-thumb{background:#3b3527;border-radius:3px}
 /* 한 줄 — 이름은 사람마다 고정 색(--nc), 내 줄은 금빛 · 잇단 줄은 이름을 감춘다 */
-.ch-line{display:flex;align-items:flex-start;gap:6px;background:#0b0a08c8;border:1px solid #2a2618b0;border-radius:3px;padding:2px 8px;
-  font-size:12.5px;line-height:20px;color:#e0d8c0;width:fit-content;max-width:100%;text-shadow:0 1px 1px #000;transition:opacity .25s}
+/* 닫힌 채팅 줄 — 상자 없이 글만(그늘은 가장자리 없이 번진다) */
+.ch-line{display:flex;align-items:flex-start;gap:6px;background:linear-gradient(90deg,#0b0a08a0,#0b0a0850 70%,transparent);border:0;border-radius:0;padding:1px 24px 1px 8px;
+  font-size:12.5px;line-height:20px;color:#e8e0c8;width:fit-content;max-width:100%;text-shadow:0 1px 2px #000,0 0 8px #000a;transition:opacity .25s linear,transform .6s ease-out}
+/* 새 줄 — 왼쪽에서 미끄러져 들어오며 펴진다. 줄은 다시 그려지므로 지난 시간만큼 음수 지연(--age)으로 이어 간다 */
+.ch-line.new{animation:chIn .38s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--age,0) * -1ms)}
+.ch-line.fading{transform:translateY(-3px)}
+@keyframes chIn{from{opacity:0;transform:translateX(-14px) scale(.96);filter:blur(1.5px)}60%{filter:none}}
+#chat-emos:not([hidden]){animation:chPart .2s ease-out}
 .ch-line b{color:var(--nc,var(--gold));font-weight:600;flex:none;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
 .ch-msg{min-width:0;overflow-wrap:anywhere}
 .ch-line.cont b{visibility:hidden}
-#chat.open .ch-line{background:transparent;border-color:transparent;padding:1px 4px;width:auto}
+#chat.open .ch-line{background:transparent;padding:1px 4px;width:auto}
 #chat.open .ch-line:hover{background:#ffffff08}
 #chat.open .ch-line.me{background:#d8a94b0d}
 .ch-line.solo{align-items:center}
@@ -1571,18 +1607,17 @@ body.hide-clock #clock-box,body.hide-hotbar #hotbar{display:none!important}
 .ch-line.ch-sys b{color:#8fc8e8;font-style:normal;margin-right:4px}
 .ch-line.ch-sys.mine{color:#a8a08a}
 .ch-line.ch-sys.mine b{color:#7a7462}
-#chat.open .ch-line.ch-sys{border-left:2px solid #4a6878;border-radius:0;padding-left:6px;margin:2px 0}
-#chat.open .ch-line.ch-sys.mine{border-left-color:#4a4434}
+#chat.open .ch-line.ch-sys{margin:1px 0}
 #tabbar .tb-badge{position:absolute;top:-5px;left:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#c8433c;
   color:#fff;font:700 10px/16px sans-serif;font-style:normal;text-align:center;box-shadow:0 0 0 2px #0e0d0a;animation:tbGot .6s}
 #chat-row{display:flex;gap:6px;padding:6px 8px 8px}
 #chat:not(.open) #chat-row{display:none}
-#chat-input{pointer-events:auto;flex:1;min-width:0;padding:6px 9px;border-radius:3px;background:#0c0b08;
-  border:1px solid var(--frame);color:var(--ink);font-family:inherit;font-size:12.5px}
-#chat-input:focus{outline:none;border-color:var(--gold)}
-#chat-emo{pointer-events:auto;flex:none;width:34px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:3px;
-  background:linear-gradient(#2a2a22,#171612);border:1px solid var(--frame);cursor:pointer}
-#chat-emo:hover,#chat-emo.on{border-color:var(--gold)}
+#chat-input{pointer-events:auto;flex:1;min-width:0;padding:6px 9px;border-radius:14px;background:#00000066;
+  border:1px solid transparent;color:var(--ink);font-family:inherit;font-size:12.5px}
+#chat-input:focus{outline:none;border-color:#d8a94b66;box-shadow:0 0 12px #d8a94b22}
+#chat-emo{pointer-events:auto;flex:none;width:34px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:#00000066;border:1px solid transparent;cursor:pointer}
+#chat-emo:hover,#chat-emo.on{border-color:#d8a94b88}
 /* 그림말 판 — 입력 줄 바로 위 · 갈래 탭 · 이름 줄 */
 #chat-emos{pointer-events:auto;margin:0 8px;border:1px solid var(--frame);border-radius:4px;background:#0c0b08;overflow:hidden}
 #chat-emos[hidden],#chat[hidden],#chat-emo[hidden],#chat-input[hidden]{display:none}

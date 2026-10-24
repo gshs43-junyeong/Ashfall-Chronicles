@@ -4850,6 +4850,7 @@
   "BOSS_MOVES.blight_maw.moves.6.n": "壁を伝う胆汁",
   "BOSS_MOVES.blight_maw.ult.n": "巣の開花",
   "BOSS_LINES.blight_maw.1": "巣が身震いする — 閉じた巣房ごとに何かがうごめく。",
-  "BOSS_LINES.blight_maw.2": "膿んだ壁が裂ける。母がさらに速く這い回る。"
+  "BOSS_LINES.blight_maw.2": "膿んだ壁が裂ける。母がさらに速く這い回る。",
+  "NOTICE_KINDS.4.n": "アイテム入手"
  }
 }

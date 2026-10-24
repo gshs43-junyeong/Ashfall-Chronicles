@@ -4850,6 +4850,7 @@
   "BOSS_MOVES.blight_maw.moves.6.n": "沿墙而下的胆汁",
   "BOSS_MOVES.blight_maw.ult.n": "巢穴绽放",
   "BOSS_LINES.blight_maw.1": "蜂巢一阵颤抖——每个封闭的巢室里都有东西在蠕动。",
-  "BOSS_LINES.blight_maw.2": "溃烂的巢壁破裂了。巢母爬得更快了。"
+  "BOSS_LINES.blight_maw.2": "溃烂的巢壁破裂了。巢母爬得更快了。",
+  "NOTICE_KINDS.4.n": "获得物品"
  }
 }

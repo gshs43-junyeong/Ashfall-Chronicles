@@ -4850,6 +4850,7 @@
   "BOSS_MOVES.blight_maw.moves.6.n": "Bile Down the Walls",
   "BOSS_MOVES.blight_maw.ult.n": "Nest in Bloom",
   "BOSS_LINES.blight_maw.1": "The hive shudders — something writhes behind every sealed cell.",
-  "BOSS_LINES.blight_maw.2": "The festering wall bursts. The mother crawls faster."
+  "BOSS_LINES.blight_maw.2": "The festering wall bursts. The mother crawls faster.",
+  "NOTICE_KINDS.4.n": "Item pickups"
  }
 }

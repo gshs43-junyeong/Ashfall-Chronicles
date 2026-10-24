@@ -4850,6 +4850,7 @@
   "BOSS_MOVES.blight_maw.moves.6.n": "Bilis por las paredes",
   "BOSS_MOVES.blight_maw.ult.n": "El nido florece",
   "BOSS_LINES.blight_maw.1": "La colmena se estremece: algo se retuerce tras cada celda sellada.",
-  "BOSS_LINES.blight_maw.2": "La pared purulenta revienta. La madre se arrastra más rápido."
+  "BOSS_LINES.blight_maw.2": "La pared purulenta revienta. La madre se arrastra más rápido.",
+  "NOTICE_KINDS.4.n": "Objetos obtenidos"
  }
 }

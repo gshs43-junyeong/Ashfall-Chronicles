@@ -195,7 +195,7 @@ export const ProgressPart: Bag = {
   },
   onPickup(it: Bag) {
     this.sfx('pickup', 0.94 + Math.random() * 0.12);   // 떨어진 물건 줍기 — 연달아 주워도 똑같이 안 들리게 음높이를 조금씩
-    if (it && idef(it).type !== 'block' && idef(it).type !== 'mat') this.toast(tr('{itemName} 획득', { itemName: itemName(it) }), 'good');
+    if (it && idef(it).type !== 'block' && idef(it).type !== 'mat') this.toast(tr('{itemName} 획득', { itemName: itemName(it) }), 'loot');
     UI.refreshBag();
   },
 

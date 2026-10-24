@@ -136,5 +136,7 @@ export const NOTICE_KINDS = [
   { id: 'good', n: '획득 · 성공', def: 1 },
   { id: 'info', n: '안내 · 발견', def: 1 },
   { id: 'quest', n: '목표 진행', def: 1 },
-  { id: 'craft', n: '제작 · 설치', def: 1 }
+  { id: 'craft', n: '제작 · 설치', def: 1 },
+  /* ★ 새 갈래는 맨 끝에(번역 열쇠가 번호) · 주운 물건 알림은 기본으로 끈다(사용자 결정 — 캘 때마다 화면을 덮었다) */
+  { id: 'loot', n: '아이템 획득', def: 0 }
 ];

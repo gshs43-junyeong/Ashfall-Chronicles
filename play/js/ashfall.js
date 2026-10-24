@@ -6988,7 +6988,9 @@
     { id: "good", n: "획득 · 성공", def: 1 },
     { id: "info", n: "안내 · 발견", def: 1 },
     { id: "quest", n: "목표 진행", def: 1 },
-    { id: "craft", n: "제작 · 설치", def: 1 }
+    { id: "craft", n: "제작 · 설치", def: 1 },
+    /* ★ 새 갈래는 맨 끝에(번역 열쇠가 번호) · 주운 물건 알림은 기본으로 끈다(사용자 결정 — 캘 때마다 화면을 덮었다) */
+    { id: "loot", n: "아이템 획득", def: 0 }
   ];
 
   // src/game/data/enemies.ts
@@ -43280,7 +43282,7 @@
       const box = $("#set-notices");
       if (!box) return;
       const off = app.settings && app.settings.notice || {};
-      box.innerHTML = NOTICE_KINDS.map((k) => `<label class="set-row chk"><span>${k.n}</span><input type="checkbox" data-notice="${k.id}"${off[k.id] === 0 ? "" : " checked"}></label>`).join("");
+      box.innerHTML = NOTICE_KINDS.map((k) => `<label class="set-row chk"><span>${k.n}</span><input type="checkbox" data-notice="${k.id}"${(off[k.id] ?? k.def) === 0 ? "" : " checked"}></label>`).join("");
       box.querySelectorAll("[data-notice]").forEach((el) => el.addEventListener("change", () => {
         const n = Object.assign({}, app.settings && app.settings.notice || {});
         n[el.dataset.notice] = el.checked ? 1 : 0;
@@ -53631,8 +53633,8 @@
     /* 설정에서 끈 갈래는 띄우지 않는다. */
     toast(m, k) {
       if (k && k !== "bad") {
-        const n = this.settings && this.settings.notice;
-        if (n && n[k] === 0) return;
+        const n = this.settings && this.settings.notice || {}, kd = NOTICE_KINDS.find((q) => q.id === k);
+        if ((n[k] ?? (kd ? kd.def : 1)) === 0) return;
       }
       UI5.toast(m, k);
       if (this.net && this.noteLine) this.noteLine("", m, true);
@@ -68832,7 +68834,7 @@
     },
     onPickup(it) {
       this.sfx("pickup", 0.94 + Math.random() * 0.12);
-      if (it && idef(it).type !== "block" && idef(it).type !== "mat") this.toast(tr("{itemName} 획득", { itemName: itemName(it) }), "good");
+      if (it && idef(it).type !== "block" && idef(it).type !== "mat") this.toast(tr("{itemName} 획득", { itemName: itemName(it) }), "loot");
       UI5.refreshBag();
     },
     /* ---- 길잡이 ---- */
