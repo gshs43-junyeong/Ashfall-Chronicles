@@ -63,15 +63,16 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'homing', n: '구전', tele: 0.6, cnt: 4, spd: 220, turn: 2.4, proj: 'bolt', m: 0.5, ph: 1, pw: [0, 1.2, 1] },
     { k: 'shield', n: '폭풍의 눈', tele: 0.7, v: 0.12, life: 10, fx: 'wind', ph: 2, pw: [0, 0, 1.3] }],
     ult: { k: 'wall', n: '천둥 벽', tele: 1, times: 3, spd: 300, gap: 110, every: 1.4, fx: 'bolt', m: 0.8 } },
-  first_keeper: { c: '#e8d8a0', every: 6.5, moves: [
-    { k: 'march', n: '룬 기둥', tele: 0.6, cnt: 8, gap: 58, every: 0.14, h: 120, both: 1, fx: 'rune', m: 0.9 },
-    { k: 'beam', n: '파수 광선', tele: 0.8, cnt: 3, spread: 0.5, dur: 1.2, w: 22, len: 820, sweep: 0, fx: 'rune', m: 0.45 },
-    { k: 'rain', n: '봉인 지뢰', tele: 0.5, form: 'scatter', cnt: 6, spread: 420, delay: 2.2, r: 52, shape: 'circle', fx: 'rune', m: 1 },
-    { k: 'sig', sig: 'scales', n: '판결의 저울', tele: 0.8, pose: 0, m: 1 },
+  /* 판결석 좌상 — 신전 뒷벽 벽감의 눈 가린 재판관. 저울은 머문 쪽으로 기울고 · 석판은 광선을 막는다(entity/boss-judge) */
+  first_keeper: { c: '#e8d8a0', every: 6, moves: [
+    { k: 'sig', sig: 'verdict', n: '판결', tele: 0.4, m: 1 },
+    { k: 'sig', sig: 'tablets', n: '증언 석판', tele: 0.3, cnt: 2, m: 1 },
+    { k: 'sig', sig: 'gavel', n: '판결의 손', tele: 0.3, m: 1 },
     { k: 'homing', n: '룬 추적탄', tele: 0.6, cnt: 5, spd: 200, turn: 2, proj: 'rune', m: 0.55, pw: [1, 1, 1] },
-    { k: 'ward', n: '판결의 결계', tele: 0.8, hits: 14, life: 10, fx: 'rune', ph: 1, pw: [0, 1, 1.2] },
-    { k: 'blink', n: '파수 강림', tele: 0.3, times: 2, r: 90, fx: 'slash', m: 1, ph: 2, pw: [0, 0, 1.3] }],
-    ult: { k: 'ring', n: '최초의 판결', tele: 1.2, times: 4, cnt: 26, gap: 4, spd: 260, every: 0.5, proj: 'rune', march: 1, m: 0.6 } },
+    { k: 'sig', sig: 'condemn', n: '단죄의 눈', tele: 0.3, cnt: 3, m: 0.9, ph: 1, pw: [0, 1.4, 1.2] },
+    { k: 'sig', sig: 'tablets', n: '증언이 쏟아진다', tele: 0.3, cnt: 3, m: 1, ph: 2, pw: [0, 0, 1] },
+    { k: 'sig', sig: 'verdict', n: '거듭된 판결', tele: 0.3, weigh: 1.8, m: 1.1, ph: 2, pw: [0, 0, 1.2] }],
+    ult: { k: 'sig', sig: 'sentence', n: '최초의 선고', tele: 1, m: 1 } },
   pursuer: { c: '#b48aff', every: 5.5, moves: [
     { k: 'rain', n: '별똥 추격', tele: 0.6, form: 'trail', cnt: 8, every: 0.22, delay: 0.75, r: 48, shape: 'circle', fx: 'meteor', m: 1 },
     { k: 'dash', n: '그림자 질주', tele: 0.4, times: 4, spd: 3.6, m: 1 },
@@ -226,7 +227,7 @@ export const XFX_OF: Record<string, string> = { rune: 'rune', fire: 'fire', fros
    stagger 비틀거림(무거운 몸 — 멈춰 선다) · heat 과열(마법 · 원소 — 느려진다) · crack 균열(갑옷 · 껍데기 — 방어가 벌어진다). 사연: docs/code-history.md#h181 */
 /** 깨어날 때 넓혀 둘 싸움터(칸 — 너비 · 바닥에서 높이) — 몸 그림이 바위에 묻히지 않게(game/boss-arena) */
 export const BOSS_ARENA: Record<string, { w: number; h: number }> = {
-  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }
+  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }, first_keeper: { w: 58, h: 26 }
 };
 export const BOSS_GAP: Record<string, string> = {
   king_slime: 'stagger', bone_lord: 'stagger', first_keeper: 'stagger', pursuer: 'stagger', mine_horror: 'stagger', ice_warden: 'stagger',

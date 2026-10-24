@@ -68,6 +68,7 @@ export const BossSigPart: Bag = {
       case 'chang': case 'chusk': case 'cswing': case 'cthread': case 'cgust': case 'cscale': case 'cdive': case 'cdark': return this.cocoonHz(h, dt, host, me);   // 잿빛 고치(game/boss-cocoon-fx)
       case 'hfist': case 'hsand': case 'hpit': case 'hdead': case 'hflip': return this.hourglassHz(h, dt, host, me);   // 모래시계 거상(game/boss-hourglass-fx)
       case 'hvmove': case 'hvbrood': case 'hvbile': case 'hvspit': case 'hvbloom': return this.hiveHz(h, dt, host, me);   // 곪은 벌집 어미(game/boss-hive-fx)
+      case 'jverdict': case 'jtab': case 'jgavel': case 'jeye': return this.judgeHz(h, dt, host, me);   // 판결석 좌상(game/boss-judge-fx)
       case 'pulse': case 'veil': case 'rod': case 'rail': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로
         h.fired = 1;

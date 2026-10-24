@@ -123,6 +123,10 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   /* 곪은 벌집 어미 — 젖은 살 · 거품 · 밀랍이 깨지는 소리를 낮춰 빌린다 */
   hive_crawl: ['mat_flesh', .55, .6], hive_pop: ['bubble', .6, .8], hive_bulge: ['mat_flesh', .7, .7], hive_crack: ['mat_wood', .8, 1.1],
   hive_ooze: ['bubble', .5, .8], hive_splash: ['splash', .6, .9], hive_hiss: ['sk_smoke', .8, .7], hive_spit: ['splash', 1.1, .7], hive_roar: ['chapter', .4, 1],
+  /* 판결석 좌상 — 돌이 갈리는 낮은 소리 · 금속 저울 · 빛줄기는 마법 소리를 늘여 빌린다 */
+  jd_weigh: ['door_open', .4, .7], jd_verdict: ['boom_small', .45, 1.1], jd_tablet: ['mat_stone', .5, .9], jd_slam: ['mat_stone', .6, 1.2],
+  jd_lift: ['door_open', .45, .8], jd_gavel: ['boom_small', .5, 1.2], jd_eye: ['magic', .5, .7], jd_beam: ['magic', .7, 1],
+  jd_sentence: ['chapter', .45, .9], jd_tear: ['mat_glass', .6, 1.2],
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],

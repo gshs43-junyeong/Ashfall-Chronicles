@@ -246,7 +246,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
 
   storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 117, def: 38, spd: 150, ai: 'b_storm', w: 132, h: 140, c: '#bcd8f0', xp: 6500, gold: 8000, boss: 1,
                  drops: [['sky_feather', 1, 30, 50], ['aether_shard', 1, 20, 35], ['charm_feather', 1, 1, 1], ['star_heart', 1, 1, 1]] },
-  first_keeper: { n: '최초의 파수꾼', cw: '기', hp: 20000, dmg: 120, def: 52, spd: 96, ai: 'b_keeper', w: 64, h: 86, c: '#c8b98a', xp: 8600, gold: 20000, boss: 1,
+  first_keeper: { n: '최초의 파수꾼 · 판결석 좌상', cw: '기', hp: 20000, dmg: 120, def: 52, spd: 0, ai: 'b_judge', w: 120, h: 200, wall: 1, ph: 3, c: '#c8b98a', xp: 8600, gold: 20000, boss: 1,
                  minion: 'ruin_guard',
                  drops: [['aether_shard', 1, 40, 60], ['ruin_brick', 1, 40, 70], ['charm_rune', 1, 1, 1], ['star_heart', 1, 2, 2]] },
 

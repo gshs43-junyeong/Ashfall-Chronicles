@@ -160,6 +160,7 @@ export const BossSigArtPart: Bag = {
       case 'chang': case 'chusk': case 'cswing': case 'cthread': case 'cgust': case 'cscale': case 'cdive': case 'cdark': return this.cocoonTell(c, h, cx0, cy0);   // 잿빛 고치(game/boss-cocoon-art)
       case 'hfist': case 'hsand': case 'hpit': case 'hdead': case 'hflip': return this.hourglassTell(c, h, cx0, cy0);   // 모래시계 거상(game/boss-hourglass-art)
       case 'hvmove': case 'hvbrood': case 'hvbile': case 'hvspit': case 'hvbloom': return this.hiveTell(c, h, cx0, cy0);   // 곪은 벌집 어미(game/boss-hive-art)
+      case 'jverdict': case 'jtab': case 'jgavel': case 'jeye': return this.judgeTell(c, h, cx0, cy0);   // 판결석 좌상(game/boss-judge-art)
       case 'pulse': {                                                  // 박동 — 뛸 때마다 심장 둘레가 확 부푼다
         if (!b) return true;
         const u = (h.t % h.every) / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);

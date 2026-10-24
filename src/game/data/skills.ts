@@ -54,7 +54,7 @@ export const BOSS_SURGE: Bag = {
   restorer:    { k: 'mend', t: 2.0, cd: 22,         v: .03, brk: .035, c: '#a8c8e8', s: 'sk_heal',  n: '되돌리려 한다' }
 };
 /* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. */
-export const SURGE_FLY: Record<string, number> = { b_organ: 1, b_cocoon: 1, b_hourglass: 1, b_hive: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+export const SURGE_FLY: Record<string, number> = { b_organ: 1, b_cocoon: 1, b_hourglass: 1, b_hive: 1, b_judge: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
 
 /* ---------------- 스킬 / 특성 ---------------- */
 export const SKILLS: Record<string, SkillDef> = {
@@ -274,7 +274,7 @@ export const BOSS_LINES: Bag = {
   frost_witch:  { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
   void_king:    { 1: '나선이 되감긴다.', 2: '공허가 방향을 바꾼다.' },
   storm_warden: { 1: '구름이 낮아진다.', 2: '내리꽂을 때만, 닿는다.' },
-  first_keeper: { 1: '석판 하나가 꺼진다.', 2: '꺼진 쪽이 무르다.' },
+  first_keeper: { 1: '눈가리개에 금이 간다 — 그 틈으로 무언가 내다본다.', 2: '가리개가 찢긴다. 외눈이 뜬다.' },
   pursuer:      { 1: '형태가 무너지고 다시 선다.', 2: '한 줄기 길만 비어 있다.',
                   3: '쫓던 것을 잊은 얼굴이다.', 4: '별을 놓친 자리가 비어 있다.' },
   overseer:     { 1: '관리자: "공정 재개."', 2: '관리자: "…명령이 남아 있다."' },

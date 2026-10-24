@@ -850,6 +850,177 @@ def hive_parts(f):
     return F.render()
 
 
+# ===== 판결석 좌상(first_keeper 자리) — 신전 뒷벽 벽감에 앉은 눈 가린 재판관 석상, 한 손에 저울 · 한 손은 몸짓 =====
+MARB, MARB_D, MARB_L = '#bdb5a0', '#77705e', '#e2dccb'        # 대리석 · 그늘 · 빛 받는 면
+ROBE, ROBE_D = '#9a9484', '#5e5a4e'                           # 옷 주름 돌
+GILT, GILT_D, RUNE = '#d8b04a', '#7a5a1e', '#fff0b0'          # 금박 · 그늘 · 룬 빛
+JD_W, JD_H = 96, 112                                          # 게임 entity/boss-judge.ts JD 와 같게
+
+
+def judge_head(F, cx, hy, st, fall=0):
+    """머리 — 뾰족한 두건 · 고요한 얼굴 · 금 눈가리개(st 1 금 · st 2 찢어져 늘어지고 외눈이 뜬다). 목 축 (cx, hy + 14)"""
+    F.part('stone', ROBE_D, bevel=3).poly([(cx - 17, hy + 17), (cx - 14, hy + 8), (cx - 13, hy - 2), (cx - 7, hy - 13), (cx, hy - 17), (cx + 7, hy - 13), (cx + 13, hy - 2), (cx + 14, hy + 8), (cx + 17, hy + 17), (cx + 8, hy + 15), (cx - 8, hy + 15)])
+    F.part('stone', ROBE, bevel=2).poly([(cx - 14, hy + 15), (cx - 11, hy + 7), (cx - 11, hy - 1), (cx - 6, hy - 11), (cx, hy - 15), (cx + 6, hy - 11), (cx + 11, hy - 1), (cx + 11, hy + 7), (cx + 14, hy + 15), (cx + 6, hy + 13), (cx - 6, hy + 13)])
+    F.part('stone', MARB, bevel=3).poly([(cx - 8, hy - 7), (cx + 8, hy - 7), (cx + 9, hy + 4), (cx + 5, hy + 11), (cx - 5, hy + 11), (cx - 9, hy + 4)])
+    F.part('stone', MARB_L, bevel=1.5).poly([(cx - 7, hy - 6), (cx - 2, hy - 6), (cx - 3, hy + 2), (cx - 7, hy + 3)])
+    F.part('stone', MARB_D, bevel=1).box(cx - 0.8, hy - 1, 1.6, 6, 0.6)                 # 콧날
+    F.part('stone', MARB_D, bevel=0.6).box(cx - 3, hy + 7, 6, 1, 0.4)                   # 다문 입
+    if st < 2:                                                                          # 금 눈가리개 — 귀 뒤로 매듭
+        F.part('metal', GILT, bevel=1.2).poly([(cx - 10, hy - 4), (cx + 10, hy - 4), (cx + 10, hy + 1), (cx - 10, hy + 1)])
+        fine(F, (cx - 9, hy - 3.4), (cx + 9, hy - 3.4), '#fff0c0', 200)
+        for s2 in (-1, 1):
+            F.part('glow', RUNE, glow=True).ell(cx + s2 * 4, hy - 1.5, 1.2, 0.6)     # 천 너머로 비치는 눈빛
+        if st == 1:
+            crack(F, [(cx + 2, hy - 4), (cx + 3.5, hy - 1.5), (cx + 2.5, hy + 1)], 0.45, RUNE)
+    else:                                                                               # 찢어진 가리개 — 한쪽이 늘어지고 가운데 외눈
+        F.part('metal', GILT, bevel=1.2).poly([(cx - 10, hy - 4), (cx - 3, hy - 4), (cx - 4, hy + 1), (cx - 10, hy + 1)])
+        F.part('metal', GILT_D, bevel=1).poly([(cx + 3, hy - 4), (cx + 10, hy - 4), (cx + 9, hy + 9), (cx + 6, hy + 12), (cx + 5, hy + 2)])
+        F.part('stone', '#1c1812', bevel=0.8).ell(cx, hy - 1.5, 3.4, 2.4)
+        F.part('glow', RUNE, glow=True).ell(cx, hy - 1.5, 2.2, 1.6)
+        F.part('glow', '#ffffff', glow=True).ell(cx - 0.4, hy - 1.9, 0.8, 0.6)
+        F.glow(cx, hy - 1.5, 7, RUNE, 0.45)
+        crack(F, [(cx - 6, hy - 9), (cx - 4, hy - 4), (cx - 6.5, hy + 3), (cx - 4.5, hy + 9)], 0.45, RUNE)
+    F.part('metal', GILT, bevel=1).poly([(cx - 4, hy - 12), (cx, hy - 16.5), (cx + 4, hy - 12), (cx, hy - 10)])   # 이마의 저울 문장
+
+
+def judge_body(f):
+    """몸 시트 8장(96×112 설계 칸 · 바닥 109) — 0·1 멀쩡(가슴 문장이 숨 쉰다) · 2·3 금(금빛이 새는 금) · 4·5 깨진 어깨 · 무너지는 벽감 · 6·7 쓰러짐.
+       벽감(뒷벽에 판 아치) · 옥좌 · 앉은 몸(두건 망토 · 무릎 · 흘러내린 옷자락). 머리 · 팔 · 저울은 조각이라 게임이 움직인다"""
+    W, H = JD_W, JD_H
+    F = ZFig(W, H)
+    cx, base = 48, 109
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    fall = 0 if f < 6 else (4 if f == 6 else 10)
+    # 벽감 — 바깥 테(조각 띠) · 안의 깊은 그늘 · 아치 꼭대기 쐐기돌
+    arch = lambda r, top, n=28: [(cx - r, base)] + [(cx + math.cos(math.pi + k / n * math.pi) * r, top + r + math.sin(math.pi + k / n * math.pi) * r) for k in range(n + 1)] + [(cx + r, base)]
+    F.part('stone', MARB_D, bevel=4).poly(arch(46, 2))
+    F.part('stone', '#c9c1aa', bevel=3).poly(arch(43, 5))
+    F.part('stone', '#26221c', bevel=2).poly(arch(38, 10))
+    for k in range(9):                                                                  # 아치 테의 돌 마디
+        a = math.pi + (k + 0.5) / 9 * math.pi
+        x0, y0 = cx + math.cos(a) * 38, 48 + math.sin(a) * 38
+        x1, y1 = cx + math.cos(a) * 43, 48 + math.sin(a) * 43
+        fine(F, (x0, y0), (x1, y1), MARB_D, 230)
+    F.part('metal', GILT, bevel=2).poly([(cx - 5, 3), (cx + 5, 3), (cx + 3.5, 11), (cx - 3.5, 11)])
+    F.part('glow', RUNE, glow=True).ell(cx, 7, 1.4, 1.6)
+    # 옥좌 — 높은 등판(뾰족한 꼭대기) · 팔걸이
+    F.part('stone', '#4a4436', bevel=3).poly([(cx - 22, 88), (cx - 22, 30), (cx - 12, 18), (cx, 12), (cx + 12, 18), (cx + 22, 30), (cx + 22, 88)])
+    F.part('stone', '#5e5848', bevel=2).poly([(cx - 18, 86), (cx - 18, 31), (cx - 10, 21), (cx, 16), (cx + 10, 21), (cx + 18, 31), (cx + 18, 86)])
+    for s2 in (-1, 1):
+        F.part('stone', MARB_D, bevel=3).box(cx + s2 * 27 - 5, 62, 10, 28, 2)
+        F.part('stone', MARB, bevel=2).box(cx + s2 * 27 - 6, 59, 12, 5, 2)
+        F.part('metal', GILT, bevel=1).ell(cx + s2 * 27, 61.5, 1.8, 1.6)
+    # 계단 받침
+    F.part('stone', MARB_D, bevel=3).box(cx - 40, base - 8, 80, 8, 1)
+    F.part('stone', MARB, bevel=3).box(cx - 34, base - 14, 68, 7, 1)
+    fine(F, (cx - 33, base - 13.4), (cx + 33, base - 13.4), MARB_L, 220)
+    # 무릎과 옷자락 — 무릎 둘이 앞으로, 그 사이로 옷이 흘러 발등을 덮는다
+    for s2 in (-1, 1):
+        x = cx + s2 * 12
+        F.part('stone', ROBE, bevel=3).poly([(x - 9, 72 + fall * 0.4), (x + 9, 72 + fall * 0.4), (x + 9, base - 15), (x - 9, base - 15)])
+        F.part('stone', '#b2ac9c', bevel=3).ell(x, 72 + fall * 0.4, 9.5, 6.5)
+        F.part('stone', MARB_D, bevel=2).poly([(x - 8, base - 16), (x + 8, base - 16), (x + 9, base - 14), (x - 9, base - 14)])
+    F.part('stone', ROBE_D, bevel=2).poly([(cx - 4, 74), (cx + 4, 74), (cx + 6, base - 14), (cx - 6, base - 14)])
+    for k in range(7):                                                                  # 옷 주름 — 무릎에서 아래로 내리는 결
+        x = cx - 18 + k * 6
+        fine(F, (x, 79), (x + (k - 3) * 0.4, base - 16), ROBE_D, 200)
+    # 몸통 — 좁아지는 허리 · 두건 망토가 목에서 둥근 어깨로 흘러내려 팔꿈치까지 덮는다 · 가슴에 저울 문장(속불)
+    F.part('stone', ROBE, bevel=4).poly([(cx - 18, 40 + fall), (cx + 18, 40 + fall), (cx + 19, 54), (cx + 15, 72), (cx - 15, 72), (cx - 19, 54)])
+    F.part('stone', '#aaa494', bevel=2).poly([(cx - 6, 44 + fall), (cx + 6, 44 + fall), (cx + 4, 70), (cx - 4, 70)])        # 가운데 앞섶
+    for s2 in (-1, 1):
+        sh = [(cx + s2 * 5, 30 + fall)] + [(cx + s2 * (6 + 19 * math.sin(k / 8 * math.pi / 2)), 30 + fall + 12 * (1 - math.cos(k / 8 * math.pi / 2))) for k in range(1, 9)]
+        sh += [(cx + s2 * 26, 46 + fall), (cx + s2 * 24, 56), (cx + s2 * 17, 52), (cx + s2 * 12, 42 + fall)]
+        F.part('stone', ROBE_D, bevel=3).poly(sh)
+        F.part('stone', '#aaa494', bevel=1.5).poly([(cx + s2 * 7, 32 + fall), (cx + s2 * 15, 34 + fall), (cx + s2 * 13, 37 + fall), (cx + s2 * 8, 36 + fall)])
+        fine(F, (cx + s2 * 15, 39 + fall), (cx + s2 * 21, 51), ROBE, 200)
+    F.part('metal', GILT, bevel=1.5).box(cx - 18, 68, 36, 2.6, 1)                       # 허리띠
+    F.part('metal', GILT_D, bevel=2).ell(cx, 51 + fall * 0.6, 8.5, 8.5)                 # 가슴 문장 — 금 고리 · 그 안 룬
+    F.part('stone', '#2a2418', flat=True).ell(cx, 51 + fall * 0.6, 6.6, 6.6)
+    if f < 6:
+        lit = RUNE if b else '#f0d890'
+        F.part('glow', lit, glow=True).box(cx - 0.6, 46 + fall * 0.6, 1.2, 9, 0.3)
+        F.part('glow', lit, glow=True).box(cx - 4.5, 47.5, 9, 1.1, 0.3)
+        for s2 in (-1, 1):
+            F.part('glow', lit, glow=True).ell(cx + s2 * 3.6, 52.5, 1.6, 0.7)
+        F.glow(cx, 51, 9 + b * 2, RUNE, 0.3 + b * 0.1)
+    # 목 — 머리는 조각(0~2). 쓰러지는 장만 머리를 몸에 같이 그린다
+    F.part('stone', MARB_D, bevel=2).box(cx - 5, 30 + fall, 10, 8, 2)
+    if fall:
+        judge_head(F, cx, 20 + fall, 2)
+    if st >= 1:
+        crack(F, [(cx + 17, 40 + fall), (cx + 13, 48), (cx + 16, 57), (cx + 12, 66)], 0.5, RUNE)
+        crack(F, [(cx - 36, 30), (cx - 33, 40), (cx - 35, 50)], 0.45, RUNE)
+    if st >= 2:
+        crack(F, [(cx - 18, 44 + fall), (cx - 14, 54), (cx - 17, 62)], 0.5, RUNE)
+        crack(F, [(cx + 10, 76), (cx + 13, 86), (cx + 9, 94)], 0.45, RUNE)
+        crack(F, [(cx + 30, 14), (cx + 34, 24), (cx + 31, 34)], 0.45, RUNE)
+        for (x, y) in ((cx + 23, 37 + fall), (cx - 8, 82)):
+            F.part('stone', MARB_D, flat=True).ell(x, y, 3, 2.2)
+            fine(F, (x - 2.6, y - 1), (x + 2.6, y + 1), MARB_L, 220)
+    if fall:
+        for k in range(10):
+            x = cx - 38 + k * 7.8 + (k % 2) * 2
+            F.part('stone', MARB if k % 2 else MARB_D, bevel=2).poly([(x, base - 1), (x + 4, base - 6 - (k % 3) * 2), (x + 9, base - 3), (x + 8, base - 1)])
+    return F.render()
+
+
+def judge_parts(f):
+    """조각 11장(40×44 설계 칸) — 0~2 머리(목 축 (20, 34)) · 3 윗소매 · 4 아랫소매(가로 · 8→32) · 5 편 손바닥 · 6 가리키는 손 · 7 쥔 손(손목 (8, 22) · 손끝 +x)
+       · 8 저울대(가운데 (20, 22) · 양끝 고리) · 9 접시(가운데 (20, 22)) · 10 증언 석판(밑동 (20, 41))"""
+    F = ZFig(40, 44)
+    cx = 20
+    if f <= 2:
+        judge_head(F, cx, 20, f)
+    elif f in (3, 4):
+        r0, r1 = (7.5, 6.5) if f == 3 else (6.5, 5)
+        F.part('stone', ROBE, bevel=3).cap(8, 22, 32, 22, r0, r1)
+        F.part('stone', '#b2ac9c', bevel=2).cap(9, 19.5, 30, 20, r0 * 0.35, r1 * 0.3)
+        for k in range(3):
+            fine(F, (12 + k * 6, 22 + r0 * 0.6), (16 + k * 6, 22 - r0 * 0.4), ROBE_D, 200)
+        if f == 4:
+            F.part('metal', GILT, bevel=1.2).box(28, 22 - r1 - 0.5, 3, r1 * 2 + 1, 1)    # 소맷부리 금테
+    elif f == 5:                                                                        # 편 손바닥 — 손가락 넷이 +x 로 · 엄지는 위
+        F.part('stone', MARB, bevel=3).box(7, 16, 14, 12, 4)
+        for k in range(4):
+            F.part('stone', MARB_L if k % 2 else MARB, bevel=1.4).cap(20, 17.5 + k * 3, 31 - abs(k - 1.5), 17.5 + k * 3, 1.5, 1.3)
+        F.part('stone', MARB_D, bevel=1.4).cap(12, 16, 17, 10, 1.8, 1.5)
+        F.part('glow', RUNE, glow=True).ell(14, 22, 2.2, 2.2)                         # 손바닥의 룬
+    elif f == 6:                                                                        # 가리키는 손 — 검지만 뻗고 나머지는 말아 쥔다
+        F.part('stone', MARB, bevel=3).box(7, 16, 15, 13, 5)
+        F.part('stone', MARB_L, bevel=1.5).cap(20, 18, 34, 18, 1.6, 1.4)
+        for k in range(3):
+            F.part('stone', MARB_D, bevel=1).box(19, 21 + k * 2.6, 4, 2.4, 1)
+        F.part('stone', MARB_D, bevel=1.4).cap(12, 16, 17, 12, 1.8, 1.5)
+    elif f == 7:                                                                        # 쥔 손 — 저울 고리를 움켜쥔다
+        F.part('stone', MARB, bevel=4).box(7, 15, 16, 15, 6)
+        for k in range(4):
+            F.part('stone', MARB_L, bevel=2).box(19, 15.5 + k * 3.6, 5, 3.2, 1.4)
+        F.part('stone', MARB_D, bevel=2).box(8, 13, 7, 6, 2)
+    elif f == 8:                                                                        # 저울대 — 금 막대 · 가운데 고리와 바늘 · 양끝 갈고리
+        F.part('metal', GILT, bevel=1.6).box(2, 20.6, 36, 2.8, 1.2)
+        F.part('metal', GILT_D, bevel=1).box(2, 22.8, 36, 0.8, 0.3)
+        F.part('metal', GILT, bevel=1.6).ell(20, 22, 3.2, 3.2)
+        F.part('stone', '#2a2418', flat=True).ell(20, 22, 1.4, 1.4)
+        F.part('metal', GILT, bevel=1).poly([(19.2, 18.5), (20.8, 18.5), (20, 9)])       # 바늘(위로)
+        for x in (3, 37):
+            F.part('metal', GILT_D, bevel=1).ell(x, 24.5, 1.6, 1.6)
+        F.part('glow', RUNE, glow=True).ell(20, 22, 0.8, 0.8)
+    elif f == 9:                                                                        # 접시 — 얕은 금 대접 · 테 · 룬 한 자
+        F.part('metal', GILT_D, bevel=1.5).poly([(8, 21), (32, 21), (29, 26), (24, 28), (16, 28), (11, 26)])
+        F.part('metal', GILT, bevel=1.4).box(7, 19.6, 26, 2.2, 1)
+        fine(F, (8, 20.2), (32, 20.2), '#fff0c0', 210)
+        F.part('glow', RUNE, glow=True).box(19.4, 23, 1.2, 3, 0.3)
+    else:                                                                               # 증언 석판 — 둥근 머리 돌판 · 새긴 룬 줄
+        F.part('stone', MARB_D, bevel=3).poly([(11, 41), (11, 12), (14, 7), (20, 5), (26, 7), (29, 12), (29, 41)])
+        F.part('stone', MARB, bevel=2).poly([(13, 40), (13, 13), (15.5, 9), (20, 7.5), (24.5, 9), (27, 13), (27, 40)])
+        for k in range(6):
+            y = 14 + k * 4.2
+            F.part('glow', RUNE, glow=True).box(15.5, y, 9 - (k % 3) * 2, 1, 0.3)
+        F.glow(20, 24, 6, RUNE, 0.25)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -857,6 +1028,7 @@ RIGS = {
     'corrupt_heart': {'body': (46, 80, 8, 0, cocoon_body), 'parts': (100, 80, 14, moth_frame)},
     'sand_guardian': {'body': (84, 104, 8, 2, colossus_body), 'parts': (40, 44, 8, colossus_parts)},
     'blight_maw': {'body': (HIVE_W, HIVE_H, 8, 2, hive_body), 'parts': (40, 36, 5, hive_parts)},
+    'first_keeper': {'body': (JD_W, JD_H, 8, 2, judge_body), 'parts': (40, 44, 11, judge_parts)},
 }
 
 
