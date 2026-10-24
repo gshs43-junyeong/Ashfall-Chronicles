@@ -24,7 +24,7 @@ tells you about. The seventy-five achievements are split into eight groups and t
 
 > **v1.1.4 (2026-10-18)** — **rides** (horse, skiff, mine cart) · an osu!-style **fishing duel** · boss moves with **openings** to punish ·
 > rebuilt **ruins** with sealed-room puzzles and deeper floors · the **floating citadel** · new depth layers and caves · a talent web ·
-> wild horses, junk weapons, factory splitters · a new soundtrack. Full list: [`docs/update/v1.1.4-changelog.md`](docs/update/v1.1.4-changelog.md).
+> wild horses, junk weapons, factory splitters · a new soundtrack.
 > v1.1.3 redrew skill effects and set monsters on fire — [`docs/update/v1.1.3-changelog.md`](docs/update/v1.1.3-changelog.md).
 > v1.1.2 added **multiplayer** (2–4 players), monster skills, the **Ashfall** font and the **app edition** (Electron, unsigned) —
 > [`docs/update/v1.1.2-changelog.md`](docs/update/v1.1.2-changelog.md). v1.1.x saves open as they are.
@@ -131,7 +131,7 @@ git-ignored — edits there are lost on the next build. Release zips are not com
 |---|---|
 | [`README-ko.md`](README-ko.md) | This README in Korean |
 | [`docs/README.md`](docs/README.md) | **Documentation map** — what to read and where to start (Korean) |
-| [`docs/update/v1.1.4-changelog.md`](docs/update/v1.1.4-changelog.md) · [`docs/update/v1.1.3-changelog.md`](docs/update/v1.1.3-changelog.md) · [`docs/update/v1.1.2-changelog.md`](docs/update/v1.1.2-changelog.md) | **What v1.1.4, v1.1.3 and v1.1.2 add** (Korean: [`v1.1.4`](docs/update/v1.1.4-changelog.ko.md) · [`v1.1.3`](docs/update/v1.1.3-changelog.ko.md) · [`v1.1.2`](docs/update/v1.1.2-changelog.ko.md)) |
+| [`docs/update/v1.1.3-changelog.md`](docs/update/v1.1.3-changelog.md) · [`docs/update/v1.1.2-changelog.md`](docs/update/v1.1.2-changelog.md) | **What v1.1.3 and v1.1.2 add** (Korean: [`v1.1.3`](docs/update/v1.1.3-changelog.ko.md) · [`v1.1.2`](docs/update/v1.1.2-changelog.ko.md)) |
 | [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) · [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) | What v1.1.1 and v1.1.0 added (Korean) |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | Shared rules for adding chapters and sessions (Korean) |
 | [`docs/engine.md`](docs/engine.md) | The engine's public API and the engine-only sample game (Korean) |

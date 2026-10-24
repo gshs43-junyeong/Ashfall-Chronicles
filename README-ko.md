@@ -25,7 +25,7 @@
 
 > **v1.1.4 (2026-10-18)** — **탈 것**(말 · 조각배 · 광산 수레) · osu! 식 **낚시 겨루기** · 기술 뒤 **틈**을 보이는 보스 ·
 > 봉인 방 퍼즐과 깊은 층으로 다시 지은 **유적** · **부유 성채** · 새 깊이층과 동굴 · 그물 하나가 된 특성 트리 ·
-> 야생마 · 잡동사니 무기 · 공장 분기기 · 새 배경음악. 무엇이 들어갔는지는 [`docs/update/v1.1.4-changelog.ko.md`](docs/update/v1.1.4-changelog.ko.md) 에 있습니다.
+> 야생마 · 잡동사니 무기 · 공장 분기기 · 새 배경음악.
 > v1.1.3 에는 새로 그린 스킬 연출과 불붙는 몬스터가 들어왔습니다 — [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md).
 > v1.1.2 에는 **멀티플레이**(2~4명) · 몬스터 스킬 · 게임 글꼴 **Ashfall** · **앱으로 여는 판**(Electron, 서명 없음)이 들어왔습니다 —
 > [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md). v1.1.x 의 저장은 그대로 열립니다.
@@ -69,7 +69,7 @@
 | [`README.md`](README.md) | 영어 안내(이 문서의 영어판 — 영어가 먼저입니다) |
 | [`docs/about-copy.md`](docs/about-copy.md) | GitHub About · 소개 문구(한국어·영어)의 원본 |
 | [`docs/story-and-sessions.md`](docs/story-and-sessions.md) | **세션·장을 늘릴 때의 공용 규약** — 손대는 자리 목록과 지켜야 할 규칙. 세션 3 을 붙일 때 실제로 쓴 문서이고, 다음 세션도 여기서 시작합니다 |
-| [`docs/update/v1.1.4-changelog.ko.md`](docs/update/v1.1.4-changelog.ko.md) · [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) · [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md) | **v1.1.4 · v1.1.3 · v1.1.2 에 무엇이 들어갔는가**(릴리스 본문은 영어판 `docs/update/v<판>-changelog.md`) |
+| [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) · [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md) | **v1.1.3 · v1.1.2 에 무엇이 들어갔는가**(릴리스 본문은 영어판 `docs/update/v<판>-changelog.md`) |
 | [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) | v1.1.1 에 무엇이 들어갔는가 |
 | [`docs/debug-urls.md`](docs/debug-urls.md) | 구역 · 기능 앞에서 바로 시작하는 디버그 주소(영상 촬영용 `?debug=showcase` 포함) |
 | [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) | v1.1.0 에 무엇이 들어갔는가 |
@@ -235,4 +235,4 @@ Node 없이 **Docker 만으로**도 같은 일을 합니다:
 
 사이트와 웹 게임은 **같은 빌드를 두 곳에** 올립니다 — `ashfall-chronicles.vercel.app` 과 `ashfall-chronicles.pages.dev`(Cloudflare Pages).
 어느 쪽이든 같지만 저장은 주소마다 따로라, 옮겨 가려면 **설정 → 저장 내보내기 / 가져오기**를 쓰세요.
-v1.1.4 · v1.1.3 · v1.1.2 · v1.1.1 · v1.1.0 의 전체 목록은 [`docs/update/v1.1.4-changelog.ko.md`](docs/update/v1.1.4-changelog.ko.md) · [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) · [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md) · [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) · [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) 에 있습니다.
+v1.1.3 · v1.1.2 · v1.1.1 · v1.1.0 의 전체 목록은 [`docs/update/v1.1.3-changelog.ko.md`](docs/update/v1.1.3-changelog.ko.md) · [`docs/update/v1.1.2-changelog.ko.md`](docs/update/v1.1.2-changelog.ko.md) · [`docs/update/v1.1.1-changelog.md`](docs/update/v1.1.1-changelog.md) · [`docs/update/v1.1-changelog.md`](docs/update/v1.1-changelog.md) 에 있습니다.
