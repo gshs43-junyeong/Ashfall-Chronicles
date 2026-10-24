@@ -891,6 +891,9 @@
   "광석을 녹인다": [
    "ui/process.smelter"
   ],
+  "광을 낸다": [
+   "ui/process.craftPlan"
+  ],
   "광장 밖으로 삐져나감: {slotKey}({tx0}~{tx1}) vs 광장 {plaza}~{plaza2}": [
    "world/village.checkDawnLayout"
   ],
@@ -964,6 +967,9 @@
   "기계": [
    "ui/tip.showTip",
    "index.html"
+  ],
+  "기계 망치로 두드린다": [
+   "ui/process.craftPlan"
   ],
   "기관이 멈추자 발사대 보관고의 봉인이 풀렸다": [
    "game/citadel.citadelBossDown"
@@ -1199,6 +1205,7 @@
    "game/life.gainStarOrbit"
   ],
   "다시 달군다": [
+   "ui/craft-scene.sceneSmith",
    "ui/process.craftPlan"
   ],
   "다시 듣기": [
@@ -1399,6 +1406,9 @@
   ],
   "뜯어 봐야 안다": [
    "data/quests"
+  ],
+  "띠톱이 자른다": [
+   "ui/process.craftPlan"
   ],
   "라이선스": [
    "index.html"
@@ -1694,6 +1704,9 @@
   "물을 받는다": [
    "ui/process.sprinkler"
   ],
+  "물줄기로 자른다": [
+   "ui/process.craftPlan"
+  ],
   "뭔가 걸렸다 — {itemName}{v}": [
    "game/fishing.giveCatch"
   ],
@@ -1748,6 +1761,10 @@
   ],
   "바로 곁에": [
    "game/meteor.meteorImpact"
+  ],
+  "바이스에 물린다": [
+   "ui/craft-scene.sceneWork",
+   "ui/process.craftPlan"
   ],
   "반시계 방향 옆": [
    "ui/machine.logicCfg"
@@ -2031,6 +2048,10 @@
   "불러오는 중… {got}/{need}": [
    "game.tick"
   ],
+  "불순물을 걷는다": [
+   "ui/craft-scene.sceneForge",
+   "ui/process.craftPlan"
+  ],
   "불에 넣을 것": [
    "data/quests"
   ],
@@ -2221,6 +2242,9 @@
   "섞는다": [
    "ui/process.craftPlan"
   ],
+  "설계를 띄운다": [
+   "ui/process.craftPlan"
+  ],
   "설계실 봉인": [
    "game/interact.openSeal"
   ],
@@ -2300,6 +2324,10 @@
   "쇠를 달군다": [
    "ui/process.craftPlan"
   ],
+  "쇠찌꺼기를 걷는다": [
+   "ui/craft-scene.sceneForge",
+   "ui/process.craftPlan"
+  ],
   "수레는 레일 위에 놓는다": [
    "game/rides.placeMount",
    "game/rides.useMount"
@@ -2325,6 +2353,9 @@
   ],
   "숨겨진 업적 — 해내면 그때 드러난다.": [
    "ui/quest.renderAch"
+  ],
+  "숯과 광석을 켜켜이 넣는다": [
+   "ui/process.craftPlan"
   ],
   "스킬 슬롯": [
    "index.html"
@@ -2384,6 +2415,9 @@
   ],
   "신호": [
    "game/netchat"
+  ],
+  "실톱으로 켠다": [
+   "ui/process.craftPlan"
   ],
   "심장을 올린다 (지금 체력의 절반)": [
    "game/ruin-events.openScale"
@@ -2466,6 +2500,9 @@
   "아침을 기다림": [
    "factory/tick.tick"
   ],
+  "아크로 녹인다": [
+   "ui/process.craftPlan"
+  ],
   "안쪽을 봤어. 사람이 만든 게 아니야. …사람을 보고 만든 거야.": [
    "data/quests"
   ],
@@ -2473,7 +2510,11 @@
    "game/netchat.refreshChat",
    "index.html"
   ],
+  "압력로에 달군다": [
+   "ui/process.craftPlan"
+  ],
   "압력을 올린다": [
+   "ui/process.craftPlan",
    "ui/process.pressor"
   ],
   "앞이 막히면 옆(넘침)": [
@@ -2642,6 +2683,7 @@
    "ui/craft.refreshCraft"
   ],
   "용접한다": [
+   "ui/process.craftPlan",
    "ui/process.assembler"
   ],
   "우리는 그 말을 셋으로 끊어 서로 다른 방에 두었다.": [
@@ -2905,9 +2947,6 @@
   "자루를 박는다": [
    "ui/process.craftPlan"
   ],
-  "자른다": [
-   "ui/process.craftPlan"
-  ],
   "작업대": [
    "game/render-world.drawCursor"
   ],
@@ -3060,6 +3099,9 @@
   ],
   "전 <b>{totalN}개 장</b>": [
    "ui/quest.refreshQuest"
+  ],
+  "전극을 내린다": [
+   "ui/process.craftPlan"
   ],
   "전기를 낸다": [
    "ui/process.gen",
@@ -3265,6 +3307,9 @@
   "진화를 기다린다 — {food|을} 먹여야 한다": [
    "ui/tip.showTip"
   ],
+  "집게팔이 맞춘다": [
+   "ui/process.craftPlan"
+  ],
   "짠물이 폐를 채운다 — 숨이 줄었다": [
    "game.tickTileTraps"
   ],
@@ -3421,6 +3466,9 @@
    "ui.refreshStatSheet",
    "ui/tip.compareLine"
   ],
+  "치수를 입력한다": [
+   "ui/process.craftPlan"
+  ],
   "치수를 잰다": [
    "ui/process.craftPlan"
   ],
@@ -3517,6 +3565,9 @@
   "톱니바퀴가 하나 필요하다": [
    "game/repair.repairMachine"
   ],
+  "톱으로 자른다": [
+   "ui/process.craftPlan"
+  ],
   "통과": [
    "factory",
    "factory/tick.tick"
@@ -3612,6 +3663,11 @@
   ],
   "푹 잤다 — 아침이다": [
    "game/interact.fn"
+  ],
+  "풀무질한다": [
+   "ui/craft-scene.sceneForge",
+   "ui/craft-scene.sceneSmith",
+   "ui/process.craftPlan"
   ],
   "플레이어끼리 싸울 수 있다(PvP 켜짐)": [
    "game/netchat.netCfgToast"

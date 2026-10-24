@@ -668,11 +668,17 @@ def fix_feet(c, f, cid):
     return c
 
 
+# 뒷손이 그늘 살색으로 안 잡히는 장(뛰기 · 떨어지기 · 대시 · 피격) — 뒤로 뻗은 팔목 끝을 손으로 적는다(없으면 왼손 물건이 사라졌다)
+BACK_FIX = {6: [6, 27, 9, 29], 7: [6, 21, 9, 23], 8: [5, 18, 8, 20], 12: [9, 29, 12, 32]}
+
+
 def back_hands(w):
     """뒷손 — 원본이 그늘 살색(#a78864)으로 칠한 칸의 상자(새 프레임 좌표). 뛰기 · 떨어지기 · 대시처럼 뒷손이 안 보이는 장은 None.
     핫바 물건(횃불 따위)은 이 손에 쥐인다(game/render-actors drawOffHand) — 사연: docs/code-history.md#h211"""
     out = []
     for f in range(N):
+        if f in BACK_FIX:
+            b = BACK_FIX[f]; out.append([[round((b[0] + b[2]) / 2, 1), round((b[1] + b[3]) / 2 + 0.5, 1)], b]); continue
         pts = [(x, y) for y in range(18, OH) for x in range(OW) if w[f][y][x][3] and hx(w[f][y][x]) == 'a78864']
         if not pts:
             out.append(None); continue

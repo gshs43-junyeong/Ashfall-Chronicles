@@ -46238,11 +46238,13 @@
     drawIc: () => drawIc,
     glow: () => glow2,
     machSteps: () => machSteps,
+    stationSpeed: () => stationSpeed,
     stepRow: () => stepRow
   });
   var craftSpeed = (lv) => 2 - (Math.max(1, Math.min(10, lv)) - 1) * (1.3 / 9);
   var METAL = /_bar$|_ore$|nail|rivet|plate|gear|wire|chain/;
-  function craftPlan(r, lv) {
+  var stationSpeed = (st, lv) => st === "hand" ? 1 : [1.5, 1.05, 0.78, 0.58][Math.max(1, Math.min(4, lv)) - 1];
+  function craftPlan(r, lv, slv = 1) {
     const mats = Object.keys(r.need), kinds = mats.length, qty = mats.reduce((a, k) => a + r.need[k], 0);
     const ty = ITEMS[r.out] ? ITEMS[r.out].type : "", gear = ty === "weapon" || ty === "armor" || ty === "tool";
     const metals = mats.filter((id) => METAL.test(id)).length, st0 = r.station || "hand";
@@ -46252,22 +46254,32 @@
       st = "smith";
       base = 3.4;
       baseN = 4;
-      S.push([tr("쇠를 달군다"), 0], [ty === "armor" ? tr("판을 두드린다") : tr("두드려 편다"), 1]);
-      if (kinds >= 3 || qty >= 12) S.push([tr("다시 달군다"), 0], [tr("또 두드린다"), 1]);
+      S.push([slv >= 4 ? tr("압력로에 달군다") : tr("쇠를 달군다"), 0]);
+      if (slv === 1) S.push([tr("풀무질한다"), 0]);
+      S.push([slv >= 3 ? tr("기계 망치로 두드린다") : ty === "armor" ? tr("판을 두드린다") : tr("두드려 편다"), 1]);
+      if ((kinds >= 3 || qty >= 12) && slv < 3) S.push([tr("다시 달군다"), 0], [tr("또 두드린다"), 1]);
       S.push([ty === "armor" ? tr("이어 맞춘다") : ty === "tool" ? tr("자루를 박는다") : tr("날을 세운다"), 2], [tr("담금질한다"), 3]);
     } else if (st0 === "forge") {
       base = 2.8;
       baseN = 4;
-      S.push([tr("불을 지핀다"), 0], [tr("녹인다"), 1]);
+      if (slv >= 4) S.push([tr("압력을 올린다"), 0]);
+      else if (slv === 3) S.push([tr("전극을 내린다"), 0]);
+      else if (slv === 2) S.push([tr("숯과 광석을 켜켜이 넣는다"), 0]);
+      else S.push([tr("불을 지핀다"), 0], [tr("풀무질한다"), 0]);
+      S.push([slv === 3 ? tr("아크로 녹인다") : tr("녹인다"), 1]);
       if (metals >= 2 || kinds >= 3) S.push([tr("섞는다"), 1]);
+      if (slv === 2 || slv >= 4) S.push([slv >= 4 ? tr("불순물을 걷는다") : tr("쇠찌꺼기를 걷는다"), 1]);
       S.push([tr("틀에 붓는다"), 2], [tr("식힌다"), 3]);
     } else if (st0 === "work") {
       base = 2.4;
       baseN = 4;
-      S.push([tr("치수를 잰다"), 0], [tr("자른다"), 1], [tr("맞춰 붙인다"), 2]);
-      if (metals) S.push([tr("못을 박는다"), 2]);
+      S.push([slv >= 4 ? tr("설계를 띄운다") : slv === 3 ? tr("치수를 입력한다") : tr("치수를 잰다"), 0]);
+      if (slv === 2) S.push([tr("바이스에 물린다"), 0]);
+      S.push([slv >= 4 ? tr("물줄기로 자른다") : slv === 3 ? tr("띠톱이 자른다") : slv === 2 ? tr("실톱으로 켠다") : tr("톱으로 자른다"), 1]);
+      S.push([slv >= 3 ? tr("집게팔이 맞춘다") : tr("맞춰 붙인다"), 2]);
+      if (metals) S.push([slv >= 3 ? tr("용접한다") : tr("못을 박는다"), 2]);
       if (kinds >= 4) S.push([tr("조립한다"), 2]);
-      S.push([tr("다듬는다"), 3]);
+      S.push([slv >= 4 ? tr("광을 낸다") : tr("다듬는다"), 3]);
     } else {
       base = 1.2;
       baseN = 3;
@@ -46275,7 +46287,7 @@
       if (kinds >= 3) S.push([tr("단단히 묶는다"), 1]);
       S.push([tr("다듬는다"), 2]);
     }
-    const dur = Math.min(16, base * (S.length / baseN) * (1 + 0.12 * Math.log2(1 + qty)) * craftSpeed(lv));
+    const dur = Math.min(24, base * (S.length / baseN) * (1 + 0.12 * Math.log2(1 + qty)) * craftSpeed(lv) * stationSpeed(st0, slv));
     return { st, n: S.map((x) => x[0]), v: S.map((x) => x[1]), dur };
   }
   function machSteps(t) {
@@ -46385,10 +46397,11 @@
         this.craftEnd();
         return;
       }
-      const i = q.shift(), r = RECIPES[i], lv = app.player.profLv("craft"), S = craftPlan(r, lv);
+      const i = q.shift(), r = RECIPES[i], lv = app.player.profLv("craft"), so = r.station ? app.nearStObj[r.station] : null;
+      const slv = so && so.lv || 1, S = craftPlan(r, lv, slv);
       if (lv >= 3 && this._lastCraft === r.out) S.dur *= 0.7;
       this._lastCraft = r.out;
-      this.craftRun = { i, r, st: S.st, S, t0: performance.now(), step: -1, parts: [] };
+      this.craftRun = { i, r, st: S.st, S, slv, t0: performance.now(), step: -1, parts: [] };
       const cv = this.craftStageEl();
       cv.classList.add("on");
       const tick2 = () => {
@@ -46453,7 +46466,7 @@
       c.setTransform(dpr, 0, 0, dpr, 0, 0);
       c.clearRect(0, 0, W, H);
       const n = R.S.n.length, idx = Math.min(n - 1, Math.floor(k * n)), sk = k * n - idx;
-      this.craftScene(c, W, H, { st: R.st, step: R.S.v[idx], idx, names: R.S.n, sk, k, t: performance.now() / 1e3, mats: Object.keys(R.r.need).slice(0, 4), out: R.r.out, idle: false });
+      this.craftScene(c, W, H, { st: R.st, step: R.S.v[idx], idx, names: R.S.n, sk, k, t: performance.now() / 1e3, mats: Object.keys(R.r.need).slice(0, 4), out: R.r.out, idle: false, lv: R.slv });
       const left = (this.craftQ || []).length;
       if (left) {
         const txt = tr("줄 선 것 {n}", { n: left });
@@ -47917,6 +47930,75 @@
     c.fillRect(L - 4, -8, 2, 15);
     c.restore();
   }
+  function plate(c, H, name, lv) {
+    c.save();
+    c.font = `700 10px ${FONT || "sans-serif"}`;
+    const w = c.measureText(name).width + 14 + 4 * 7;
+    c.fillStyle = "rgba(10,9,7,.78)";
+    c.beginPath();
+    c.roundRect(6, H - 22, w, 16, 3);
+    c.fill();
+    c.strokeStyle = "#5a4a2a";
+    c.lineWidth = 1;
+    c.stroke();
+    c.fillStyle = "#d8c48a";
+    c.textBaseline = "middle";
+    c.fillText(name, 12, H - 13.5);
+    for (let i = 0; i < 4; i++) {
+      c.fillStyle = i < lv ? "#f0c060" : "#3a3220";
+      c.beginPath();
+      c.arc(16 + c.measureText(name).width + i * 7, H - 14, 2.2, 0, TAU);
+      c.fill();
+    }
+    c.restore();
+  }
+  function arc(c, x0, y0, x1, y1, t, col = "#cfe8ff") {
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    c.strokeStyle = col;
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.moveTo(x0, y0);
+    for (let i = 1; i < 6; i++) {
+      const u = i / 6;
+      c.lineTo(lerp(x0, x1, u) + (hash(Math.floor(t * 30) * 7 + i) - 0.5) * 8, lerp(y0, y1, u) + (hash(Math.floor(t * 30) * 3 + i) - 0.5) * 4);
+    }
+    c.lineTo(x1, y1);
+    c.stroke();
+    c.restore();
+    glow2(c, x1, y1, 16, col, 0.6);
+  }
+  function robotArm(c, bx, by, hx, hy, lit) {
+    const D = Math.hypot(hx - bx, hy - by), L = Math.max(34, D * 0.62), d = Math.min(L * 2 - 2, D), a = Math.atan2(hy - by, hx - bx), al = Math.acos(d / (2 * L));
+    const e1 = Math.sin(a - al) < Math.sin(a + al) ? a - al : a + al, ex = bx + Math.cos(e1) * L, ey = by + Math.sin(e1) * L;
+    c.fillStyle = "#3a3e46";
+    c.fillRect(bx - 9, by - 4, 18, 8);
+    c.strokeStyle = "#8a8e98";
+    c.lineWidth = 6;
+    c.lineCap = "round";
+    c.beginPath();
+    c.moveTo(bx, by);
+    c.lineTo(ex, ey);
+    c.lineTo(hx, hy);
+    c.stroke();
+    c.strokeStyle = "#b8bcc4";
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(bx, by - 2);
+    c.lineTo(ex, ey - 2);
+    c.stroke();
+    c.fillStyle = "#5a5e68";
+    c.beginPath();
+    c.arc(ex, ey, 4.5, 0, TAU);
+    c.fill();
+    c.fillStyle = lit;
+    c.beginPath();
+    c.arc(ex, ey, 1.6, 0, TAU);
+    c.fill();
+    c.fillStyle = "#5a5e68";
+    c.fillRect(hx - 6, hy - 2, 3, 9);
+    c.fillRect(hx + 3, hy - 2, 3, 9);
+  }
   var CraftSceneUIPart = {
     /** 공정 무대 하나 그리기 — 위 단계 줄(돌 때만) · 아래 시설 장면 */
     craftScene(c, W, H, s) {
@@ -47924,6 +48006,8 @@
       else if (s.st === "forge") this.sceneForge(c, W, H, s);
       else if (s.st === "smith") this.sceneSmith(c, W, H, s);
       else this.sceneHand(c, W, H, s);
+      const kind = s.st === "smith" ? "forge" : s.st;
+      if ((kind === "work" || kind === "forge") && STATION_NAME[kind]) plate(c, H, STATION_NAME[kind][s.lv || 1], s.lv || 1);
       if (!s.idle && s.names) stepRow(c, s.names, s.idx ?? s.step, s.sk, 8, 6, W - 16);
     },
     /** 창이 열려 있는 동안 쉬는 무대 — 고른 탭의 시설이 숨 쉰다(공정이 돌면 공정이 그린다) */
@@ -47943,7 +48027,8 @@
           const c = cv.getContext("2d");
           c.setTransform(dpr, 0, 0, dpr, 0, 0);
           c.clearRect(0, 0, W, H);
-          this.craftScene(c, W, H, { st: this.craftTab || "hand", step: 0, sk: 0, k: 0, t: performance.now() / 1e3, mats: [], out: "", idle: true });
+          const tab = this.craftTab || "hand", so = app.nearStObj && app.nearStObj[tab];
+          this.craftScene(c, W, H, { st: tab, step: 0, sk: 0, k: 0, t: performance.now() / 1e3, mats: [], out: "", idle: true, lv: so && so.lv || 1 });
         }
         this._ciRaf = requestAnimationFrame(loop);
       };
@@ -47951,7 +48036,8 @@
     },
     /* ================= 작업대 ================= */
     sceneWork(c, W, H, s) {
-      const { step, sk, k, t, idle } = s, floor = H - 14, top = floor - 54, bx0 = 26, bx1 = W - 26;
+      const { step, sk, k, t, idle } = s, floor = H - 14, top = floor - 54, bx0 = 26, bx1 = W - 26, lv = s.lv || 1;
+      const nm = s.names && s.idx !== void 0 ? s.names[s.idx] : "";
       const wg = c.createLinearGradient(0, 0, 0, H);
       wg.addColorStop(0, "#2a1e14");
       wg.addColorStop(1, "#16100a");
@@ -47992,13 +48078,27 @@
         c.fillStyle = "#8a8e98";
         c.fillRect(x - 6, 58, 13, 7);
       });
-      const lamp = 0.75 + 0.25 * Math.sin(t * 6.3) * Math.sin(t * 2.1);
-      c.fillStyle = "#4a3a2a";
-      c.fillRect(W - 70, 10, 2, 22);
-      c.fillStyle = "#c8a050";
-      c.fillRect(W - 76, 30, 14, 10);
-      glow2(c, W - 69, 36, 70, "#ffb050", 0.35 * lamp);
-      glow2(c, W - 69, 36, 14, "#fff0c0", 0.6 * lamp);
+      if (lv >= 3) {
+        c.fillStyle = "#2a2a30";
+        c.fillRect(W - 70, 0, 2, 26);
+        c.fillStyle = "#4a4e56";
+        c.beginPath();
+        c.moveTo(W - 82, 34);
+        c.lineTo(W - 56, 34);
+        c.lineTo(W - 62, 24);
+        c.lineTo(W - 76, 24);
+        c.fill();
+        glow2(c, W - 69, 38, 80, lv >= 4 ? "#a8e8ff" : "#e8f0ff", 0.3);
+        glow2(c, W - 69, 35, 10, "#ffffff", 0.7);
+      } else {
+        const lamp = 0.75 + 0.25 * Math.sin(t * 6.3) * Math.sin(t * 2.1);
+        c.fillStyle = "#4a3a2a";
+        c.fillRect(W - 70, 10, 2, 22);
+        c.fillStyle = "#c8a050";
+        c.fillRect(W - 76, 30, 14, 10);
+        glow2(c, W - 69, 36, 70, "#ffb050", 0.35 * lamp);
+        glow2(c, W - 69, 36, 14, "#fff0c0", 0.6 * lamp);
+      }
       c.fillStyle = "#2a1c10";
       c.fillRect(bx0 + 10, top + 14, 10, floor - top - 14);
       c.fillRect(bx1 - 20, top + 14, 10, floor - top - 14);
@@ -48022,6 +48122,21 @@
       c.fillRect(bx1 - 46, top - 14, 20, 3);
       c.fillStyle = "#8a8e98";
       c.fillRect(bx1 - 52, top - 9, 6, 3);
+      if (lv >= 2) {
+        c.fillStyle = "#7a7e88";
+        c.fillRect(bx0, top + 12, bx1 - bx0, 3);
+        for (let x = bx0 + 6; x < bx1; x += 18) {
+          c.fillStyle = "#c8ccd4";
+          c.fillRect(x, top + 13, 1, 1);
+        }
+      }
+      if (lv >= 4) {
+        const g2 = 0.5 + 0.5 * Math.sin(t * 2.4);
+        c.fillStyle = `rgba(110,220,255,${0.35 + 0.35 * g2})`;
+        c.fillRect(bx0 + 4, top + 15, bx1 - bx0 - 8, 2);
+        glow2(c, W / 2, top + 16, 90, "#6ad8ff", 0.12 + 0.08 * g2);
+      }
+      const armOn = lv >= 3 && !idle && step === 2, abx = bx1 - 18, aby = top - 2;
       const cx = W / 2, py = top - 12;
       s.mats.forEach((id, i) => {
         const used = !idle && k > (i + 1) / (s.mats.length + 1) * 0.5;
@@ -48039,6 +48154,7 @@
         c.fillRect(cx - 70, py, 140, 12);
         c.fillStyle = "#b48650";
         c.fillRect(cx - 70, py, 140, 3);
+        if (lv >= 3) robotArm(c, abx, aby, abx - 30 + Math.sin(t * 0.8) * 6, aby - 40 + Math.sin(t * 1.1) * 4, lv >= 4 ? "#6ad8ff" : "#7aff9a");
         return;
       }
       const cutX = cx + 22, L0 = cx - 80, L1 = cx + 80, kerf = step === 1 ? ease(sk) : step > 1 ? 1 : 0;
@@ -48078,7 +48194,32 @@
         c.fillStyle = "#2a1a0c";
         c.fillRect(cutX - 1, py, 2, 12 * kerf);
       }
-      if (step === 0) {
+      if (step === 0 && lv >= 3) {
+        const u = ease(Math.min(1, sk * 2)), hy = py - 58;
+        c.save();
+        c.globalAlpha = 0.5 * u;
+        c.strokeStyle = lv >= 4 ? "#7ae0ff" : "#a8c8ff";
+        c.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+          c.beginPath();
+          c.moveTo(cx - 60, hy + i * 7);
+          c.lineTo(cx + 60, hy + i * 7);
+          c.stroke();
+        }
+        c.globalAlpha = u;
+        drawIc(c, s.out, cx - 16, hy + 2, 32);
+        c.restore();
+        c.fillStyle = "#ff5a4a";
+        c.fillRect(cutX - 1, py - 4 + Math.sin(t * 9) * 1, 2, 18);
+        glow2(c, cutX, py + 6, 14, "#ff6a5a", 0.5);
+      } else if (step === 0 && lv === 2 && nm === tr("바이스에 물린다")) {
+        const u = ease(sk);
+        c.fillStyle = "#4a4e56";
+        c.fillRect(L0 - 14 + u * 6, py - 4, 10, 20);
+        c.fillStyle = "#8a8e98";
+        c.fillRect(L0 - 30, py + 4, 18 - u * 6, 3);
+      }
+      if (step === 0 && lv < 3 && nm !== tr("바이스에 물린다")) {
         const sq = ease(Math.min(1, sk * 3));
         c.fillStyle = "#c8b070";
         c.fillRect(cutX + 2, py - 30 + (1 - sq) * -20, 4, 42);
@@ -48104,36 +48245,99 @@
           c.fillRect(L0 + 10 + i * 20, py + 1, 1, i % 2 ? 3 : 5);
         }
       }
-      if (step === 1 && sk < 0.95) {
-        const sw = Math.sin(t * 20) * 22, dep = 12 * kerf;
+      if (step === 1 && sk < 0.95 && lv >= 4) {
+        c.fillStyle = "#3a3e46";
+        c.fillRect(cutX - 7, 18, 14, 16);
+        c.fillStyle = "#5a5e68";
+        c.fillRect(cutX - 3, 34, 6, 6);
+        c.strokeStyle = "rgba(160,230,255,.9)";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(cutX, 40);
+        c.lineTo(cutX + Math.sin(t * 40) * 0.6, py + 12 * kerf);
+        c.stroke();
+        glow2(c, cutX, py + 10 * kerf, 18, "#7ae0ff", 0.6);
+        puffs(c, cutX, py + 12, 4, t, 1.2, 18, "180,230,250", 0.45);
+      } else if (step === 1 && sk < 0.95 && lv === 3) {
+        c.fillStyle = "#4a4e56";
+        c.fillRect(cutX - 18, 8, 36, 24);
+        c.fillStyle = "#6a6e78";
+        c.fillRect(cutX - 18, 8, 36, 3);
+        c.fillStyle = "#2a2a30";
+        c.beginPath();
+        c.arc(cutX, 20, 9, 0, TAU);
+        c.fill();
         c.save();
-        c.translate(cutX + sw, py + dep - 2);
-        c.rotate(-0.12);
-        c.fillStyle = "#c8ccd4";
-        c.beginPath();
-        c.moveTo(-46, 0);
-        c.lineTo(20, 0);
-        c.lineTo(20, -14);
-        c.lineTo(-40, -8);
-        c.closePath();
-        c.fill();
-        c.fillStyle = "#9aa0aa";
-        for (let x = -44; x < 20; x += 4) {
-          c.beginPath();
-          c.moveTo(x, 0);
-          c.lineTo(x + 2, 3);
-          c.lineTo(x + 4, 0);
-          c.fill();
-        }
-        c.fillStyle = "#e8ecf2";
-        c.fillRect(-38, -7, 56, 1);
-        c.fillStyle = "#6a4a28";
-        c.beginPath();
-        c.roundRect(18, -18, 16, 16, 4);
-        c.fill();
-        c.fillStyle = "#2a1c10";
-        c.fillRect(23, -13, 6, 6);
+        c.translate(cutX, 20);
+        c.rotate(t * 30);
+        c.fillStyle = "#8a8e98";
+        c.fillRect(-8, -1, 16, 2);
         c.restore();
+        c.fillStyle = "#c8ccd4";
+        c.fillRect(cutX - 1, 32, 2, py + 12 - 32);
+        c.fillStyle = "#e8ecf2";
+        for (let y = 32 + t * 300 % 6; y < py + 12; y += 6) c.fillRect(cutX - 1, y, 2, 1);
+        c.fillStyle = "#e8c890";
+        for (let i = 0; i < 12; i++) {
+          const q = (t * 3 + i / 12) % 1, a = hash(i * 7);
+          c.globalAlpha = 1 - q;
+          c.fillRect(cutX + 2 + q * 30 * a, py + 6 - q * 10 + q * q * 30, 2, 2);
+        }
+        c.globalAlpha = 1;
+      } else if (step === 1 && sk < 0.95) {
+        const sw = Math.sin(t * (lv === 2 ? 26 : 20)) * (lv === 2 ? 14 : 22), dep = 12 * kerf;
+        if (lv === 2) {
+          c.save();
+          c.translate(cutX + sw, py + dep - 2);
+          c.strokeStyle = "#8a8e98";
+          c.lineWidth = 3;
+          c.beginPath();
+          c.moveTo(-30, 0);
+          c.lineTo(-30, -26);
+          c.lineTo(22, -26);
+          c.lineTo(22, 0);
+          c.stroke();
+          c.strokeStyle = "#e8ecf2";
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(-30, 0);
+          c.lineTo(22, 0);
+          c.stroke();
+          c.fillStyle = "#6a4a28";
+          c.beginPath();
+          c.roundRect(20, -8, 8, 16, 3);
+          c.fill();
+          c.restore();
+        } else {
+          c.save();
+          c.translate(cutX + sw, py + dep - 2);
+          c.rotate(-0.12);
+          c.fillStyle = "#c8ccd4";
+          c.beginPath();
+          c.moveTo(-46, 0);
+          c.lineTo(20, 0);
+          c.lineTo(20, -14);
+          c.lineTo(-40, -8);
+          c.closePath();
+          c.fill();
+          c.fillStyle = "#9aa0aa";
+          for (let x = -44; x < 20; x += 4) {
+            c.beginPath();
+            c.moveTo(x, 0);
+            c.lineTo(x + 2, 3);
+            c.lineTo(x + 4, 0);
+            c.fill();
+          }
+          c.fillStyle = "#e8ecf2";
+          c.fillRect(-38, -7, 56, 1);
+          c.fillStyle = "#6a4a28";
+          c.beginPath();
+          c.roundRect(18, -18, 16, 16, 4);
+          c.fill();
+          c.fillStyle = "#2a1c10";
+          c.fillRect(23, -13, 6, 6);
+          c.restore();
+        }
         c.fillStyle = "#e8c890";
         for (let i = 0; i < 16; i++) {
           const q = (t * 2.4 + i / 16) % 1, a = hash(i * 7);
@@ -48161,15 +48365,48 @@
           c.fillRect(nx - 9 + (1 - sunk) * 6, ny + 3 + i * 12, 2, 4);
           c.fillStyle = "#8a8e98";
         }
-        hammer(c, nx - 74, ny + 4 + Math.min(2, hit) * 12 + 6, a, 62);
-        if (ph > 0.6 && ph < 0.78) {
-          glow2(c, nx - 8, ny + 5 + Math.min(2, hit) * 12, 16, "#fff0c0", 0.8);
-          sparks(c, nx - 8, ny + 5 + Math.min(2, hit) * 12, floor, 6, t, 4, -0.4, 0.7);
+        if (lv >= 3) {
+          const wy = ny + 4 + sk * 30 % 30;
+          if (hash(Math.floor(t * 20)) > 0.25) arc(c, nx + 20, wy - 8, nx - 6, wy, t, lv >= 4 ? "#9ae8ff" : "#d8e8ff");
+          sparks(c, nx - 6, wy, floor, 10, t * 2, 3, 0.4, 0.6);
+          c.fillStyle = "#5a5e68";
+          c.fillRect(nx + 18, wy - 14, 10, 8);
+          c.fillStyle = "#2a2a30";
+          c.fillRect(nx + 22, wy - 22, 3, 8);
+        } else {
+          hammer(c, nx - 74, ny + 4 + Math.min(2, hit) * 12 + 6, a, 62);
+          if (ph > 0.6 && ph < 0.78) {
+            glow2(c, nx - 8, ny + 5 + Math.min(2, hit) * 12, 16, "#fff0c0", 0.8);
+            sparks(c, nx - 8, ny + 5 + Math.min(2, hit) * 12, floor, 6, t, 4, -0.4, 0.7);
+          }
         }
+      }
+      if (lv >= 3) {
+        const hx2 = armOn ? cutX + 8 : abx - 30 + Math.sin(t * 0.8) * 6, hy2 = armOn ? py - 50 + ease(Math.min(1, sk * 2.5)) * 10 : aby - 40 + Math.sin(t * 1.1) * 4;
+        robotArm(c, abx, aby, hx2, hy2, lv >= 4 ? "#6ad8ff" : "#7aff9a");
       }
       if (step === 3) {
         const pass = sk * 2.2 % 1, plx = L0 + 10 + pass * (cutX - L0 - 30);
-        if (sk < 0.6) {
+        if (sk < 0.6 && lv >= 4) {
+          c.save();
+          c.translate(plx + 14, py - 10);
+          c.rotate(t * 20);
+          c.fillStyle = "#d8d0c0";
+          c.beginPath();
+          c.arc(0, 0, 10, 0, TAU);
+          c.fill();
+          c.strokeStyle = "#a89a80";
+          c.lineWidth = 1;
+          for (let i = 0; i < 6; i++) {
+            c.rotate(TAU / 6);
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(9, 0);
+            c.stroke();
+          }
+          c.restore();
+          for (let i = 0; i < 3; i++) glow2(c, plx + hash(Math.floor(t * 8) + i) * 40 - 20, py + 2, 6, "#ffffff", 0.7);
+        } else if (sk < 0.6) {
           c.fillStyle = "#7a5230";
           c.beginPath();
           c.roundRect(plx, py - 14, 30, 14, 3);
@@ -48215,7 +48452,8 @@
     },
     /* ================= 용광로 ================= */
     sceneForge(c, W, H, s) {
-      const { step, sk, k, t, idle } = s, floor = H - 12;
+      const { step, sk, k, t, idle } = s, floor = H - 12, lv = s.lv || 1;
+      const nm = s.names && s.idx !== void 0 ? s.names[s.idx] : "";
       c.fillStyle = "#141012";
       c.fillRect(0, 0, W, H);
       bricks(c, 0, 0, W, floor, "#2c2426", "#221b1d", 26, 11);
@@ -48256,8 +48494,79 @@
         c.fill();
       }
       flames(c, mx + 4, my + mh - 6, mw - 8, 0.6 + heat * blow, t);
+      if (lv === 3) {
+        c.globalCompositeOperation = "lighter";
+        c.fillStyle = `rgba(160,200,255,${0.18 + 0.12 * Math.sin(t * 40)})`;
+        c.fillRect(mx, my, mw, mh);
+        c.globalCompositeOperation = "source-over";
+      }
+      if (lv >= 4) {
+        c.globalCompositeOperation = "lighter";
+        c.fillStyle = `rgba(90,220,255,${0.14 + 0.06 * Math.sin(t * 3)})`;
+        c.fillRect(mx, my, mw, mh);
+        c.globalCompositeOperation = "source-over";
+      }
       c.restore();
-      glow2(c, mx + mw / 2, my + mh - 6, 70, "#ff7a2a", 0.22 + 0.3 * heat * blow);
+      glow2(c, mx + mw / 2, my + mh - 6, 70, lv === 3 ? "#bcd8ff" : lv >= 4 ? "#7adcff" : "#ff7a2a", 0.22 + 0.3 * heat * blow);
+      if (lv === 2) {
+        c.fillStyle = "#4a4a52";
+        for (const yy of [fy + 26, fy + 52]) c.fillRect(fx + 2, yy, fw - 4, 4);
+        c.fillStyle = "#5a5a62";
+        for (let x = fx + 8; x < fx + fw - 4; x += 14) for (const yy of [fy + 27, fy + 53]) c.fillRect(x, yy, 2, 2);
+        for (let i = 0; i < 4; i++) {
+          c.fillStyle = i % 2 ? "#2a2420" : "#6a4a3a";
+          c.fillRect(fx + fw / 2 - 10, fy - 8 + i * 2 - 22, 20, 2);
+        }
+      }
+      if (lv === 3) {
+        const down = idle ? 0.3 : step === 0 ? ease(sk) : 1;
+        for (let i = -1; i <= 1; i++) {
+          const ex = mx + mw / 2 + i * 18, ey = my - 8 + down * 20;
+          c.fillStyle = "#5a5e68";
+          c.fillRect(ex - 3, fy - 30, 6, ey - fy + 30);
+          c.fillStyle = "#8a8e98";
+          c.fillRect(ex - 3, fy - 30, 2, ey - fy + 30);
+          if (!idle && down > 0.9 && hash(Math.floor(t * 25) + i * 5) > 0.3) arc(c, ex, ey, ex + (hash(i + Math.floor(t * 25)) - 0.5) * 16, my + mh - 8, t + i);
+        }
+      }
+      if (lv >= 4) {
+        c.strokeStyle = "#6a6e78";
+        c.lineWidth = 5;
+        c.beginPath();
+        c.moveTo(fx - 2, floor);
+        c.lineTo(fx - 2, fy + 16);
+        c.quadraticCurveTo(fx + fw / 2, fy - 26, fx + fw + 2, fy + 16);
+        c.lineTo(fx + fw + 2, floor);
+        c.stroke();
+        c.fillStyle = "#a8acb4";
+        for (let i = 0; i < 9; i++) {
+          const u = i / 8, x = lerp(fx, fx + fw, u), y = fy + 16 - Math.sin(u * Math.PI) * 18;
+          c.fillRect(x - 1, y - 1, 2, 2);
+        }
+        const gx = fx + fw + 14, gy = fy + 6, pr = idle ? 0.3 + 0.05 * Math.sin(t) : step === 0 ? ease(sk) : 0.9 + 0.05 * Math.sin(t * 9);
+        c.fillStyle = "#2a2a30";
+        c.beginPath();
+        c.arc(gx, gy, 11, 0, TAU);
+        c.fill();
+        c.fillStyle = "#e8e4d8";
+        c.beginPath();
+        c.arc(gx, gy, 9, 0, TAU);
+        c.fill();
+        c.fillStyle = "#d04a3a";
+        c.beginPath();
+        c.arc(gx, gy, 9, -0.6, 0.1);
+        c.lineTo(gx, gy);
+        c.fill();
+        c.strokeStyle = "#1a1a1e";
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(gx, gy);
+        const ga = Math.PI * 0.8 + pr * Math.PI * 1.4;
+        c.lineTo(gx + Math.cos(ga) * 8, gy + Math.sin(ga) * 8);
+        c.stroke();
+        if (pr > 0.85) puffs(c, fx + fw - 6, fy + 4, 3, t, 1.4, 22, "220,236,246", 0.5);
+        glow2(c, mx + mw / 2, floor - 4, 40, "#5ad8ff", 0.25 + 0.1 * Math.sin(t * 2));
+      }
       for (let i = 0; i < 4; i++) {
         c.strokeStyle = `rgba(255,200,150,${0.05 + 0.04 * heat})`;
         c.lineWidth = 2;
@@ -48265,23 +48574,44 @@
         for (let y = my - 2; y > fy - 30; y -= 3) c.lineTo(mx + 10 + i * (mw - 20) / 3 + Math.sin(y * 0.3 + t * 6 + i) * 2.5, y);
         c.stroke();
       }
-      const bw = 14 + 10 * (idle ? 0.5 + 0.5 * Math.sin(t * 1.4) : step === 0 ? Math.abs(Math.sin(sk * Math.PI * 3)) : 0.3);
-      c.fillStyle = "#6a4626";
-      c.beginPath();
-      c.moveTo(8, floor - 30);
-      c.lineTo(8 + 34, floor - 30 - bw / 2);
-      c.lineTo(8 + 34, floor - 30 + bw / 2);
-      c.closePath();
-      c.fill();
-      c.fillStyle = "#4a2e18";
-      c.beginPath();
-      c.moveTo(8, floor - 30);
-      c.lineTo(8 + 34, floor - 30 + bw / 2);
-      c.lineTo(8 + 34, floor - 30 + bw / 2 + 4);
-      c.closePath();
-      c.fill();
-      c.fillStyle = "#5a5a62";
-      c.fillRect(fx - 4, floor - 32, 8, 4);
+      if (lv <= 2) {
+        const pump = nm === tr("풀무질한다") ? Math.abs(Math.sin(sk * Math.PI * 6)) : step === 0 && lv === 1 ? Math.abs(Math.sin(sk * Math.PI * 3)) : 0.3;
+        const bw = 14 + 10 * (idle ? 0.5 + 0.5 * Math.sin(t * 1.4) : pump);
+        c.fillStyle = "#6a4626";
+        c.beginPath();
+        c.moveTo(8, floor - 30);
+        c.lineTo(8 + 34, floor - 30 - bw / 2);
+        c.lineTo(8 + 34, floor - 30 + bw / 2);
+        c.closePath();
+        c.fill();
+        c.fillStyle = "#4a2e18";
+        c.beginPath();
+        c.moveTo(8, floor - 30);
+        c.lineTo(8 + 34, floor - 30 + bw / 2);
+        c.lineTo(8 + 34, floor - 30 + bw / 2 + 4);
+        c.closePath();
+        c.fill();
+        c.fillStyle = "#5a5a62";
+        c.fillRect(fx - 4, floor - 32, 8, 4);
+        if (nm === tr("풀무질한다")) puffs(c, fx + 4, floor - 30, 3, t, 1.6, 12, "255,180,120", 0.4);
+      } else {
+        c.fillStyle = "#2e3036";
+        c.fillRect(6, floor - 44, 30, 44);
+        c.fillStyle = "#3e4048";
+        c.fillRect(6, floor - 44, 30, 4);
+        for (let i = 0; i < 4; i++) {
+          c.fillStyle = "#4a4e56";
+          c.fillRect(9, floor - 36 + i * 9, 24, 3);
+        }
+        c.fillStyle = hash(Math.floor(t * 3)) > 0.5 ? "#7aff9a" : "#2a5a3a";
+        c.fillRect(30, floor - 41, 3, 3);
+        c.strokeStyle = "#1a1a1e";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(36, floor - 30);
+        c.quadraticCurveTo(fx - 4, floor - 8, fx + 6, floor - 30);
+        c.stroke();
+      }
       const qx = W - 74, qy = floor - 40;
       c.fillStyle = "#4a3420";
       c.fillRect(qx, qy, 48, 40);
@@ -48360,8 +48690,25 @@
       }
       c.restore();
       if (molt > 0 && step <= 1) glow2(c, cxr, cyr - 6, 26, "#ffb040", 0.5 * molt);
+      if (nm === tr("쇠찌꺼기를 걷는다") || nm === tr("불순물을 걷는다")) {
+        const u = sk, rx = cxr - 10 + u * 34;
+        c.fillStyle = "#3a3030";
+        for (let i = 0; i < 6; i++) {
+          const x = cxr - 10 + i * 4;
+          if (x > rx - 4) c.fillRect(x, cyr - 8 + i % 2, 3, 2);
+        }
+        c.strokeStyle = "#6a6e78";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(rx, cyr - 9);
+        c.lineTo(rx + 40, cyr - 46);
+        c.stroke();
+        c.fillStyle = "#6a6e78";
+        c.fillRect(rx - 3, cyr - 10, 6, 3);
+        if (lv >= 4) glow2(c, cxr, cyr - 8, 18, "#7ae0ff", 0.4);
+      }
       if (step <= 1) s.mats.forEach((id, i) => {
-        const st0 = i * 0.18, q = step === 0 ? ease(seg(sk, st0, st0 + 0.6)) : 1;
+        const st0 = i * 0.18, q = step === 0 && nm !== tr("풀무질한다") ? ease(seg(sk, st0, st0 + 0.6)) : 1;
         if (step === 1 && sk > 0.4 + i * 0.12) return;
         const x = lerp(mx - 70 + i * 22, cxr - 10, q), y = lerp(fy - 40, cyr - 26, q) - Math.sin(q * Math.PI) * 18;
         hotIcon(c, id, x, y, 20, step === 1 ? 0.5 + sk : q * 0.4);
@@ -48406,7 +48753,8 @@
     /* ================= 대장간(용광로에서 무기 · 방어구 · 도구) ================= */
     /** 쇳물을 틀에 붓는 게 아니라 달구고(0) · 모루에서 두드리고(1) · 날을 세우거나 이어 맞추고(2) · 담금질한다(3) */
     sceneSmith(c, W, H, s) {
-      const { step, sk, t, idle } = s, floor = H - 12, ty = ITEMS[s.out] ? ITEMS[s.out].type : "weapon";
+      const { step, sk, t, idle } = s, floor = H - 12, ty = ITEMS[s.out] ? ITEMS[s.out].type : "weapon", lv = s.lv || 1;
+      const nm = s.names && s.idx !== void 0 ? s.names[s.idx] : "";
       c.fillStyle = "#141012";
       c.fillRect(0, 0, W, H);
       bricks(c, 0, 0, W, floor, "#2c2426", "#221b1d", 26, 11);
@@ -48436,15 +48784,22 @@
         c.fill();
       }
       flames(c, fx + 12, fy + 10, fw - 24, 0.35 + 0.5 * heatOn, t);
-      glow2(c, fx + fw / 2, fy + 6, 60, "#ff7a2a", 0.2 + 0.3 * heatOn);
-      const bw = 10 + 10 * (step === 0 && !idle ? Math.abs(Math.sin(sk * Math.PI * 4)) : 0.4);
-      c.fillStyle = "#6a4626";
-      c.beginPath();
-      c.moveTo(fx + fw + 4, fy + 22);
-      c.lineTo(fx + fw + 34, fy + 22 - bw / 2);
-      c.lineTo(fx + fw + 34, fy + 22 + bw / 2);
-      c.closePath();
-      c.fill();
+      glow2(c, fx + fw / 2, fy + 6, 60, lv >= 4 ? "#7adcff" : lv === 3 ? "#cfe0ff" : "#ff7a2a", 0.2 + 0.3 * heatOn);
+      if (lv <= 2) {
+        const bw = 10 + 10 * (nm === tr("풀무질한다") ? Math.abs(Math.sin(sk * Math.PI * 6)) : step === 0 && !idle ? Math.abs(Math.sin(sk * Math.PI * 4)) : 0.4);
+        c.fillStyle = "#6a4626";
+        c.beginPath();
+        c.moveTo(fx + fw + 4, fy + 22);
+        c.lineTo(fx + fw + 34, fy + 22 - bw / 2);
+        c.lineTo(fx + fw + 34, fy + 22 + bw / 2);
+        c.closePath();
+        c.fill();
+      } else {
+        c.fillStyle = "#2e3036";
+        c.fillRect(fx + fw + 4, fy + 8, 22, 26);
+        c.fillStyle = hash(Math.floor(t * 3)) > 0.5 ? "#7aff9a" : "#2a5a3a";
+        c.fillRect(fx + fw + 20, fy + 11, 3, 3);
+      }
       const ax = W * 0.5, top = floor - 38;
       c.fillStyle = "#4a3420";
       c.fillRect(ax - 16, top + 14, 32, floor - top - 14);
@@ -48505,14 +48860,15 @@
       let x = onAnvil[0], y = onAnvil[1], heat = 0.5, form = 1, hamA = 0.9;
       const aHit = Math.PI - 0.12, hx = ax + 58, hy = top - 22;
       if (step === 0) {
-        const back = (s.idx || 0) > 0 ? ease(seg(sk, 0, 0.25)) : 1;
+        const again = nm === tr("다시 달군다"), bellows = nm === tr("풀무질한다");
+        const back = again ? ease(seg(sk, 0, 0.25)) : 1;
         x = lerp(onAnvil[0], inFire[0], back);
         y = lerp(onAnvil[1], inFire[1], back) - Math.sin(back * Math.PI) * 16;
-        const go = ease(seg(sk, 0.8, 1));
+        const go = lv === 1 && !bellows && !again ? 0 : ease(seg(sk, 0.8, 1));
         x = lerp(x, onAnvil[0], go);
         y = lerp(y, onAnvil[1], go) - Math.sin(go * Math.PI) * 16;
-        heat = Math.min(1, 0.2 + sk * 1.1);
-        form = (s.idx || 0) > 0 ? 0.5 : 0;
+        heat = Math.min(1, (bellows ? 0.6 : 0.2) + sk * 1.1);
+        form = again ? 0.5 : 0;
         if (sk < 0.8) sparks(c, inFire[0] + 14, inFire[1] + 18, floor, 5, t, 1.4, 0, 0.7);
       } else if (step === 1) {
         const n = 3, b = Math.min(n - 1, Math.floor(sk * n)), u = sk * n - b;
@@ -48552,7 +48908,8 @@
         if (dunk > 0) puffs(c, qx + 24, qy, 6, t, 0.9, 36 + 20 * (1 - rise), "220,226,236", 0.75 * (1 - rise * 0.6));
         if (rise > 0) glow2(c, x + 14, y + 14, 40, "#ffe8a0", 0.45 * rise);
       }
-      if (step === 0 && sk < 0.8) {
+      const buried = step === 0 && Math.abs(y - inFire[1]) < 4;
+      if (buried) {
         c.save();
         c.beginPath();
         c.rect(0, 0, W, fy + 6);
@@ -48568,8 +48925,26 @@
         hotIcon(c, s.out, x, y, 28, heat);
       }
       c.globalAlpha = 1;
-      if (step === 0 && sk < 0.8) c.restore();
-      hammer(c, hx, hy, step === 1 || step === 2 && ty === "armor" ? hamA : aHit + 1.6, step === 2 ? 30 : 48);
+      if (buried) c.restore();
+      if (lv >= 3) {
+        const ph = step === 1 ? sk * 5 % 1 : 0.1 + 0.05 * Math.sin(t * 2), drop = ph < 0.7 ? ease(ph / 0.7) * 0.15 : 0.15 + (1 - 0.15) * ((ph - 0.7) / 0.3) ** 2;
+        const hy2 = 8 + (top - 46) * (step === 1 ? ph < 0.85 ? drop : 1 - (ph - 0.85) / 0.15 : 0.1);
+        c.fillStyle = "#3a3e46";
+        c.fillRect(ax - 52, 6, 8, top - 6);
+        c.fillRect(ax + 38, 6, 8, top - 6);
+        c.fillRect(ax - 52, 4, 98, 8);
+        c.fillStyle = "#6a6e78";
+        c.fillRect(ax - 6, 12, 8, hy2 - 4);
+        c.fillStyle = "#4a4e56";
+        c.fillRect(ax - 20, hy2 + 8, 36, 18);
+        c.fillStyle = "#8a8e98";
+        c.fillRect(ax - 20, hy2 + 8, 36, 3);
+        if (step === 1 && ph > 0.85 && ph < 0.95) {
+          sparks(c, ax - 6, top - 6, floor, 16, t * 3, 3.4, 0, 0.9);
+          glow2(c, ax - 6, top - 10, 40, "#ffe0a0", 0.7);
+        }
+      }
+      if (!(lv >= 3 && step === 1)) hammer(c, hx, hy, step === 1 || step === 2 && ty === "armor" ? hamA : aHit + 1.6, step === 2 ? 30 : 48);
     },
     /* ================= 맨손 ================= */
     sceneHand(c, W, H, s) {
@@ -67892,7 +68267,7 @@
         if (canThin) {
           const d = clamp((ashF - 0.1) / 0.8, 0, 1) * (spec.thin || 1);
           const t1 = clamp(d * 2, 0, 1), t2 = clamp(d * 2 - 1, 0, 1);
-          const plate = (lv, a) => {
+          const plate2 = (lv, a) => {
             if (a <= 0) return;
             if (!solid) {
               c.globalAlpha = (1 - ashF) * a;
@@ -67901,8 +68276,8 @@
             c.globalAlpha = ashF * a;
             TileArt.drawThin(c, id, v, sx, sy, 1, lv);
           };
-          plate(1, keep);
-          plate(0, keep * (1 - t2));
+          plate2(1, keep);
+          plate2(0, keep * (1 - t2));
           if (t1 < 1) pair(keep * (1 - t1));
         } else pair(keep);
       }
@@ -75005,7 +75380,7 @@
       const sk = left ? lk : key;
       const hand0 = this.spritesOn ? this.playerHand(sk, fr, sx, sy, p.facing < 0) : null;
       const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(sk, fr, sx, sy, p.facing < 0, true) : null;
-      if (left) this.drawHeldWeapon(c, p, sx, sy, 0, hand0);
+      if (left) this.drawHeldWeapon(c, p, sx, sy, 0, hand0, true);
       else if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, false);
       if (this.spritesOn && Sprites.draw(c, sk, fr, sx, sy, p.facing < 0)) {
         if (left) {
@@ -75468,10 +75843,10 @@
           Art.drawItem(c, hi.id, -7, -9, 13);
         }
       } else if (long) {
-        c.rotate(-0.95 + swing);
+        c.rotate(-0.7 + swing);
         Art.drawItem(c, hi.id, -9, -15, 18);
       } else {
-        c.translate(-7, 1);
+        c.translate(-1, 2);
         c.rotate(-0.15 + swing * 0.5);
         Art.drawItem(c, hi.id, -7, -9, 13);
       }
@@ -75496,7 +75871,7 @@
         c.restore();
       }
     },
-    drawHeldWeapon(c, p, sx, sy, bob, hand) {
+    drawHeldWeapon(c, p, sx, sy, bob, hand, back = false) {
       const hi = p.held(), hd = hi && idef(hi);
       const tool = hd && (hd.type === "tool" || hd.type === "rod") ? hi : null;
       const wep = tool || p.equip.weapon;
@@ -75539,7 +75914,10 @@
           Art.drawItem(c, wep.id, -13, -13, 26);
           c.restore();
         } else {
-          if (tool && p.swing <= 0) {
+          const rest = back && !(p.swing > 0) && this.time - (p.castAt ?? -9) >= 0.35;
+          if (rest) {
+            c.rotate(-1.15);
+          } else if (tool && p.swing <= 0) {
             c.scale(p.facing > 0 ? 1 : -1, 1);
             c.rotate(-0.4);
           } else {

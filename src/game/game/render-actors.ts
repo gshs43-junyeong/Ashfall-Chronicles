@@ -213,7 +213,7 @@ export const RenderActorsPart: Bag = {
     const sk = left ? lk : key;
     const hand0 = this.spritesOn ? this.playerHand(sk, fr, sx, sy, p.facing < 0) : null;
     const off = this.spritesOn ? this.offItem(p) : null, handB = off ? this.playerHand(sk, fr, sx, sy, p.facing < 0, true) : null;
-    if (left) this.drawHeldWeapon(c, p, sx, sy, 0, hand0);                // 오른손 무기 — 몸 뒤
+    if (left) this.drawHeldWeapon(c, p, sx, sy, 0, hand0, true);                // 오른손 무기 — 몸 뒤
     else if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, false);   // 왼손 물건 — 몸 뒤
     if (this.spritesOn && Sprites.draw(c, sk, fr, sx, sy, p.facing < 0)) {
       if (left) { if (off) this.drawOffHand(c, p, sx, sy, hand0, handB, true); }   // 왼손 물건 — 몸 앞
@@ -604,8 +604,8 @@ export const RenderActorsPart: Bag = {
     if (front) {                                                             // 앞손 — 세워 들고 조금 앞으로
       if (long) { c.rotate(-0.3 + swing); Art.drawItem(c, hi.id, -9, -15, 18); }
       else { c.translate(2, 1); c.rotate(0.1 + swing * 0.5); Art.drawItem(c, hi.id, -7, -9, 13); }
-    } else if (long) { c.rotate(-0.95 + swing); Art.drawItem(c, hi.id, -9, -15, 18); }
-    else { c.translate(-7, 1); c.rotate(-0.15 + swing * 0.5); Art.drawItem(c, hi.id, -7, -9, 13); }
+    } else if (long) { c.rotate(-0.7 + swing); Art.drawItem(c, hi.id, -9, -15, 18); }
+    else { c.translate(-1, 2); c.rotate(-0.15 + swing * 0.5); Art.drawItem(c, hi.id, -7, -9, 13); }   // 손에서 떼지 않는다 — 비켜 들면 떠 보였다
     if (hi.id === 'torch') {                                                 // 든 횃불은 불꽃이 일렁인다
       const fl = 0.7 + 0.3 * Math.sin(this.time * 17) * Math.sin(this.time * 7.3);
       c.globalCompositeOperation = 'lighter';
@@ -618,7 +618,7 @@ export const RenderActorsPart: Bag = {
       Sprites.draw(c, grip.key, grip.fr, sx, sy, grip.flip); c.restore();
     }
   },
-  drawHeldWeapon(c: any, p: any, sx: any, sy: any, bob: any, hand: any) {
+  drawHeldWeapon(c: any, p: any, sx: any, sy: any, bob: any, hand: any, back = false) {
     /* 손에 그려지는 것은 "지금 실제로 쓰는 것"이어야 한다 — 핫바에 도구·낚싯대가 있으면 그것을, 아니면 장착 무기를. */
     const hi = p.held(), hd = hi && idef(hi);
     const tool = hd && (hd.type === 'tool' || hd.type === 'rod') ? hi : null;
@@ -656,7 +656,11 @@ export const RenderActorsPart: Bag = {
         Art.drawItem(c, wep.id, -13, -13, 26);
         c.restore();
       } else {
-        if (tool && p.swing <= 0) {
+        const rest = back && !(p.swing > 0) && this.time - (p.castAt ?? -9) >= 0.35;
+        if (rest) {
+          /* 뒷손(왼쪽을 볼 때의 오른손)에 쉬는 무기는 등 쪽으로 세운다 — 앞으로 눕히면 날이 몸을 건너 앞손에 든 것처럼 보였다. 사연: docs/code-history.md#h223 */
+          c.rotate(-1.15);
+        } else if (tool && p.swing <= 0) {
           /* 도구는 **거울로 뒤집어** 그린다 — 사연: docs/code-history.md#h74 */
           c.scale(p.facing > 0 ? 1 : -1, 1);
           c.rotate(-0.4);
