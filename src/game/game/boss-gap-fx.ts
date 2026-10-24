@@ -7,6 +7,17 @@ import { BOSS_MOVES, GAP_KIND } from '../data/bossmoves.js';
 import { Sprites } from '../sprites.js';
 import { Enemy } from '../entity.js';
 import { Game } from '../game.js';
+import { bodyCrack, hs } from './boss-hazard-art.js';
+
+/** 금 그물 — 한 점에서 갈래 n 이 잘게 꺾이며 뻗는다(어두운 틈 + 갈래 빛깔 속불). grow 0~1 로 자란다 */
+function crackNet(c: CanvasRenderingContext2D, sd: number, cx: number, cy: number, R: number, grow: number, col: string, n = 7) {
+  for (const [cl, lw] of [['rgba(18,12,8,.92)', 3.6], [col, 1.3]] as [string, number][])
+    for (let i = 0; i < n; i++) {
+      const a = i / n * TAU + (hs(sd, i) - 0.5) * 0.7, L = R * (0.45 + hs(sd, i + 20) * 0.6) * grow;
+      if (L > 2) bodyCrack(c, sd * 7 + i, cx, cy, a, L, cl, lw);
+    }
+}
+let CV: HTMLCanvasElement | null = null;
 
 export const BossGapFxPart: Bag = {
 
@@ -17,6 +28,28 @@ export const BossGapFxPart: Bag = {
     if (e.gapMiss) this.ringFx(e.cx, e.y + e.h, Math.max(e.w, e.h) * 1.2, '#ffffff', 0.6);
     this.shake = Math.max(this.shake || 0, e.gapMiss ? 9 : 5);
     this.sfxAt && this.sfxAt(e.gapK === 'stagger' ? 'sk_quake' : e.gapK === 'heat' ? 'sk_fire' : 'hit_crit', e.cx / 22, e.cy / 22);
+  },
+
+  /** 균열 틈 — 그 몸 그림 위에만 금이 번진다(시트 칸을 따로 그려 그 모양으로 오린다). drawEnemy 가 몸을 그린 바로 다음에 부른다.
+      ★ 네모 금 그림을 몸 위에 붙이면 몸 밖까지 곧은 줄이 그어졌다(사용자 지적) — 사연: docs/code-history.md#h227 */
+  enemyCrack(c: CanvasRenderingContext2D, e: any, key: string, x: number, y: number) {
+    if (!(e.gapT > 0 && e.gapK === 'crack') || !e.boss) return;
+    const m = Sprites.meta && (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]); if (!m) return;
+    const fw = m.frameW, fh = m.frameH, ox = m.ox || 0, oy = m.oy || 0;
+    if (!CV) CV = document.createElement('canvas');
+    if (CV.width < fw || CV.height < fh) { CV.width = Math.max(CV.width, fw); CV.height = Math.max(CV.height, fh); }
+    const g = CV.getContext('2d')!; g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, CV.width, CV.height);
+    if (!Sprites.draw(g, key, this.enemyFrame(e), -ox, -oy, e.facing < 0)) return;
+    const C = this.crackOf(e, fw, fh), K = GAP_KIND[e.gapK];
+    g.globalCompositeOperation = 'source-atop';
+    crackNet(g, C.sd, C.ox, C.oy, Math.max(fw, fh) * 0.55, Math.min(1, (this.time - C.t0) / 0.35), K ? K.c : '#cfe8ff');
+    c.save(); c.globalAlpha = Math.min(1, e.gapT * 3); c.drawImage(CV, 0, 0, fw, fh, x + ox, y + oy, fw, fh); c.restore();
+    e._crkAt = this.time;
+  },
+  /** 이번 균열의 씨 · 시작점(몸 위쪽 가운데 언저리) — 틈이 새로 열릴 때마다 다시 */
+  crackOf(e: any, w: number, h: number) {
+    if (!e._crk || e._crk.m !== e.gapMax) e._crk = { m: e.gapMax, sd: 1 + Math.floor(Math.random() * 9999), u: 0.35 + Math.random() * 0.3, v: 0.3 + Math.random() * 0.25, t0: this.time };
+    const C = e._crk; return { sd: C.sd, ox: w * C.u, oy: h * C.v, t0: C.t0 };
   },
 
   /** 몸 위의 틈 · 방어 자세 — drawMobFx 다음(같은 카메라) */
@@ -56,9 +89,12 @@ export const BossGapFxPart: Bag = {
           if (Math.random() < 0.5) this.mfxAdd({ k: 'smoke', x: e.cx + (Math.random() - 0.5) * e.w * 0.7, y: e.y + e.h * 0.2, vx: (Math.random() - 0.5) * 20, vy: -60, life: 0.9, r: 5, c: '200,190,185', c2: '240,235,230' });
           if (Math.random() < 0.4) this.mfxAdd({ k: 'ember', x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 60, vy: -90, life: 0.6, r: 2, c: '255,130,50', c2: '255,226,150' });
         } else if (e.gapK === 'crack') {                              // 몸에 번진 금 — 흰 금 그림, 남은 시간만큼 짙게
-          const art = Sprites.vfxArt('ward_crack', K.c);
-          c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.55 + 0.4 * k;
-          if (art) c.drawImage(art, x - R * 0.9, y - R * 0.9, R * 1.8, R * 1.8);
+          if ((e as any)._crkAt !== this.time) {                            // 몸 그림이 시트가 아닌 보스(뒷벽 · 조각) — 판정 상자 타원 안에만
+            const C = this.crackOf(e, e.w, e.h);
+            c.globalAlpha = fade; c.beginPath(); c.ellipse(x, y, e.w * 0.5, e.h * 0.5, 0, 0, TAU); c.clip();
+            crackNet(c, C.sd, x - e.w / 2 + C.ox, y - e.h / 2 + C.oy, Math.max(e.w, e.h) * 0.6, Math.min(1, (t - C.t0) / 0.35), K.c);
+          }
+          void k;
           if (Math.random() < 0.25) this.mfxAdd({ k: 'mote', x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 80, vy: -40, life: 0.7, r: 2.2, c: '200,230,255', c2: '255,255,255' });
         }
         if (e.gapMiss) {                                              // 헛손질 — 발밑 먼지 고리가 한 번 더 번진다

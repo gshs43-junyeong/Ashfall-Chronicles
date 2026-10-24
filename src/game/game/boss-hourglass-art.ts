@@ -5,7 +5,7 @@ import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
 import { HG, duneH, fistAt, hgAt, hgFloor, hgSand, smooth } from '../entity/boss-hourglass.js';
 import { Game } from '../game.js';
-import { groundZone, hs, hzGlow, rgba } from './boss-hazard-art.js';
+import { bodyCrack, groundZone, hs, hzGlow, rgba } from './boss-hazard-art.js';
 import { VORTEX_ART } from './boss-field-art.js';
 /* ★ 몸 · 모래시계 · 둔덕은 objects 단계(인물 뒤 — 플레이어가 그 앞을 지나고 둔덕 위에 선다), 팔은 drawBossLit(인물 앞 · 빛 앞),
    눈 · 유리의 빛은 fx 단계(빛 뒤). drawEnemy 는 이 보스를 건너뛴다. 모래시계 속 모래는 그림에 없다 — 남은 체력 · 마감 시간을 여기서 칠한다. */
@@ -141,8 +141,7 @@ export const BossHourglassArt: Bag = {
       if (!broke) glassSand(c, top, 1 - top, flow, T);
       if (pim) c.drawImage(pim, 0, 0, PW, PH, -80, -88, PW, PH);
       if (broke) {                                                   // 깨진 유리 — 목에서 퍼지는 금
-        c.strokeStyle = 'rgba(255,240,200,.85)'; c.lineWidth = 2;
-        for (let i = 0; i < 7; i++) { const a = hs(dl.id || 1, i) * TAU; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a) * 34, Math.sin(a) * 50); c.stroke(); }
+        for (let i = 0; i < 7; i++) { const a = hs(dl.id || 1, i) * TAU; bodyCrack(c, (dl.id || 1) * 13 + i, 0, 0, a, 34 + 16 * Math.abs(Math.sin(a)), 'rgba(255,240,200,.85)', 2.2); }
       }
       c.restore();
     }

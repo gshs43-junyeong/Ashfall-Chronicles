@@ -5,7 +5,7 @@ import { TS } from '../world.js';
 import { Sprites } from '../sprites.js';
 import { JD, eyeStage, jdAt, verdictTilt } from '../entity/boss-judge.js';
 import { Game } from '../game.js';
-import { groundZone, hzGlow, rgba } from './boss-hazard-art.js';
+import { bodyCrack, groundZone, hzGlow, rgba } from './boss-hazard-art.js';
 /* ★ 몸 · 머리 · 석판은 objects 단계(인물 뒤 — 플레이어가 그 앞을 지난다), 팔 · 저울은 drawBossLit(인물 앞 · 빛 앞), 눈 · 문장 · 광선은 fx(빛 뒤).
    멈춘 석상으로 보이지 않게(사용자) 머리는 늘 플레이어를 보고 숨에 맞춰 오르내리며, 저울 접시는 줄에 매달려 흔들리고, 빈손은 쉬지 않고 몸짓한다. */
 
@@ -119,8 +119,7 @@ export const BossJudgeArt: Bag = {
     c.translate(x, y); if (fall > 0) c.rotate(Math.sin(h.sd + h.t * 9) * 0.08 * fall);
     c.drawImage(pim, 10 * PW, 0, PW, PH, -80, -164, PW, PH);
     if (h.cr) {                                                       // 막은 광선 자국 — 금
-      c.strokeStyle = 'rgba(40,30,20,.85)'; c.lineWidth = 2;
-      for (let i = 0; i < Math.min(4, h.cr) * 2; i++) { const ox = ((h.sd * (i + 3)) % 30) - 15, oy = -40 - ((h.sd * (i + 7)) % 80); c.beginPath(); c.moveTo(ox, oy); c.lineTo(ox + 8, oy + 14); c.lineTo(ox + 2, oy + 26); c.stroke(); }
+      for (let i = 0; i < Math.min(4, h.cr); i++) { const ox = ((h.sd * (i + 3)) % 30) - 15, oy = -40 - ((h.sd * (i + 7)) % 80); bodyCrack(c, Math.floor(h.sd * 10) + i, ox, oy, 1.1 + (i % 2) * 0.9, 30, 'rgba(40,30,20,.85)', 2.2); }
     }
     c.restore();
   },

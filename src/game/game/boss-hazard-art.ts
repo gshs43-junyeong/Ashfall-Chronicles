@@ -87,6 +87,17 @@ export function strokePath(c: C2, p: number[], col: string, lw: number) {
   c.strokeStyle = col; c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round';
   c.beginPath(); c.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.stroke();
 }
+/** 몸에 가는 금 — 잘게 꺾이며 끝으로 가늘어지고 가운데서 곁금이 한 갈래(곧은 줄은 그어 놓은 선으로 보였다 — 사연: docs/code-history.md#h227) */
+export function bodyCrack(c: C2, sd: number, x: number, y: number, ang: number, len: number, col: string, lw: number) {
+  const run = (s: number, x0: number, y0: number, a: number, L: number, w: number) => {
+    const p = jag(s, x0, y0, x0 + Math.cos(a) * L, y0 + Math.sin(a) * L, 7, L * 0.09);
+    c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let i = 2; i < p.length; i += 2) { c.lineWidth = Math.max(0.6, w * (1 - (i / p.length) * 0.75)); c.beginPath(); c.moveTo(p[i - 2], p[i - 1]); c.lineTo(p[i], p[i + 1]); c.stroke(); }
+    return p;
+  };
+  const p = run(sd, x, y, ang, len, lw), m = 2 * (2 + Math.floor(hs(sd, 3) * 3));
+  run(sd + 11, p[m], p[m + 1], ang + (hs(sd, 5) < 0.5 ? -1 : 1) * (0.5 + hs(sd, 6) * 0.6), len * (0.3 + hs(sd, 7) * 0.2), lw * 0.55);
+}
 /** 땅 금 — 가운데서 갈라져 나가는 줄 */
 export function cracks(c: C2, sd: number, x: number, y: number, R: number, col: string, k: number, n = 5) {
   for (let i = 0; i < n; i++) {

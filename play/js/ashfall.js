@@ -56403,92 +56403,6 @@
   };
   mixin(Game.prototype, StageFxPart, true);
 
-  // src/game/game/boss-gap-fx.ts
-  var boss_gap_fx_exports = {};
-  __export(boss_gap_fx_exports, {
-    BossGapFxPart: () => BossGapFxPart
-  });
-  var BossGapFxPart = {
-    /** 틈이 열리는 순간 — 갈래 빛깔의 고리 · 흔들림, 헛손질이면 한 겹 더 */
-    gapBurst(e) {
-      const K = GAP_KIND[e.gapK];
-      if (!K) return;
-      this.ringFx(e.cx, e.cy, Math.max(e.w, e.h) * 0.8, K.c, 0.45);
-      if (e.gapMiss) this.ringFx(e.cx, e.y + e.h, Math.max(e.w, e.h) * 1.2, "#ffffff", 0.6);
-      this.shake = Math.max(this.shake || 0, e.gapMiss ? 9 : 5);
-      this.sfxAt && this.sfxAt(e.gapK === "stagger" ? "sk_quake" : e.gapK === "heat" ? "sk_fire" : "hit_crit", e.cx / 22, e.cy / 22);
-    },
-    /** 몸 위의 틈 · 방어 자세 — drawMobFx 다음(같은 카메라) */
-    drawBossGaps(c, camX, camY) {
-      const t = this.time;
-      for (const e of this.ents || []) {
-        if (!(e instanceof Enemy) || e.dead || !e.boss) continue;
-        if (e.ghost && e.gapT > 0) e.gapT -= 1 / 60;
-        const x = e.cx - camX, y = e.cy - camY, R = Math.max(e.w, e.h) * 0.62;
-        if (x < -R * 2 || y < -R * 2 || x > this.W + R * 2 || y > this.H + R * 2) continue;
-        const col = (BOSS_MOVES[e.type] || {}).c || "#bcd8f4";
-        c.save();
-        if (e.bracing()) {
-          const art = Sprites.vfxArt("ward_shell", col), a = 0.32 + Math.sin(t * 9) * 0.08;
-          c.globalCompositeOperation = "lighter";
-          c.globalAlpha = a;
-          if (art) c.drawImage(art, x - R, y - R, R * 2, R * 2);
-          c.strokeStyle = col;
-          c.lineWidth = 3;
-          c.globalAlpha = a + 0.25;
-          const f = e.facing || 1;
-          c.beginPath();
-          c.arc(x, y, R * 1.02, f > 0 ? -1.1 : Math.PI - 1.1, f > 0 ? 1.1 : Math.PI + 1.1);
-          c.stroke();
-        }
-        if (e.gapT > 0) {
-          const K = GAP_KIND[e.gapK], k = Math.min(1, e.gapT / Math.max(0.3, e.gapMax || 1)), fade = Math.min(1, e.gapT * 3);
-          if (e.gapK === "stagger") {
-            const hy = e.y - camY - 10;
-            for (let i = 0; i < 3; i++) {
-              const a = t * 5 + i * TAU / 3, sx = x + Math.cos(a) * e.w * 0.42, sy = hy + Math.sin(a) * 7;
-              c.globalAlpha = fade * (Math.sin(a) > 0 ? 1 : 0.55);
-              c.fillStyle = i ? "#ffe8a0" : "#ffffff";
-              c.beginPath();
-              for (let j = 0; j < 10; j++) {
-                const r = j % 2 ? 3.2 : 8, b = j * Math.PI / 5 + t * 3;
-                c.lineTo(sx + Math.cos(b) * r, sy + Math.sin(b) * r);
-              }
-              c.closePath();
-              c.fill();
-            }
-          } else if (e.gapK === "heat") {
-            c.globalCompositeOperation = "lighter";
-            const g = c.createRadialGradient(x, y, 2, x, y, R * 1.1);
-            g.addColorStop(0, "rgba(255,150,70," + 0.45 * fade + ")");
-            g.addColorStop(1, "rgba(255,90,30,0)");
-            c.fillStyle = g;
-            c.fillRect(x - R * 1.1, y - R * 1.1, R * 2.2, R * 2.2);
-            if (Math.random() < 0.5) this.mfxAdd({ k: "smoke", x: e.cx + (Math.random() - 0.5) * e.w * 0.7, y: e.y + e.h * 0.2, vx: (Math.random() - 0.5) * 20, vy: -60, life: 0.9, r: 5, c: "200,190,185", c2: "240,235,230" });
-            if (Math.random() < 0.4) this.mfxAdd({ k: "ember", x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 60, vy: -90, life: 0.6, r: 2, c: "255,130,50", c2: "255,226,150" });
-          } else if (e.gapK === "crack") {
-            const art = Sprites.vfxArt("ward_crack", K.c);
-            c.globalCompositeOperation = "lighter";
-            c.globalAlpha = 0.55 + 0.4 * k;
-            if (art) c.drawImage(art, x - R * 0.9, y - R * 0.9, R * 1.8, R * 1.8);
-            if (Math.random() < 0.25) this.mfxAdd({ k: "mote", x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 80, vy: -40, life: 0.7, r: 2.2, c: "200,230,255", c2: "255,255,255" });
-          }
-          if (e.gapMiss) {
-            c.globalCompositeOperation = "source-over";
-            c.globalAlpha = 0.25 * fade;
-            c.strokeStyle = "#fff4d0";
-            c.lineWidth = 2;
-            c.beginPath();
-            c.ellipse(x, e.y + e.h - camY, e.w * (0.6 + (1 - k) * 0.4), 6, 0, 0, TAU);
-            c.stroke();
-          }
-        }
-        c.restore();
-      }
-    }
-  };
-  mixin(Game.prototype, BossGapFxPart, true);
-
   // src/game/game/boss-form-fx.ts
   var boss_form_fx_exports = {};
   __export(boss_form_fx_exports, {
@@ -61144,6 +61058,7 @@
   var boss_hazard_art_exports = {};
   __export(boss_hazard_art_exports, {
     STRIKE_ART: () => STRIKE_ART,
+    bodyCrack: () => bodyCrack,
     bone: () => bone,
     cracks: () => cracks,
     flame: () => flame,
@@ -61298,6 +61213,24 @@
     c.moveTo(p[0], p[1]);
     for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]);
     c.stroke();
+  }
+  function bodyCrack(c, sd, x, y, ang, len, col, lw) {
+    const run = (s, x0, y0, a, L, w) => {
+      const p2 = jag(s, x0, y0, x0 + Math.cos(a) * L, y0 + Math.sin(a) * L, 7, L * 0.09);
+      c.strokeStyle = col;
+      c.lineCap = "round";
+      c.lineJoin = "round";
+      for (let i = 2; i < p2.length; i += 2) {
+        c.lineWidth = Math.max(0.6, w * (1 - i / p2.length * 0.75));
+        c.beginPath();
+        c.moveTo(p2[i - 2], p2[i - 1]);
+        c.lineTo(p2[i], p2[i + 1]);
+        c.stroke();
+      }
+      return p2;
+    };
+    const p = run(sd, x, y, ang, len, lw), m = 2 * (2 + Math.floor(hs3(sd, 3) * 3));
+    run(sd + 11, p[m], p[m + 1], ang + (hs3(sd, 5) < 0.5 ? -1 : 1) * (0.5 + hs3(sd, 6) * 0.6), len * (0.3 + hs3(sd, 7) * 0.2), lw * 0.55);
   }
   function cracks(c, sd, x, y, R, col, k, n = 5) {
     for (let i = 0; i < n; i++) {
@@ -62169,6 +62102,137 @@
       }
     }
   };
+
+  // src/game/game/boss-gap-fx.ts
+  var boss_gap_fx_exports = {};
+  __export(boss_gap_fx_exports, {
+    BossGapFxPart: () => BossGapFxPart
+  });
+  function crackNet(c, sd, cx, cy, R, grow, col, n = 7) {
+    for (const [cl, lw] of [["rgba(18,12,8,.92)", 3.6], [col, 1.3]])
+      for (let i = 0; i < n; i++) {
+        const a = i / n * TAU + (hs3(sd, i) - 0.5) * 0.7, L = R * (0.45 + hs3(sd, i + 20) * 0.6) * grow;
+        if (L > 2) bodyCrack(c, sd * 7 + i, cx, cy, a, L, cl, lw);
+      }
+  }
+  var CV = null;
+  var BossGapFxPart = {
+    /** 틈이 열리는 순간 — 갈래 빛깔의 고리 · 흔들림, 헛손질이면 한 겹 더 */
+    gapBurst(e) {
+      const K = GAP_KIND[e.gapK];
+      if (!K) return;
+      this.ringFx(e.cx, e.cy, Math.max(e.w, e.h) * 0.8, K.c, 0.45);
+      if (e.gapMiss) this.ringFx(e.cx, e.y + e.h, Math.max(e.w, e.h) * 1.2, "#ffffff", 0.6);
+      this.shake = Math.max(this.shake || 0, e.gapMiss ? 9 : 5);
+      this.sfxAt && this.sfxAt(e.gapK === "stagger" ? "sk_quake" : e.gapK === "heat" ? "sk_fire" : "hit_crit", e.cx / 22, e.cy / 22);
+    },
+    /** 균열 틈 — 그 몸 그림 위에만 금이 번진다(시트 칸을 따로 그려 그 모양으로 오린다). drawEnemy 가 몸을 그린 바로 다음에 부른다.
+        ★ 네모 금 그림을 몸 위에 붙이면 몸 밖까지 곧은 줄이 그어졌다(사용자 지적) — 사연: docs/code-history.md#h227 */
+    enemyCrack(c, e, key, x, y) {
+      if (!(e.gapT > 0 && e.gapK === "crack") || !e.boss) return;
+      const m = Sprites.meta && (Sprites.meta.characters.sheets[key] || Sprites.meta.bosses.sheets[key]);
+      if (!m) return;
+      const fw = m.frameW, fh = m.frameH, ox = m.ox || 0, oy = m.oy || 0;
+      if (!CV) CV = document.createElement("canvas");
+      if (CV.width < fw || CV.height < fh) {
+        CV.width = Math.max(CV.width, fw);
+        CV.height = Math.max(CV.height, fh);
+      }
+      const g = CV.getContext("2d");
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = "source-over";
+      g.clearRect(0, 0, CV.width, CV.height);
+      if (!Sprites.draw(g, key, this.enemyFrame(e), -ox, -oy, e.facing < 0)) return;
+      const C = this.crackOf(e, fw, fh), K = GAP_KIND[e.gapK];
+      g.globalCompositeOperation = "source-atop";
+      crackNet(g, C.sd, C.ox, C.oy, Math.max(fw, fh) * 0.55, Math.min(1, (this.time - C.t0) / 0.35), K ? K.c : "#cfe8ff");
+      c.save();
+      c.globalAlpha = Math.min(1, e.gapT * 3);
+      c.drawImage(CV, 0, 0, fw, fh, x + ox, y + oy, fw, fh);
+      c.restore();
+      e._crkAt = this.time;
+    },
+    /** 이번 균열의 씨 · 시작점(몸 위쪽 가운데 언저리) — 틈이 새로 열릴 때마다 다시 */
+    crackOf(e, w, h) {
+      if (!e._crk || e._crk.m !== e.gapMax) e._crk = { m: e.gapMax, sd: 1 + Math.floor(Math.random() * 9999), u: 0.35 + Math.random() * 0.3, v: 0.3 + Math.random() * 0.25, t0: this.time };
+      const C = e._crk;
+      return { sd: C.sd, ox: w * C.u, oy: h * C.v, t0: C.t0 };
+    },
+    /** 몸 위의 틈 · 방어 자세 — drawMobFx 다음(같은 카메라) */
+    drawBossGaps(c, camX, camY) {
+      const t = this.time;
+      for (const e of this.ents || []) {
+        if (!(e instanceof Enemy) || e.dead || !e.boss) continue;
+        if (e.ghost && e.gapT > 0) e.gapT -= 1 / 60;
+        const x = e.cx - camX, y = e.cy - camY, R = Math.max(e.w, e.h) * 0.62;
+        if (x < -R * 2 || y < -R * 2 || x > this.W + R * 2 || y > this.H + R * 2) continue;
+        const col = (BOSS_MOVES[e.type] || {}).c || "#bcd8f4";
+        c.save();
+        if (e.bracing()) {
+          const art = Sprites.vfxArt("ward_shell", col), a = 0.32 + Math.sin(t * 9) * 0.08;
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = a;
+          if (art) c.drawImage(art, x - R, y - R, R * 2, R * 2);
+          c.strokeStyle = col;
+          c.lineWidth = 3;
+          c.globalAlpha = a + 0.25;
+          const f = e.facing || 1;
+          c.beginPath();
+          c.arc(x, y, R * 1.02, f > 0 ? -1.1 : Math.PI - 1.1, f > 0 ? 1.1 : Math.PI + 1.1);
+          c.stroke();
+        }
+        if (e.gapT > 0) {
+          const K = GAP_KIND[e.gapK], k = Math.min(1, e.gapT / Math.max(0.3, e.gapMax || 1)), fade = Math.min(1, e.gapT * 3);
+          if (e.gapK === "stagger") {
+            const hy = e.y - camY - 10;
+            for (let i = 0; i < 3; i++) {
+              const a = t * 5 + i * TAU / 3, sx = x + Math.cos(a) * e.w * 0.42, sy = hy + Math.sin(a) * 7;
+              c.globalAlpha = fade * (Math.sin(a) > 0 ? 1 : 0.55);
+              c.fillStyle = i ? "#ffe8a0" : "#ffffff";
+              c.beginPath();
+              for (let j = 0; j < 10; j++) {
+                const r = j % 2 ? 3.2 : 8, b = j * Math.PI / 5 + t * 3;
+                c.lineTo(sx + Math.cos(b) * r, sy + Math.sin(b) * r);
+              }
+              c.closePath();
+              c.fill();
+            }
+          } else if (e.gapK === "heat") {
+            c.globalCompositeOperation = "lighter";
+            const g = c.createRadialGradient(x, y, 2, x, y, R * 1.1);
+            g.addColorStop(0, "rgba(255,150,70," + 0.45 * fade + ")");
+            g.addColorStop(1, "rgba(255,90,30,0)");
+            c.fillStyle = g;
+            c.fillRect(x - R * 1.1, y - R * 1.1, R * 2.2, R * 2.2);
+            if (Math.random() < 0.5) this.mfxAdd({ k: "smoke", x: e.cx + (Math.random() - 0.5) * e.w * 0.7, y: e.y + e.h * 0.2, vx: (Math.random() - 0.5) * 20, vy: -60, life: 0.9, r: 5, c: "200,190,185", c2: "240,235,230" });
+            if (Math.random() < 0.4) this.mfxAdd({ k: "ember", x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 60, vy: -90, life: 0.6, r: 2, c: "255,130,50", c2: "255,226,150" });
+          } else if (e.gapK === "crack") {
+            if (e._crkAt !== this.time) {
+              const C = this.crackOf(e, e.w, e.h);
+              c.globalAlpha = fade;
+              c.beginPath();
+              c.ellipse(x, y, e.w * 0.5, e.h * 0.5, 0, 0, TAU);
+              c.clip();
+              crackNet(c, C.sd, x - e.w / 2 + C.ox, y - e.h / 2 + C.oy, Math.max(e.w, e.h) * 0.6, Math.min(1, (t - C.t0) / 0.35), K.c);
+            }
+            void k;
+            if (Math.random() < 0.25) this.mfxAdd({ k: "mote", x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 80, vy: -40, life: 0.7, r: 2.2, c: "200,230,255", c2: "255,255,255" });
+          }
+          if (e.gapMiss) {
+            c.globalCompositeOperation = "source-over";
+            c.globalAlpha = 0.25 * fade;
+            c.strokeStyle = "#fff4d0";
+            c.lineWidth = 2;
+            c.beginPath();
+            c.ellipse(x, e.y + e.h - camY, e.w * (0.6 + (1 - k) * 0.4), 6, 0, 0, TAU);
+            c.stroke();
+          }
+        }
+        c.restore();
+      }
+    }
+  };
+  mixin(Game.prototype, BossGapFxPart, true);
 
   // src/game/game/boss-field-art.ts
   var boss_field_art_exports = {};
@@ -65112,14 +65176,9 @@
         if (!broke) glassSand(c, top, 1 - top, flow, T2);
         if (pim) c.drawImage(pim, 0, 0, PW2, PH2, -80, -88, PW2, PH2);
         if (broke) {
-          c.strokeStyle = "rgba(255,240,200,.85)";
-          c.lineWidth = 2;
           for (let i = 0; i < 7; i++) {
             const a = hs3(dl.id || 1, i) * TAU;
-            c.beginPath();
-            c.moveTo(0, 0);
-            c.lineTo(Math.cos(a) * 34, Math.sin(a) * 50);
-            c.stroke();
+            bodyCrack(c, (dl.id || 1) * 13 + i, 0, 0, a, 34 + 16 * Math.abs(Math.sin(a)), "rgba(255,240,200,.85)", 2.2);
           }
         }
         c.restore();
@@ -65966,15 +66025,9 @@
       if (fall > 0) c.rotate(Math.sin(h.sd + h.t * 9) * 0.08 * fall);
       c.drawImage(pim, 10 * PW4, 0, PW4, PH4, -80, -164, PW4, PH4);
       if (h.cr) {
-        c.strokeStyle = "rgba(40,30,20,.85)";
-        c.lineWidth = 2;
-        for (let i = 0; i < Math.min(4, h.cr) * 2; i++) {
+        for (let i = 0; i < Math.min(4, h.cr); i++) {
           const ox = h.sd * (i + 3) % 30 - 15, oy = -40 - h.sd * (i + 7) % 80;
-          c.beginPath();
-          c.moveTo(ox, oy);
-          c.lineTo(ox + 8, oy + 14);
-          c.lineTo(ox + 2, oy + 26);
-          c.stroke();
+          bodyCrack(c, Math.floor(h.sd * 10) + i, ox, oy, 1.1 + i % 2 * 0.9, 30, "rgba(40,30,20,.85)", 2.2);
         }
       }
       c.restore();
@@ -76721,6 +76774,7 @@
     /** 손그림 몹 위에 얹는 것들 — 피격 섬광 · 체력 막대 · 페이즈 전환 섬광. */
     /** 피격 섬광(흰빛) · 페이즈 전환(금빛) — 방금 그린 그림과 같은 자리 · 같은 변형 안에서 실루엣 사본으로 */
     enemyFlash(c, e, key, x, y) {
+      if (e.boss && e.gapT > 0) this.enemyCrack(c, e, key, x, y);
       if (!(e.flash > 0) && !(e.phaseT > 0)) return;
       const fr = this.enemyFrame(e), fl = e.facing < 0;
       for (const [on, col, a] of [[e.flash > 0, "#ffffff", Math.min(0.75, e.flash * 6)], [e.phaseT > 0, "#ffe08a", Math.min(0.55, e.phaseT * 0.8)]]) {
@@ -80605,7 +80659,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_gap_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_gap_fx_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

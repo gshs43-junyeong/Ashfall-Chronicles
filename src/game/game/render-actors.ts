@@ -704,6 +704,7 @@ export const RenderActorsPart: Bag = {
   /** 손그림 몹 위에 얹는 것들 — 피격 섬광 · 체력 막대 · 페이즈 전환 섬광. */
   /** 피격 섬광(흰빛) · 페이즈 전환(금빛) — 방금 그린 그림과 같은 자리 · 같은 변형 안에서 실루엣 사본으로 */
   enemyFlash(c: CanvasRenderingContext2D, e: Enemy, key: string, x: number, y: number) {
+    if (e.boss && e.gapT > 0) this.enemyCrack(c, e, key, x, y);      // 균열 틈 — 몸 그림 위에만(game/boss-gap-fx)
     if (!(e.flash > 0) && !(e.phaseT > 0)) return;
     const fr = this.enemyFrame(e), fl = e.facing < 0;
     for (const [on, col, a] of [[e.flash > 0, '#ffffff', Math.min(.75, e.flash * 6)], [e.phaseT > 0, '#ffe08a', Math.min(.55, e.phaseT * 0.8)]] as [boolean, string, number][]) {

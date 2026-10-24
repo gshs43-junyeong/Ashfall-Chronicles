@@ -104,21 +104,64 @@ def fine(F, a, b, col, alpha=255):
         Fig.px(F, (a[0] + (b[0] - a[0]) * t) * K, (a[1] + (b[1] - a[1]) * t) * K, col, alpha)
 
 
-def crack(F, pts, w, hot):
-    """빛이 새는 금 — 속불 쐐기 + 위(그늘) 쪽 어두운 날 1px · 아래 쪽 깨진 날의 밝은 칸 몇 개"""
+def _organic(pts, rnd, depth=3, amp=0.22):
+    """금의 길 — 마디마다 가운데를 옆으로 밀어 잘게 꺾는다(곧은 토막이 번개처럼 보였다)"""
+    out = [pts[0]]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        seg = [(x0, y0), (x1, y1)]
+        for d in range(depth):
+            nxt = [seg[0]]
+            for (ax, ay), (bx, by) in zip(seg, seg[1:]):
+                L = math.hypot(bx - ax, by - ay) or 1
+                off = (rnd() - 0.5) * 2 * L * amp / (1 + d * 0.4)
+                mx, my = (ax + bx) / 2 - (by - ay) / L * off, (ay + by) / 2 + (bx - ax) / L * off
+                nxt += [(mx, my), (bx, by)]
+            seg = nxt
+        out += seg[1:]
+    return out
+
+
+def _wedge(F, path, w0, w1, hot, rnd):
+    """속불 쐐기 — 굵기가 w0 에서 w1 로 가늘어지고(마디마다 조금씩 달라진다) · 그늘 쪽 날은 어둡게 · 깨진 날 몇 칸은 밝게"""
+    n = len(path)
     L, R = [], []
-    for i, (x, y) in enumerate(pts):
-        x2, y2 = pts[min(i + 1, len(pts) - 1)]; x1, y1 = pts[max(i - 1, 0)]
+    for i, (x, y) in enumerate(path):
+        x2, y2 = path[min(i + 1, n - 1)]; x1, y1 = path[max(i - 1, 0)]
         dx, dy = x2 - x1, y2 - y1; d = math.hypot(dx, dy) or 1
-        ww = w * (1 - i / len(pts) * 0.6)
+        u = i / max(1, n - 1)
+        ww = (w0 + (w1 - w0) * u) * (0.75 + 0.5 * rnd())
+        if i == n - 1:
+            ww = 0.05
         L.append((x - dy / d * ww, y + dx / d * ww)); R.append((x + dy / d * ww, y - dx / d * ww))
     F.part('glow', hot, glow=True).poly(L + R[::-1])
-    F.glow(pts[0][0] * K / K, pts[0][1], 3, hot, 0.25)
     for (a, b) in zip(R, R[1:]):
         fine(F, a, b, '#1c140e')
     for k, (a, b) in enumerate(zip(L, L[1:])):
-        if k % 2 == 0:
-            fine(F, a, b, '#d8a874', 230)
+        if rnd() < 0.35:
+            fine(F, a, b, '#d8a874', 220)
+
+
+def crack(F, pts, w, hot):
+    """빛이 새는 금 — 잘게 꺾인 길을 따라 가늘어지는 속불 쐐기 + 가는 곁금 한두 갈래.
+       ★ 곧은 토막 몇 개로 그으면 번개 · 직선처럼 보였다(사용자 지적 2026-10-24) — 길은 _organic 이 꺾고, 난수는 점에서 씨를 받아 장마다 같다"""
+    sd = [int(abs(x * 131 + y * 71)) % 2147483647 + 1 for (x, y) in pts]
+    state = [sum(sd) % 2147483647 or 7]
+
+    def rnd():
+        state[0] = state[0] * 48271 % 2147483647
+        return state[0] / 2147483647
+    path = _organic(pts, rnd)
+    _wedge(F, path, w, w * 0.3, hot, rnd)
+    F.glow(pts[0][0], pts[0][1], 2.5, hot, 0.22)
+    total = sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(path, path[1:]))
+    for k in range(1 + (total > 10)):                     # 곁금 — 길 중간에서 비스듬히 갈라져 금방 사라진다
+        i = int(len(path) * (0.25 + 0.45 * rnd()))
+        x, y = path[i]; x2, y2 = path[min(i + 1, len(path) - 1)]
+        a = math.atan2(y2 - y, x2 - x) + (1 if rnd() < 0.5 else -1) * (0.5 + 0.6 * rnd())
+        ln = total * (0.18 + 0.15 * rnd())
+        tip = (x + math.cos(a) * ln, y + math.sin(a) * ln)
+        mid = (x + math.cos(a) * ln * 0.5 + (rnd() - 0.5) * ln * 0.3, y + math.sin(a) * ln * 0.5 + (rnd() - 0.5) * ln * 0.3)
+        _wedge(F, _organic([(x, y), mid, tip], rnd, 2, 0.25), w * 0.45, w * 0.1, hot, rnd)
 
 
 def pool_shell(f):
