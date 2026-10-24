@@ -45,6 +45,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
     else if (AI === 'b_hourglass') this.hgAI(dt, world);              // 모래시계 거상(entity/boss-hourglass)
     else if (AI === 'b_hive') this.hvAI(dt, world, p);                // 곪은 벌집 어미(entity/boss-hive)
     else if (AI === 'b_judge') this.jdAI(dt, world);                  // 판결석 좌상(entity/boss-judge)
+    else if (AI === 'b_eclipse') this.ecAI(dt, world);                // 일식(entity/boss-eclipse)
     else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
     else if (AI === 'b_slime') {
       if (this.onGround) {
@@ -244,54 +245,6 @@ export const BossAI: Bag & ThisType<Enemy> = {
         }
       } else this.vx *= 0.9;
       this.move(dt, world);
-    } else if (AI === 'b_pursuer') {
-      /* 종장 — 별을 쫓아온 것. */
-      if (this.stateT <= 0) {
-        this.state = (this.state + 1) % 4;
-        this.stateT = 3.0 - this.pf * 0.8;
-        if (this.state === 1) {
-          this.x = clamp(p.cx + (Math.random() < .5 ? -170 : 170), TS * 3, WW * TS - TS * 3) - this.w / 2;
-          this.y = p.cy - this.h;
-          G.shake = Math.max(G.shake, 12);
-          for (let i = 0; i < 26; i++) G.parts.push(new Part(this.cx, this.cy, '#a06fff', -40, 1.1));
-        }
-        if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
-          G.ents.push(new Enemy(this.def.minion || 'wraith', this.cx + (Math.random() - 0.5) * 300, this.cy - 30, G.scale()));
-      }
-      if (this.state === 0) {            // 공허 탄막 — 천천히 돌아가는 나선
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.5, dt * 2);
-        this.vy = lerp(this.vy, Math.sign(dy) * this.spd! * 0.4, dt * 2);
-        if (this.atkCd <= 0) {
-          this.atkCd = 0.28 - this.pf * 0.1;
-          this.spin = (this.spin || 0) + 0.55;
-          const n = 3 + this.pf * 2;
-          for (let i = 0; i < n; i++) {
-            const a = this.spin + i * TAU / n;
-            G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, 'enemy', 'void'));
-          }
-        }
-      } else if (this.state === 1) {     // 강타 — 플레이어를 향해 가속, 닿으면 폭발
-        const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-        this.vx = lerp(this.vx, Math.cos(a) * this.spd! * 2.4, dt * 5);
-        this.vy = lerp(this.vy, Math.sin(a) * this.spd! * 2.4, dt * 5);
-        if (this.atkCd <= 0) {
-          this.atkCd = 1.1;
-          const n = 10 + this.pf * 8;
-          for (let k = 0; k < n; k++) {
-            const ang = k * TAU / n;
-            G.projs.push(new Proj(this.cx, this.cy, Math.cos(ang) * 250, Math.sin(ang) * 250, this.dmg * 0.38, 'enemy', 'dark'));
-          }
-        }
-      } else if (this.state === 2) {     // 잿비 — 머리 위에서 쏟아진다
-        this.vx = lerp(this.vx, 0, dt * 3);
-        this.vy = lerp(this.vy, -30, dt * 3);
-        if (this.atkCd <= 0) {
-          this.atkCd = 0.16 - this.pf * 0.06;
-          const px = p.cx + (Math.random() - 0.5) * 620;
-          G.projs.push(new Proj(px, this.cy - 260, (Math.random() - 0.5) * 40, 420, this.dmg * 0.34, 'enemy', 'bone'));
-        }
-      } else { this.vx *= 0.9; this.vy *= 0.9; }
-      this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_prolif') {
       /* 증식체 — 뛰지 않는다. */
       this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.35, dt * 2);

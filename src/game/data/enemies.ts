@@ -251,7 +251,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['aether_shard', 1, 40, 60], ['ruin_brick', 1, 40, 70], ['charm_rune', 1, 1, 1], ['star_heart', 1, 2, 2]] },
 
   /* 종장 — 별이 도망쳐 온 그것 */
-  pursuer:      { n: '별을 쫓아온 것', hp: 42000, dmg: 165, def: 68, spd: 128, ai: 'b_pursuer', w: 172, h: 192, c: '#2a2036', xp: 11000, gold: 60000, ph: 5, boss: 1,
+  pursuer:      { n: '별을 쫓아온 것 · 일식', hp: 42000, dmg: 165, def: 68, spd: 0, ai: 'b_eclipse', w: 170, h: 150, wall: 1, c: '#2a2036', xp: 11000, gold: 60000, ph: 5, boss: 1,
                  minion: 'wraith', aggro: 4000,
                  drops: [['void_frag', 1, 60, 90], ['star_heart', 1, 3, 3], ['charm_dawn', 1, 1, 1], ['scythe_void', 1, 1, 1]] },
 

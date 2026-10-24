@@ -127,6 +127,9 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   jd_weigh: ['door_open', .4, .7], jd_verdict: ['boom_small', .45, 1.1], jd_tablet: ['mat_stone', .5, .9], jd_slam: ['mat_stone', .6, 1.2],
   jd_lift: ['door_open', .45, .8], jd_gavel: ['boom_small', .5, 1.2], jd_eye: ['magic', .5, .7], jd_beam: ['magic', .7, 1],
   jd_sentence: ['chapter', .45, .9], jd_tear: ['mat_glass', .6, 1.2],
+  /* 일식 — 낮게 늘인 바람 · 공허 소리, 손은 둔탁한 땅울림 */
+  ec_reach: ['sk_whirl', .4, .8], ec_slam: ['boom_small', .4, 1.2], ec_open: ['magic', .4, .8], ec_stare: ['sk_quake', .5, .9],
+  ec_total: ['chapter', .35, 1], ec_crack: ['mat_glass', .5, 1.1],
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],

@@ -10,7 +10,7 @@ import { DAY_CYCLE, Game } from '../game.js';
 
 export const RenderSkyPart: Bag = {
 
-  dayFactor() { return DAY_CYCLE.light(this.dayT); },
+  dayFactor() { return DAY_CYCLE.light(this.dayT) * (1 - 0.85 * (this.ecDim || 0)); },   // 일식이 해를 가린 만큼(game/boss-eclipse-art)
   drawSky(c: CanvasRenderingContext2D, f: any, camX: number, camY: number) { const { SURF_BASE, HELL_Y } = dimsOf(this.world);
     const surfPx = SURF_BASE * TS;
     let top = mixHex('#0a0d1c', '#4a86c8', f);

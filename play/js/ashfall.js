@@ -1942,13 +1942,13 @@
       this.m = o.mods || {};
       this.th = { ...DEF_THEME, ...o.theme || {} };
       this.rng = new RNG(o.seed);
-      const { ar, cs, od, hp } = this.d, ease5 = o.ease || 0;
+      const { ar, cs, od, hp } = this.d, ease6 = o.ease || 0;
       this.r = 54.4 - 4.48 * cs;
       this.pre = ar < 5 ? 1.2 + 0.6 * (5 - ar) / 5 : 1.2 - 0.75 * (ar - 5) / 5;
       this.fade = Math.min(0.4, this.pre * 2 / 3);
-      this.w300 = (80 - 6 * od) / 1e3 + ease5 * 0.5;
-      this.w100 = (140 - 8 * od) / 1e3 + ease5 * 0.75;
-      this.w50 = (200 - 10 * od) / 1e3 + ease5;
+      this.w300 = (80 - 6 * od) / 1e3 + ease6 * 0.5;
+      this.w100 = (140 - 8 * od) / 1e3 + ease6 * 0.75;
+      this.w50 = (200 - 10 * od) / 1e3 + ease6;
       this.beat = 60 / this.d.bpm;
       this.t = 0;
       this.objs = [];
@@ -8543,14 +8543,15 @@
     },
     /* 종장 — 별이 도망쳐 온 그것 */
     pursuer: {
-      n: "별을 쫓아온 것",
+      n: "별을 쫓아온 것 · 일식",
       hp: 42e3,
       dmg: 165,
       def: 68,
-      spd: 128,
-      ai: "b_pursuer",
-      w: 172,
-      h: 192,
+      spd: 0,
+      ai: "b_eclipse",
+      w: 170,
+      h: 150,
+      wall: 1,
       c: "#2a2036",
       xp: 11e3,
       gold: 6e4,
@@ -9211,7 +9212,7 @@
     hepha: { k: "rage", t: 1.8, cd: 20, dur: 9, v: 0.35, brk: 0.04, c: "#ff9a4a", s: "sk_fire", n: "화로를 올린다", m: "달아오름" },
     restorer: { k: "mend", t: 2, cd: 22, v: 0.03, brk: 0.035, c: "#a8c8e8", s: "sk_heal", n: "되돌리려 한다" }
   };
-  var SURGE_FLY = { b_organ: 1, b_cocoon: 1, b_hourglass: 1, b_hive: 1, b_judge: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+  var SURGE_FLY = { b_organ: 1, b_cocoon: 1, b_hourglass: 1, b_hive: 1, b_judge: 1, b_eclipse: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
   var SKILLS = {
     /* ===== 검투사 — 붙어서 버티고 밀어붙인다 ===== */
     s_cleave: {
@@ -9856,10 +9857,10 @@
     storm_warden: { 1: "구름이 낮아진다.", 2: "내리꽂을 때만, 닿는다." },
     first_keeper: { 1: "눈가리개에 금이 간다 — 그 틈으로 무언가 내다본다.", 2: "가리개가 찢긴다. 외눈이 뜬다." },
     pursuer: {
-      1: "형태가 무너지고 다시 선다.",
-      2: "한 줄기 길만 비어 있다.",
-      3: "쫓던 것을 잊은 얼굴이다.",
-      4: "별을 놓친 자리가 비어 있다."
+      1: "해가 조금 더 가려진다. 그림자가 길어진다.",
+      2: "손이 둘이 된다.",
+      3: "외눈이 감기지 않는다.",
+      4: "테가 깨진다 — 그 틈으로 오래 혼자였던 것이 보인다."
     },
     overseer: { 1: '관리자: "공정 재개."', 2: '관리자: "…명령이 남아 있다."' },
     proliferator: { 1: "하나가 둘이 되는 것을 멈추지 못한다.", 2: "껍데기가 닫힌다 — 갈라진 것부터." },
@@ -14718,19 +14719,20 @@
       ],
       ult: { k: "sig", sig: "sentence", n: "최초의 선고", tele: 1, m: 1 }
     },
+    /* 일식 — 하늘에 뚫린 별의 음화. 그림자 끝에 손이 내려오고(짚은 손만 제대로 맞는다) · 응시는 빛 속에서만 견딘다(entity/boss-eclipse) */
     pursuer: {
       c: "#b48aff",
       every: 5.5,
       moves: [
+        { k: "sig", sig: "shand", n: "그림자 손", tele: 0.3, m: 1 },
         { k: "rain", n: "별똥 추격", tele: 0.6, form: "trail", cnt: 8, every: 0.22, delay: 0.75, r: 48, shape: "circle", fx: "meteor", m: 1 },
-        { k: "dash", n: "그림자 질주", tele: 0.4, times: 4, spd: 3.6, m: 1 },
-        { k: "vortex", n: "중력 우물", tele: 0.8, life: 3.2, r: 420, pull: 340, burst: 170, fx: "grav", m: 1.1 },
-        { k: "sig", sig: "gaze", n: "응시", tele: 0.8, pose: 0, m: 1 },
-        { k: "beam", n: "별을 꿰는 선", tele: 0.9, cnt: 1, dur: 2, w: 26, len: 900, sweep: 2, fx: "star", m: 0.35, ph: 1, pw: [0, 1, 1, 1, 1] },
-        { k: "homing", n: "떠도는 별", tele: 0.6, cnt: 6, spd: 210, turn: 2, proj: "void", m: 0.5, ph: 2, pw: [0, 0, 1.2, 1, 1] },
-        { k: "blink", n: "그림자 건너기", tele: 0.3, times: 3, r: 90, fx: "rift", m: 1, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }
+        { k: "sig", sig: "stare", n: "응시", tele: 0.3, m: 1 },
+        { k: "homing", n: "떠도는 별", tele: 0.6, cnt: 6, spd: 210, turn: 2, proj: "void", m: 0.5, ph: 1, pw: [0, 1.2, 1, 1, 1] },
+        { k: "sig", sig: "hands2", n: "두 손", tele: 0.3, cnt: 2, m: 1, ph: 2, pw: [0, 0, 1.3, 1.2, 1] },
+        { k: "sig", sig: "stare", n: "긴 응시", tele: 0.3, pulses: 3, m: 1, ph: 3, pw: [0, 0, 0, 1.3, 1.2] },
+        { k: "sig", sig: "hands2", n: "떨어지는 그림자", tele: 0.3, cnt: 3, m: 1, ph: 4, pw: [0, 0, 0, 0, 1.5] }
       ],
-      ult: { k: "spiral", n: "종말의 별", tele: 1.4, arms: 5, dur: 5.5, every: 0.09, spd: 300, proj: "void", turn: 2, rain: 1, m: 0.4 }
+      ult: { k: "sig", sig: "totality", n: "개기일식", tele: 1, m: 1 }
     },
     /* ---------------- 유적의 주인 ---------------- */
     mine_horror: {
@@ -14984,7 +14986,6 @@
   var GAP_MISS_MUL = 0.25;
   var BOSS_FORM = {
     proliferator: { split: 1, n: "스스로를 복제한다" },
-    pursuer: { split: 3, n: "그림자가 떨어져 나온다" },
     tide_warden: { fly: 1, k: "spout", n: "물기둥을 타고 오른다" },
     hepha: { fly: 2, k: "jets", n: "분사구에 불이 붙는다" },
     archetype: { fly: 3, k: "wings", n: "설계선이 날개가 된다" }
@@ -21542,10 +21543,10 @@
         return false;
       };
       const cand = [...r.shuffle(free.slice()), sigRoom, main].filter(Boolean);
-      let hid5 = false;
+      let hid6 = false;
       found: for (const q of cand) for (const side of r.chance(0.5) ? [-1, 1] : [1, -1])
         for (const fy of [q.y + q.h - 3, q.y + q.h - 4, q.y + q.h - 5]) if (pocket(q, side, fy)) {
-          hid5 = true;
+          hid6 = true;
           break found;
         }
       const closet = (q) => {
@@ -21565,8 +21566,8 @@
         }
         return false;
       };
-      if (!hid5) hid5 = cand.some((q) => under(q));
-      if (!hid5) cand.some((q) => closet(q));
+      if (!hid6) hid6 = cand.some((q) => under(q));
+      if (!hid6) cand.some((q) => closet(q));
       const ledge = (q) => {
         const fy = q.y + q.h - 3;
         for (const left of r.chance(0.5) ? [true, false] : [false, true])
@@ -34752,6 +34753,7 @@
         if (!op && Math.random() < 0.4) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#9fb4c8", 0));
       } else if (this.def.ai === "b_hourglass") amount = this.hgHurt(amount);
       else if (this.def.ai === "b_hive") amount = this.hvHurt(amount);
+      else if (this.def.ai === "b_eclipse") amount = this.ecHurt(amount);
       if (this.guard) {
         amount *= 0.12;
         if (Math.random() < 0.5) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#8d8874", 0));
@@ -37122,6 +37124,10 @@
           app.judgePhaseFx(this);
           break;
         // 눈가리개가 갈라진다(game/boss-judge-fx)
+        case "b_eclipse":
+          app.eclipsePhaseFx(this);
+          break;
+        // 원판이 떨고 별 파편이 진다(game/boss-eclipse-fx)
         case "b_slime":
           if (ph >= lock) {
             this.guard = 1;
@@ -37866,6 +37872,7 @@
       else if (AI === "b_hourglass") this.hgAI(dt, world);
       else if (AI === "b_hive") this.hvAI(dt, world, p);
       else if (AI === "b_judge") this.jdAI(dt, world);
+      else if (AI === "b_eclipse") this.ecAI(dt, world);
       else if (AI === "b_pool") this.poolAI(dt, world, p, dx);
       else if (AI === "b_slime") {
         if (this.onGround) {
@@ -38088,56 +38095,6 @@
           }
         } else this.vx *= 0.9;
         this.move(dt, world);
-      } else if (AI === "b_pursuer") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = 3 - this.pf * 0.8;
-          if (this.state === 1) {
-            this.x = clamp(p.cx + (Math.random() < 0.5 ? -170 : 170), TS * 3, WW2 * TS - TS * 3) - this.w / 2;
-            this.y = p.cy - this.h;
-            app.shake = Math.max(app.shake, 12);
-            for (let i = 0; i < 26; i++) app.parts.push(new Part(this.cx, this.cy, "#a06fff", -40, 1.1));
-          }
-          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++)
-            app.ents.push(new Enemy(this.def.minion || "wraith", this.cx + (Math.random() - 0.5) * 300, this.cy - 30, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.5, dt * 2);
-          this.vy = lerp(this.vy, Math.sign(dy) * this.spd * 0.4, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.28 - this.pf * 0.1;
-            this.spin = (this.spin || 0) + 0.55;
-            const n = 3 + this.pf * 2;
-            for (let i = 0; i < n; i++) {
-              const a = this.spin + i * TAU / n;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 330, Math.sin(a) * 330, this.dmg * 0.42, "enemy", "void"));
-            }
-          }
-        } else if (this.state === 1) {
-          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-          this.vx = lerp(this.vx, Math.cos(a) * this.spd * 2.4, dt * 5);
-          this.vy = lerp(this.vy, Math.sin(a) * this.spd * 2.4, dt * 5);
-          if (this.atkCd <= 0) {
-            this.atkCd = 1.1;
-            const n = 10 + this.pf * 8;
-            for (let k = 0; k < n; k++) {
-              const ang = k * TAU / n;
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(ang) * 250, Math.sin(ang) * 250, this.dmg * 0.38, "enemy", "dark"));
-            }
-          }
-        } else if (this.state === 2) {
-          this.vx = lerp(this.vx, 0, dt * 3);
-          this.vy = lerp(this.vy, -30, dt * 3);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.16 - this.pf * 0.06;
-            const px = p.cx + (Math.random() - 0.5) * 620;
-            app.projs.push(new Proj(px, this.cy - 260, (Math.random() - 0.5) * 40, 420, this.dmg * 0.34, "enemy", "bone"));
-          }
-        } else {
-          this.vx *= 0.9;
-          this.vy *= 0.9;
-        }
-        this.move(dt, world, { gravMul: 0 });
       } else if (AI === "b_prolif") {
         this.vx = lerp(this.vx, Math.sign(dx) * this.spd * 0.35, dt * 2);
         if (this.stateT <= 0) {
@@ -38951,6 +38908,12 @@
         case "sentence":
           return this.jdSig(d, p, world, K);
         // 판결석 좌상(entity/boss-judge)
+        case "shand":
+        case "hands2":
+        case "stare":
+        case "totality":
+          return this.ecSig(d, p, world, K);
+        // 일식(entity/boss-eclipse)
         case "beat": {
           this.hz({ k: "pulse", life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
           for (let b = 0; b < 3; b++) app.after(b * 0.85, () => {
@@ -40262,6 +40225,158 @@
     }
   };
   mixin(Enemy.prototype, BossJudge, true);
+
+  // src/game/entity/boss-eclipse.ts
+  var boss_eclipse_exports = {};
+  __export(boss_eclipse_exports, {
+    BossEclipse: () => BossEclipse,
+    EC: () => EC,
+    ecLit: () => ecLit,
+    handStage: () => handStage,
+    shadowTip: () => shadowTip
+  });
+  var hid5 = 0;
+  var nid8 = () => 8e6 + (hid5 = hid5 % 1e6 + 1);
+  var EC = { W: 136, C: 68, R: 36, K: 4, SKY: 760 };
+  function ecLit(q, world) {
+    let it = null;
+    try {
+      it = q.held && q.held();
+    } catch (e) {
+      it = null;
+    }
+    if (it && it.id === "torch") return true;
+    if (q.buffs && q.buffs.some((b) => b.id === "lit" || b.id === "lit_greater" || b.id === "lantern")) return true;
+    for (const h of app.bhz || []) if (h.k === "elight" && h.t > h.tele && h.t < h.life - 0.3 && Math.abs(q.cx - h.x) < h.w / 2) return true;
+    const tx = Math.floor(q.cx / TS), ty = Math.floor(q.cy / TS);
+    for (let y = ty - 4; y <= ty + 4; y++) for (let x = tx - 5; x <= tx + 5; x++) {
+      const d = TILE_DEF[world.get(x, y)];
+      if (d && (d.light || 0) >= 5) return true;
+    }
+    return false;
+  }
+  function shadowTip(e, q) {
+    const d = q.cx - e.hx, dir = Math.sign(d) || 1;
+    return q.cx + dir * Math.max(170, Math.min(470, Math.abs(d) * 0.35 + 150));
+  }
+  function handStage(h) {
+    if (h.t < h.tele) {
+      const u = h.t / h.tele;
+      return [0.55 * u * u, 0];
+    }
+    const t = h.t - h.tele;
+    if (t < 0.14) return [0.55 + 0.45 * (t / 0.14) ** 2, 1];
+    if (t < 0.14 + h.plant) return [1, 2];
+    return [Math.max(0, 1 - (t - 0.14 - h.plant) / h.lift), 3];
+  }
+  var BossEclipse = {
+    /** 몸놀림 — 하늘 자리는 플레이어들 가운데를 천천히 따라가고, 판정 상자는 짚은 손이 있으면 그 손으로 */
+    ecAI(dt, world) {
+      this.vx = this.vy = 0;
+      if (!this.anchored) {
+        this.anchored = 1;
+        this.hx = this.cx;
+        const tx = Math.floor(this.cx / TS);
+        let fy = this.cy + 200;
+        for (let ty = Math.floor(this.cy / TS) - 10; ty < Math.floor(this.cy / TS) + 40; ty++) if (world.solid(tx, ty) && !world.solid(tx, ty - 1)) {
+          fy = ty * TS;
+          break;
+        }
+        this.hy = fy - EC.SKY;
+      }
+      const live2 = app.players.filter((q) => !q.dead && q.hp > 0);
+      if (live2.length) {
+        const ax = live2.reduce((a, q) => a + q.cx, 0) / live2.length;
+        this.hx += (ax - this.hx) * Math.min(1, dt * 0.25);
+      }
+      const hand2 = this.ecPlanted();
+      if (hand2) {
+        this.x = hand2.tx - this.w / 2;
+        this.y = hand2.fy - this.h;
+      } else {
+        this.x = this.hx - this.w / 2;
+        this.y = this.hy - this.h / 2;
+      }
+    },
+    /** 땅을 짚고 있는 손 */
+    ecPlanted() {
+      for (const h of app.bhz || []) if (h.k === "ehand" && (h.ref === this || h.nid === this.nid) && handStage(h)[1] === 2) return h;
+      return null;
+    },
+    /** 받는 피해 — 짚은 손 ×1.3 · 하늘의 원판 ×0.3 */
+    ecHurt(a) {
+      if (this.ecPlanted()) return a * 1.3;
+      if (Math.random() < 0.35) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("닿지 않는다"), "#b4a0d8", 0));
+      return a * 0.3;
+    },
+    /** 그림자 손 하나 — q 의 그림자 끝(at 이 있으면 거기) */
+    ecHand(q, m, K, at, tele = 1.3) {
+      const tx = at ?? shadowTip(this, q);
+      return this.hz({
+        k: "ehand",
+        id: nid8(),
+        ref: this,
+        nid: this.nid,
+        tx,
+        fy: app.hzFloor(tx, q.y),
+        px: q.cx,
+        tele,
+        plant: 1.6 - this.pf * 0.4,
+        lift: 0.7,
+        life: tele + 0.14 + 1.6 + 0.7,
+        dmg: this.dmg * m,
+        c: K.c,
+        sd: Math.random() * 99
+      });
+    },
+    /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
+    ecSig(d, p, world, K) {
+      const m = d.m ?? 1, E = this;
+      switch (d.sig) {
+        case "shand": {
+          this.ecHand(p, m, K);
+          app.sfxAt && app.sfxAt("ec_reach", p.cx / TS, p.cy / TS);
+          return { busy: 1.6 };
+        }
+        case "hands2": {
+          const n = d.cnt || 2;
+          this.ecHand(p, m, K);
+          app.after(0.65, () => {
+            if (!E.dead) E.ecHand(p, m, K, p.cx, 1);
+          });
+          if (n >= 3) app.after(1.3, () => {
+            if (!E.dead) E.ecHand(p, m, K, p.cx - (shadowTip(E, p) - p.cx), 1);
+          });
+          app.sfxAt && app.sfxAt("ec_reach", p.cx / TS, p.cy / TS);
+          return { busy: 1.2 + n * 0.65 };
+        }
+        case "stare": {
+          const pulses = d.pulses || 2, tele = 1.9, gap = 1.3;
+          const xs = [p.cx + (Math.random() < 0.5 ? -1 : 1) * (130 + Math.random() * 90), p.cx + (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 120)];
+          if (pulses >= 3) xs.push(p.cx + (Math.random() - 0.5) * 900);
+          const life = tele + gap * (pulses - 1) + 1;
+          for (const x of xs) this.hz({ k: "elight", id: nid8(), ref: this, nid: this.nid, x, fy: app.hzFloor(x, p.y), w: 120, tele: 0.7, life, c: K.c, sd: Math.random() * 99 });
+          this.hz({ k: "estare", id: nid8(), ref: this, nid: this.nid, tele, gap, pulses, life, dmg: this.dmg * m, c: K.c });
+          app.sfxAt && app.sfxAt("ec_open", p.cx / TS, p.cy / TS);
+          return { busy: life };
+        }
+        case "totality": {
+          const dur = 8;
+          this.hz({ k: "etotal", id: nid8(), ref: this, nid: this.nid, tele: 1.6, life: 1.6 + dur, every: 0.8, dmg: this.dmg * m * 0.35, c: K.c });
+          for (let i = 0; i < 4; i++) app.after(2.2 + i * 1.6, () => {
+            if (!E.dead) {
+              const q = app.hzNear(E.hx, E.hy + EC.SKY) || p;
+              E.ecHand(q, m, K, void 0, 1);
+            }
+          });
+          app.sfxAt && app.sfxAt("ec_total", p.cx / TS, p.cy / TS);
+          return { busy: 1.6 + dur };
+        }
+      }
+      return { busy: 0.3 };
+    }
+  };
+  mixin(Enemy.prototype, BossEclipse, true);
 
   // src/game/entity/boss-gaps.ts
   var boss_gaps_exports = {};
@@ -42302,12 +42417,12 @@
     renderBig(c, w, m, ax, ay, time, camX, camY) {
       const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t], [bx, by] = this.brokeJolt(m, time);
       const jx = (busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0) + bx;
-      const [X, Y, PW5, PH5] = this.drawBig(c, m, ax + jx, ay + by, time);
+      const [X, Y, PW6, PH5] = this.drawBig(c, m, ax + jx, ay + by, time);
       if (m.t === "drill_x") this.drawWork(c, w, m, ax, ay, time, camX, camY);
-      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW5 - TS, Y, time);
+      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW6 - TS, Y, time);
       if (s.rot) {
         const [dx, dy] = DIR4[m.dir & 3];
-        const ex = dx > 0 ? X + PW5 : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH5 : Y + PH5 - TS / 2;
+        const ex = dx > 0 ? X + PW6 : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH5 : Y + PH5 - TS / 2;
         c.fillStyle = "rgba(255,214,120,.9)";
         c.fillRect(ex + dx * 2 - 2 - (dx > 0 ? 2 : 0), ey + dy * 2 - 2 - (dy > 0 ? 2 : 0), 4, 4);
       }
@@ -42319,12 +42434,12 @@
       if (m.rec >= 0 && MRECIPES[m.rec]) {
         const p = clamp(m.prog / MRECIPES[m.rec].t, 0, 1);
         c.fillStyle = "#2a2a32";
-        c.fillRect(X + 4, Y + PH5 - 3, PW5 - 8, 2);
+        c.fillRect(X + 4, Y + PH5 - 3, PW6 - 8, 2);
         c.fillStyle = "#5fc45f";
-        c.fillRect(X + 4, Y + PH5 - 3, Math.round((PW5 - 8) * p), 2);
+        c.fillRect(X + 4, Y + PH5 - 3, Math.round((PW6 - 8) * p), 2);
       }
       c.fillStyle = this.statusColor(m);
-      c.fillRect(X + PW5 - 4, Y + 2, 2, 2);
+      c.fillRect(X + PW6 - 4, Y + 2, 2, 2);
     }
   };
   mixin(Factory11, FactoryRenderPart);
@@ -43697,17 +43812,17 @@
         mx = Math.max(mx, Math.abs(x));
         my = Math.max(my, Math.abs(y));
       }
-      const PW5 = Math.round((mx + 80) * 2), PH5 = Math.round((my + 80) * 2);
+      const PW6 = Math.round((mx + 80) * 2), PH5 = Math.round((my + 80) * 2);
       const grid = document.createElement("div");
       grid.className = "bgrid";
       grid.style.height = `min(${this.TREE_H}px, calc(100vh - 380px))`;
       grid.style.setProperty("--cy", "50%");
       const plane = document.createElement("div");
       plane.className = "bplane";
-      plane.style.width = PW5 + "px";
+      plane.style.width = PW6 + "px";
       plane.style.height = PH5 + "px";
       plane.style.setProperty("--cy", PH5 / 2 + "px");
-      this._treePlane = { el: plane, grid, w: PW5, h: PH5 };
+      this._treePlane = { el: plane, grid, w: PW6, h: PH5 };
       const svg = document.createElementNS(NS, "svg");
       svg.setAttribute("class", "blines");
       const line4 = (a, b, cls, c) => {
@@ -49507,11 +49622,11 @@
         hopper(c, 10, by - 52, binW, 40);
         ins.slice(0, 3).forEach((id, i) => pile(c, id, m.in[id], 14 + i * 12 - (ins.length > 1 ? 6 : 0), by - 50 + i * 3, 16));
         belt(c, lx0 - 8, hx + 2, by, run, t);
-        const nid8 = inId || fuelId;
-        if (nid8 && run && p < IN) {
+        const nid9 = inId || fuelId;
+        if (nid9 && run && p < IN) {
           const k2 = ease(p / IN);
-          drawIc(c, nid8, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
-        } else if (nid8) drawIc(c, nid8, lx0 - 4, by - 15, 16);
+          drawIc(c, nid9, lerp(lx0 - 4, hx - 8, k2), by - 15, 16);
+        } else if (nid9) drawIc(c, nid9, lx0 - 4, by - 15, 16);
       } else if (kind === "drill" && outId) {
         c.fillStyle = "#3a2c20";
         c.fillRect(10, by - 30, binW, 50);
@@ -50538,6 +50653,13 @@
     jd_beam: ["magic", 0.7, 1],
     jd_sentence: ["chapter", 0.45, 0.9],
     jd_tear: ["mat_glass", 0.6, 1.2],
+    /* 일식 — 낮게 늘인 바람 · 공허 소리, 손은 둔탁한 땅울림 */
+    ec_reach: ["sk_whirl", 0.4, 0.8],
+    ec_slam: ["boom_small", 0.4, 1.2],
+    ec_open: ["magic", 0.4, 0.8],
+    ec_stare: ["sk_quake", 0.5, 0.9],
+    ec_total: ["chapter", 0.35, 1],
+    ec_crack: ["mat_glass", 0.5, 1.1],
     /* ★ 몹·보스가 쏘는 소리. */
     efire_phys: ["bow", 0.82, 0.5],
     efire_magic: ["magic", 0.8, 0.5],
@@ -56795,12 +56917,12 @@
             const [cx, cy] = st.pop();
             group.push([cx, cy]);
             for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-              const nx = cx + dx, ny = cy + dy, nid8 = w.get(nx, ny);
-              if (nid8 === T.WOOD) {
+              const nx = cx + dx, ny = cy + dy, nid9 = w.get(nx, ny);
+              if (nid9 === T.WOOD) {
                 touching = true;
                 continue;
               }
-              if (!leafy(nid8)) continue;
+              if (!leafy(nid9)) continue;
               const k = ny * WW2 + nx;
               if (seen.has(k)) continue;
               seen.add(k);
@@ -63145,6 +63267,10 @@
     sandpour: ["rain", "sand"],
     quick: ["vortex", "sand"],
     deadline: ["ring", ""],
+    shand: ["rain", "void"],
+    hands2: ["rain", "void"],
+    stare: ["ring", "star"],
+    totality: ["ring", "void"],
     verdict: ["rain", "rune"],
     tablets: ["rain", "rune"],
     gavel: ["leap", ""],
@@ -65603,13 +65729,13 @@
         const mv = hzOf4(this, e, "hvmove");
         let cell = e.hvCell ?? 9, out = 1;
         if (mv) {
-          const [hideK, hid5, outK] = moveStage(mv);
+          const [hideK, hid6, outK] = moveStage(mv);
           if (mv.t < mv.hide) {
             cell = mv.from;
             out = 1 - hideK;
           } else {
             cell = mv.to;
-            out = hid5 ? 0 : outK;
+            out = hid6 ? 0 : outK;
           }
         }
         const [hx, hy] = cellAt(e, cell);
@@ -66402,6 +66528,324 @@
   };
   mixin(Game.prototype, BossJudgeFx, true);
 
+  // src/game/game/boss-eclipse-art.ts
+  var boss_eclipse_art_exports = {};
+  __export(boss_eclipse_art_exports, {
+    BossEclipseArt: () => BossEclipseArt
+  });
+  var BW5 = EC.W * EC.K, PW5 = 192, CORONA = "#b48aff", PALE = "#f0e0ff";
+  var isEc = (e) => e && !e.dead && e.def && e.def.ai === "b_eclipse";
+  function hzOf6(g, e, k) {
+    for (const h of g.bhz || []) if (h.k === k && g.hzBoss(h) === e) return h;
+    return null;
+  }
+  var ease5 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
+  var DARK = null;
+  var BossEclipseArt = {
+    /** 하늘의 원판 · 코로나 · 외눈(sky 단계) — 그리면서 낮빛 가림(ecDim)도 정한다 */
+    drawEclipseSky(f) {
+      const c = f.c, T2 = this.time || 0, dt = this.paused ? 0 : 1 / 60;
+      let want = 0;
+      for (const e of this.ents) {
+        if (!isEc(e)) continue;
+        const im = Sprites.want("pursuer"), pim = Sprites.want("pursuer_parts");
+        const st = Math.min(2, Math.round((e.pf || 0) * 2)), sr = hzOf6(this, e, "estare"), tot = hzOf6(this, e, "etotal"), hd = hzOf6(this, e, "ehand");
+        want = Math.max(want, tot && tot.t > tot.tele * 0.5 ? 0.97 : sr ? 0.8 : 0.42 + 0.08 * st);
+        const W = this.W, H = this.H;
+        const sx = W / 2 + clamp(((e.hx ?? e.cx) - f.camX - W / 2) * 0.18, -W * 0.28, W * 0.28) + Math.sin(T2 * 0.37) * 10;
+        const sy = H * 0.24 + Math.sin(T2 * 0.53) * 6;
+        e.ecScr = [sx, sy];
+        const S = 1.25 * (1 + Math.sin(T2 * 1.1) * 0.012);
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        const g = c.createRadialGradient(sx, sy, EC.R * EC.K * S * 0.9, sx, sy, EC.R * EC.K * S * (2.4 + 0.15 * Math.sin(T2 * 1.7)));
+        g.addColorStop(0, "rgba(200,170,255,.35)");
+        g.addColorStop(0.4, "rgba(150,110,240,.12)");
+        g.addColorStop(1, "rgba(120,80,220,0)");
+        c.fillStyle = g;
+        c.fillRect(sx - W, sy - H, W * 2, H * 2);
+        c.restore();
+        if (!im) continue;
+        const fr = st * 2 + (T2 % 1.6 < 0.8 ? 0 : 1);
+        c.save();
+        c.translate(sx, sy);
+        c.rotate(T2 * 0.04 + Math.sin(T2 * 0.3) * 0.05);
+        c.scale(S, S);
+        c.imageSmoothingEnabled = false;
+        c.drawImage(im, fr * BW5, 0, BW5, BW5, -BW5 / 2, -BW5 / 2, BW5, BW5);
+        if (e.flash > 0) {
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = Math.min(0.4, e.flash * 3);
+          c.drawImage(im, fr * BW5, 0, BW5, BW5, -BW5 / 2, -BW5 / 2, BW5, BW5);
+        }
+        c.restore();
+        if (pim) {
+          const E = e.ecEye || (e.ecEye = { o: 0, lx: 0, ly: 0 });
+          const blink = T2 % 7 < 1.6 ? Math.sin(T2 % 7 / 1.6 * Math.PI) * 0.6 : 0;
+          const goal = sr || tot && tot.t > 0.4 ? 1 : hd && hd.t < hd.tele ? 0.5 : blink;
+          E.o = ease5(E.o, goal, dt, 5);
+          const px = this.player.cx - f.camX - sx, py = this.player.cy - f.camY - sy, d = Math.hypot(px, py) || 1;
+          E.lx = ease5(E.lx, px / d * 26, dt, 3);
+          E.ly = ease5(E.ly, py / d * 20, dt, 3);
+          const ef = E.o < 0.22 ? 0 : E.o < 0.7 ? 1 : 2, k = 1.5 + (sr ? 0.25 * Math.sin(T2 * 12) * 0.2 : 0);
+          c.save();
+          c.translate(sx + E.lx, sy + E.ly);
+          c.scale(k, k);
+          c.imageSmoothingEnabled = false;
+          c.drawImage(pim, ef * PW5, 0, PW5, PW5, -PW5 / 2, -PW5 / 2, PW5, PW5);
+          c.restore();
+          if (E.o > 0.5) hzGlow(c, sx + E.lx, sy + E.ly, 60 + 40 * E.o, PALE, 0.25 * E.o);
+        }
+      }
+      this.ecDim = ease5(this.ecDim || 0, want, dt, want > (this.ecDim || 0) ? 0.8 : 0.4);
+    },
+    /** 그림자 손(actors 단계 · drawBossLit) — 화면 위에서 팔뚝이 이어져 내려와 땅을 짚는다 */
+    drawEclipseHands(c) {
+      const pim = Sprites.want("pursuer_parts");
+      if (!pim) return;
+      const cx0 = this.cam.x, cy0 = this.cam.y, T2 = this.time || 0;
+      for (const h of this.bhz || []) {
+        if (h.k !== "ehand") continue;
+        const [ht, st] = handStage(h), s = 1.3, top = cy0 - 280;
+        const wristY = top + (h.fy - 196 * s - top) * ht, x = h.tx + (st === 0 ? Math.sin(T2 * 2.3 + h.sd) * 8 * (1 - ht) : 0);
+        c.save();
+        c.translate(-cx0, -cy0);
+        c.imageSmoothingEnabled = false;
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        hzGlow(c, x, wristY + 90 * s, 120 * s, CORONA, 0.22);
+        c.restore();
+        for (let y = wristY - PW5 * s * 0.95; y > cy0 - PW5 * s * 1.2; y -= PW5 * s * 0.95) c.drawImage(pim, 5 * PW5, 0, PW5, PW5, x - PW5 * s / 2, y, PW5 * s, PW5 * s);
+        const fr = st === 2 ? 4 : 3;
+        if (st === 1) for (let g2 = 3; g2 >= 1; g2--) {
+          c.save();
+          c.globalAlpha = 0.25 / g2;
+          c.drawImage(pim, fr * PW5, 0, PW5, PW5, x - 96 * s, wristY - 16 * s - g2 * 30, PW5 * s, PW5 * s);
+          c.restore();
+        }
+        c.drawImage(pim, fr * PW5, 0, PW5, PW5, x - 96 * s, wristY - 16 * s, PW5 * s, PW5 * s);
+        const b = this.hzBoss(h);
+        if (b && b.flash > 0 && st === 2) {
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = Math.min(0.5, b.flash * 4);
+          c.drawImage(pim, fr * PW5, 0, PW5, PW5, x - 96 * s, wristY - 16 * s, PW5 * s, PW5 * s);
+        }
+        c.restore();
+      }
+    },
+    /** 기술 예고(fx · drawSig 에서) — 길게 눕는 그림자 · 손이 짚을 자리 · 빛기둥 */
+    eclipseTell(c, h, cx0, cy0) {
+      const T2 = this.time || 0;
+      switch (h.k) {
+        case "estare":
+        case "etotal":
+          return true;
+        case "ehand":
+          {
+            if (h.t > h.tele + 0.2) return true;
+            const k = Math.min(1, h.t / h.tele), fy = h.fy - cy0, q = this.hzNear(h.tx, h.fy) || this.player;
+            const x0 = q.cx - cx0, x1 = x0 + (h.tx - cx0 - x0) * Math.min(1, k * 1.4);
+            c.save();
+            c.globalAlpha = 0.55 * Math.min(1, k * 2);
+            const gr = c.createLinearGradient(x0, 0, x1, 0);
+            gr.addColorStop(0, "rgba(8,4,16,.85)");
+            gr.addColorStop(1, "rgba(30,14,50,.35)");
+            c.fillStyle = gr;
+            c.beginPath();
+            c.moveTo(x0, fy - 3);
+            c.lineTo(x1, fy - 1);
+            c.lineTo(x1, fy + 1);
+            c.lineTo(x0, fy + 3);
+            c.closePath();
+            c.fill();
+            c.beginPath();
+            c.ellipse(x1, fy, 18 + 60 * k, 6 + 4 * k, 0, 0, TAU);
+            c.fill();
+            c.restore();
+            groundZone(c, h.tx - cx0, fy, 96, "#6a3aa8", k, T2);
+          }
+          return true;
+        case "elight":
+          {
+            const a = h.t < h.tele ? h.t / h.tele * 0.35 : Math.min(1, (h.life - h.t) / 0.4), x = h.x - cx0, fy = h.fy - cy0, w = h.t < h.tele ? h.w * 0.25 : h.w;
+            c.save();
+            c.globalCompositeOperation = "lighter";
+            c.globalAlpha = a;
+            const g = c.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+            g.addColorStop(0, "rgba(255,230,170,0)");
+            g.addColorStop(0.5, "rgba(255,236,190,.45)");
+            g.addColorStop(1, "rgba(255,230,170,0)");
+            c.fillStyle = g;
+            c.fillRect(x - w / 2, -40, w, fy + 40);
+            c.fillStyle = "rgba(255,248,220,.5)";
+            c.fillRect(x - 2 + Math.sin(T2 * 3 + h.sd) * 6, -40, 3, fy + 40);
+            c.restore();
+            if (h.t >= h.tele) groundZone(c, x, fy, h.w / 2, "#ffe6a0", 0.6, T2);
+          }
+          return true;
+      }
+      return false;
+    },
+    /** 빛(fx 단계) — 응시의 박동 · 개기일식의 어둠(제 빛 안만 트인다) */
+    drawEclipseGlow(f) {
+      const c = f.c, T2 = this.time || 0;
+      for (const e of this.ents) {
+        if (!isEc(e)) continue;
+        const sr = hzOf6(this, e, "estare");
+        if (sr && sr.t < sr.tele) {
+          const k2 = sr.t / sr.tele, W2 = this.W, H2 = this.H;
+          const g2 = c.createRadialGradient(W2 / 2, H2 / 2, Math.min(W2, H2) * (0.6 - 0.25 * k2), W2 / 2, H2 / 2, Math.max(W2, H2) * 0.75);
+          g2.addColorStop(0, "rgba(40,10,70,0)");
+          g2.addColorStop(1, `rgba(40,10,70,${0.45 * k2})`);
+          c.fillStyle = g2;
+          c.fillRect(0, 0, W2, H2);
+        }
+        const tot = hzOf6(this, e, "etotal");
+        if (!tot) continue;
+        const k = tot.t < tot.tele ? tot.t / tot.tele : Math.min(1, (tot.life - tot.t) / 0.5);
+        const W = this.W, H = this.H;
+        if (!DARK) DARK = document.createElement("canvas");
+        if (DARK.width !== W || DARK.height !== H) {
+          DARK.width = W;
+          DARK.height = H;
+        }
+        const d = DARK.getContext("2d");
+        d.globalCompositeOperation = "source-over";
+        d.clearRect(0, 0, W, H);
+        d.fillStyle = `rgba(4,2,10,${0.93 * k})`;
+        d.fillRect(0, 0, W, H);
+        d.globalCompositeOperation = "destination-out";
+        const hole = (x, y, r) => {
+          const g2 = d.createRadialGradient(x, y, r * 0.3, x, y, r);
+          g2.addColorStop(0, "rgba(0,0,0,1)");
+          g2.addColorStop(1, "rgba(0,0,0,0)");
+          d.fillStyle = g2;
+          d.fillRect(x - r, y - r, r * 2, r * 2);
+        };
+        for (const q of this.players) if (!q.dead) hole(q.cx - f.camX, q.cy - f.camY, ecLit(q, this.world) ? 190 + Math.sin(T2 * 9) * 6 : 60);
+        const w = this.world;
+        for (let ty = f.ty0; ty <= f.ty1; ty++) for (let tx = f.tx0; tx <= f.tx1; tx++) {
+          const df = TILE_DEF[w.get(tx, ty)];
+          if (df && (df.light || 0) >= 5) hole(tx * TS + TS / 2 - f.camX, ty * TS + TS / 2 - f.camY, 130);
+        }
+        c.drawImage(DARK, 0, 0);
+        const [sx, sy] = e.ecScr || [W / 2, H * 0.24], R0 = EC.R * EC.K * 1.25;
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        c.globalAlpha = k;
+        const g = c.createRadialGradient(sx, sy, R0 * 0.95, sx, sy, R0 * 1.9);
+        g.addColorStop(0, "rgba(240,224,255,.55)");
+        g.addColorStop(0.25, "rgba(180,138,255,.25)");
+        g.addColorStop(1, "rgba(120,80,220,0)");
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(sx, sy, R0 * 1.9, 0, TAU);
+        c.arc(sx, sy, R0 * 0.97, 0, TAU, true);
+        c.fill();
+        c.strokeStyle = "rgba(255,246,230,.9)";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(sx, sy, R0, 0, TAU);
+        c.stroke();
+        for (let i = 0; i < 9; i++) {
+          const a0 = i / 9 * TAU + T2 * 0.05, L = R0 * (0.35 + 0.25 * Math.sin(T2 * 0.7 + i * 1.7));
+          c.strokeStyle = `rgba(220,200,255,${0.25 + 0.15 * Math.sin(T2 + i)})`;
+          c.lineWidth = 2;
+          c.beginPath();
+          c.moveTo(sx + Math.cos(a0) * R0, sy + Math.sin(a0) * R0);
+          c.quadraticCurveTo(sx + Math.cos(a0 + 0.12) * (R0 + L * 0.6), sy + Math.sin(a0 + 0.12) * (R0 + L * 0.6), sx + Math.cos(a0 + 0.2) * (R0 + L), sy + Math.sin(a0 + 0.2) * (R0 + L));
+          c.stroke();
+        }
+        hzGlow(c, sx + Math.cos(2.6) * R0, sy + Math.sin(2.6) * R0, 30 + 6 * Math.sin(T2 * 5), "#ffffff", 0.9);
+        c.restore();
+      }
+    }
+  };
+  mixin(Game.prototype, BossEclipseArt, true);
+
+  // src/game/game/boss-eclipse-fx.ts
+  var boss_eclipse_fx_exports = {};
+  __export(boss_eclipse_fx_exports, {
+    BossEclipseFx: () => BossEclipseFx
+  });
+  var CORONA2 = "#b48aff", PALE2 = "#f0e0ff", DUST4 = "rgba(60,40,90,.6)";
+  var BossEclipseFx = {
+    /** 위험 지대 한 칸의 움직임(sigUpdate 에서) — 처리했으면 true */
+    eclipseHz(h, dt, host, me) {
+      const b = this.hzBoss(h);
+      switch (h.k) {
+        case "ehand":
+          {
+            const [, st] = handStage(h);
+            if (st === 1 && !h.hit) {
+              h.hit = 1;
+              this.shake = Math.max(this.shake, 13);
+              this.vfx.puffs(h.tx, h.fy - 6, 6, 30, DUST4, 1, 40);
+              this.vfx.motes(h.tx, h.fy - 20, 14, PALE2, 40, 90, 0.8, 4);
+              this.sfxAt && this.sfxAt("ec_slam", h.tx / TS, h.fy / TS);
+              if (host) {
+                for (const q of this.players) if (!q.dead && q.hp > 0 && Math.abs(q.cx - h.tx) < 96 && q.y + q.h > h.fy - 120) q.hurt(h.dmg, h.tx);
+                if (b) for (const s of [-1, 1]) b.hz({ k: "wave", x: h.tx + s * 70, y: h.fy, vx: s * 320, w: 30, hh: 24, life: 1.8, dmg: h.dmg * 0.5, c: h.c, fx: "void", sd: Math.random() * 99 });
+              }
+            }
+            if (st === 2 && Math.random() < 0.3) this.parts.push(new Part(h.tx + (Math.random() - 0.5) * 120, h.fy - 4, CORONA2, -30, 0.9, { spd: 0.3, r: 1.3, g: -0.2 }));
+          }
+          return true;
+        case "elight":
+          {
+            if (h.t > h.tele && Math.random() < 0.5) this.parts.push(new Part(h.x + (Math.random() - 0.5) * h.w * 0.8, h.fy, "#fff0c0", -60, 1, { spd: 0.2, r: 1.2, g: -0.3 }));
+          }
+          return true;
+        case "estare":
+          {
+            const i = Math.floor((h.t - h.tele) / h.gap);
+            if (h.t >= h.tele && i < h.pulses && h.pk !== i && h.t - h.tele - i * h.gap < 0.2) {
+              h.pk = i;
+              this.shake = Math.max(this.shake, 6);
+              this.sfxAt && this.sfxAt("ec_stare", this.player.cx / TS, this.player.cy / TS);
+              for (const q of this.players) {
+                if (q.dead || q.hp <= 0) continue;
+                const lit = ecLit(q, this.world);
+                if (!lit) {
+                  this.vfx.flare(q.cx, q.cy, 60, CORONA2, 0.3, "impact");
+                  if (host) q.hurt(h.dmg, q.cx);
+                } else this.vfx.motes(q.cx, q.cy, 6, "#fff0c0", 20, 40, 0.5, 3);
+              }
+            }
+          }
+          return true;
+        case "etotal":
+          {
+            if (h.t < h.tele) return true;
+            const i = Math.floor((h.t - h.tele) / h.every);
+            if (h.ek !== i) {
+              h.ek = i;
+              for (const q of this.players) {
+                if (q.dead || q.hp <= 0 || ecLit(q, this.world)) continue;
+                this.vfx.motes(q.cx, q.cy, 5, CORONA2, 20, 40, 0.5, 3);
+                if (host) q.hurt(h.dmg, q.cx);
+              }
+            }
+            if (!h.endFx && h.t > h.life - 0.3) {
+              h.endFx = 1;
+              this.vfx.flare(this.player.cx, this.player.cy - 200, 400, "#fff4d8", 0.35, "impact");
+            }
+            void me;
+          }
+          return true;
+      }
+      return false;
+    },
+    /** 막 넘김 — 원판이 떨고 테에서 별 파편이 떨어진다 */
+    eclipsePhaseFx(e) {
+      this.shake = Math.max(this.shake, 14);
+      const q = this.player;
+      for (let i = 0; i < 18; i++) this.parts.push(new Part(q.cx + (Math.random() - 0.5) * 900, q.cy - 400 - Math.random() * 100, i % 2 ? CORONA2 : PALE2, 160, 1.6, { spd: 0.5, r: 1.6, g: 0.4 }));
+      this.sfxAt && this.sfxAt("ec_crack", e.cx / TS, e.cy / TS);
+    }
+  };
+  mixin(Game.prototype, BossEclipseFx, true);
+
   // src/game/game/boss-arena.ts
   var boss_arena_exports = {};
   __export(boss_arena_exports, {
@@ -66814,6 +67258,12 @@
         case "jeye":
           return this.judgeTell(c, h, cx0, cy0);
         // 판결석 좌상(game/boss-judge-art)
+        case "ehand":
+        case "elight":
+        case "estare":
+        case "etotal":
+          return this.eclipseTell(c, h, cx0, cy0);
+        // 일식(game/boss-eclipse-art)
         case "pulse": {
           if (!b) return true;
           const u = h.t % h.every / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);
@@ -67314,6 +67764,12 @@
         case "jeye":
           return this.judgeHz(h, dt, host, me);
         // 판결석 좌상(game/boss-judge-fx)
+        case "ehand":
+        case "elight":
+        case "estare":
+        case "etotal":
+          return this.eclipseHz(h, dt, host, me);
+        // 일식(game/boss-eclipse-fx)
         case "pulse":
         case "veil":
         case "rod":
@@ -67864,6 +68320,7 @@
       this.drawOrganArms(c);
       this.drawHourglassArms(c);
       this.drawJudgeArms(c);
+      this.drawEclipseHands(c);
       const L = this.bhz;
       if (!L || !L.length) return;
       const cx0 = this.cam.x, cy0 = this.cam.y, T02 = this.time || 0;
@@ -68402,9 +68859,9 @@
         let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
         if (this.starGain && i === n - 1) {
           const gk = Math.min(1, this.starGain.t / this.starGain.dur);
-          const ease5 = 1 - Math.pow(1 - gk, 3);
-          y -= (1 - ease5) * 240;
-          x += (1 - ease5) * 40;
+          const ease6 = 1 - Math.pow(1 - gk, 3);
+          y -= (1 - ease6) * 240;
+          x += (1 - ease6) * 40;
         }
         const back = riseK > 0.9 || Math.sin(a) >= 0 ? 1 : 0.45;
         const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));
@@ -69275,12 +69732,12 @@
         return `rgb(${f(n >> 16 & 255)},${f(n >> 8 & 255)},${f(n & 255)})`;
       };
       const k = on ? 1 : 0.52;
-      const DARK = dim("#39414a", k), MID = dim("#5a6470", k), LITE = dim("#7c8794", k);
+      const DARK2 = dim("#39414a", k), MID = dim("#5a6470", k), LITE = dim("#7c8794", k);
       const RIVET = dim("#b9c4d0", k);
       c.save();
       c.translate(Math.round(x), Math.round(y));
       c.scale(this.RIG_SCALE, this.RIG_SCALE);
-      c.strokeStyle = DARK;
+      c.strokeStyle = DARK2;
       c.lineCap = "butt";
       for (const [bx, tx2, wdt] of [[-42, -15, 8], [42, 15, 8], [-22, -9, 4], [22, 9, 4]]) {
         c.lineWidth = wdt;
@@ -69303,17 +69760,17 @@
       c.fillRect(-30, -190, 60, 72);
       c.fillStyle = LITE;
       c.fillRect(-30, -190, 60, 10);
-      c.fillStyle = DARK;
+      c.fillStyle = DARK2;
       c.fillRect(-30, -130, 60, 12);
       c.fillStyle = RIVET;
       for (let ry = -184; ry < -124; ry += 14)
         for (let rx = -25; rx <= 25; rx += 10) c.fillRect(rx, ry, 2, 2);
-      c.fillStyle = DARK;
+      c.fillStyle = DARK2;
       c.fillRect(8, -252, 18, 64);
       c.fillStyle = MID;
       c.fillRect(6, -256, 22, 7);
       const lx = 20, ly = -150;
-      c.fillStyle = DARK;
+      c.fillStyle = DARK2;
       c.fillRect(lx - 7, ly - 7, 14, 14);
       if (on) {
         const a = 0.55 + Math.sin(ph * 1.7) * 0.3;
@@ -73789,6 +74246,7 @@
     buildPipeline() {
       this.pipe = createPipeline(["sky", "light", "far", "tiles", "machines", "objects", "ground", "drops", "actors", "lighting", "fx", "screen"]);
       this.pipe.add("sky", (f) => this.rSky(f));
+      this.pipe.add("sky", (f) => this.drawEclipseSky(f));
       this.pipe.add("light", (f) => this.rLightCalc(f));
       this.pipe.add("far", (f) => this.rFar(f));
       this.pipe.add("tiles", (f) => this.rTiles(f));
@@ -73824,6 +74282,7 @@
       this.pipe.add("fx", (f) => this.drawHiveGlow(f));
       this.pipe.add("fx", (f) => this.drawHourglassGlow(f));
       this.pipe.add("fx", (f) => this.drawJudgeGlow(f));
+      this.pipe.add("fx", (f) => this.drawEclipseGlow(f));
       this.pipe.add("screen", (f) => this.rScreen(f));
       this.pipe.add("screen", (f) => this.drawStage(f));
       this.pipe.add("screen", (f) => this.rTimeStop(f));
@@ -74389,8 +74848,9 @@
   });
   var RenderSkyPart = {
     dayFactor() {
-      return DAY_CYCLE.light(this.dayT);
+      return DAY_CYCLE.light(this.dayT) * (1 - 0.85 * (this.ecDim || 0));
     },
+    // 일식이 해를 가린 만큼(game/boss-eclipse-art)
     drawSky(c, f, camX, camY) {
       const { SURF_BASE: SURF_BASE2, HELL_Y: HELL_Y2 } = dimsOf(this.world);
       const surfPx = SURF_BASE2 * TS;
@@ -76323,7 +76783,7 @@
         }
         return;
       }
-      if (e.def.ai === "b_organ" || e.def.ai === "b_hourglass" || e.def.ai === "b_hive" || e.def.ai === "b_judge") return;
+      if (e.def.ai === "b_organ" || e.def.ai === "b_hourglass" || e.def.ai === "b_hive" || e.def.ai === "b_judge" || e.def.ai === "b_eclipse") return;
       if (e.def.ai === "b_cocoon") {
         this.drawCocoon(c, e, sx, sy);
         if (!this.paused) this.cocoonAmbient(e);
@@ -77316,9 +77776,9 @@
           c.stroke();
           c.setLineDash([]);
         }
-        const lock = Math.min(1, pa / 0.35), ease5 = 1 - Math.pow(1 - lock, 3);
-        const pad = 3 + (1 - ease5) * 22 + beat * 2.5, rot = (1 - ease5) * 1.6;
-        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease5) * 4;
+        const lock = Math.min(1, pa / 0.35), ease6 = 1 - Math.pow(1 - lock, 3);
+        const pad = 3 + (1 - ease6) * 22 + beat * 2.5, rot = (1 - ease6) * 1.6;
+        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease6) * 4;
         c.save();
         c.translate(x + ew / 2, y + eh / 2);
         c.rotate(rot);
@@ -78990,15 +79450,15 @@
     },
     netPutEnemies(list) {
       const n = this.net, t = now();
-      for (const [nid8, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
-        let e = n.ghosts.get(nid8);
+      for (const [nid9, type, x, y, vx, vy, f, g, hp, mhp, fl, ca, ck, gp] of list) {
+        let e = n.ghosts.get(nid9);
         if (!e) {
           if (!ENEMIES[type]) continue;
           e = new Enemy(type, x, y);
           e.ghost = true;
-          e.nid = nid8;
+          e.nid = nid9;
           e.netBuf = new SnapBuffer(1.5 / NET_HZ);
-          n.ghosts.set(nid8, e);
+          n.ghosts.set(nid9, e);
           this.ents.push(e);
         }
         e.netBuf.push(t, { x, y });
@@ -79034,9 +79494,9 @@
         }
         e.seenAt = t;
       }
-      for (const [nid8, e] of n.ghosts) if (t - e.seenAt > 1) {
+      for (const [nid9, e] of n.ghosts) if (t - e.seenAt > 1) {
         e.dead = true;
-        n.ghosts.delete(nid8);
+        n.ghosts.delete(nid9);
       }
     },
     /** 참가자가 그림자 몹을 쳤다 — 맞는 그림은 바로(손맛), 피해는 호스트가 계산한다. */
@@ -79077,10 +79537,10 @@
     },
     netPutDeaths(list) {
       const n = this.net;
-      for (const nid8 of list) {
-        const e = n.ghosts.get(nid8);
+      for (const nid9 of list) {
+        const e = n.ghosts.get(nid9);
         if (!e) continue;
-        n.ghosts.delete(nid8);
+        n.ghosts.delete(nid9);
         e.dead = true;
         this.addCorpse(e);
         this.deathBurst(e);
@@ -79098,13 +79558,13 @@
     },
     netPutProjs(list) {
       const n = this.net, t = now();
-      for (const [nid8, x, y, vx, vy, type] of list) {
-        let q = n.gproj.get(nid8);
+      for (const [nid9, x, y, vx, vy, type] of list) {
+        let q = n.gproj.get(nid9);
         if (!q) {
           q = new Proj(x, y, vx, vy, 0, "enemy", type);
           q.ghost = true;
-          q.nid = nid8;
-          n.gproj.set(nid8, q);
+          q.nid = nid9;
+          n.gproj.set(nid9, q);
           this.projs.push(q);
         }
         q.x = x - q.w / 2;
@@ -79113,9 +79573,9 @@
         q.vy = vy;
         q.seenAt = t;
       }
-      for (const [nid8, q] of n.gproj) if (t - q.seenAt > 0.25) {
+      for (const [nid9, q] of n.gproj) if (t - q.seenAt > 0.25) {
         q.dead = true;
-        n.gproj.delete(nid8);
+        n.gproj.delete(nid9);
       }
     },
     /** 시계·날짜·세계 사건(비·붉은 달…) — 참가자는 사건을 굴리지 않고 호스트 것을 받는다. */
@@ -79762,9 +80222,9 @@
       if (tiles) {
         for (const q of n.peers.values()) if (q.rp) this.netSend(q.t, "rel", { k: "tiles", l: tiles });
       }
-      for (const [nid8, e] of n.live) if (e.dead) {
-        n.live.delete(nid8);
-        if (!n.dead.includes(nid8)) n.dead.push(nid8);
+      for (const [nid9, e] of n.live) if (e.dead) {
+        n.live.delete(nid9);
+        if (!n.dead.includes(nid9)) n.dead.push(nid9);
       }
       for (const q of n.peers.values()) {
         if (!q.rp) continue;
@@ -80659,7 +81119,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_gap_fx_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_eclipse_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_gap_fx_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_eclipse_art_exports, boss_eclipse_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

@@ -73,15 +73,16 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'sig', sig: 'tablets', n: '증언이 쏟아진다', tele: 0.3, cnt: 3, m: 1, ph: 2, pw: [0, 0, 1] },
     { k: 'sig', sig: 'verdict', n: '거듭된 판결', tele: 0.3, weigh: 1.8, m: 1.1, ph: 2, pw: [0, 0, 1.2] }],
     ult: { k: 'sig', sig: 'sentence', n: '최초의 선고', tele: 1, m: 1 } },
+  /* 일식 — 하늘에 뚫린 별의 음화. 그림자 끝에 손이 내려오고(짚은 손만 제대로 맞는다) · 응시는 빛 속에서만 견딘다(entity/boss-eclipse) */
   pursuer: { c: '#b48aff', every: 5.5, moves: [
+    { k: 'sig', sig: 'shand', n: '그림자 손', tele: 0.3, m: 1 },
     { k: 'rain', n: '별똥 추격', tele: 0.6, form: 'trail', cnt: 8, every: 0.22, delay: 0.75, r: 48, shape: 'circle', fx: 'meteor', m: 1 },
-    { k: 'dash', n: '그림자 질주', tele: 0.4, times: 4, spd: 3.6, m: 1 },
-    { k: 'vortex', n: '중력 우물', tele: 0.8, life: 3.2, r: 420, pull: 340, burst: 170, fx: 'grav', m: 1.1 },
-    { k: 'sig', sig: 'gaze', n: '응시', tele: 0.8, pose: 0, m: 1 },
-    { k: 'beam', n: '별을 꿰는 선', tele: 0.9, cnt: 1, dur: 2, w: 26, len: 900, sweep: 2, fx: 'star', m: 0.35, ph: 1, pw: [0, 1, 1, 1, 1] },
-    { k: 'homing', n: '떠도는 별', tele: 0.6, cnt: 6, spd: 210, turn: 2, proj: 'void', m: 0.5, ph: 2, pw: [0, 0, 1.2, 1, 1] },
-    { k: 'blink', n: '그림자 건너기', tele: 0.3, times: 3, r: 90, fx: 'rift', m: 1, ph: 3, pw: [0, 0, 0, 1.4, 1.4] }],
-    ult: { k: 'spiral', n: '종말의 별', tele: 1.4, arms: 5, dur: 5.5, every: 0.09, spd: 300, proj: 'void', turn: 2, rain: 1, m: 0.4 } },
+    { k: 'sig', sig: 'stare', n: '응시', tele: 0.3, m: 1 },
+    { k: 'homing', n: '떠도는 별', tele: 0.6, cnt: 6, spd: 210, turn: 2, proj: 'void', m: 0.5, ph: 1, pw: [0, 1.2, 1, 1, 1] },
+    { k: 'sig', sig: 'hands2', n: '두 손', tele: 0.3, cnt: 2, m: 1, ph: 2, pw: [0, 0, 1.3, 1.2, 1] },
+    { k: 'sig', sig: 'stare', n: '긴 응시', tele: 0.3, pulses: 3, m: 1, ph: 3, pw: [0, 0, 0, 1.3, 1.2] },
+    { k: 'sig', sig: 'hands2', n: '떨어지는 그림자', tele: 0.3, cnt: 3, m: 1, ph: 4, pw: [0, 0, 0, 0, 1.5] }],
+    ult: { k: 'sig', sig: 'totality', n: '개기일식', tele: 1, m: 1 } },
 
   /* ---------------- 유적의 주인 ---------------- */
   mine_horror: { c: '#c8a878', every: 7, moves: [
@@ -249,7 +250,6 @@ export const GAP_MISS_MUL = 0.25;  // 헛손질이면 받는 피해에 더한다
    split 그 마디에서 둘로 갈라진다(남은 체력을 반씩, 둘 다 쓰러져야 끝). 3 · 5 마디 보스만 — 두 마디는 바뀔 틈이 없다 */
 export const BOSS_FORM: Record<string, { fly?: number; k?: string; split?: number; n?: string }> = {
   proliferator: { split: 1, n: '스스로를 복제한다' },
-  pursuer: { split: 3, n: '그림자가 떨어져 나온다' },
   tide_warden: { fly: 1, k: 'spout', n: '물기둥을 타고 오른다' },
   hepha: { fly: 2, k: 'jets', n: '분사구에 불이 붙는다' },
   archetype: { fly: 3, k: 'wings', n: '설계선이 날개가 된다' }

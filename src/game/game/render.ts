@@ -38,6 +38,7 @@ export const RenderPart: Bag = {
   buildPipeline() {
     this.pipe = createPipeline(['sky', 'light', 'far', 'tiles', 'machines', 'objects', 'ground', 'drops', 'actors', 'lighting', 'fx', 'screen']);
     this.pipe.add('sky', (f: any) => this.rSky(f));
+    this.pipe.add('sky', (f: any) => this.drawEclipseSky(f));      // 하늘의 일식 원판 · 외눈(game/boss-eclipse-art)
     this.pipe.add('light', (f: any) => this.rLightCalc(f));
     this.pipe.add('far', (f: any) => this.rFar(f));
     this.pipe.add('tiles', (f: any) => this.rTiles(f));
@@ -73,6 +74,7 @@ export const RenderPart: Bag = {
     this.pipe.add('fx', (f: any) => this.drawHiveGlow(f));          // 어미 눈 · 머리가 나올 방
     this.pipe.add('fx', (f: any) => this.drawHourglassGlow(f));     // 거상의 눈 · 모래시계 빛 · 시간 마감
     this.pipe.add('fx', (f: any) => this.drawJudgeGlow(f));         // 판결석의 눈 · 가슴 문장 · 단죄의 광선
+    this.pipe.add('fx', (f: any) => this.drawEclipseGlow(f));       // 응시의 조임 · 개기일식의 어둠
     this.pipe.add('screen', (f: any) => this.rScreen(f));
     this.pipe.add('screen', (f: any) => this.drawStage(f));       // 스킬 무대 — 집중선 · 화면 섬광
     this.pipe.add('screen', (f: any) => this.rTimeStop(f));       // 멈춘 모래시계(game/trinkets)

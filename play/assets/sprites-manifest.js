@@ -3936,13 +3936,15 @@ window.SPRITE_MANIFEST = {
       },
       "pursuer": {
         "file": "boss/pursuer.png",
-        "frameW": 204,
-        "frameH": 214,
-        "count": 12,
+        "frameW": 544,
+        "frameH": 544,
+        "count": 8,
+        "foot": 67,
+        "side": 1,
+        "death": 2,
+        "scale": 1,
         "gap": 0,
-        "foot": -0.75,
-        "side": 0,
-        "death": 2
+        "rig": 1
       },
       "overseer": {
         "file": "boss/overseer.png",
@@ -4135,18 +4137,6 @@ window.SPRITE_MANIFEST = {
         "scale": 1,
         "gap": 0,
         "foot": -1.5,
-        "side": 0,
-        "pose": 1
-      },
-      "pursuer_pose": {
-        "file": "boss/pursuer_pose.png",
-        "frameW": 328,
-        "frameH": 289,
-        "count": 45,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -0.75,
         "side": 0,
         "pose": 1
       },
@@ -4374,6 +4364,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 160,
         "frameH": 176,
         "count": 11,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "pursuer_parts": {
+        "file": "boss/pursuer_parts.png",
+        "frameW": 192,
+        "frameH": 192,
+        "count": 7,
         "scale": 1,
         "gap": 0,
         "rig": 1

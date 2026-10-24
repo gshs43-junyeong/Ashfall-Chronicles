@@ -1064,6 +1064,129 @@ def judge_parts(f):
     return F.render()
 
 
+# ===== 일식(pursuer 자리) — 하늘에 뚫린 별의 음화: 검은 원판 · 보랏빛 코로나 · 가운데 외눈 · 그림자 손 =====
+VOIDK, CORONA, CORONA_L, RIM = '#07050c', '#b48aff', '#f0e0ff', '#ffe6b0'
+EC_W = 136                                                     # 게임 game/boss-eclipse-art.ts EC 와 같게(가운데 68, 68 · 원판 반지름 36)
+
+
+def eclipse_body(f):
+    """몸 시트 8장(136×136 설계 칸) — 0·1 코로나가 일렁인다 · 2·3 빛의 금 · 4·5 테가 깨지고 코로나가 사납다 · 6·7 무너짐(원판이 조각나며 줄어든다).
+       원판 속은 거의 검다 — 별이 있어야 할 자리에 검은 별(음화)이 희미한 테두리만 남는다. 눈은 조각(0~2)이라 게임이 뜨고 감긴다"""
+    F = ZFig(EC_W, EC_W)
+    cx = cy = 68
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dying = f >= 6
+    R = 36 if not dying else (30 if f == 6 else 22)
+    state = [97 + f * 13]
+
+    def rnd():
+        state[0] = state[0] * 48271 % 2147483647
+        return state[0] / 2147483647
+    if not dying:                                              # 코로나 — 부드러운 빛무리 + 테에서 휘어 나가는 가는 빛줄기(막이 오를수록 길고 사납다)
+        F.glow(cx, cy, R + 12 + st * 3, CORONA, 0.34 + b * 0.05)
+        F.glow(cx, cy, R + 5, CORONA_L, 0.36)
+        for k in range(22):
+            a = k / 22 * math.tau + (rnd() - 0.5) * 0.12 + b * 0.05
+            ln = 9 + rnd() * (8 + st * 4) + (5 if k % 5 == 0 else 0)
+            bend = (rnd() - 0.5) * 0.5
+            pts = []
+            for j in range(7):
+                u = j / 6
+                aa = a + bend * u * u
+                pts.append((cx + math.cos(aa) * (R + ln * u), cy + math.sin(aa) * (R + ln * u)))
+            w0 = 1.1 + rnd() * 0.9
+            L, Rr = [], []
+            for j, (x, y) in enumerate(pts):
+                x2, y2 = pts[min(j + 1, 6)]; x1, y1 = pts[max(j - 1, 0)]
+                dx, dy = x2 - x1, y2 - y1; d = math.hypot(dx, dy) or 1
+                ww = w0 * (1 - j / 6) + 0.05
+                L.append((x - dy / d * ww, y + dx / d * ww)); Rr.append((x + dy / d * ww, y - dx / d * ww))
+            F.part('glow', CORONA_L if k % 3 == 0 else CORONA, glow=True).poly(L + Rr[::-1])
+    F.part('stone', VOIDK, flat=True).ell(cx, cy, R, R)               # 원판 — 빛을 먹은 구멍
+    for k in range(5):                                         # 음화의 별 — 검은 별의 희미한 테
+        a = k / 5 * math.tau + 0.4
+        sx, sy, sr = cx + math.cos(a) * R * 0.55, cy + math.sin(a) * R * 0.5, 2.6 + rnd() * 1.6
+        pts = [(sx + math.cos(j / 10 * math.tau - math.pi / 2) * (sr if j % 2 == 0 else sr * 0.42), sy + math.sin(j / 10 * math.tau - math.pi / 2) * (sr if j % 2 == 0 else sr * 0.42)) for j in range(10)]
+        for (p0, p1) in zip(pts, pts[1:] + pts[:1]):
+            fine(F, p0, p1, '#5a3a8a', 170)
+    for k in range(64):                                        # 테 — 금빛 고리(다이아몬드 고리), 한 점이 가장 밝다
+        a = k / 64 * math.tau
+        if dying and rnd() < 0.35:
+            continue
+        x0, y0 = cx + math.cos(a) * R, cy + math.sin(a) * R
+        x1, y1 = cx + math.cos(a + math.tau / 64) * R, cy + math.sin(a + math.tau / 64) * R
+        fine(F, (x0, y0), (x1, y1), RIM if (k + b * 7) % 9 else '#ffffff', 255)
+    ba = 2.3 + b * 0.5
+    F.part('glow', '#ffffff', glow=True).ell(cx + math.cos(ba) * R, cy + math.sin(ba) * R, 2.2, 2.2)
+    F.glow(cx + math.cos(ba) * R, cy + math.sin(ba) * R, 7, RIM, 0.55)
+    if st >= 1:
+        crack(F, [(cx - 20, cy - 26), (cx - 12, cy - 12), (cx - 16, cy + 2)], 0.6, CORONA_L)
+        crack(F, [(cx + 30, cy + 10), (cx + 18, cy + 16), (cx + 14, cy + 28)], 0.55, CORONA_L)
+    if st >= 2:
+        crack(F, [(cx + 6, cy - 34), (cx + 10, cy - 20), (cx + 4, cy - 10)], 0.6, RIM)
+        crack(F, [(cx - 34, cy + 12), (cx - 22, cy + 18), (cx - 18, cy + 30)], 0.5, RIM)
+        for k in range(3):                                     # 깨져 나간 테 — 빛이 새는 홈
+            a = 0.8 + k * 2.1
+            F.part('stone', VOIDK, flat=True).ell(cx + math.cos(a) * R, cy + math.sin(a) * R, 3.4, 3.4)
+    if dying:                                                  # 조각 — 원판에서 떨어져 나가는 검은 파편과 그 테
+        for k in range(9):
+            a = k / 9 * math.tau + rnd()
+            d = R + 6 + rnd() * 14 + (f - 6) * 8
+            x, y = cx + math.cos(a) * d, cy + math.sin(a) * d
+            F.part('stone', VOIDK, flat=True).poly([(x - 3, y - 1), (x + 1, y - 4), (x + 4, y + 1), (x - 1, y + 3)])
+            fine(F, (x - 3, y - 1), (x + 1, y - 4), RIM, 200)
+        F.glow(cx, cy, R + 10, CORONA_L, 0.25)
+    return F.render()
+
+
+def eclipse_parts(f):
+    """조각 7장(48×48 설계 칸) — 0~2 눈(감김 · 반쯤 · 뜸, 가운데 (24, 24)) · 3 편 그림자 손 · 4 움켜쥔 손(손목 (24, 4) · 손끝 아래)
+       · 5 팔뚝 마디(세로, 위아래로 이어 그린다) · 6 별 파편"""
+    F = ZFig(48, 48)
+    cx = 24
+    if f <= 2:
+        op = (0.0, 0.45, 1.0)[f]
+        F.glow(cx, 24, 14, CORONA, 0.25 + op * 0.25)
+        lid = [(cx - 15, 24)] + [(cx + math.cos(math.pi - k / 12 * math.pi) * 15, 24 - math.sin(k / 12 * math.pi) * (1.2 + 7.5 * op)) for k in range(13)] + \
+              [(cx + math.cos(k / 12 * math.pi) * 15, 24 + math.sin(k / 12 * math.pi) * (1.0 + 6.5 * op)) for k in range(13)]
+        F.part('glow', CORONA_L, glow=True).poly(lid)
+        if op > 0.1:
+            F.part('stone', '#1a0e2a', flat=True).ell(cx, 24, 6 + op * 1.5, (1 + 6 * op) * 0.95)
+            F.part('glow', '#ffffff', glow=True).poly([(cx + math.cos(j / 8 * math.tau - math.pi / 2) * (3.4 if j % 2 == 0 else 1.2) * op, 24 + math.sin(j / 8 * math.tau - math.pi / 2) * (3.4 if j % 2 == 0 else 1.2) * op) for j in range(8)])
+        else:
+            fine(F, (cx - 14, 24), (cx + 14, 24), '#ffffff', 255)
+    elif f in (3, 4):
+        curl = f == 4
+        F.part('stone', '#0c0814', bevel=3).poly([(cx - 8, 2), (cx + 8, 2), (cx + 11, 18), (cx + 9, 24), (cx - 9, 24), (cx - 11, 18)])   # 손등
+        for k in range(4):                                     # 손가락 — 아래로 벌어지거나(편 손) 움켜쥔다
+            x0 = cx - 9 + k * 6
+            if curl:
+                pts = [(x0, 22), (x0 + 1, 31), (x0 + (k - 1.5) * 1.2, 36), (x0 + 3 - (k - 1.5) * 0.5, 33)]
+            else:
+                pts = [(x0, 22), (x0 + (k - 1.5) * 2.4, 34), (x0 + (k - 1.5) * 3.6, 44 - abs(k - 1.5) * 2)]
+            for (a, b2) in zip(pts, pts[1:]):
+                F.part('stone', '#120c1e', bevel=1.4).cap(a[0], a[1], b2[0], b2[1], 2.2, 1.6)
+            tip = pts[-1]
+            F.part('glow', CORONA_L, glow=True).ell(tip[0], tip[1], 0.9, 0.9)
+        F.part('stone', '#120c1e', bevel=1.4).cap(cx + 10, 16, cx + 16 + (0 if curl else 3), 26 + (2 if curl else 6), 2.2, 1.7)   # 엄지
+        for k in range(6):                                     # 속의 별 — 그림자 속에 박힌 작은 빛
+            F.part('glow', CORONA_L if k % 2 else CORONA, glow=True).ell(cx - 6 + (k * 37 % 13), 6 + (k * 23 % 16), 0.6, 0.6)
+        F.glow(cx, 18, 10, CORONA, 0.22)
+    elif f == 5:                                               # 팔뚝 — 위아래 끝이 그대로 이어지게(벽에 닿지 않게 가로만 좁힌다)
+        F.part('stone', '#0c0814', flat=True).box(cx - 7, 0, 14, 48, 0)
+        F.part('stone', '#160e24', flat=True).box(cx - 4, 0, 4, 48, 0)
+        for k in range(5):
+            F.part('glow', CORONA, glow=True).ell(cx - 3 + (k * 29 % 7), 5 + k * 9, 0.5, 0.5)
+        fine(F, (cx - 7, 0), (cx - 7, 47.8), '#5a3a8a', 180); fine(F, (cx + 7, 0), (cx + 7, 47.8), '#3a2458', 180)
+    else:                                                      # 별 파편 — 무너질 때 흩어지는 조각
+        F.part('stone', VOIDK, flat=True).poly([(14, 20), (24, 10), (34, 18), (30, 32), (18, 34)])
+        for (a, b2) in (((14, 20), (24, 10)), ((24, 10), (34, 18))):
+            fine(F, a, b2, RIM, 230)
+        F.glow(24, 22, 6, CORONA, 0.3)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -1072,6 +1195,7 @@ RIGS = {
     'sand_guardian': {'body': (84, 104, 8, 2, colossus_body), 'parts': (40, 44, 8, colossus_parts)},
     'blight_maw': {'body': (HIVE_W, HIVE_H, 8, 2, hive_body), 'parts': (40, 36, 5, hive_parts)},
     'first_keeper': {'body': (JD_W, JD_H, 8, 2, judge_body), 'parts': (40, 44, 11, judge_parts)},
+    'pursuer': {'body': (EC_W, EC_W, 8, 2, eclipse_body), 'parts': (48, 48, 7, eclipse_parts, (5,))},
 }
 
 
