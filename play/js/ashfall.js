@@ -66541,6 +66541,204 @@
   }
   var ease5 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
   var DARK = null;
+  var EYE2 = null;
+  var SMALL_EYES = [
+    // 윗반쪽에만 — 아랫반쪽은 원경 숲에 가린다
+    [-1.57, 0.64, 20],
+    [-2.25, 0.66, 17],
+    [-0.89, 0.66, 17],
+    [-2.9, 0.84, 14],
+    [-0.24, 0.84, 14],
+    [-1.95, 0.9, 11],
+    [-1.19, 0.9, 11],
+    [-2.6, 0.92, 10]
+  ];
+  function blinkOf(T2, sd) {
+    const per = 4.3 + sd * 1.7 % 2.2, u = (T2 + sd * 3.1) % per;
+    const one = (v) => v < 0 || v > 0.16 ? 1 : Math.abs(v - 0.08) / 0.08;
+    return Math.min(one(u), sd % 2 < 1 ? one(u - 0.3) : 1);
+  }
+  function lookAt(E, dx, dy, dt, mx, my) {
+    const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 260);
+    E.lx = ease5(E.lx, dx / d * mx * k, dt, 4);
+    E.ly = ease5(E.ly, dy / d * my * k, dt, 4);
+  }
+  function drawEye(c, x, y, P2, w, h, o, lx, ly, T2, sd, dil) {
+    const Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
+    if (!EYE2) EYE2 = document.createElement("canvas");
+    if (EYE2.width < Wc || EYE2.height < Hc) {
+      EYE2.width = Math.max(EYE2.width, Wc);
+      EYE2.height = Math.max(EYE2.height, Hc);
+    }
+    const d = EYE2.getContext("2d");
+    d.clearRect(0, 0, Wc, Hc);
+    const cx = Wc / 2, cy = Hc / 2, a = w / 2, b = h / 2, bo = b * o, u = Math.max(1, w / 46);
+    const almond = (ax, up, dn) => {
+      d.beginPath();
+      d.moveTo(cx - ax, cy);
+      d.quadraticCurveTo(cx, cy - up * 2, cx + ax, cy);
+      d.quadraticCurveTo(cx, cy + dn * 2, cx - ax, cy);
+      d.closePath();
+    };
+    const lashes = (up, n, len, col) => {
+      d.strokeStyle = col;
+      d.lineCap = "round";
+      for (let i = 0; i < n; i++) {
+        const t = 0.08 + 0.84 * (i + 0.5) / n, px = cx - a + 2 * a * t, py = cy - up * 4 * t * (1 - t);
+        const lean = (t - 0.5) * 2.2, wob = Math.sin(sd + i * 2.1 + T2 * 0.9) * 0.12;
+        const L = len * (0.55 + 0.6 * Math.sin(t * Math.PI)) * (0.85 + 0.25 * Math.sin(i * 4.7 + sd));
+        const ex = px + (lean + wob) * L * 0.75, ey = py - L * (1 - Math.abs(lean) * 0.3);
+        for (const [lw, k] of [[1.1 * u, 0.55], [0.6 * u, 1]]) {
+          d.lineWidth = lw;
+          d.beginPath();
+          d.moveTo(px, py);
+          d.quadraticCurveTo(px + lean * L * 0.15, py - L * 0.6 * k, px + (ex - px) * k, py + (ey - py) * k);
+          d.stroke();
+        }
+      }
+    };
+    if (o < 0.07) {
+      d.strokeStyle = "rgba(200,170,255,.5)";
+      d.lineWidth = 1.6;
+      d.beginPath();
+      d.moveTo(cx - a, cy);
+      d.quadraticCurveTo(cx, cy + b * 0.5, cx + a, cy);
+      d.stroke();
+      d.strokeStyle = "#07030d";
+      d.lineWidth = 1.1;
+      d.stroke();
+      for (let i = 1; i < 7; i++) {
+        const t = i / 7, px = cx - a + 2 * a * t, py = cy + b * 0.5 * 2 * t * (1 - t);
+        d.beginPath();
+        d.moveTo(px, py);
+        d.lineTo(px + (t - 0.5) * 1.4, py + 1.6 + Math.sin(t * Math.PI) * 1.4);
+        d.stroke();
+      }
+    } else {
+      almond(a + 2 * u, bo + 1.6 * u, bo * 0.85 + 1.4 * u);
+      d.fillStyle = "#12081f";
+      d.fill();
+      d.strokeStyle = "#46286c";
+      d.lineWidth = u;
+      d.stroke();
+      d.save();
+      almond(a, bo, bo * 0.85);
+      d.clip();
+      const ix = cx + lx, iy = cy + ly, r = b * 0.9;
+      let g = d.createRadialGradient(cx + lx * 0.4, cy + ly * 0.4 + b * 0.2, 0, cx, cy, a);
+      g.addColorStop(0, "#f6efff");
+      g.addColorStop(0.55, "#c3a8ec");
+      g.addColorStop(1, "#3e2464");
+      d.fillStyle = g;
+      d.fillRect(0, 0, Wc, Hc);
+      d.lineWidth = 0.55 * u;
+      for (let i = 0; i < 6; i++) {
+        const s0 = Math.sin(sd * 7 + i * 12.9898) * 43758.5453, u2 = s0 - Math.floor(s0), side = i % 2 ? 1 : -1;
+        let vx = cx + side * a * 0.95, vy = cy + (u2 - 0.5) * bo * 1.2;
+        d.strokeStyle = "rgba(176,40,112,.5)";
+        d.beginPath();
+        d.moveTo(vx, vy);
+        for (let k = 0; k < 3; k++) {
+          vx -= side * a * 0.17;
+          vy += Math.sin(u2 * 40 + k * 2.3) * 1.2;
+          d.lineTo(vx, vy);
+        }
+        d.stroke();
+      }
+      g = d.createRadialGradient(ix, iy, 0, ix, iy, r);
+      g.addColorStop(0, "#fff3cc");
+      g.addColorStop(0.3, "#ffc768");
+      g.addColorStop(0.5, "#c592ff");
+      g.addColorStop(0.82, "#6a36c4");
+      g.addColorStop(1, "#1e0c38");
+      d.fillStyle = g;
+      d.beginPath();
+      d.arc(ix, iy, r, 0, TAU);
+      d.fill();
+      const rp = r * (0.34 + 0.14 * dil + 0.03 * Math.sin(T2 * 2.1 + sd));
+      for (let i = 0; i < 30; i++) {
+        const an = i / 30 * TAU + T2 * 0.12 * (sd % 2 ? -1 : 1), r0 = rp * 1.15, r1 = r * (0.8 + 0.15 * Math.sin(i * 1.7 + sd));
+        d.strokeStyle = i % 2 ? "rgba(255,236,200,.38)" : "rgba(26,8,52,.4)";
+        d.lineWidth = 0.6 * u;
+        d.beginPath();
+        d.moveTo(ix + Math.cos(an) * r0, iy + Math.sin(an) * r0);
+        d.lineTo(ix + Math.cos(an + 0.08) * r1, iy + Math.sin(an + 0.08) * r1);
+        d.stroke();
+      }
+      d.strokeStyle = "#120720";
+      d.lineWidth = 1.2 * u;
+      d.beginPath();
+      d.arc(ix, iy, r - 0.4, 0, TAU);
+      d.stroke();
+      g = d.createRadialGradient(ix, iy, rp * 0.9, ix, iy, rp * 1.7);
+      g.addColorStop(0, "rgba(255,250,236,.95)");
+      g.addColorStop(1, "rgba(255,214,140,0)");
+      d.fillStyle = g;
+      d.beginPath();
+      d.arc(ix, iy, rp * 1.7, 0, TAU);
+      d.fill();
+      d.fillStyle = "#040108";
+      d.beginPath();
+      d.arc(ix, iy, rp, 0, TAU);
+      d.fill();
+      const da = T2 * 0.9 + sd;
+      d.fillStyle = "#ffffff";
+      d.fillRect(ix + Math.cos(da) * rp - 0.6 * u, iy + Math.sin(da) * rp - 0.6 * u, 1.3 * u, 1.3 * u);
+      g = d.createLinearGradient(0, cy - bo * 2, 0, cy - bo * 0.1);
+      g.addColorStop(0, "rgba(10,4,22,.85)");
+      g.addColorStop(1, "rgba(10,4,22,0)");
+      d.fillStyle = g;
+      d.fillRect(0, 0, Wc, cy);
+      d.fillStyle = "rgba(255,255,255,.95)";
+      d.fillRect(ix - r * 0.5, iy - r * 0.55, Math.max(1, r * 0.22), Math.max(1, r * 0.18));
+      d.fillStyle = "rgba(255,255,255,.5)";
+      d.fillRect(ix + r * 0.3, iy + r * 0.3, u, u);
+      d.restore();
+      d.lineCap = "round";
+      d.strokeStyle = "#06020c";
+      d.lineWidth = 1.5 * u;
+      d.beginPath();
+      d.moveTo(cx - a, cy);
+      d.quadraticCurveTo(cx, cy - bo * 2, cx + a, cy);
+      d.stroke();
+      d.strokeStyle = "#2a1644";
+      d.lineWidth = 0.8 * u;
+      d.beginPath();
+      d.moveTo(cx - a, cy);
+      d.quadraticCurveTo(cx, cy + bo * 1.7, cx + a, cy);
+      d.stroke();
+      lashes(bo, Math.max(5, Math.round(w / 6)), Math.max(1.8, h * 0.2), "#0b0516");
+    }
+    c.save();
+    c.imageSmoothingEnabled = false;
+    c.drawImage(EYE2, 0, 0, Wc, Hc, Math.round(x - Wc * P2 / 2), Math.round(y - Hc * P2 / 2), Wc * P2, Hc * P2);
+    c.restore();
+  }
+  function eyeGlow(c, e, T2, boost) {
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    for (const [x, y, r, o0] of e.ecGlow || []) {
+      const o = Math.min(1, o0 * boost);
+      if (o0 < 0.15) continue;
+      const pu = 0.85 + 0.15 * Math.sin(T2 * 3 + x * 0.01);
+      let g = c.createRadialGradient(x, y, r * 0.25, x, y, r * 1.1);
+      g.addColorStop(0, `rgba(255,226,160,${0.5 * o * pu})`);
+      g.addColorStop(0.45, `rgba(190,140,255,${0.22 * o})`);
+      g.addColorStop(1, "rgba(120,80,220,0)");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r * 1.1, 0, TAU);
+      c.fill();
+      g = c.createRadialGradient(x, y, 0, x, y, r * 2.6);
+      g.addColorStop(0, `rgba(180,138,255,${0.12 * o})`);
+      g.addColorStop(1, "rgba(120,80,220,0)");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(x, y, r * 2.6, 0, TAU);
+      c.fill();
+    }
+    c.restore();
+  }
   var BossEclipseArt = {
     /** 하늘의 원판 · 코로나 · 외눈(sky 단계) — 그리면서 낮빛 가림(ecDim)도 정한다 */
     drawEclipseSky(f) {
@@ -66548,7 +66746,7 @@
       let want = 0;
       for (const e of this.ents) {
         if (!isEc(e)) continue;
-        const im = Sprites.want("pursuer"), pim = Sprites.want("pursuer_parts");
+        const im = Sprites.want("pursuer");
         const st = Math.min(2, Math.round((e.pf || 0) * 2)), sr = hzOf6(this, e, "estare"), tot = hzOf6(this, e, "etotal"), hd = hzOf6(this, e, "ehand");
         want = Math.max(want, tot && tot.t > tot.tele * 0.5 ? 0.97 : sr ? 0.8 : 0.42 + 0.08 * st);
         const W = this.W, H = this.H;
@@ -66579,23 +66777,34 @@
           c.drawImage(im, fr * BW5, 0, BW5, BW5, -BW5 / 2, -BW5 / 2, BW5, BW5);
         }
         c.restore();
-        if (pim) {
-          const E = e.ecEye || (e.ecEye = { o: 0, lx: 0, ly: 0 });
-          const blink = T2 % 7 < 1.6 ? Math.sin(T2 % 7 / 1.6 * Math.PI) * 0.6 : 0;
-          const goal = sr || tot && tot.t > 0.4 ? 1 : hd && hd.t < hd.tele ? 0.5 : blink;
-          E.o = ease5(E.o, goal, dt, 5);
-          const px = this.player.cx - f.camX - sx, py = this.player.cy - f.camY - sy, d = Math.hypot(px, py) || 1;
-          E.lx = ease5(E.lx, px / d * 26, dt, 3);
-          E.ly = ease5(E.ly, py / d * 20, dt, 3);
-          const ef = E.o < 0.22 ? 0 : E.o < 0.7 ? 1 : 2, k = 1.5 + (sr ? 0.25 * Math.sin(T2 * 12) * 0.2 : 0);
-          c.save();
-          c.translate(sx + E.lx, sy + E.ly);
-          c.scale(k, k);
-          c.imageSmoothingEnabled = false;
-          c.drawImage(pim, ef * PW5, 0, PW5, PW5, -PW5 / 2, -PW5 / 2, PW5, PW5);
-          c.restore();
-          if (E.o > 0.5) hzGlow(c, sx + E.lx, sy + E.ly, 60 + 40 * E.o, PALE, 0.25 * E.o);
+        const P2 = EC.K * S, rot = T2 * 0.04 + Math.sin(T2 * 0.3) * 0.05;
+        const tx = this.player.cx - f.camX, ty = this.player.cy - f.camY;
+        const busy = sr || tot && tot.t > 0.4 ? 1 : hd && hd.t < hd.tele ? 0.78 : 0.5;
+        const eyes = e.ecEyes || (e.ecEyes = SMALL_EYES.map((q, i) => ({ o: 0, lx: 0, ly: 0, sd: i * 2.3 + 0.7 })));
+        e.ecGlow = [];
+        e.ecDraw = [];
+        const nOpen = [0, 2, 4, 6, 8][Math.min(4, e.phase || 0)];
+        for (let i = 0; i < eyes.length; i++) {
+          const E = eyes[i], [ang, rr, sz] = SMALL_EYES[i];
+          const ex = sx + Math.cos(ang + rot) * EC.R * P2 * rr, ey = sy + Math.sin(ang + rot) * EC.R * P2 * rr;
+          const goal = i < nOpen ? Math.max(0.15, Math.min(busy + 0.2, 0.95)) * blinkOf(T2, E.sd) : 0;
+          E.o = ease5(E.o, goal, dt, goal < E.o ? 14 : 4);
+          if (E.o < 0.02 && i >= nOpen) continue;
+          lookAt(E, tx - ex, ty - ey, dt, sz * 0.32, sz * 0.12);
+          hzGlow(c, ex, ey, sz * P2 * 0.9, CORONA, 0.18 * E.o);
+          e.ecGlow.push([ex + E.lx * P2, ey + E.ly * P2, sz * 0.45 * P2, E.o]);
+          e.ecDraw.push([ex, ey, P2, sz, sz * 0.5, E.o, E.lx, E.ly, E.sd, sr ? 1 : 0]);
+          drawEye(c, ex, ey, P2, sz, sz * 0.5, E.o, E.lx, E.ly, T2, E.sd, sr ? 1 : 0);
         }
+        const glow4 = e.ecGlow;
+        const M2 = e.ecEye || (e.ecEye = { o: 0, lx: 0, ly: 0, sd: 0 });
+        const mg = busy * blinkOf(T2, 0);
+        M2.o = ease5(M2.o, mg, dt, mg < M2.o ? 16 : 5);
+        lookAt(M2, tx - sx, ty - sy, dt, 22, 7);
+        glow4.push([sx + M2.lx * P2 / 2, sy + M2.ly * P2 / 2, 46 * 0.9 * P2 / 2, M2.o]);
+        e.ecDraw.push([sx, sy, P2 / 2, 92, 46, M2.o, M2.lx, M2.ly, 0, tot ? 0.6 : 0]);
+        drawEye(c, sx, sy, P2 / 2, 92, 46, M2.o, M2.lx, M2.ly, T2, 0, sr ? 1 : tot ? 0.6 : 0);
+        if (M2.o > 0.5) hzGlow(c, sx + M2.lx * P2 / 2, sy + M2.ly * P2 / 2, 70 + 50 * M2.o, PALE, 0.22 * M2.o);
       }
       this.ecDim = ease5(this.ecDim || 0, want, dt, want > (this.ecDim || 0) ? 0.8 : 0.4);
     },
@@ -66701,7 +66910,10 @@
           c.fillRect(0, 0, W2, H2);
         }
         const tot = hzOf6(this, e, "etotal");
-        if (!tot) continue;
+        if (!tot) {
+          eyeGlow(c, e, T2, 1);
+          continue;
+        }
         const k = tot.t < tot.tele ? tot.t / tot.tele : Math.min(1, (tot.life - tot.t) / 0.5);
         const W = this.W, H = this.H;
         if (!DARK) DARK = document.createElement("canvas");
@@ -66758,6 +66970,11 @@
         }
         hzGlow(c, sx + Math.cos(2.6) * R0, sy + Math.sin(2.6) * R0, 30 + 6 * Math.sin(T2 * 5), "#ffffff", 0.9);
         c.restore();
+        c.save();
+        c.globalAlpha = 0.92 * k;
+        for (const q of e.ecDraw || []) drawEye(c, q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], T2, q[8], q[9]);
+        c.restore();
+        eyeGlow(c, e, T2, 1 + k);
       }
     }
   };

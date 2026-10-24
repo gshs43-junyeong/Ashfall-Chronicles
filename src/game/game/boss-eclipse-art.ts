@@ -20,6 +20,115 @@ function hzOf(g: Bag, e: Enemy, k: string) {
 }
 const ease = (cur: number, to: number, dt: number, rate: number) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
 let DARK: HTMLCanvasElement | null = null;
+let EYE: HTMLCanvasElement | null = null;
+
+/** 원판 위 작은 눈 — [각, 반지름 비(원판 R 기준), 폭(설계 칸)] · 뜨는 순서대로(막 1: 앞 둘 · 2: 넷 · 3: 여섯 · 4: 여덟) */
+const SMALL_EYES: [number, number, number][] = [                  // 윗반쪽에만 — 아랫반쪽은 원경 숲에 가린다
+  [-1.57, 0.64, 20], [-2.25, 0.66, 17], [-0.89, 0.66, 17], [-2.9, 0.84, 14],
+  [-0.24, 0.84, 14], [-1.95, 0.9, 11], [-1.19, 0.9, 11], [-2.6, 0.92, 10]];
+/** 깜빡임 — 눈마다 제 박자로 0.16초에 감았다 뜬다(가끔 두 번) */
+function blinkOf(T: number, sd: number): number {
+  const per = 4.3 + (sd * 1.7) % 2.2, u = (T + sd * 3.1) % per;
+  const one = (v: number) => v < 0 || v > 0.16 ? 1 : Math.abs(v - 0.08) / 0.08;
+  return Math.min(one(u), sd % 2 < 1 ? one(u - 0.3) : 1);
+}
+/** 눈동자가 과녁 쪽으로 — 화면 거리 d 를 설계 칸 안의 치우침(최대 mx · my)으로 */
+function lookAt(E: Bag, dx: number, dy: number, dt: number, mx: number, my: number) {
+  const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 260);
+  E.lx = ease(E.lx, dx / d * mx * k, dt, 4); E.ly = ease(E.ly, dy / d * my * k, dt, 4);
+}
+/** 눈 하나 — 작은 판(설계 칸)에 그린 뒤 P 배로 키운다(원판과 같은 굵은 칸).
+    아몬드 눈꺼풀 · 속눈썹 · 그늘진 흰자 · 핏줄 · 결이 도는 홍채 · 동공은 그 자체로 개기일식(검은 원 + 코로나 고리 + 다이아몬드 한 점) */
+function drawEye(c: C2, x: number, y: number, P: number, w: number, h: number, o: number, lx: number, ly: number, T: number, sd: number, dil: number) {
+  const Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
+  if (!EYE) EYE = document.createElement('canvas');
+  if (EYE.width < Wc || EYE.height < Hc) { EYE.width = Math.max(EYE.width, Wc); EYE.height = Math.max(EYE.height, Hc); }
+  const d = EYE.getContext('2d')!;
+  d.clearRect(0, 0, Wc, Hc);
+  const cx = Wc / 2, cy = Hc / 2, a = w / 2, b = h / 2, bo = b * o, u = Math.max(1, w / 46);   // u — 큰 눈은 선도 같은 비로 굵게
+  const almond = (ax: number, up: number, dn: number) => {
+    d.beginPath(); d.moveTo(cx - ax, cy); d.quadraticCurveTo(cx, cy - up * 2, cx + ax, cy); d.quadraticCurveTo(cx, cy + dn * 2, cx - ax, cy); d.closePath();
+  };
+  const lashes = (up: number, n: number, len: number, col: string) => {   // 속눈썹 — 바깥으로 휘어 눕고, 가운데가 길고, 뿌리가 굵다
+    d.strokeStyle = col; d.lineCap = 'round';
+    for (let i = 0; i < n; i++) {
+      const t = 0.08 + 0.84 * (i + 0.5) / n, px = cx - a + 2 * a * t, py = cy - up * 4 * t * (1 - t);
+      const lean = (t - 0.5) * 2.2, wob = Math.sin(sd + i * 2.1 + T * 0.9) * 0.12;
+      const L = len * (0.55 + 0.6 * Math.sin(t * Math.PI)) * (0.85 + 0.25 * Math.sin(i * 4.7 + sd));
+      const ex = px + (lean + wob) * L * 0.75, ey = py - L * (1 - Math.abs(lean) * 0.3);
+      for (const [lw, k] of [[1.1 * u, 0.55], [0.6 * u, 1]] as [number, number][]) {
+        d.lineWidth = lw; d.beginPath(); d.moveTo(px, py);
+        d.quadraticCurveTo(px + lean * L * 0.15, py - L * 0.6 * k, px + (ex - px) * k, py + (ey - py) * k); d.stroke();
+      }
+    }
+  };
+  if (o < 0.07) {                                                  // 감은 눈 — 아래로 처진 속눈썹 줄과 틈새로 새는 빛
+    d.strokeStyle = 'rgba(200,170,255,.5)'; d.lineWidth = 1.6; d.beginPath(); d.moveTo(cx - a, cy); d.quadraticCurveTo(cx, cy + b * 0.5, cx + a, cy); d.stroke();
+    d.strokeStyle = '#07030d'; d.lineWidth = 1.1; d.stroke();
+    for (let i = 1; i < 7; i++) { const t = i / 7, px = cx - a + 2 * a * t, py = cy + b * 0.5 * 2 * t * (1 - t);
+      d.beginPath(); d.moveTo(px, py); d.lineTo(px + (t - 0.5) * 1.4, py + 1.6 + Math.sin(t * Math.PI) * 1.4); d.stroke(); }
+  } else {
+    almond(a + 2 * u, bo + 1.6 * u, bo * 0.85 + 1.4 * u); d.fillStyle = '#12081f'; d.fill();          // 눈두덩
+    d.strokeStyle = '#46286c'; d.lineWidth = u; d.stroke();
+    d.save(); almond(a, bo, bo * 0.85); d.clip();
+    const ix = cx + lx, iy = cy + ly, r = b * 0.9;
+    let g = d.createRadialGradient(cx + lx * 0.4, cy + ly * 0.4 + b * 0.2, 0, cx, cy, a);
+    g.addColorStop(0, '#f6efff'); g.addColorStop(0.55, '#c3a8ec'); g.addColorStop(1, '#3e2464'); d.fillStyle = g; d.fillRect(0, 0, Wc, Hc);
+    d.lineWidth = 0.55 * u;                                            // 핏줄 — 가장자리에서 홍채 쪽으로 갈라지며
+    for (let i = 0; i < 6; i++) {
+      const s0 = Math.sin(sd * 7 + i * 12.9898) * 43758.5453, u = s0 - Math.floor(s0), side = i % 2 ? 1 : -1;
+      let vx = cx + side * a * 0.95, vy = cy + (u - 0.5) * bo * 1.2;
+      d.strokeStyle = 'rgba(176,40,112,.5)'; d.beginPath(); d.moveTo(vx, vy);
+      for (let k = 0; k < 3; k++) { vx -= side * a * 0.17; vy += (Math.sin(u * 40 + k * 2.3) * 1.2); d.lineTo(vx, vy); }
+      d.stroke();
+    }
+    g = d.createRadialGradient(ix, iy, 0, ix, iy, r);                 // 홍채
+    g.addColorStop(0, '#fff3cc'); g.addColorStop(0.3, '#ffc768'); g.addColorStop(0.5, '#c592ff'); g.addColorStop(0.82, '#6a36c4'); g.addColorStop(1, '#1e0c38');
+    d.fillStyle = g; d.beginPath(); d.arc(ix, iy, r, 0, TAU); d.fill();
+    const rp = r * (0.34 + 0.14 * dil + 0.03 * Math.sin(T * 2.1 + sd));
+    for (let i = 0; i < 30; i++) {                                 // 홍채 결 — 천천히 돈다
+      const an = i / 30 * TAU + T * 0.12 * (sd % 2 ? -1 : 1), r0 = rp * 1.15, r1 = r * (0.8 + 0.15 * Math.sin(i * 1.7 + sd));
+      d.strokeStyle = i % 2 ? 'rgba(255,236,200,.38)' : 'rgba(26,8,52,.4)'; d.lineWidth = 0.6 * u;
+      d.beginPath(); d.moveTo(ix + Math.cos(an) * r0, iy + Math.sin(an) * r0); d.lineTo(ix + Math.cos(an + 0.08) * r1, iy + Math.sin(an + 0.08) * r1); d.stroke();
+    }
+    d.strokeStyle = '#120720'; d.lineWidth = 1.2 * u; d.beginPath(); d.arc(ix, iy, r - 0.4, 0, TAU); d.stroke();
+    g = d.createRadialGradient(ix, iy, rp * 0.9, ix, iy, rp * 1.7);  // 동공 둘레 코로나
+    g.addColorStop(0, 'rgba(255,250,236,.95)'); g.addColorStop(1, 'rgba(255,214,140,0)');
+    d.fillStyle = g; d.beginPath(); d.arc(ix, iy, rp * 1.7, 0, TAU); d.fill();
+    d.fillStyle = '#040108'; d.beginPath(); d.arc(ix, iy, rp, 0, TAU); d.fill();
+    const da = T * 0.9 + sd;                                       // 다이아몬드 반지 — 테를 도는 한 점
+    d.fillStyle = '#ffffff'; d.fillRect(ix + Math.cos(da) * rp - 0.6 * u, iy + Math.sin(da) * rp - 0.6 * u, 1.3 * u, 1.3 * u);
+    g = d.createLinearGradient(0, cy - bo * 2, 0, cy - bo * 0.1);     // 윗눈꺼풀 그늘
+    g.addColorStop(0, 'rgba(10,4,22,.85)'); g.addColorStop(1, 'rgba(10,4,22,0)'); d.fillStyle = g; d.fillRect(0, 0, Wc, cy);
+    d.fillStyle = 'rgba(255,255,255,.95)'; d.fillRect(ix - r * 0.5, iy - r * 0.55, Math.max(1, r * 0.22), Math.max(1, r * 0.18));
+    d.fillStyle = 'rgba(255,255,255,.5)'; d.fillRect(ix + r * 0.3, iy + r * 0.3, u, u);
+    d.restore();
+    d.lineCap = 'round';
+    d.strokeStyle = '#06020c'; d.lineWidth = 1.5 * u; d.beginPath(); d.moveTo(cx - a, cy); d.quadraticCurveTo(cx, cy - bo * 2, cx + a, cy); d.stroke();
+    d.strokeStyle = '#2a1644'; d.lineWidth = 0.8 * u; d.beginPath(); d.moveTo(cx - a, cy); d.quadraticCurveTo(cx, cy + bo * 1.7, cx + a, cy); d.stroke();
+    lashes(bo, Math.max(5, Math.round(w / 6)), Math.max(1.8, h * 0.2), '#0b0516');
+  }
+  c.save(); c.imageSmoothingEnabled = false;
+  c.drawImage(EYE, 0, 0, Wc, Hc, Math.round(x - Wc * P / 2), Math.round(y - Hc * P / 2), Wc * P, Hc * P);
+  c.restore();
+}
+
+/** 눈빛 — 빛(어둠) 겹 뒤에 한 번 더: 원판은 어두워져도 동공의 코로나 · 홍채만은 빛난다(개기일식엔 어둠 위로 더 세게) */
+function eyeGlow(c: C2, e: Bag, T: number, boost: number) {
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (const [x, y, r, o0] of e.ecGlow || []) {
+    const o = Math.min(1, o0 * boost);
+    if (o0 < 0.15) continue;
+    const pu = 0.85 + 0.15 * Math.sin(T * 3 + x * 0.01);
+    let g = c.createRadialGradient(x, y, r * 0.25, x, y, r * 1.1);
+    g.addColorStop(0, `rgba(255,226,160,${0.5 * o * pu})`); g.addColorStop(0.45, `rgba(190,140,255,${0.22 * o})`); g.addColorStop(1, 'rgba(120,80,220,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 1.1, 0, TAU); c.fill();
+    g = c.createRadialGradient(x, y, 0, x, y, r * 2.6);
+    g.addColorStop(0, `rgba(180,138,255,${0.12 * o})`); g.addColorStop(1, 'rgba(120,80,220,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 2.6, 0, TAU); c.fill();
+  }
+  c.restore();
+}
 
 export const BossEclipseArt: Bag = {
   /** 하늘의 원판 · 코로나 · 외눈(sky 단계) — 그리면서 낮빛 가림(ecDim)도 정한다 */
@@ -28,7 +137,7 @@ export const BossEclipseArt: Bag = {
     let want = 0;
     for (const e of this.ents) {
       if (!isEc(e)) continue;
-      const im = Sprites.want('pursuer'), pim = Sprites.want('pursuer_parts');
+      const im = Sprites.want('pursuer');
       const st = Math.min(2, Math.round((e.pf || 0) * 2)), sr = hzOf(this, e, 'estare'), tot = hzOf(this, e, 'etotal'), hd = hzOf(this, e, 'ehand');
       want = Math.max(want, tot && tot.t > tot.tele * 0.5 ? 0.97 : sr ? 0.8 : 0.42 + 0.08 * st);
       const W = this.W, H = this.H;
@@ -48,19 +157,33 @@ export const BossEclipseArt: Bag = {
       c.drawImage(im, fr * BW, 0, BW, BW, -BW / 2, -BW / 2, BW, BW);
       if (e.flash > 0) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.min(0.4, e.flash * 3); c.drawImage(im, fr * BW, 0, BW, BW, -BW / 2, -BW / 2, BW, BW); }
       c.restore();
-      /* 외눈 — 플레이어 쪽을 보고, 응시 · 개기일식엔 크게 뜨고, 손을 뻗을 땐 반쯤, 쉴 땐 가끔 떴다 감는다 */
-      if (pim) {
-        const E = e.ecEye || (e.ecEye = { o: 0, lx: 0, ly: 0 });
-        const blink = (T % 7) < 1.6 ? Math.sin((T % 7) / 1.6 * Math.PI) * 0.6 : 0;
-        const goal = sr || (tot && tot.t > 0.4) ? 1 : hd && hd.t < hd.tele ? 0.5 : blink;
-        E.o = ease(E.o, goal, dt, 5);
-        const px = this.player.cx - f.camX - sx, py = this.player.cy - f.camY - sy, d = Math.hypot(px, py) || 1;
-        E.lx = ease(E.lx, px / d * 26, dt, 3); E.ly = ease(E.ly, py / d * 20, dt, 3);
-        const ef = E.o < 0.22 ? 0 : E.o < 0.7 ? 1 : 2, k = 1.5 + (sr ? 0.25 * Math.sin(T * 12) * 0.2 : 0);
-        c.save(); c.translate(sx + E.lx, sy + E.ly); c.scale(k, k); c.imageSmoothingEnabled = false;
-        c.drawImage(pim, ef * PW, 0, PW, PW, -PW / 2, -PW / 2, PW, PW); c.restore();
-        if (E.o > 0.5) hzGlow(c, sx + E.lx, sy + E.ly, 60 + 40 * E.o, PALE, 0.25 * E.o);
+      /* 눈 — 가운데 외눈 + 막이 넘어갈수록 원판에 하나씩 더 뜨는 작은 눈(제 눈꺼풀 · 깜빡임 · 모두 플레이어를 본다) */
+      const P = EC.K * S, rot = T * 0.04 + Math.sin(T * 0.3) * 0.05;
+      const tx = this.player.cx - f.camX, ty = this.player.cy - f.camY;
+      const busy = sr || (tot && tot.t > 0.4) ? 1 : hd && hd.t < hd.tele ? 0.78 : 0.5;
+      const eyes = e.ecEyes || (e.ecEyes = SMALL_EYES.map((q, i) => ({ o: 0, lx: 0, ly: 0, sd: i * 2.3 + 0.7 })));
+      e.ecGlow = []; e.ecDraw = [];
+      const nOpen = [0, 2, 4, 6, 8][Math.min(4, e.phase || 0)];
+      for (let i = 0; i < eyes.length; i++) {
+        const E = eyes[i], [ang, rr, sz] = SMALL_EYES[i];
+        const ex = sx + Math.cos(ang + rot) * EC.R * P * rr, ey = sy + Math.sin(ang + rot) * EC.R * P * rr;
+        const goal = i < nOpen ? Math.max(0.15, Math.min(busy + 0.2, 0.95)) * blinkOf(T, E.sd) : 0;
+        E.o = ease(E.o, goal, dt, goal < E.o ? 14 : 4);
+        if (E.o < 0.02 && i >= nOpen) continue;
+        lookAt(E, tx - ex, ty - ey, dt, sz * 0.32, sz * 0.12);
+        hzGlow(c, ex, ey, sz * P * 0.9, CORONA, 0.18 * E.o);
+        e.ecGlow.push([ex + E.lx * P, ey + E.ly * P, sz * 0.45 * P, E.o]);
+        e.ecDraw.push([ex, ey, P, sz, sz * 0.5, E.o, E.lx, E.ly, E.sd, sr ? 1 : 0]);
+        drawEye(c, ex, ey, P, sz, sz * 0.5, E.o, E.lx, E.ly, T, E.sd, sr ? 1 : 0);
       }
+      const glow: number[][] = e.ecGlow;
+      const M = e.ecEye || (e.ecEye = { o: 0, lx: 0, ly: 0, sd: 0 });
+      const mg = busy * blinkOf(T, 0); M.o = ease(M.o, mg, dt, mg < M.o ? 16 : 5);
+      lookAt(M, tx - sx, ty - sy, dt, 22, 7);
+      glow.push([sx + M.lx * P / 2, sy + M.ly * P / 2, 46 * 0.9 * P / 2, M.o]);
+      e.ecDraw.push([sx, sy, P / 2, 92, 46, M.o, M.lx, M.ly, 0, tot ? 0.6 : 0]);
+      drawEye(c, sx, sy, P / 2, 92, 46, M.o, M.lx, M.ly, T, 0, sr ? 1 : tot ? 0.6 : 0);
+      if (M.o > 0.5) hzGlow(c, sx + M.lx * P / 2, sy + M.ly * P / 2, 70 + 50 * M.o, PALE, 0.22 * M.o);
     }
     this.ecDim = ease(this.ecDim || 0, want, dt, want > (this.ecDim || 0) ? 0.8 : 0.4);
   },
@@ -124,7 +247,7 @@ export const BossEclipseArt: Bag = {
         g.addColorStop(0, 'rgba(40,10,70,0)'); g.addColorStop(1, `rgba(40,10,70,${0.45 * k})`);
         c.fillStyle = g; c.fillRect(0, 0, W, H);
       }
-      const tot = hzOf(this, e, 'etotal'); if (!tot) continue;
+      const tot = hzOf(this, e, 'etotal'); if (!tot) { eyeGlow(c, e, T, 1); continue; }
       const k = tot.t < tot.tele ? tot.t / tot.tele : Math.min(1, (tot.life - tot.t) / 0.5);
       const W = this.W, H = this.H;
       if (!DARK) DARK = document.createElement('canvas');
@@ -155,6 +278,10 @@ export const BossEclipseArt: Bag = {
       }
       hzGlow(c, sx + Math.cos(2.6) * R0, sy + Math.sin(2.6) * R0, 30 + 6 * Math.sin(T * 5), '#ffffff', 0.9);
       c.restore();
+      c.save(); c.globalAlpha = 0.92 * k;                            // 어둠 속에서 눈만 뜨고 본다
+      for (const q of e.ecDraw || []) drawEye(c, q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], T, q[8], q[9]);
+      c.restore();
+      eyeGlow(c, e, T, 1 + k);
     }
   },
 };
