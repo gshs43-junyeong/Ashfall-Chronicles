@@ -39,6 +39,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
       case 'brood': case 'bilefall': case 'spit': case 'bloom': return this.hvSig(d, p, world, K);   // 곪은 벌집 어미(entity/boss-hive)
       case 'verdict': case 'tablets': case 'gavel': case 'condemn': case 'sentence': return this.jdSig(d, p, world, K);   // 판결석 좌상(entity/boss-judge)
       case 'shand': case 'hands2': case 'stare': case 'totality': return this.ecSig(d, p, world, K);   // 일식(entity/boss-eclipse)
+      case 'vleap': return this.vkSig(d, p, world, K);   // 공허의 왕(entity/boss-void)
       case 'rroots': case 'rrings': case 'rbloom': case 'rfell': return this.rtSig(d, p, world, K);   // 뿌리 대성당(entity/boss-root)
       case 'beat': {                                              // 박동 — 세 번 뛸 때마다 바닥을 타고 고동이 퍼진다(뛰어넘는다)
         this.hz({ k: 'pulse', life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });

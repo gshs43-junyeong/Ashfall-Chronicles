@@ -146,34 +146,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
       } else { this.vx *= 0.9; this.vy = lerp(this.vy, Math.sin(G.time * 2) * 30, dt * 2); }
       this.move(dt, world, { gravMul: 0 });
     } else if (AI === 'b_void') {
-      if (this.stateT <= 0) {
-        this.state = (this.state + 1) % 4; this.stateT = 2.6 - this.pf * 0.6;
-        if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++) G.ents.push(new Enemy('wraith', this.cx + (Math.random() - 0.5) * 320, this.cy, G.scale()));
-      }
-      if (this.state === 0) {          // 나선탄
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd! * 0.6, dt * 2);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd! * 0.6, dt * 2);
-        if (this.atkCd <= 0) {
-          this.atkCd = 0.16;
-          const a = G.time * 5;
-          for (let k = 0; k < 3; k++)
-            G.projs.push(new Proj(this.cx, this.cy, Math.cos(a + k * TAU / 3) * 300, Math.sin(a + k * TAU / 3) * 300, this.dmg * 0.45, 'enemy', 'void'));
-        }
-      } else if (this.state === 1) {   // 추적 레이저 탄
-        this.vx *= 0.9; this.vy *= 0.9;
-        if (this.atkCd <= 0) {
-          this.atkCd = 0.5;
-          const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-          for (let i = -2; i <= 2; i++) {
-            const pr = new Proj(this.cx, this.cy, Math.cos(a + i * 0.13) * 520, Math.sin(a + i * 0.13) * 520, this.dmg * 0.55, 'enemy', 'void');
-            G.projs.push(pr);
-          }
-        }
-      } else if (this.state === 2) {   // 돌진
-        this.vx = lerp(this.vx, (dx / (dd || 1)) * this.spd! * 3, dt * 4);
-        this.vy = lerp(this.vy, (dy / (dd || 1)) * this.spd! * 3, dt * 4);
-      } else { this.vx *= 0.92; this.vy *= 0.92; }
-      this.move(dt, world, { gravMul: 0 });
+      this.vkAI(dt, world, p);                                         // 공허의 왕 — 뒷벽 망토(entity/boss-void)
     } else if (AI === 'b_storm') {
       /* 폭풍의 수호자 — 상하 급강하 + 회전 돌풍 + 바람 정령 소환 */
       if (this.stateT <= 0) {

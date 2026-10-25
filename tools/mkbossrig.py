@@ -1526,6 +1526,123 @@ def witch_parts(f):
     return F.render()
 
 
+# ===== 공허의 왕(void_king) — 심연 투기장 뒷벽 전체를 덮은 어둠 망토 · 그 속에서 왕관 쓴 머리와 손만 나온다 =====
+VOID, VOID_D, VOID_L, VRUNE, VGOLD = '#160c26', '#08040f', '#3c2666', '#b48aff', '#c8a860'
+VK_W, VK_H = 220, 86                                          # 게임 entity/boss-void.ts VK 와 같게(망토 가운데 110 · 바닥 85)
+
+
+def void_cloak(f):
+    """망토 8장(220×86 · 바닥 85 · 위 막대 y 3) — 0·1 주름이 일렁인다 · 2·3 찢긴 틈(별빛 테) · 4·5 더 찢기고 왕의 문장이 깨진다 · 6·7 무너져 내린다.
+       머리 · 손은 조각, 걷힌 틈의 별은 게임이 그린다"""
+    F = ZFig(VK_W, VK_H)
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    sag = 0 if f < 6 else (8 if f == 6 else 22)
+    # 망토 몸 — 위는 고리마다 물결, 아래는 땅에 끌리는 찢긴 단(장마다 일렁임이 다르다)
+    top = [(10 + k * 200 / 36, 3 + sag * 0.3 + 3.2 * abs(math.sin(k * 1.7 + b * 0.6)) + 1.4 * (k % 3)) for k in range(37)]   # 위는 어둠 속으로 풀려 사라진다(장대 없이)
+    bot = []
+    for k in range(40, -1, -1):
+        x = 8 + k * 204 / 40
+        y = 84 - (3 if (k + b) % 3 == 0 else 0) - (k * 7 % 5) * 0.6
+        bot.append((x, min(85, y)))
+    edgeL = [(8 - math.sin(u * 3 + b) * 1.5, 6 + u * 76) for u in [k / 8 for k in range(1, 8)]]
+    edgeR = [(VK_W - 8 + math.sin(u * 3 + b) * 1.5, 6 + u * 76) for u in [k / 8 for k in range(7, 0, -1)]]
+    F.part('cloth', VOID_D, bevel=3).poly(top + edgeR + bot + edgeL)
+    F.part('cloth', VOID, bevel=2.5).poly([(x, y + 1.5) for (x, y) in top] + [(x - 1.5, y) for (x, y) in edgeR] + [(x, y - 1.5) for (x, y) in bot] + [(x + 1.5, y) for (x, y) in edgeL])
+    # 주름 — 고리 사이에서 늘어진 굵은 골 · 빛 받는 마루(일렁임은 장마다 좌우로 조금)
+    xs, x = [], 14.0
+    while x < VK_W - 14:                                                                 # 골 간격이 고르지 않게
+        xs.append(x); x += 5.5 + 5 * abs(math.sin(len(xs) * 2.3))
+    for k, x in enumerate(xs):
+        x += (1.2 if (k + b) % 2 else -1.2) * 0.8
+        w = 2.2 + (k % 3) * 1.1
+        F.part('cloth', VOID_D, bevel=1.2).poly([(x - w * 0.5, 7), (x + w * 0.5, 7), (x + w * 0.7 + math.sin(k) * 1.5, 82), (x - w * 0.7 + math.sin(k) * 1.5, 82)])
+        fine(F, (x + w * 0.8, 8), (x + w * 0.9 + math.sin(k) * 1.5, 80), VOID_L, 150)
+    for k in range(5):                                                                   # 비스듬히 쓸린 큰 결 — 무게가 처진 곳
+        x0 = 30 + k * 40
+        for j in range(3):
+            fine(F, (x0 + j * 2.5, 12 + j), (x0 - 16 + j * 3 + b, 60 + j * 4), VOID_L, 110)
+    # 단 — 금빛 룬 띠(왕의 옷자락)
+    for k in range(34):
+        x = 12 + k * 5.9
+        y = 78 - (k * 7 % 5) * 0.4
+        F.part('glow', VRUNE if (k + b) % 4 else '#e0c8ff', glow=True).box(x, y, 2.2 if k % 3 else 1.2, 0.8, 0.2)
+    fine(F, (10, 76), (VK_W - 10, 76), VGOLD, 180)
+    # 왕의 문장 — 가운데 위 나선(막 2 에 쪼개진다)
+    cx, cy = VK_W / 2, 20
+    F.part('metal', VGOLD, bevel=1).ell(cx, cy, 9, 9)
+    F.part('cloth', VOID_D, flat=True).ell(cx, cy, 7.6, 7.6)
+    for k in range(40):
+        a = k / 40 * math.tau * 2.2; r = 1 + k / 40 * 6.4
+        Fig.px(F, (cx + math.cos(a) * r) * K, (cy + math.sin(a) * r) * K, VRUNE, 240)
+    F.glow(cx, cy, 10 + b * 2, VRUNE, 0.3)
+    if st >= 1:                                                                          # 찢긴 틈 — 테가 별빛으로 탄다(안의 별은 게임이)
+        for (x, y, w, h) in ((48, 40, 6, 16), (168, 34, 5, 18)) + (((80, 60, 5, 12), (142, 58, 7, 14), (30, 64, 4, 10)) if st >= 2 else ()):
+            F.part('cloth', '#000000', flat=True).poly([(x, y - h), (x + w * 0.6, y - h * 0.3), (x + w, y + h * 0.2), (x + w * 0.2, y + h), (x - w * 0.5, y + h * 0.3), (x - w * 0.3, y - h * 0.4)])
+            for (a, b2) in (((x, y - h), (x + w, y + h * 0.2)), ((x + w, y + h * 0.2), (x + w * 0.2, y + h)), ((x - w * 0.5, y + h * 0.3), (x, y - h))):
+                fine(F, a, b2, VRUNE, 220)
+    if st >= 2:
+        crack(F, [(cx - 6, cy - 6), (cx - 1, cy), (cx + 4, cy + 7)], 0.6, VRUNE)
+    if sag:                                                                              # 무너짐 — 고리가 풀려 한쪽부터 흘러내린다
+        for k in range(6):
+            x = 16 + k * 33
+            F.part('cloth', VOID_D, bevel=2).poly([(x, 84), (x + 10, 84 - sag * 0.5), (x + 22, 84)])
+    return F.render()
+
+
+def void_parts(f):
+    """조각 6장(48×48 설계 칸) — 0 머리(가운데 (24, 25) · 높은 깃 아래가 망토 속으로) · 1 입 벌린 머리 · 2 금 간 왕관 · 3 편 손(손목 (8, 24) → +x)
+       · 4 갈퀴 손 · 5 쥔 주먹"""
+    F = ZFig(48, 48)
+    if f <= 2:
+        cx, cy = 24, 25
+        F.part('cloth', VOID_D, bevel=3).poly([(cx - 17, 46), (cx - 14, 30), (cx - 8, 36), (cx, 33), (cx + 8, 36), (cx + 14, 30), (cx + 17, 46)])   # 높은 깃
+        F.part('cloth', VOID_L, bevel=1.5).poly([(cx - 15, 45), (cx - 12.5, 32), (cx - 10, 36), (cx - 13, 45)])
+        F.part('stone', '#a49ab4', bevel=2.5).poly([(cx - 9, cy - 7), (cx + 9, cy - 7), (cx + 9.5, cy + 2), (cx + 6, cy + 12), (cx + 2, cy + 16), (cx - 2, cy + 16), (cx - 6, cy + 12), (cx - 9.5, cy + 2)])   # 길쭉한 해골 가면
+        F.part('stone', '#cfc6dc', bevel=1.5).poly([(cx - 7, cy - 6), (cx + 7, cy - 6), (cx + 7.5, cy + 1), (cx + 3, cy + 4), (cx - 3, cy + 4), (cx - 7.5, cy + 1)])   # 이마 · 광대 — 빛 받는 면
+        for s2 in (-1, 1):                                                               # 광대 아래 그늘 · 비스듬한 눈 틈(안으로 내리꽂힌 성난 눈)
+            F.part('stone', '#5e5274', bevel=0.8).poly([(cx + s2 * 8.5, cy + 2), (cx + s2 * 3.5, cy + 6), (cx + s2 * 5, cy + 11), (cx + s2 * 8, cy + 6)])
+            F.part('stone', '#06030c', flat=True).poly([(cx + s2 * 1.4, cy + 0.6), (cx + s2 * 7.6, cy - 2.6), (cx + s2 * 7.0, cy + 0.8), (cx + s2 * 2.4, cy + 2.4)])
+            F.part('glow', VRUNE, glow=True).poly([(cx + s2 * 2.6, cy + 0.9), (cx + s2 * 6.6, cy - 1.4), (cx + s2 * 6.2, cy - 0.2), (cx + s2 * 3.0, cy + 1.7)])
+            fine(F, (cx + s2 * 1.2, cy - 1.0), (cx + s2 * 8.2, cy - 4.0), '#2a2238', 230)   # 눈썹뼈
+        F.glow(cx, cy, 9, VRUNE, 0.35)
+        F.part('stone', '#0a0612', flat=True).poly([(cx - 1.0, cy + 4.6), (cx + 1.0, cy + 4.6), (cx, cy + 7.4)])
+        if f == 1:                                                                       # 벌린 입 — 안이 별 없는 어둠 · 빛 한 점
+            F.part('stone', '#0a0612', flat=True).ell(cx, cy + 11, 3.6, 3.6)
+            F.part('glow', VRUNE, glow=True).ell(cx, cy + 11.2, 1.4, 1.0)
+        else:
+            for k in range(5):
+                F.part('stone', '#bcb0cc', bevel=0.5).box(cx - 4.5 + k * 2, cy + 10, 1.4, 2.6, 0.4)
+        for k in range(7):                                                               # 왕관 — 검은 쇠 가시 · 끝마다 보랏빛
+            a = -math.pi / 2 + (k - 3) * 0.32
+            x0, y0 = cx + math.cos(a) * 8, cy - 6 + math.sin(a) * 3
+            x1, y1 = cx + math.cos(a) * 11, cy - 9 + math.sin(a) * (8 + (3 - abs(k - 3)) * 2)
+            F.part('metal', '#2a2238', bevel=1).poly([(x0 - 1.4, y0), (x1, y1), (x0 + 1.4, y0)])
+            F.part('glow', VRUNE, glow=True).ell(x1, y1 + 0.6, 0.7, 0.7)
+        F.part('metal', VGOLD, bevel=1).box(cx - 9.5, cy - 9, 19, 2.4, 1)
+        if f == 2:
+            crack(F, [(cx - 3, cy - 9), (cx - 1, cy - 4), (cx - 4, cy + 1)], 0.5, VRUNE)
+            crack(F, [(cx + 6, cy - 11), (cx + 7, cy - 6)], 0.4, VRUNE)
+    else:
+        F.part('cloth', VOID_D, bevel=2).cap(7, 24, 13, 24, 5.5, 5)                       # 소맷부리
+        F.part('metal', '#2a2238', bevel=2).box(9, 18, 12, 12, 3)                         # 쇠 장갑 손등
+        F.part('glow', VRUNE, glow=True).ell(15, 24, 1.6, 1.6)
+        if f == 3:
+            for k in range(4):
+                F.part('metal', '#3a3050', bevel=1).cap(20, 19.5 + k * 3, 31 - abs(k - 1.5) * 1.5, 18 + k * 4, 1.3, 1.0)
+            F.part('metal', '#3a3050', bevel=1).cap(13, 18, 17, 11, 1.4, 1.1)
+        elif f == 4:
+            for k in range(4):
+                bx, by = 20, 19.5 + k * 3
+                F.part('metal', '#3a3050', bevel=1).cap(bx, by, bx + 6, by - 2 + k, 1.3, 1.1)
+                F.part('metal', VGOLD, bevel=0.6).poly([(bx + 5.6, by - 3 + k), (bx + 10, by + k), (bx + 6, by + k)])
+        else:
+            F.part('metal', '#3a3050', bevel=1.5).box(19, 18, 8, 12, 3)
+            for k in range(4):
+                fine(F, (20, 20.5 + k * 2.8), (26.5, 20.5 + k * 2.8), '#120c1e', 220)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -1536,6 +1653,7 @@ RIGS = {
     'first_keeper': {'body': (JD_W, JD_H, 8, 2, judge_body), 'parts': (40, 44, 11, judge_parts)},
     'pursuer': {'body': (EC_W, EC_W, 8, 2, eclipse_body), 'parts': (48, 48, 7, eclipse_parts, (5,))},
     'frost_witch': {'body': (FW_W, FW_H, 8, 2, witch_body), 'parts': (28, 56, 5, witch_parts)},
+    'void_king': {'body': (VK_W, VK_H, 8, 2, void_cloak), 'parts': (48, 48, 6, void_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

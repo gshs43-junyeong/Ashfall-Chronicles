@@ -241,7 +241,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['corrupt_ess', 1, 30, 50], ['charm_leech', 1, 1, 1], ['star_heart', 1, 1, 1], ['mythril_ore', 1, 12, 20]] },
   frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 67, def: 24, spd: 90, ai: 'b_witch', w: 84, h: 180, c: '#a8dcf0', xp: 3100, gold: 1600, boss: 1,
                  drops: [['frost_core', 1, 25, 40], ['staff_frost', 1, 1, 1], ['star_heart', 1, 1, 1], ['amul_swift', 1, 1, 1]] },
-  void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 110, ai: 'b_void', w: 132, h: 176, c: '#5e3fa8', xp: 4500, gold: 5000, boss: 1,
+  void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 0, ai: 'b_void', w: 110, h: 120, wall: 1, c: '#5e3fa8', xp: 4500, gold: 5000, boss: 1,
                  drops: [['void_frag', 1, 30, 50], ['charm_star', 1, 1, 1], ['star_heart', 1, 1, 1]] },
 
   storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 117, def: 38, spd: 150, ai: 'b_storm', w: 132, h: 140, c: '#bcd8f0', xp: 6500, gold: 8000, boss: 1,

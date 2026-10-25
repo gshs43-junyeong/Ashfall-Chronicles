@@ -3894,15 +3894,15 @@
       },
       "void_king": {
         "file": "boss/void_king.png",
-        "frameW": 156,
-        "frameH": 190,
+        "frameW": 880,
+        "frameH": 344,
         "count": 8,
-        "foot": -1.5,
+        "foot": 7,
         "side": 0.0,
         "death": 2,
         "scale": 1,
         "gap": 0,
-        "big": 2
+        "rig": 1
       },
       "storm_warden": {
         "file": "boss/storm_warden.png",
@@ -4097,18 +4097,6 @@
         "foot": -0.75,
         "side": 0.0,
         "death": 2
-      },
-      "void_king_pose": {
-        "file": "boss/void_king_pose.png",
-        "frameW": 250,
-        "frameH": 257,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 0.0,
-        "pose": 1
       },
       "storm_warden_pose": {
         "file": "boss/storm_warden_pose.png",
@@ -4370,6 +4358,15 @@
         "frameW": 112,
         "frameH": 224,
         "count": 5,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "void_king_parts": {
+        "file": "boss/void_king_parts.png",
+        "frameW": 192,
+        "frameH": 192,
+        "count": 6,
         "scale": 1,
         "gap": 0,
         "rig": 1

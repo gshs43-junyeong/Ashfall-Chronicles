@@ -1279,7 +1279,8 @@
    "game/citadel.anchorUse"
   ],
   "닿지 않는다": [
-   "entity/boss-eclipse.ecHurt"
+   "entity/boss-eclipse.ecHurt",
+   "entity/boss-void.vkHurt"
   ],
   "대기": [
    "factory.stLabel",

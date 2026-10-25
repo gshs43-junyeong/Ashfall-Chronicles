@@ -48,7 +48,7 @@ export const BOSS_MOVES: Record<string, Bag> = {
   void_king: { c: '#a06fff', every: 6, moves: [
     { k: 'vortex', n: '사건의 지평선', tele: 0.8, life: 3, r: 380, pull: 320, burst: 150, fx: 'void', m: 1.1 },
     { k: 'beam', n: '공허 광선', tele: 0.9, cnt: 1, dur: 2.2, w: 30, len: 900, sweep: 2.2, fx: 'void', m: 0.35 },
-    { k: 'blink', n: '틈새 도약', tele: 0.3, times: 3, r: 90, fx: 'rift', m: 1 },
+    { k: 'sig', sig: 'vleap', n: '틈새 도약', tele: 0.3, times: 2, m: 1 },
     { k: 'sig', sig: 'veil', n: '어둠 장막', tele: 0.9, pose: 0, m: 1 },
     { k: 'ring', n: '공허 파문', tele: 0.6, times: 3, cnt: 24, gap: 4, spd: 250, every: 0.5, rot: 0.3, proj: 'void', m: 0.5, pw: [1, 1, 1] },
     { k: 'ward', n: '공허의 결계', tele: 0.8, hits: 12, life: 9, fx: 'void', ph: 1, pw: [0, 0.9, 1.2] },
@@ -229,7 +229,7 @@ export const XFX_OF: Record<string, string> = { rune: 'rune', fire: 'fire', fros
    stagger 비틀거림(무거운 몸 — 멈춰 선다) · heat 과열(마법 · 원소 — 느려진다) · crack 균열(갑옷 · 껍데기 — 방어가 벌어진다). 사연: docs/code-history.md#h181 */
 /** 깨어날 때 넓혀 둘 싸움터(칸 — 너비 · 바닥에서 높이) — 몸 그림이 바위에 묻히지 않게(game/boss-arena) */
 export const BOSS_ARENA: Record<string, { w: number; h: number }> = {
-  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }, first_keeper: { w: 58, h: 26 }, vine_lord: { w: 66, h: 34 }
+  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }, first_keeper: { w: 58, h: 26 }, void_king: { w: 60, h: 24 }, vine_lord: { w: 66, h: 34 }
 };
 export const BOSS_GAP: Record<string, string> = {
   king_slime: 'stagger', bone_lord: 'stagger', first_keeper: 'stagger', pursuer: 'stagger', mine_horror: 'stagger', ice_warden: 'stagger',

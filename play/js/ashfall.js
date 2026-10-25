@@ -1942,13 +1942,13 @@
       this.m = o.mods || {};
       this.th = { ...DEF_THEME, ...o.theme || {} };
       this.rng = new RNG(o.seed);
-      const { ar, cs, od, hp } = this.d, ease8 = o.ease || 0;
+      const { ar, cs, od, hp } = this.d, ease9 = o.ease || 0;
       this.r = 54.4 - 4.48 * cs;
       this.pre = ar < 5 ? 1.2 + 0.6 * (5 - ar) / 5 : 1.2 - 0.75 * (ar - 5) / 5;
       this.fade = Math.min(0.4, this.pre * 2 / 3);
-      this.w300 = (80 - 6 * od) / 1e3 + ease8 * 0.5;
-      this.w100 = (140 - 8 * od) / 1e3 + ease8 * 0.75;
-      this.w50 = (200 - 10 * od) / 1e3 + ease8;
+      this.w300 = (80 - 6 * od) / 1e3 + ease9 * 0.5;
+      this.w100 = (140 - 8 * od) / 1e3 + ease9 * 0.75;
+      this.w50 = (200 - 10 * od) / 1e3 + ease9;
       this.beat = 60 / this.d.bpm;
       this.t = 0;
       this.objs = [];
@@ -8502,10 +8502,11 @@
       hp: 12e3,
       dmg: 82,
       def: 32,
-      spd: 110,
+      spd: 0,
       ai: "b_void",
-      w: 132,
-      h: 176,
+      w: 110,
+      h: 120,
+      wall: 1,
       c: "#5e3fa8",
       xp: 4500,
       gold: 5e3,
@@ -14688,7 +14689,7 @@
       moves: [
         { k: "vortex", n: "사건의 지평선", tele: 0.8, life: 3, r: 380, pull: 320, burst: 150, fx: "void", m: 1.1 },
         { k: "beam", n: "공허 광선", tele: 0.9, cnt: 1, dur: 2.2, w: 30, len: 900, sweep: 2.2, fx: "void", m: 0.35 },
-        { k: "blink", n: "틈새 도약", tele: 0.3, times: 3, r: 90, fx: "rift", m: 1 },
+        { k: "sig", sig: "vleap", n: "틈새 도약", tele: 0.3, times: 2, m: 1 },
         { k: "sig", sig: "veil", n: "어둠 장막", tele: 0.9, pose: 0, m: 1 },
         { k: "ring", n: "공허 파문", tele: 0.6, times: 3, cnt: 24, gap: 4, spd: 250, every: 0.5, rot: 0.3, proj: "void", m: 0.5, pw: [1, 1, 1] },
         { k: "ward", n: "공허의 결계", tele: 0.8, hits: 12, life: 9, fx: "void", ph: 1, pw: [0, 0.9, 1.2] },
@@ -14958,6 +14959,7 @@
     sand_guardian: { w: 56, h: 24 },
     blight_maw: { w: 46, h: 21 },
     first_keeper: { w: 58, h: 26 },
+    void_king: { w: 60, h: 24 },
     vine_lord: { w: 66, h: 34 }
   };
   var BOSS_GAP = {
@@ -34763,6 +34765,7 @@
       } else if (this.def.ai === "b_hourglass") amount = this.hgHurt(amount);
       else if (this.def.ai === "b_hive") amount = this.hvHurt(amount);
       else if (this.def.ai === "b_eclipse") amount = this.ecHurt(amount);
+      else if (this.def.ai === "b_void") amount = this.vkHurt(amount);
       if (this.guard) {
         amount *= 0.12;
         if (Math.random() < 0.5) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("막혔다"), "#8d8874", 0));
@@ -38001,39 +38004,7 @@
         }
         this.move(dt, world, { gravMul: 0 });
       } else if (AI === "b_void") {
-        if (this.stateT <= 0) {
-          this.state = (this.state + 1) % 4;
-          this.stateT = 2.6 - this.pf * 0.6;
-          if (this.state === 3) for (let i = 0; i < 2 + this.pf * 2; i++) app.ents.push(new Enemy("wraith", this.cx + (Math.random() - 0.5) * 320, this.cy, app.scale()));
-        }
-        if (this.state === 0) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 0.6, dt * 2);
-          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 0.6, dt * 2);
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.16;
-            const a = app.time * 5;
-            for (let k = 0; k < 3; k++)
-              app.projs.push(new Proj(this.cx, this.cy, Math.cos(a + k * TAU / 3) * 300, Math.sin(a + k * TAU / 3) * 300, this.dmg * 0.45, "enemy", "void"));
-          }
-        } else if (this.state === 1) {
-          this.vx *= 0.9;
-          this.vy *= 0.9;
-          if (this.atkCd <= 0) {
-            this.atkCd = 0.5;
-            const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-            for (let i = -2; i <= 2; i++) {
-              const pr = new Proj(this.cx, this.cy, Math.cos(a + i * 0.13) * 520, Math.sin(a + i * 0.13) * 520, this.dmg * 0.55, "enemy", "void");
-              app.projs.push(pr);
-            }
-          }
-        } else if (this.state === 2) {
-          this.vx = lerp(this.vx, dx / (dd || 1) * this.spd * 3, dt * 4);
-          this.vy = lerp(this.vy, dy / (dd || 1) * this.spd * 3, dt * 4);
-        } else {
-          this.vx *= 0.92;
-          this.vy *= 0.92;
-        }
-        this.move(dt, world, { gravMul: 0 });
+        this.vkAI(dt, world, p);
       } else if (AI === "b_storm") {
         if (this.stateT <= 0) {
           this.state = (this.state + 1) % 4;
@@ -38927,6 +38898,9 @@
         case "totality":
           return this.ecSig(d, p, world, K2);
         // 일식(entity/boss-eclipse)
+        case "vleap":
+          return this.vkSig(d, p, world, K2);
+        // 공허의 왕(entity/boss-void)
         case "rroots":
         case "rrings":
         case "rbloom":
@@ -40382,6 +40356,95 @@
     }
   };
   mixin(Enemy.prototype, BossRoot, true);
+
+  // src/game/entity/boss-void.ts
+  var boss_void_exports = {};
+  __export(boss_void_exports, {
+    BossVoid: () => BossVoid,
+    VK: () => VK,
+    vkOrigin: () => vkOrigin
+  });
+  var VK = { K: 4, W: 220, H: 86, BASE: 85, HY0: 30, HY1: 58, EDGE: 22, HANDS: [0.2, 0.8] };
+  var vkOrigin = (e) => [e.vkX0 ?? e.cx - VK.W * VK.K / 2, e.vkY0 ?? e.cy - 200];
+  var BossVoid = {
+    /** 몸놀림 — 처음 한 번 망토를 바닥에 건다 · 머리는 플레이어 위로 천천히 떠돈다 · 손은 공허를 쏜다 */
+    vkAI(dt, world, p) {
+      this.vx = this.vy = 0;
+      if (!this.anchored) {
+        this.anchored = 1;
+        const tx = Math.floor(this.cx / TS);
+        let fy = this.cy + 200;
+        for (let ty2 = Math.floor(this.cy / TS) - 4; ty2 < Math.floor(this.cy / TS) + 40; ty2++) if (world.solid(tx, ty2) && !world.solid(tx, ty2 - 1)) {
+          fy = ty2 * TS;
+          break;
+        }
+        this.vkX0 = this.cx - VK.W * VK.K / 2;
+        this.vkY0 = fy - VK.BASE * VK.K;
+        this.vkHx = this.cx;
+        this.vkHy = this.vkY0 + (VK.HY0 + 10) * VK.K;
+        this.vkSunk = 1;
+        this.vkSinkTo = 0;
+      }
+      const x0 = this.vkX0, y0 = this.vkY0, K2 = VK.K;
+      this.vkSunk += Math.sign((this.vkSinkTo || 0) - this.vkSunk) * Math.min(Math.abs((this.vkSinkTo || 0) - this.vkSunk), dt * 2.2);
+      if (this.vkSunk < 0.9) {
+        const tx = Math.max(x0 + VK.EDGE * K2, Math.min(x0 + (VK.W - VK.EDGE) * K2, p.cx));
+        this.vkHx += (tx - this.vkHx) * Math.min(1, dt * 0.55);
+      }
+      const ty = y0 + (VK.HY0 + (VK.HY1 - VK.HY0) * (0.5 + 0.5 * Math.sin((app.time || 0) * 0.45))) * K2;
+      this.vkHy += (ty - this.vkHy) * Math.min(1, dt * 1.2);
+      this.x = this.vkHx - this.w / 2;
+      this.y = this.vkHy - this.h / 2;
+      this.vkShot = (this.vkShot ?? 2) - dt;
+      if (this.vkShot <= 0 && this.vkSunk < 0.5 && !(this.mv && this.mv.d)) {
+        this.vkShot = 2.6 - (this.pf || 0) * 0.7;
+        const side = this.vkSide = 1 - (this.vkSide || 0), hx = x0 + VK.W * K2 * VK.HANDS[side], hy = y0 + 46 * K2;
+        this.vkCast = { side, t: app.time || 0 };
+        app.after(0.35, () => {
+          if (this.dead) return;
+          const a = Math.atan2(p.cy - hy, p.cx - hx);
+          for (let i = -1; i <= 1; i++) app.projs.push(new Proj(hx, hy, Math.cos(a + i * 0.16) * 330, Math.sin(a + i * 0.16) * 330, this.dmg * 0.5, "enemy", "void"));
+        });
+      }
+      this.vkSum = (this.vkSum ?? 6) - dt;
+      if (this.vkSum <= 0) {
+        this.vkSum = 11 - (this.pf || 0) * 3;
+        if (app.ents.filter((q) => q.type === "wraith" && !q.dead).length < 4)
+          for (let i = 0; i < 1 + Math.round(this.pf || 0); i++) app.ents.push(new Enemy("wraith", x0 + (Math.random() < 0.5 ? 30 : VK.W * K2 - 30), y0 + VK.BASE * K2 - 60, app.scale()));
+      }
+    },
+    /** 받는 피해 — 망토 속으로 가라앉은 머리는 거의 닿지 않는다 */
+    vkHurt(a) {
+      if ((this.vkSunk || 0) < 0.5) return a;
+      if (Math.random() < 0.35) app.texts.push(new DmgText(this.cx + (Math.random() - 0.5) * 20, this.y - 10, tr("닿지 않는다"), "#b4a0d8", 0));
+      return a * 0.25;
+    },
+    /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
+    vkSig(d, p, world, K2) {
+      const m = d.m ?? 1, E = this;
+      switch (d.sig) {
+        case "vleap": {
+          const n = d.times || 2;
+          for (let i = 0; i < n; i++) app.after(i * 1.5, () => {
+            if (E.dead) return;
+            E.vkSinkTo = 1;
+            app.after(0.5, () => {
+              if (E.dead) return;
+              const [x0] = vkOrigin(E);
+              E.vkHx = Math.max(x0 + VK.EDGE * VK.K, Math.min(x0 + (VK.W - VK.EDGE) * VK.K, p.cx));
+              E.vkSinkTo = 0;
+              app.vfx.sigil(E.vkHx, E.vkHy, 70, K2.c, 0.6, 6, 2, 1, "sigil_void");
+              for (const s of [-1, 1]) E.hz({ k: "strike", x: p.cx + s * 110, y: p.y + p.h, r: 70, shape: "circle", delay: 0.55, life: 0.9, dmg: E.dmg * m, c: K2.c, fx: "rift", sd: Math.random() * 99 });
+              E.vkGrab = { t: app.time || 0, x: p.cx, fy: p.y + p.h };
+            });
+          });
+          return { busy: n * 1.5 + 0.6 };
+        }
+      }
+      return { busy: 0.3 };
+    }
+  };
+  mixin(Enemy.prototype, BossVoid, true);
 
   // src/game/entity/boss-eclipse.ts
   var boss_eclipse_exports = {};
@@ -42574,12 +42637,12 @@
     renderBig(c, w, m, ax, ay, time, camX, camY) {
       const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t], [bx, by] = this.brokeJolt(m, time);
       const jx = (busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0) + bx;
-      const [X, Y, PW8, PH7] = this.drawBig(c, m, ax + jx, ay + by, time);
+      const [X, Y, PW9, PH7] = this.drawBig(c, m, ax + jx, ay + by, time);
       if (m.t === "drill_x") this.drawWork(c, w, m, ax, ay, time, camX, camY);
-      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW8 - TS, Y, time);
+      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW9 - TS, Y, time);
       if (s.rot) {
         const [dx, dy] = DIR4[m.dir & 3];
-        const ex = dx > 0 ? X + PW8 : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH7 : Y + PH7 - TS / 2;
+        const ex = dx > 0 ? X + PW9 : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH7 : Y + PH7 - TS / 2;
         c.fillStyle = "rgba(255,214,120,.9)";
         c.fillRect(ex + dx * 2 - 2 - (dx > 0 ? 2 : 0), ey + dy * 2 - 2 - (dy > 0 ? 2 : 0), 4, 4);
       }
@@ -42591,12 +42654,12 @@
       if (m.rec >= 0 && MRECIPES[m.rec]) {
         const p = clamp(m.prog / MRECIPES[m.rec].t, 0, 1);
         c.fillStyle = "#2a2a32";
-        c.fillRect(X + 4, Y + PH7 - 3, PW8 - 8, 2);
+        c.fillRect(X + 4, Y + PH7 - 3, PW9 - 8, 2);
         c.fillStyle = "#5fc45f";
-        c.fillRect(X + 4, Y + PH7 - 3, Math.round((PW8 - 8) * p), 2);
+        c.fillRect(X + 4, Y + PH7 - 3, Math.round((PW9 - 8) * p), 2);
       }
       c.fillStyle = this.statusColor(m);
-      c.fillRect(X + PW8 - 4, Y + 2, 2, 2);
+      c.fillRect(X + PW9 - 4, Y + 2, 2, 2);
     }
   };
   mixin(Factory11, FactoryRenderPart);
@@ -43982,17 +44045,17 @@
         mx = Math.max(mx, Math.abs(x));
         my = Math.max(my, Math.abs(y));
       }
-      const PW8 = Math.round((mx + 80) * 2), PH7 = Math.round((my + 80) * 2);
+      const PW9 = Math.round((mx + 80) * 2), PH7 = Math.round((my + 80) * 2);
       const grid = document.createElement("div");
       grid.className = "bgrid";
       grid.style.height = `min(${this.TREE_H}px, calc(100vh - 380px))`;
       grid.style.setProperty("--cy", "50%");
       const plane = document.createElement("div");
       plane.className = "bplane";
-      plane.style.width = PW8 + "px";
+      plane.style.width = PW9 + "px";
       plane.style.height = PH7 + "px";
       plane.style.setProperty("--cy", PH7 / 2 + "px");
-      this._treePlane = { el: plane, grid, w: PW8, h: PH7 };
+      this._treePlane = { el: plane, grid, w: PW9, h: PH7 };
       const svg = document.createElementNS(NS, "svg");
       svg.setAttribute("class", "blines");
       const line4 = (a, b, cls, c) => {
@@ -67264,18 +67327,217 @@
   };
   mixin(Game.prototype, BossWitchArt, true);
 
+  // src/game/game/boss-void-art.ts
+  var boss_void_art_exports = {};
+  __export(boss_void_art_exports, {
+    BossVoidArt: () => BossVoidArt
+  });
+  var BW7 = VK.W * VK.K, BH7 = 344, PW7 = 192, VRUNE = "#b48aff";
+  var TEARS = [[48, 40, 6, 16, 1], [168, 34, 5, 18, 1], [80, 60, 5, 12, 2], [142, 58, 7, 14, 2], [30, 64, 4, 10, 2]];
+  var ease7 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
+  var isVk = (e) => e && !e.dead && e.def && e.def.ai === "b_void";
+  function starfield(c, x, y, w, h, T2, seed) {
+    const g = c.createLinearGradient(x, y, x + w, y + h);
+    g.addColorStop(0, "#05030e");
+    g.addColorStop(0.5, "#120a2c");
+    g.addColorStop(1, "#070418");
+    c.fillStyle = g;
+    c.fillRect(x, y, w, h);
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    const n = Math.ceil(w * h / 260);
+    for (let i = 0; i < n; i++) {
+      const s = Math.sin((i + 1) * 12.9898 + seed * 78.233) * 43758.5453, u = s - Math.floor(s), v = s * 7.31 % 1;
+      const sx = x + u * w, sy = y + Math.abs(v) * h, tw = 0.5 + 0.5 * Math.sin(T2 * (1.5 + i % 5) + i);
+      c.fillStyle = i % 9 === 0 ? `rgba(200,170,255,${0.8 * tw})` : `rgba(240,236,255,${0.4 + 0.5 * tw})`;
+      const r = i % 13 === 0 ? 2 : 1;
+      c.fillRect(Math.round(sx), Math.round(sy), r, r);
+    }
+    const ng = c.createRadialGradient(x + w * (0.5 + 0.3 * Math.sin(T2 * 0.2 + seed)), y + h * 0.5, 0, x + w / 2, y + h / 2, Math.max(w, h) * 0.6);
+    ng.addColorStop(0, "rgba(140,90,220,.25)");
+    ng.addColorStop(1, "rgba(60,30,120,0)");
+    c.fillStyle = ng;
+    c.fillRect(x, y, w, h);
+    c.restore();
+  }
+  function tear(c, x, y, w, h, T2, seed, open) {
+    if (open <= 0.02) return;
+    const ww = w * open;
+    c.save();
+    c.beginPath();
+    c.moveTo(x, y - h);
+    c.quadraticCurveTo(x + ww * 1.1, y - h * 0.2, x + ww * 0.3, y + h);
+    c.quadraticCurveTo(x - ww * 1.1, y + h * 0.2, x, y - h);
+    c.closePath();
+    c.save();
+    c.clip();
+    starfield(c, x - ww * 1.2, y - h, ww * 2.4, h * 2, T2, seed);
+    c.restore();
+    c.strokeStyle = `rgba(180,138,255,${0.7 * open})`;
+    c.lineWidth = 2;
+    c.stroke();
+    c.restore();
+  }
+  var BossVoidArt = {
+    /** 망토 · 별 · 머리 · 손(objects 단계) */
+    drawVoidBody(f) {
+      const c = f.c, im = Sprites.want("void_king"), pim = Sprites.want("void_king_parts"), T2 = this.time || 0;
+      for (const e of this.ents) {
+        if (!isVk(e) || !im) continue;
+        const A = e.vkA || (e.vkA = { open: 0, t0: T2, rx: [0, 0], ry: [0, 0] }), dt = this.paused ? 0 : Math.max(0, Math.min(0.1, T2 - A.t0));
+        A.t0 = T2;
+        const st = Math.min(2, Math.round((e.pf || 0) * 2)), casting = !!(e.mv && e.mv.d);
+        A.open = ease7(A.open, casting ? 1 : 0, dt, casting ? 3 : 1.5);
+        const [wx0, wy0] = vkOrigin(e), x0 = wx0 - f.camX, y0 = wy0 - f.camY, K2 = VK.K;
+        c.save();
+        const w = this.world, tx0 = Math.floor(wx0 / TS) - 1, ty0 = Math.floor(wy0 / TS) - 10;
+        c.beginPath();
+        for (let ty = ty0; ty <= ty0 + Math.ceil(BH7 / TS) + 11; ty++) for (let tx = tx0; tx <= tx0 + Math.ceil(BW7 / TS) + 2; tx++)
+          if (!w.solid(tx, ty)) c.rect(tx * TS - f.camX, ty * TS - f.camY, TS, TS);
+        c.clip();
+        c.save();
+        c.translate(x0 + BW7 / 2, y0 + 10);
+        c.scale(1, 0.28);
+        const sg = c.createRadialGradient(0, 0, 0, 0, 0, BW7 * 0.62);
+        sg.addColorStop(0, "rgba(8,4,16,.9)");
+        sg.addColorStop(0.6, "rgba(8,4,16,.55)");
+        sg.addColorStop(1, "rgba(8,4,16,0)");
+        c.fillStyle = sg;
+        c.beginPath();
+        c.arc(0, 0, BW7 * 0.62, 0, TAU);
+        c.fill();
+        c.restore();
+        for (let k = 0; k < 14; k++) {
+          const wx = x0 + 30 + k * (BW7 - 60) / 13 + Math.sin(T2 * 0.7 + k) * 10, wh = 60 + 40 * Math.sin(T2 * 0.5 + k * 1.7);
+          const wg = c.createLinearGradient(0, y0 - wh, 0, y0 + 10);
+          wg.addColorStop(0, "rgba(16,8,30,0)");
+          wg.addColorStop(1, "rgba(16,8,30,.8)");
+          c.fillStyle = wg;
+          c.beginPath();
+          c.ellipse(wx, y0 - wh / 2 + 5, 12 + 6 * Math.sin(k), wh / 2, Math.sin(T2 * 0.4 + k) * 0.15, 0, TAU);
+          c.fill();
+        }
+        c.imageSmoothingEnabled = false;
+        const fr = st * 2 + (T2 % 2.2 < 1.1 ? 0 : 1);
+        c.drawImage(im, fr * BW7, 0, BW7, BH7, x0, y0, BW7, BH7);
+        if (e.flash > 0 && (e.vkSunk || 0) > 0.5) {
+          c.globalCompositeOperation = "lighter";
+          c.globalAlpha = Math.min(0.3, e.flash * 3);
+          c.drawImage(im, fr * BW7, 0, BW7, BH7, x0, y0, BW7, BH7);
+          c.globalCompositeOperation = "source-over";
+          c.globalAlpha = 1;
+        }
+        for (const [tx, ty, tw, th, ph] of TEARS) if (st >= ph) tear(c, x0 + tx * K2, y0 + ty * K2, tw * K2 * 0.55, th * K2, T2, tx, 1);
+        const hx = e.vkHx - f.camX, hy = e.vkHy - f.camY;
+        if (A.open > 0.02) tear(c, hx, hy + 10, 70, 150, T2, 7, A.open);
+        if (pim) {
+          const sunk = e.vkSunk || 0, q = this.hzNear(e.cx, e.cy), look = q ? Math.max(-1, Math.min(1, (q.cx - e.cx) / 400)) : 0;
+          const hf = st >= 2 ? 2 : casting ? 1 : 0, k = 0.8 + 0.2 * (1 - sunk);
+          c.save();
+          c.globalAlpha = Math.max(0, 1 - sunk * 1.1);
+          c.translate(hx, hy + sunk * 30 + Math.sin(T2 * 1.6) * 4);
+          c.rotate(look * 0.12 + Math.sin(T2 * 0.9) * 0.03);
+          c.scale(k, k);
+          c.drawImage(pim, hf * PW7, 0, PW7, PW7, -96, -100, PW7, PW7);
+          if (e.flash > 0) {
+            c.globalCompositeOperation = "lighter";
+            c.globalAlpha = Math.min(0.5, e.flash * 4);
+            c.drawImage(pim, hf * PW7, 0, PW7, PW7, -96, -100, PW7, PW7);
+          }
+          c.restore();
+          if (sunk > 0.05 && sunk < 0.95) {
+            c.save();
+            c.strokeStyle = `rgba(180,138,255,${0.6 * (1 - Math.abs(sunk - 0.5) * 2)})`;
+            c.lineWidth = 2;
+            c.beginPath();
+            c.ellipse(hx, hy + 30, 70 * sunk + 20, 14, 0, 0, TAU);
+            c.stroke();
+            c.restore();
+          }
+          e.vkEyes = sunk < 0.7 ? [[e.vkHx - 18 * k + look * 3, e.vkHy - 2], [e.vkHx + 18 * k + look * 3, e.vkHy - 2]] : [];
+          for (const side of [0, 1]) {
+            const bx = wx0 + BW7 * VK.HANDS[side], by = wy0 + 46 * K2, s = side ? 1 : -1;
+            let gx = bx + s * 10 + Math.sin(T2 * 0.8 + side * 2) * 10, gy = by + 34 + Math.sin(T2 * 1.1 + side) * 8, fr2 = 5, ang = Math.PI / 2 + s * 0.25 + Math.sin(T2 * 0.9 + side) * 0.12;
+            const cst = e.vkCast && e.vkCast.side === side && T2 - e.vkCast.t < 0.9 ? e.vkCast : null, grab = e.vkGrab && T2 - e.vkGrab.t < 1.3 ? e.vkGrab : null;
+            if (cst && q) {
+              const a = Math.atan2(q.cy - by, q.cx - bx);
+              gx = bx + Math.cos(a) * 70;
+              gy = by + Math.sin(a) * 70;
+              fr2 = 3;
+              ang = a;
+            }
+            if (grab) {
+              const u = Math.min(1, (T2 - grab.t) / 0.5);
+              gx = bx + (grab.x + s * 110 - bx) * u;
+              gy = by + (grab.fy - 24 - by) * u;
+              fr2 = 4;
+              ang = Math.PI / 2 + s * -0.4;
+            }
+            A.rx[side] = ease7(A.rx[side] || gx, gx, dt, grab ? 12 : 4);
+            A.ry[side] = ease7(A.ry[side] || gy, gy, dt, grab ? 12 : 4);
+            const X = A.rx[side] - f.camX, Y = A.ry[side] - f.camY, BX = bx - f.camX, BY = by - f.camY;
+            c.save();
+            c.lineCap = "round";
+            c.fillStyle = "#04020a";
+            c.beginPath();
+            c.ellipse(BX, BY, 26, 34, 0, 0, TAU);
+            c.fill();
+            c.strokeStyle = "rgba(180,138,255,.55)";
+            c.lineWidth = 2;
+            c.stroke();
+            c.beginPath();
+            c.moveTo(BX, BY);
+            c.quadraticCurveTo((BX + X) / 2 + s * 30, (BY + Y) / 2 - 30, X, Y);
+            c.strokeStyle = "#5a3c8c";
+            c.lineWidth = 36;
+            c.stroke();
+            c.strokeStyle = "#140a24";
+            c.lineWidth = 30;
+            c.stroke();
+            c.strokeStyle = "#2c1a4c";
+            c.lineWidth = 14;
+            c.stroke();
+            c.strokeStyle = "rgba(180,138,255,.45)";
+            c.lineWidth = 2;
+            c.stroke();
+            c.translate(X, Y);
+            c.rotate(ang);
+            if (Math.cos(ang) < 0) c.scale(1, -1);
+            c.drawImage(pim, fr2 * PW7, 0, PW7, PW7, -32, -96, PW7, PW7);
+            c.restore();
+            (e.vkHandPt || (e.vkHandPt = []))[side] = [A.rx[side], A.ry[side], fr2 === 3 ? 1 : 0];
+          }
+        }
+        c.restore();
+      }
+    },
+    /** 빛(fx 단계) — 눈 · 문장 · 쏘는 손 */
+    drawVoidGlow(f) {
+      const c = f.c, T2 = this.time || 0;
+      for (const e of this.ents) {
+        if (!isVk(e)) continue;
+        const st = Math.min(2, Math.round((e.pf || 0) * 2));
+        for (const [x, y] of e.vkEyes || []) hzGlow(c, x - f.camX, y - f.camY, 18 + st * 5, VRUNE, 0.55);
+        const [wx0, wy0] = vkOrigin(e), beat = 0.5 + 0.5 * Math.sin(T2 * 1.2);
+        hzGlow(c, wx0 + BW7 / 2 - f.camX, wy0 + 20 * VK.K - f.camY, 44 + beat * 12, VRUNE, 0.2 + 0.15 * beat);
+        for (const h of e.vkHandPt || []) if (h && h[2]) hzGlow(c, h[0] - f.camX, h[1] - f.camY, 34, VRUNE, 0.6);
+      }
+    }
+  };
+  mixin(Game.prototype, BossVoidArt, true);
+
   // src/game/game/boss-eclipse-art.ts
   var boss_eclipse_art_exports = {};
   __export(boss_eclipse_art_exports, {
     BossEclipseArt: () => BossEclipseArt
   });
-  var BW7 = EC.W * EC.K, PW7 = 192, CORONA = "#b48aff", PALE = "#f0e0ff";
+  var BW8 = EC.W * EC.K, PW8 = 192, CORONA = "#b48aff", PALE = "#f0e0ff";
   var isEc = (e) => e && !e.dead && e.def && e.def.ai === "b_eclipse";
   function hzOf7(g, e, k) {
     for (const h of g.bhz || []) if (h.k === k && g.hzBoss(h) === e) return h;
     return null;
   }
-  var ease7 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
+  var ease8 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
   var DARK = null;
   var EYE3 = null;
   var SMALL_EYES = [
@@ -67296,8 +67558,8 @@
   }
   function lookAt(E, dx, dy, dt, mx, my) {
     const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 260);
-    E.lx = ease7(E.lx, dx / d * mx * k, dt, 4);
-    E.ly = ease7(E.ly, dy / d * my * k, dt, 4);
+    E.lx = ease8(E.lx, dx / d * mx * k, dt, 4);
+    E.ly = ease8(E.ly, dy / d * my * k, dt, 4);
   }
   function drawEye(c, x, y, P2, w, h, o, lx, ly, T2, sd, dil) {
     const F = Math.max(1, Math.round(P2 / 1.25)), Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
@@ -67508,11 +67770,11 @@
         c.rotate(T2 * 0.04 + Math.sin(T2 * 0.3) * 0.05);
         c.scale(S, S);
         c.imageSmoothingEnabled = false;
-        c.drawImage(im, fr * BW7, 0, BW7, BW7, -BW7 / 2, -BW7 / 2, BW7, BW7);
+        c.drawImage(im, fr * BW8, 0, BW8, BW8, -BW8 / 2, -BW8 / 2, BW8, BW8);
         if (e.flash > 0) {
           c.globalCompositeOperation = "lighter";
           c.globalAlpha = Math.min(0.4, e.flash * 3);
-          c.drawImage(im, fr * BW7, 0, BW7, BW7, -BW7 / 2, -BW7 / 2, BW7, BW7);
+          c.drawImage(im, fr * BW8, 0, BW8, BW8, -BW8 / 2, -BW8 / 2, BW8, BW8);
         }
         c.restore();
         const P2 = EC.K * S, rot = T2 * 0.04 + Math.sin(T2 * 0.3) * 0.05;
@@ -67526,7 +67788,7 @@
           const E = eyes[i], [ang, rr, sz] = SMALL_EYES[i];
           const ex = sx + Math.cos(ang + rot) * EC.R * P2 * rr, ey = sy + Math.sin(ang + rot) * EC.R * P2 * rr;
           const goal = i < nOpen ? Math.max(0.15, Math.min(busy + 0.2, 0.95)) * blinkOf(T2, E.sd) : 0;
-          E.o = ease7(E.o, goal, dt, goal < E.o ? 14 : 4);
+          E.o = ease8(E.o, goal, dt, goal < E.o ? 14 : 4);
           if (E.o < 0.02 && i >= nOpen) continue;
           lookAt(E, tx - ex, ty - ey, dt, sz * 0.32, sz * 0.12);
           hzGlow(c, ex, ey, sz * P2 * 0.9, CORONA, 0.18 * E.o);
@@ -67537,14 +67799,14 @@
         const glow4 = e.ecGlow;
         const M2 = e.ecEye || (e.ecEye = { o: 0, lx: 0, ly: 0, sd: 0 });
         const mg = busy * blinkOf(T2, 0);
-        M2.o = ease7(M2.o, mg, dt, mg < M2.o ? 16 : 5);
+        M2.o = ease8(M2.o, mg, dt, mg < M2.o ? 16 : 5);
         lookAt(M2, tx - sx, ty - sy, dt, 22, 7);
         glow4.push([sx + M2.lx * P2 / 2, sy + M2.ly * P2 / 2, 46 * 0.9 * P2 / 2, M2.o]);
         e.ecDraw.push([sx, sy, P2 / 2, 92, 46, M2.o, M2.lx, M2.ly, 0, tot ? 0.6 : 0]);
         drawEye(c, sx, sy, P2 / 2, 92, 46, M2.o, M2.lx, M2.ly, T2, 0, sr ? 1 : tot ? 0.6 : 0);
         if (M2.o > 0.5) hzGlow(c, sx + M2.lx * P2 / 2, sy + M2.ly * P2 / 2, 70 + 50 * M2.o, PALE, 0.22 * M2.o);
       }
-      this.ecDim = ease7(this.ecDim || 0, want, dt, want > (this.ecDim || 0) ? 0.8 : 0.4);
+      this.ecDim = ease8(this.ecDim || 0, want, dt, want > (this.ecDim || 0) ? 0.8 : 0.4);
     },
     /** 그림자 손(actors 단계 · drawBossLit) — 화면 위에서 팔뚝이 이어져 내려와 땅을 짚는다 */
     drawEclipseHands(c) {
@@ -67562,20 +67824,20 @@
         c.globalCompositeOperation = "lighter";
         hzGlow(c, x, wristY + 90 * s, 120 * s, CORONA, 0.22);
         c.restore();
-        for (let y = wristY - PW7 * s * 0.95; y > cy0 - PW7 * s * 1.2; y -= PW7 * s * 0.95) c.drawImage(pim, 5 * PW7, 0, PW7, PW7, x - PW7 * s / 2, y, PW7 * s, PW7 * s);
+        for (let y = wristY - PW8 * s * 0.95; y > cy0 - PW8 * s * 1.2; y -= PW8 * s * 0.95) c.drawImage(pim, 5 * PW8, 0, PW8, PW8, x - PW8 * s / 2, y, PW8 * s, PW8 * s);
         const fr = st === 2 ? 4 : 3;
         if (st === 1) for (let g2 = 3; g2 >= 1; g2--) {
           c.save();
           c.globalAlpha = 0.25 / g2;
-          c.drawImage(pim, fr * PW7, 0, PW7, PW7, x - 96 * s, wristY - 16 * s - g2 * 30, PW7 * s, PW7 * s);
+          c.drawImage(pim, fr * PW8, 0, PW8, PW8, x - 96 * s, wristY - 16 * s - g2 * 30, PW8 * s, PW8 * s);
           c.restore();
         }
-        c.drawImage(pim, fr * PW7, 0, PW7, PW7, x - 96 * s, wristY - 16 * s, PW7 * s, PW7 * s);
+        c.drawImage(pim, fr * PW8, 0, PW8, PW8, x - 96 * s, wristY - 16 * s, PW8 * s, PW8 * s);
         const b = this.hzBoss(h);
         if (b && b.flash > 0 && st === 2) {
           c.globalCompositeOperation = "lighter";
           c.globalAlpha = Math.min(0.5, b.flash * 4);
-          c.drawImage(pim, fr * PW7, 0, PW7, PW7, x - 96 * s, wristY - 16 * s, PW7 * s, PW7 * s);
+          c.drawImage(pim, fr * PW8, 0, PW8, PW8, x - 96 * s, wristY - 16 * s, PW8 * s, PW8 * s);
         }
         c.restore();
       }
@@ -69828,9 +70090,9 @@
         let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
         if (this.starGain && i === n - 1) {
           const gk = Math.min(1, this.starGain.t / this.starGain.dur);
-          const ease8 = 1 - Math.pow(1 - gk, 3);
-          y -= (1 - ease8) * 240;
-          x += (1 - ease8) * 40;
+          const ease9 = 1 - Math.pow(1 - gk, 3);
+          y -= (1 - ease9) * 240;
+          x += (1 - ease9) * 40;
         }
         const back = riseK > 0.9 || Math.sin(a) >= 0 ? 1 : 0.45;
         const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));
@@ -75228,6 +75490,7 @@
       this.pipe.add("objects", (f) => this.drawCocoonBack(f));
       this.pipe.add("objects", (f) => this.drawHiveBody(f));
       this.pipe.add("objects", (f) => this.drawHourglassBody(f));
+      this.pipe.add("objects", (f) => this.drawVoidBody(f));
       this.pipe.add("objects", (f) => this.drawRootBody(f));
       this.pipe.add("objects", (f) => this.drawJudgeBody(f));
       this.pipe.add("ground", (f) => this.rGround(f));
@@ -75252,6 +75515,7 @@
       this.pipe.add("fx", (f) => this.drawHiveGlow(f));
       this.pipe.add("fx", (f) => this.drawHourglassGlow(f));
       this.pipe.add("fx", (f) => this.drawJudgeGlow(f));
+      this.pipe.add("fx", (f) => this.drawVoidGlow(f));
       this.pipe.add("fx", (f) => this.drawRootGlow(f));
       this.pipe.add("fx", (f) => this.drawEclipseGlow(f));
       this.pipe.add("screen", (f) => this.rScreen(f));
@@ -77754,7 +78018,7 @@
         }
         return;
       }
-      if (e.def.ai === "b_organ" || e.def.ai === "b_hourglass" || e.def.ai === "b_hive" || e.def.ai === "b_judge" || e.def.ai === "b_eclipse" || e.def.ai === "b_root") return;
+      if (e.def.ai === "b_organ" || e.def.ai === "b_hourglass" || e.def.ai === "b_hive" || e.def.ai === "b_judge" || e.def.ai === "b_eclipse" || e.def.ai === "b_root" || e.def.ai === "b_void") return;
       if (e.def.ai === "b_witch" && this.spritesOn && this.drawWitch(c, e, sx, sy)) return;
       if (e.def.ai === "b_cocoon") {
         this.drawCocoon(c, e, sx, sy);
@@ -78748,9 +79012,9 @@
           c.stroke();
           c.setLineDash([]);
         }
-        const lock = Math.min(1, pa / 0.35), ease8 = 1 - Math.pow(1 - lock, 3);
-        const pad = 3 + (1 - ease8) * 22 + beat * 2.5, rot = (1 - ease8) * 1.6;
-        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease8) * 4;
+        const lock = Math.min(1, pa / 0.35), ease9 = 1 - Math.pow(1 - lock, 3);
+        const pad = 3 + (1 - ease9) * 22 + beat * 2.5, rot = (1 - ease9) * 1.6;
+        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease9) * 4;
         c.save();
         c.translate(x + ew / 2, y + eh / 2);
         c.rotate(rot);
@@ -82092,7 +82356,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_root_exports, boss_eclipse_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_gap_fx_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_root_art_exports, boss_root_fx_exports, boss_witch_art_exports, boss_eclipse_art_exports, boss_eclipse_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_root_exports, boss_void_exports, boss_eclipse_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_gap_fx_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_root_art_exports, boss_root_fx_exports, boss_witch_art_exports, boss_void_art_exports, boss_eclipse_art_exports, boss_eclipse_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });
