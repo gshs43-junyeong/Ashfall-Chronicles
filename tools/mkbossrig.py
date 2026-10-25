@@ -1187,6 +1187,207 @@ def eclipse_parts(f):
     return F.render()
 
 
+# ===== 뿌리 대성당(vine_lord 자리) — 정글 뒷벽에 박힌 속 빈 고목: 뾰족 아치의 빈 속(입)과 그 위 옹이 눈 · 펼친 뿌리 · 두 큰 가지 =====
+BARK, BARK_D, BARK_L = '#5a4230', '#33251a', '#806048'       # 나무껍질 · 그늘 · 빛 받는 결
+MOSS, MOSS_D, SAP = '#5f8a3c', '#3a5a26', '#d8f080'          # 이끼 · 그늘 · 수액빛
+LEAF, LEAF_D, LEAF_L = '#4f8a3a', '#2e5a26', '#8cc860'
+PETAL, PETAL_D = '#f0b8d8', '#b86a98'
+RT_W, RT_H = 104, 120                                         # 게임 entity/boss-root.ts RT 와 같게(바닥 117 · 판정 가운데 52, 84)
+
+
+def _bark_lines(F, x0, y0, x1, y1, n, seed, col=BARK_D, a=200):
+    """세로 껍질 결 — 위아래로 흐르며 살짝 휜다"""
+    for k in range(n):
+        u = (k + 0.5) / n
+        x = x0 + (x1 - x0) * u
+        w = math.sin(seed + k * 1.7) * 1.4
+        fine(F, (x, y0 + (k % 3) * 2), (x + w, y1 - (k % 2) * 3), col, a)
+
+
+def root_body(f):
+    """몸 시트 8장(104×120 · 바닥 117) — 0·1 숨(빈 속 빛이 차고 빠진다 · 이끼 흔들림) · 2·3 수액이 새는 금 · 4·5 벗겨진 껍질 · 깊은 금 · 6·7 쓰러짐(줄기가 갈라지며 주저앉는다).
+       눈(옹이 속 눈동자) · 두 큰 가지 · 우듬지 · 아랫입술은 조각이라 게임이 움직인다"""
+    F = ZFig(RT_W, RT_H)
+    cx, base = 52, 117
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    sag = 0 if f < 6 else (5 if f == 6 else 12)
+    # 뿌리 — 줄기 밑에서 양옆으로 펼쳐져 바닥에 박힌다(굵게 · 끝으로 가늘게)
+    for (s2, ex, ey, r0) in ((-1, 4, 116, 6), (-1, 14, 112, 5), (-1, 30, 116, 5), (1, 100, 116, 6), (1, 90, 112, 5), (1, 74, 116, 5)):
+        sx0 = cx + s2 * 16
+        F.part('wood', BARK_D, bevel=3).cap(sx0, 104, (sx0 + ex) / 2, 108 + (ey - 108) * 0.4 - 3, r0, r0 * 0.7)
+        F.part('wood', BARK, bevel=2).cap((sx0 + ex) / 2, 108 + (ey - 108) * 0.4 - 3, ex, ey, r0 * 0.7, 1.2)
+    # 줄기 — 밑동이 넓고 위로 좁아진다 · 위에서 두 갈래 어깨(가지가 붙는 자리)
+    def half(sd):                                                                       # 옆선 — 밑동이 불룩하고 허리가 잘록 · 마디마다 울퉁불퉁
+        pts = []
+        for k in range(23):
+            y = base - 2 - k * (base - 30 - sag) / 22
+            u = (base - y) / (base - 30)
+            w = 29 - 10 * min(1, u * 1.6) + 3 * max(0, u - 0.75) * 4 + math.sin(k * 1.9 + sd) * 1.3
+            pts.append((cx + sd * w, y))
+        return pts
+    L, R = half(-1), half(1)
+    top = [(cx - 30, 22 + sag), (cx - 18, 17 + sag), (cx - 9, 24 + sag), (cx, 19 + sag), (cx + 9, 24 + sag), (cx + 18, 17 + sag), (cx + 30, 22 + sag)]
+    trunk = L + top + R[::-1]
+    F.part('wood', BARK_D, bevel=5).poly(trunk)
+    F.part('wood', BARK, bevel=4).poly([(x + (cx - x) * 0.1, y + 1.5) for (x, y) in trunk])
+    for (bx, w0) in ((-17, 5), (-2, 4), (14, 5)):                                       # 굵은 버팀 골 — 그늘 띠 + 왼쪽 날의 빛
+        pts = [(cx + bx + math.sin(k * 0.8 + bx) * 1.2, base - 3 - k * 7) for k in range(12)]
+        for (a, b2) in zip(pts, pts[1:]):
+            F.part('wood', BARK_D, bevel=1).cap(a[0], a[1], b2[0], b2[1], w0 * 0.45, w0 * 0.42)
+            fine(F, (a[0] - w0 * 0.5, a[1]), (b2[0] - w0 * 0.5, b2[1]), BARK_L, 170)
+    _bark_lines(F, cx - 24, 26 + sag, cx + 24, base - 4, 9, 1.3, '#2a1d14', 150)
+    for (x, y) in ((cx - 17, 84), (cx + 18, 40 + sag), (cx - 14, 32 + sag)):         # 옹이
+        F.part('wood', BARK_D, bevel=1.5).ell(x, y, 2.6, 3.4)
+        F.part('wood', '#1e140c', flat=True).ell(x, y + 0.4, 1.2, 1.8)
+    # 빈 속 — 뾰족 아치(대성당 문) · 기둥처럼 선 껍질 테 · 안쪽의 장미창(수액빛) — 이 아치가 입이다
+    ah, aw = 104, 13 + st * 2
+    arch = [(cx - aw, ah)] + [(cx - aw + aw * (1 - math.cos(k / 10 * math.pi / 2)) , ah - 26 - 14 * math.sin(k / 10 * math.pi / 2)) for k in range(11)]
+    arch += [(cx + aw - aw * (1 - math.cos(k / 10 * math.pi / 2)), ah - 26 - 14 * math.sin(k / 10 * math.pi / 2)) for k in range(10, -1, -1)] + [(cx + aw, ah)]
+    F.part('wood', BARK_L, bevel=3).poly([(x + (2.5 if x > cx else -2.5), y + (0 if y > 90 else -2.5)) for (x, y) in arch])
+    F.part('wood', '#120c08', flat=True).poly(arch)
+    F.part('wood', '#1c140d', flat=True).poly([(x + (cx - x) * 0.25, y + (ah - y) * 0.12) for (x, y) in arch])
+    rose = SAP if b else '#b8d070'
+    ry0 = 76
+    F.part('glow', rose, glow=True).ell(cx, ry0, 5.5 + b * 0.5, 5.5 + b * 0.5)
+    F.part('wood', '#120c08', flat=True).ell(cx, ry0, 3.6, 3.6)
+    for k in range(8):                                                                   # 장미창 살 — 수액빛이 바퀴살로
+        a = k / 8 * math.tau
+        fine(F, (cx + math.cos(a) * 1.2, ry0 + math.sin(a) * 1.2), (cx + math.cos(a) * 5.2, ry0 + math.sin(a) * 5.2), rose, 230)
+    F.glow(cx, ry0, 9 + b * 2, SAP, 0.28 + b * 0.08)
+    for s2 in (-1, 1):                                                                   # 기둥 껍질 — 아치 양옆
+        F.part('wood', BARK_D, bevel=2).box(cx + s2 * (aw + 3) - 2, 82, 4, 22, 1.5)
+    # 얼굴 — 이마 주름 · 옹이 눈구멍 둘(눈동자는 게임이 그린다) · 코 마루
+    F.part('wood', BARK_D, bevel=3).poly([(cx - 20, 50), (cx - 6, 45), (cx, 47), (cx + 6, 45), (cx + 20, 50), (cx + 18, 54), (cx + 6, 50), (cx, 52), (cx - 6, 50), (cx - 18, 54)])
+    for s2 in (-1, 1):
+        F.part('wood', BARK_L, bevel=2).ell(cx + s2 * 11, 56, 6.2, 4.6)
+        F.part('wood', '#0c0806', flat=True).ell(cx + s2 * 11, 56.4, 4.4, 3.2)
+    F.part('wood', BARK_L, bevel=2).poly([(cx - 2, 53), (cx + 2, 53), (cx + 3.5, 64), (cx, 66), (cx - 3.5, 64)])
+    # 이끼 · 늘어진 덩굴 — 이마와 어깨에서 늘어진다(숨에 따라 길이가 조금 다르다)
+    F.part('leaf', MOSS, bevel=2).poly([(cx - 22, 48), (cx - 10, 44), (cx - 4, 47), (cx - 14, 51)])
+    F.part('leaf', MOSS, bevel=2).poly([(cx + 24, 30 + sag), (cx + 30, 24 + sag), (cx + 32, 30 + sag), (cx + 26, 34 + sag)])
+    for (x, y0, L) in ((cx - 19, 50, 14), (cx - 14, 51, 9), (cx + 26, 33 + sag, 18), (cx + 29, 31 + sag, 11), (cx - 26, 30 + sag, 16)):
+        L2 = L + b * 1.5
+        F.part('leaf', MOSS_D, bevel=1).cap(x, y0, x + math.sin(x) * 1.5, y0 + L2, 0.8, 0.5)
+        F.part('leaf', LEAF_L, bevel=0.8).ell(x + math.sin(x) * 1.5, y0 + L2, 1.2, 1.4)
+    # 막마다 — 수액이 새는 금 · 벗겨진 껍질
+    if st >= 1:
+        crack(F, [(cx + 21, 58), (cx + 17, 68), (cx + 21, 80), (cx + 16, 90)], 0.55, SAP)
+        crack(F, [(cx - 22, 40 + sag), (cx - 17, 47), (cx - 20, 58)], 0.45, SAP)
+    if st >= 2:
+        crack(F, [(cx - 6, 24 + sag), (cx - 3, 32 + sag), (cx - 7, 40)], 0.5, SAP)
+        crack(F, [(cx - 24, 70), (cx - 19, 80), (cx - 25, 94)], 0.5, SAP)
+        for (x, y) in ((cx + 12, 36 + sag), (cx - 13, 92)):                             # 벗겨진 껍질 — 찢긴 테두리 · 속살은 결이 선다
+            pe = [(x + math.cos(k / 9 * math.tau) * (3.2 + 1.6 * ((k * 5) % 3) / 2), y + math.sin(k / 9 * math.tau) * (5 + 1.5 * ((k * 7) % 3) / 2)) for k in range(9)]
+            F.part('wood', '#2a1d14', bevel=0.8).poly([(a + (a - x) * 0.18, b2 + (b2 - y) * 0.12) for (a, b2) in pe])
+            F.part('wood', '#b0905e', bevel=1.2).poly(pe)
+            _bark_lines(F, x - 2.5, y - 4, x + 2.5, y + 4, 3, 2.2, '#86643e', 220)
+    if sag:                                                                              # 쓰러짐 — 가운데가 갈라져 수액이 흐른다
+        crack(F, [(cx, 22 + sag), (cx + 2, 40 + sag), (cx - 1, 60), (cx + 1, 76)], 0.9, SAP)
+        for k in range(8):
+            x = cx - 34 + k * 9.5
+            F.part('wood', BARK if k % 2 else BARK_D, bevel=2).poly([(x, base - 1), (x + 3, base - 5 - (k % 3) * 2), (x + 8, base - 3), (x + 7, base - 1)])
+    return F.render()
+
+
+def root_crown(f):
+    """우듬지 3장(120×60 · 밑 가운데 (60, 57)이 줄기 꼭대기) — 0 무성 · 1 꽃이 핀다(막 1) · 2 성기고 시든다(막 2)"""
+    F = ZFig(120, 60)
+    rnd_s = [0.3, 1.7, 2.9, 4.1, 5.3, 0.9, 2.2, 3.6, 4.8, 1.1, 2.6, 3.9, 5.6, 0.5]
+    blobs = [(60, 26, 22, 15), (34, 34, 18, 12), (86, 34, 18, 12), (16, 44, 12, 8), (104, 44, 12, 8), (48, 14, 14, 10), (74, 14, 14, 10),
+             (24, 26, 12, 9), (96, 26, 12, 9), (60, 44, 20, 9)]
+    # 가지 — 잎보다 먼저(잎 사이로 몇 군데만 비친다)
+    for (ex, ey) in ((30, 30), (90, 30), (50, 16), (70, 16), (14, 44), (106, 44)):
+        F.part('wood', BARK_D, bevel=1.5).cap(60, 57, ex, ey, 3, 0.8)
+    keep = 1.0 if f < 2 else 0.72
+    for i, (x, y, rx, ry) in enumerate(blobs):
+        if f == 2 and i % 3 == 2:
+            continue
+        F.part('leaf', LEAF_D if f < 2 else '#5a5a2a', bevel=4).ell(x, y + 2, rx * keep, ry * keep)
+    for i, (x, y, rx, ry) in enumerate(blobs):
+        if f == 2 and i % 3 == 2:
+            continue
+        F.part('leaf', LEAF if f < 2 else '#7a7a3a', bevel=3).ell(x - 1, y, rx * 0.85 * keep, ry * 0.8 * keep)
+        F.part('leaf', LEAF_L if f < 2 else '#9a904a', bevel=2).ell(x - rx * 0.3, y - ry * 0.35, rx * 0.4 * keep, ry * 0.35 * keep)
+    if f == 1:                                                                           # 꽃 — 분홍 꽃송이가 잎 사이에
+        for k in range(14):
+            x = 14 + (k * 37) % 92; y = 10 + (k * 23) % 38
+            F.part('glow', PETAL, glow=True).ell(x, y, 1.8, 1.6)
+            F.part('glow', '#fff0a0', glow=True).ell(x, y, 0.6, 0.6)
+    if f == 2:
+        for k in range(6):
+            x = 18 + k * 17; y = 50 - (k % 3) * 6
+            fine(F, (x, y), (x + 3, y + 5), BARK_D, 220)
+    return F.render()
+
+
+def root_parts(f):
+    """조각 8장(64×40 설계 칸) — 0 큰 가지(밑동 (7, 20) → +x · 잎 다발) · 1 시든 가지 · 2 솟는 뿌리(밑 (32, 39) → 위로) · 3 꽃봉오리 · 4 핀 꽃(가운데 (32, 22))
+       · 5 쓰러지는 줄기 토막(가로로 이어 붙인다 · 가운데 줄 20) · 6 줄기 단면(나이테 · 가운데 (20, 20)) · 7 아랫입술(빈 속의 아래 테 · 가운데 (32, 20))"""
+    F = ZFig(64, 40)
+    if f in (0, 1):
+        dead = f == 1
+        F.part('wood', BARK_D, bevel=3).cap(7, 20, 56, 16, 6, 2)
+        F.part('wood', BARK, bevel=2).cap(8, 18.5, 54, 15, 4, 1.2)
+        _bark_lines(F, 6, 17, 50, 21, 4, 0.7, BARK_D, 160)
+        for (bx, by, ex, ey) in ((22, 18, 30, 8), (36, 17, 45, 27), (44, 16, 51, 7), (50, 15, 56, 22)):
+            F.part('wood', BARK, bevel=1).cap(bx, by, ex, ey, 1.6, 0.6)
+            if not dead:
+                F.part('leaf', LEAF_D, bevel=2).ell(ex, ey, 5, 4)
+                F.part('leaf', LEAF, bevel=1.5).ell(ex - 0.6, ey - 0.6, 3.8, 3)
+                F.part('leaf', LEAF_L, bevel=1).ell(ex - 1.4, ey - 1.4, 1.6, 1.2)
+        if not dead:
+            F.part('leaf', MOSS, bevel=1.5).poly([(8, 14), (20, 13), (22, 16), (10, 17)])
+        else:
+            crack(F, [(14, 18), (20, 20), (28, 18)], 0.4, SAP)
+    elif f == 2:
+        F.part('wood', BARK_D, bevel=3).poly([(25, 39), (27, 26), (29.5, 12), (32, 2), (34.5, 12), (37, 26), (39, 39)])
+        F.part('wood', BARK, bevel=2).poly([(27.5, 39), (29, 26), (31, 13), (32, 5), (33, 13), (35, 26), (36.5, 39)])
+        _bark_lines(F, 29, 10, 35, 38, 3, 2.1, BARK_D, 200)
+        for (x, y, s2) in ((28, 30, -1), (36, 22, 1), (29.5, 16, -1)):                  # 잔뿌리 가시
+            F.part('wood', BARK, bevel=1).cap(x, y, x + s2 * 5, y - 3, 1.2, 0.4)
+        F.part('leaf', MOSS, bevel=1).ell(31, 34, 3.5, 1.6)
+    elif f == 3:
+        F.part('leaf', LEAF_D, bevel=1.5).cap(32, 39, 32, 26, 1.2, 1)
+        F.part('leaf', LEAF, bevel=1.2).ell(28, 33, 3.2, 1.4, -0.5)
+        F.part('glow', PETAL_D, glow=True).ell(32, 23, 3.2, 4.2)
+        F.part('leaf', LEAF, bevel=1).poly([(29, 26), (32, 19), (35, 26), (32, 27)])
+    elif f == 4:
+        F.part('leaf', LEAF_D, bevel=1.5).cap(32, 39, 32, 26, 1.2, 1)
+        for k in range(6):                                                               # 꽃잎 여섯 — 바깥이 짙고 안이 밝다
+            a = k / 6 * math.tau - math.pi / 2
+            px, py = 32 + math.cos(a) * 6.5, 22 + math.sin(a) * 6
+            F.part('glow', PETAL_D, glow=True).ell(px, py, 4.6, 3.2, a)
+            F.part('glow', PETAL, glow=True).ell(32 + math.cos(a) * 5.4, 22 + math.sin(a) * 5, 3.2, 2.2, a)
+        F.part('glow', '#ffe070', glow=True).ell(32, 22, 2.8, 2.8)
+        F.part('glow', '#fffbe0', glow=True).ell(31.4, 21.4, 1, 1)
+        F.glow(32, 22, 9, PETAL, 0.3)
+    elif f == 5:
+        F.part('wood', BARK_D, bevel=3).box(0, 12, 64, 16, 3)
+        F.part('wood', BARK, bevel=2).box(0, 13.5, 64, 11, 2)
+        _bark_lines(F, 2, 14, 62, 14.5, 9, 0.4, BARK_D, 0)
+        for k in range(9):
+            fine(F, (k * 7 + 1, 15 + (k % 2)), (k * 7 + 6, 15.4 + (k % 2)), BARK_D, 210)
+            fine(F, (k * 7 + 3, 21 - (k % 2)), (k * 7 + 7, 21.5 - (k % 2)), BARK_D, 190)
+        F.part('leaf', MOSS, bevel=1.5).poly([(10, 12), (24, 11), (26, 13.5), (12, 14)])
+        F.part('leaf', MOSS, bevel=1.5).poly([(40, 12), (52, 11.5), (53, 13.5), (41, 13.8)])
+    elif f == 6:
+        F.part('wood', BARK_D, bevel=3).ell(20, 20, 15, 15)
+        F.part('wood', '#c8a070', bevel=2).ell(20, 20, 12.5, 12.5)
+        for r in (10.5, 8.5, 6.5, 4.5, 2.6):                                            # 나이테
+            for k in range(36):
+                a = k / 36 * math.tau
+                Fig.px(F, (20 + math.cos(a) * r) * K, (20 + math.sin(a) * r) * K, '#8a6040', 230)
+        F.part('glow', SAP, glow=True).ell(20, 20, 1.4, 1.4)
+    else:
+        F.part('wood', BARK_D, bevel=3).poly([(14, 16), (50, 16), (54, 22), (46, 27), (18, 27), (10, 22)])
+        F.part('wood', BARK_L, bevel=2).poly([(16, 16.5), (48, 16.5), (51, 20), (13, 20)])
+        for k in range(6):                                                               # 이빨처럼 갈라진 나뭇결
+            x = 18 + k * 5.6
+            F.part('wood', '#c0a070', bevel=1).poly([(x, 16.5), (x + 2.6, 16.5), (x + 1.3, 12.5 - (k % 2) * 1.5)])
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -1196,6 +1397,7 @@ RIGS = {
     'blight_maw': {'body': (HIVE_W, HIVE_H, 8, 2, hive_body), 'parts': (40, 36, 5, hive_parts)},
     'first_keeper': {'body': (JD_W, JD_H, 8, 2, judge_body), 'parts': (40, 44, 11, judge_parts)},
     'pursuer': {'body': (EC_W, EC_W, 8, 2, eclipse_body), 'parts': (48, 48, 7, eclipse_parts, (5,))},
+    'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 
 

@@ -162,6 +162,7 @@ export const BossSigArtPart: Bag = {
       case 'hvmove': case 'hvbrood': case 'hvbile': case 'hvspit': case 'hvbloom': return this.hiveTell(c, h, cx0, cy0);   // 곪은 벌집 어미(game/boss-hive-art)
       case 'jverdict': case 'jtab': case 'jgavel': case 'jeye': return this.judgeTell(c, h, cx0, cy0);   // 판결석 좌상(game/boss-judge-art)
       case 'ehand': case 'elight': case 'estare': case 'etotal': return this.eclipseTell(c, h, cx0, cy0);   // 일식(game/boss-eclipse-art)
+      case 'rroot': case 'rring': case 'rflower': case 'rfell': return this.rootTell(c, h, cx0, cy0);   // 뿌리 대성당(game/boss-root-art)
       case 'pulse': {                                                  // 박동 — 뛸 때마다 심장 둘레가 확 부푼다
         if (!b) return true;
         const u = (h.t % h.every) / h.every, x = b.cx - cx0, y = b.cy - cy0, R = Math.max(b.w, b.h) * (0.55 + u * 0.6);

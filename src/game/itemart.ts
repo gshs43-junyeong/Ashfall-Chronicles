@@ -228,6 +228,7 @@ export const ISPEC: Bag = {
   sum_slime: { k: 'lantern', c: '#ffb050' },
   sum_bone: { k: 'skull' },
   sum_heart: { k: 'heart', c: '#a03f6c' },
+  sum_vine: { k: 'seed', c: '#8a5a2a' },
   sum_frost: { k: 'crown', c: '#9fe0ff', gem: '#ffffff', glow: '#9fe0ff' },
   sum_void: { k: 'drop', c: '#a06fff', glow: '#a06fff' },
 

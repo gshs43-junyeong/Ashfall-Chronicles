@@ -130,6 +130,8 @@ export const SFX_FAM: Record<string, [string, number, number]> = {
   /* 일식 — 낮게 늘인 바람 · 공허 소리, 손은 둔탁한 땅울림 */
   ec_reach: ['sk_whirl', .4, .8], ec_slam: ['boom_small', .4, 1.2], ec_open: ['magic', .4, .8], ec_stare: ['sk_quake', .5, .9],
   ec_total: ['chapter', .35, 1], ec_crack: ['mat_glass', .5, 1.1],
+  rt_heave: ['sk_quake', .35, .8], rt_burst: ['mat_wood', .6, .8], rt_ring: ['sk_quake', .4, 1.1], rt_bloom: ['magic', .35, 1.3], rt_pick: ['harvest', .5, 1.2],
+  rt_heal: ['magic', .4, .8], rt_creak: ['door_open', .5, .5], rt_fall: ['sk_whirl', .45, .6], rt_crash: ['boom_small', .6, .7],
 
   /* ★ 몹·보스가 쏘는 소리. */
   efire_phys:  ['bow', .82, .5],

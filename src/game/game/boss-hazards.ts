@@ -260,7 +260,8 @@ export const BossHazardPart: Bag = {
     this.drawOrganArms(c);                                          // 뼈 오르간의 팔 — 쉴 때도 그린다
     this.drawHourglassArms(c);                                      // 거상의 팔 · 주먹(game/boss-hourglass-art)
     this.drawJudgeArms(c);                                          // 판결석의 저울 팔 · 몸짓 손(game/boss-judge-art)
-    this.drawEclipseHands(c);                                       // 일식의 그림자 손(game/boss-eclipse-art)
+    this.drawEclipseHands(c);
+    this.drawRootLit(c);                                            // 솟는 뿌리 · 꽃 · 쓰러지는 줄기(game/boss-root-art)                                       // 일식의 그림자 손(game/boss-eclipse-art)
     const L = this.bhz; if (!L || !L.length) return;
     const cx0 = this.cam.x, cy0 = this.cam.y, T0 = this.time || 0;
     for (const h of L) {

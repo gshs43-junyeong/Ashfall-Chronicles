@@ -35,7 +35,7 @@ export const BOSS_DIE: Bag = {
 
 /* ---------------- 보스 등급 ---------------- */
 export const BOSS_TIER: Record<string, string> = {
-  mine_horror: 'mini', ice_warden: 'mini', vine_lord: 'mini',
+  mine_horror: 'mini', ice_warden: 'mini', vine_lord: 'normal',
   sand_guardian: 'mini', spore_queen: 'mini', blight_maw: 'mini',
   drowned_keeper: 'mini', isle_keeper: 'mini',
 
@@ -54,7 +54,7 @@ export const BOSS_SURGE: Bag = {
   restorer:    { k: 'mend', t: 2.0, cd: 22,         v: .03, brk: .035, c: '#a8c8e8', s: 'sk_heal',  n: '되돌리려 한다' }
 };
 /* 뜨는 보스 — 모으는 동안에도 원래대로 떠 있어야 한다. */
-export const SURGE_FLY: Record<string, number> = { b_organ: 1, b_cocoon: 1, b_hourglass: 1, b_hive: 1, b_judge: 1, b_eclipse: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
+export const SURGE_FLY: Record<string, number> = { b_organ: 1, b_cocoon: 1, b_hourglass: 1, b_hive: 1, b_judge: 1, b_eclipse: 1, b_root: 1, b_bone: 1, b_heart: 1, b_witch: 1, b_void: 1, b_storm: 1, b_pursuer: 1, b_restorer: 1 };
 
 /* ---------------- 스킬 / 특성 ---------------- */
 export const SKILLS: Record<string, SkillDef> = {
@@ -274,6 +274,7 @@ export const BOSS_LINES: Bag = {
   frost_witch:  { 1: '실비아: "…아직도 따뜻하구나."', 2: '실비아: "불 옆에 서. 거기 말고는 없어."' },
   void_king:    { 1: '나선이 되감긴다.', 2: '공허가 방향을 바꾼다.' },
   storm_warden: { 1: '구름이 낮아진다.', 2: '내리꽂을 때만, 닿는다.' },
+  vine_lord:    { 1: '고목이 몸을 턴다 — 우듬지에 꽃이 핀다.', 2: '껍질이 벗겨진다. 수액빛이 새어 나온다.' },
   first_keeper: { 1: '눈가리개에 금이 간다 — 그 틈으로 무언가 내다본다.', 2: '가리개가 찢긴다. 외눈이 뜬다.' },
   pursuer:      { 1: '해가 조금 더 가려진다. 그림자가 길어진다.', 2: '손이 둘이 된다.',
                   3: '외눈이 감기지 않는다.', 4: '테가 깨진다 — 그 틈으로 오래 혼자였던 것이 보인다.' },

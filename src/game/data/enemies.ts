@@ -208,7 +208,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 80, h: 108, c: '#9fd8f0', xp: 1600, gold: 950, ph: 2, boss: 1,
                  drops: [['frozen_core', 1, 2, 3], ['frost_core', 1, 8, 14], ['ice_shard', 1, 20, 30], ['warden_seal', 1, 1, 1]] },
   /* rank 3 */
-  vine_lord:    { n: '덩굴 군주', hp: 4100, dmg: 74, def: 34, spd: 80, ai: 'b_bone', w: 100, h: 148, c: '#3f7a34', xp: 2300, gold: 1500, ph: 2, boss: 1,
+  vine_lord:    { n: '덩굴 군주 · 뿌리 대성당', hp: 5200, dmg: 74, def: 34, spd: 0, ai: 'b_root', w: 140, h: 180, wall: 1, c: '#3f7a34', xp: 2300, gold: 1500, ph: 3, boss: 1,
                  drops: [['heartwood', 1, 2, 3], ['vine_coil', 1, 12, 20], ['orchid', 1, 8, 14]] },
   /* rank 4 — 함정이 가장 촘촘한 유적의 주인 */
   sand_guardian:{ n: '모래시계 거상', hp: 5600, dmg: 92, def: 46, spd: 0, ai: 'b_hourglass', w: 92, h: 140, wall: 1, c: '#c8a46a', xp: 3100, gold: 2100, ph: 3, boss: 1,

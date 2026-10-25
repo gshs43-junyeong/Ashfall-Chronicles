@@ -47,7 +47,7 @@ export const BossPart: Bag = {
     const zone = this.world.zoneAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
     const req = {
       king_slime: ['surface', 'cave'], bone_lord: ['cave', 'deep'], corrupt_heart: ['corrupt'],
-      frost_witch: ['ice'], void_king: ['hell'], storm_warden: ['sky'], first_keeper: ['ruin'],
+      frost_witch: ['ice'], vine_lord: ['jungle'], void_king: ['hell'], storm_warden: ['sky'], first_keeper: ['ruin'],
       pursuer: ['surface'],  // 하늘이 트인 지상에서만 — 숨는 대신 위치를 알려주는 의식이다
       overseer: ['works']
     }[bossId!];

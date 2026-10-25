@@ -124,6 +124,7 @@ export const RECIPES: RecipeDef[] = [
 
   { out: 'sum_slime', n: 1, need: { slime_gel: 25, copper_bar: 8 }, station: 'work' },
   { out: 'sum_bone', n: 1, need: { bone_frag: 30, iron_bar: 5 }, station: 'forge' },
+  { out: 'sum_vine', n: 1, need: { fern_frond: 20, leaf_jungle: 30, iron_bar: 4 }, station: 'work' },
   { out: 'sum_heart', n: 1, need: { corrupt_ess: 20, ebon_chunk: 15 }, station: 'forge' },
   { out: 'sum_frost', n: 1, need: { frost_core: 20, ice_shard: 40, mythril_bar: 4 }, station: 'forge' },
   { out: 'sum_tide', n: 1, need: { abyss_pearl: 6, abyss_core: 1, jelly_lamp: 12, sea_salt: 20 }, station: 'forge', lv: 4 },

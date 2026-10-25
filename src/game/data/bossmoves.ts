@@ -101,14 +101,15 @@ export const BOSS_MOVES: Record<string, Bag> = {
     { k: 'beam', n: '얼음 광선', tele: 0.8, cnt: 1, dur: 1.6, w: 22, len: 700, sweep: 1.2, fx: 'frost', m: 0.4, pw: [0.8, 1] },
     { k: 'shield', n: '서리 갑주', tele: 0.7, v: 0.12, life: 12, fx: 'ice', ph: 1, pw: [0, 1.4] }],
     ult: { k: 'zone', n: '빙하기', tele: 1, at: 'scatter', n2: 7, r: 70, life: 8, dps: 0.07, slow: 0.6, fx: 'frost', wall: 1 } },
+  /* 뿌리 대성당 — 정글 뒷벽에 박힌 속 빈 고목. 땅이 먼저 들썩이고 · 나이테는 뛰어넘고 · 꽃은 꺾어야 낫지 않는다(entity/boss-root) */
   vine_lord: { c: '#7fd06a', every: 6.5, moves: [
-    { k: 'march', n: '뿌리 분출', tele: 0.5, cnt: 6, gap: 60, every: 0.18, h: 110, from: 'under', fx: 'plant', m: 1 },
-    { k: 'beam', n: '가시 채찍', tele: 0.55, cnt: 1, dur: 0.6, w: 22, len: 300, sweep: 2.6, fx: 'thorn', m: 0.6 },
+    { k: 'sig', sig: 'rroots', n: '뿌리 분출', tele: 0.3, cnt: 5, m: 1 },
     { k: 'rain', n: '씨앗 폭탄', tele: 0.6, form: 'scatter', cnt: 5, spread: 340, delay: 1, r: 54, shape: 'circle', fx: 'seed', zone: { r: 50, life: 4, dps: 0.08, slow: 0.25 }, m: 0.8 },
-    { k: 'sig', sig: 'grapple', n: '갈고리 덩굴', tele: 0.5, pose: 1, m: 1 },
-    { k: 'zone', n: '가시덤불', tele: 0.5, at: 'player', n2: 3, r: 60, life: 6, dps: 0.08, slow: 0.4, fx: 'seed', pw: [0.8, 1] },
-    { k: 'heal', n: '광합성', tele: 0.6, dur: 3, v: 0.08, brk: 0.04, fx: 'leaf', ph: 1, pw: [0, 1.3] }],
-    ult: { k: 'march', n: '숲의 분노', tele: 1, cnt: 9, gap: 60, every: 0.12, h: 130, both: 1, fx: 'plant', homing: 4, m: 1 } },
+    { k: 'sig', sig: 'rrings', n: '나이테 파동', tele: 0.3, cnt: 3, m: 1 },
+    { k: 'sig', sig: 'rbloom', n: '꽃 피는 철', tele: 0.3, cnt: 4, m: 1, ph: 1, pw: [0, 1.3, 1.1] },
+    { k: 'zone', n: '가시덤불', tele: 0.5, at: 'player', n2: 3, r: 60, life: 6, dps: 0.08, slow: 0.4, fx: 'seed', ph: 1, pw: [0, 0.8, 1] },
+    { k: 'sig', sig: 'rroots', n: '뿌리의 숲', tele: 0.3, cnt: 8, m: 1, ph: 2, pw: [0, 0, 1.4] }],
+    ult: { k: 'sig', sig: 'rfell', n: '쓰러지는 나무', tele: 1, m: 1.2 } },
   /* 모래시계 거상 — 피라미드 깊은 방 왕좌에 앉은 석상. 가슴의 모래시계가 목이고 막마다 뒤집힌다(entity/boss-hourglass) */
   sand_guardian: { c: '#f0c870', every: 6.5, moves: [
     { k: 'sig', sig: 'fist', n: '주먹 내리치기', tele: 0.3, m: 1.1 },
@@ -228,7 +229,7 @@ export const XFX_OF: Record<string, string> = { rune: 'rune', fire: 'fire', fros
    stagger 비틀거림(무거운 몸 — 멈춰 선다) · heat 과열(마법 · 원소 — 느려진다) · crack 균열(갑옷 · 껍데기 — 방어가 벌어진다). 사연: docs/code-history.md#h181 */
 /** 깨어날 때 넓혀 둘 싸움터(칸 — 너비 · 바닥에서 높이) — 몸 그림이 바위에 묻히지 않게(game/boss-arena) */
 export const BOSS_ARENA: Record<string, { w: number; h: number }> = {
-  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }, first_keeper: { w: 58, h: 26 }
+  king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }, first_keeper: { w: 58, h: 26 }, vine_lord: { w: 66, h: 34 }
 };
 export const BOSS_GAP: Record<string, string> = {
   king_slime: 'stagger', bone_lord: 'stagger', first_keeper: 'stagger', pursuer: 'stagger', mine_horror: 'stagger', ice_warden: 'stagger',

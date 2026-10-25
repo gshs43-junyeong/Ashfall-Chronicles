@@ -805,6 +805,7 @@ export const ITEMS: Record<string, ItemDef> = {
   /* --- 소환 --- */
   sum_slime:   { n: '잿물 등불', i: '🏮', type: 'summon', boss: 'king_slime', stack: 9, d: '지상에서 사용하면 잿물 군체가 불빛을 따라 기어 온다.' },
   sum_bone:    { n: '저주받은 두개골', i: '💀', type: 'summon', boss: 'bone_lord', stack: 9, d: '깊은 곳에서만 반응한다.' },
+  sum_vine:    { n: '고목의 씨앗', i: '🌰', type: 'summon', boss: 'vine_lord', stack: 9, d: '정글 땅에 묻으면 잠든 고목이 눈을 뜬다.' },
   sum_heart:   { n: '고동치는 고치', i: '🫀', type: 'summon', boss: 'corrupt_heart', stack: 9, d: '부패한 땅에서 사용하라.' },
   sum_frost:   { n: '얼어붙은 왕관', i: '🔷', type: 'summon', boss: 'frost_witch', stack: 9, d: '서리 지대에서 사용하라.' },
   sum_void:    { n: '별의 눈물', i: '💧', type: 'summon', boss: 'void_king', stack: 9, d: '심연 앞에서만 열린다.' },

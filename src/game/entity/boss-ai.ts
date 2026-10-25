@@ -44,6 +44,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
     else if (AI === 'b_organ') this.organAI(dt, world, p);              // 뼈 오르간(entity/boss-organ)
     else if (AI === 'b_hourglass') this.hgAI(dt, world);              // 모래시계 거상(entity/boss-hourglass)
     else if (AI === 'b_hive') this.hvAI(dt, world, p);                // 곪은 벌집 어미(entity/boss-hive)
+    else if (AI === 'b_root') this.rtAI(dt, world);                  // 뿌리 대성당(entity/boss-root)
     else if (AI === 'b_judge') this.jdAI(dt, world);                  // 판결석 좌상(entity/boss-judge)
     else if (AI === 'b_eclipse') this.ecAI(dt, world);                // 일식(entity/boss-eclipse)
     else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)

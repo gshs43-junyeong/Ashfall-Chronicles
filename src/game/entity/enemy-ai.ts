@@ -244,7 +244,8 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       case 'b_cocoon': G.cocoonPhaseFx(this, ph); break;             // 고치가 터진다 · 날개가 찢긴다(game/boss-cocoon-fx)
       case 'b_hourglass': G.hourglassPhaseFx(this); break;           // 모래시계가 뒤집힌다(game/boss-hourglass-fx)
       case 'b_hive': G.hivePhaseFx(this); break;                     // 벌집이 몸서리친다(game/boss-hive-fx)
-      case 'b_judge': G.judgePhaseFx(this); break;                   // 눈가리개가 갈라진다(game/boss-judge-fx)
+      case 'b_judge': G.judgePhaseFx(this); break;
+      case 'b_root': G.rootPhaseFx(this); break;                     // 잎과 수액빛이 쏟아진다(game/boss-root-fx)                   // 눈가리개가 갈라진다(game/boss-judge-fx)
       case 'b_eclipse': G.eclipsePhaseFx(this); break;               // 원판이 떨고 별 파편이 진다(game/boss-eclipse-fx)
       case 'b_slime':
         // 2페이즈 — 껍데기가 굳는다.
