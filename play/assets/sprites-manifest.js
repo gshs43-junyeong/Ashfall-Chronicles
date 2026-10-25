@@ -3888,15 +3888,15 @@ window.SPRITE_MANIFEST = {
       },
       "frost_witch": {
         "file": "boss/frost_witch.png",
-        "frameW": 76,
-        "frameH": 116,
+        "frameW": 176,
+        "frameH": 232,
         "count": 8,
-        "foot": -1.5,
-        "side": 2,
+        "foot": 12,
+        "side": 0,
         "death": 2,
         "scale": 1,
         "gap": 0,
-        "big": 2
+        "rig": 1
       },
       "void_king": {
         "file": "boss/void_king.png",
@@ -4103,18 +4103,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "frost_witch_pose": {
-        "file": "boss/frost_witch_pose.png",
-        "frameW": 122,
-        "frameH": 157,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 2,
-        "pose": 1
       },
       "void_king_pose": {
         "file": "boss/void_king_pose.png",
@@ -4379,6 +4367,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 480,
         "frameH": 240,
         "count": 3,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "frost_witch_parts": {
+        "file": "boss/frost_witch_parts.png",
+        "frameW": 112,
+        "frameH": 224,
+        "count": 5,
         "scale": 1,
         "gap": 0,
         "rig": 1

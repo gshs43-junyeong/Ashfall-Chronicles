@@ -239,7 +239,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['bone_frag', 1, 30, 45], ['sword_bone', 1, 1, 1], ['star_heart', 1, 1, 1], ['pick_iron', .6, 1, 1]] },
   corrupt_heart:{ n: '잿빛 고치', hp: 3600, dmg: 48, def: 18, spd: 150, ai: 'b_cocoon', w: 104, h: 262, c: '#8a847c', xp: 2000, gold: 900, boss: 1,
                  drops: [['corrupt_ess', 1, 30, 50], ['charm_leech', 1, 1, 1], ['star_heart', 1, 1, 1], ['mythril_ore', 1, 12, 20]] },
-  frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 67, def: 24, spd: 90, ai: 'b_witch', w: 68, h: 112, c: '#a8dcf0', xp: 3100, gold: 1600, boss: 1,
+  frost_witch: { n: '서리 마녀 실비아', hp: 5600, dmg: 67, def: 24, spd: 90, ai: 'b_witch', w: 84, h: 180, c: '#a8dcf0', xp: 3100, gold: 1600, boss: 1,
                  drops: [['frost_core', 1, 25, 40], ['staff_frost', 1, 1, 1], ['star_heart', 1, 1, 1], ['amul_swift', 1, 1, 1]] },
   void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 110, ai: 'b_void', w: 132, h: 176, c: '#5e3fa8', xp: 4500, gold: 5000, boss: 1,
                  drops: [['void_frag', 1, 30, 50], ['charm_star', 1, 1, 1], ['star_heart', 1, 1, 1]] },

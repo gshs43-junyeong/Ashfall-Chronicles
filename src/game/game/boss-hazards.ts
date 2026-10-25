@@ -237,7 +237,7 @@ export const BossHazardPart: Bag = {
           c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
         } break;
         case 'push': drawPush(c, h, cx0, cy0, this.W, this.H, T0, Math.min(1, h.t * 4, (h.life - h.t) * 3)); break;
-        case 'decoy': drawDecoy(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4), T0); break;
+        case 'decoy': if (h.type === 'frost_witch' && this.spritesOn) this.drawWitchGhost(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4)); else drawDecoy(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4), T0); break;
         case 'aura': {
           const b = this.hzBoss(h); if (!b) break;
           const box = { x: b.x - cx0, y: b.y - cy0, w: b.w, h: b.h, cx: b.cx - cx0, cy: b.cy - cy0, feet: b.y + b.h - cy0, face: b.facing < 0 ? -1 : 1 };

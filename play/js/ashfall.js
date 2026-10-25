@@ -1942,13 +1942,13 @@
       this.m = o.mods || {};
       this.th = { ...DEF_THEME, ...o.theme || {} };
       this.rng = new RNG(o.seed);
-      const { ar, cs, od, hp } = this.d, ease7 = o.ease || 0;
+      const { ar, cs, od, hp } = this.d, ease8 = o.ease || 0;
       this.r = 54.4 - 4.48 * cs;
       this.pre = ar < 5 ? 1.2 + 0.6 * (5 - ar) / 5 : 1.2 - 0.75 * (ar - 5) / 5;
       this.fade = Math.min(0.4, this.pre * 2 / 3);
-      this.w300 = (80 - 6 * od) / 1e3 + ease7 * 0.5;
-      this.w100 = (140 - 8 * od) / 1e3 + ease7 * 0.75;
-      this.w50 = (200 - 10 * od) / 1e3 + ease7;
+      this.w300 = (80 - 6 * od) / 1e3 + ease8 * 0.5;
+      this.w100 = (140 - 8 * od) / 1e3 + ease8 * 0.75;
+      this.w50 = (200 - 10 * od) / 1e3 + ease8;
       this.beat = 60 / this.d.bpm;
       this.t = 0;
       this.objs = [];
@@ -2160,14 +2160,14 @@
       this.cy = y;
     }
     /** 누름 — id 는 손가락 · 단추 · 키마다 다르게(둘을 번갈아 눌러 연타) · at 은 그 순간의 겨루기 시각 */
-    press(id, at = this.t) {
+    press(id, at2 = this.t) {
       if (this.state !== "play") return;
       this.held.add(id);
       for (let i = this.head; i < this.objs.length; i++) {
         const o = this.objs[i];
-        if (o.t - at > this.pre) break;
+        if (o.t - at2 > this.pre) break;
         if (o.done || o.k === "p" || o.head) continue;
-        const dt = at - o.t;
+        const dt = at2 - o.t;
         const hr = this.r * (this.o.hitPad || 1);
         if (dt < -this.w50) {
           if (dt > -this.w50 - 0.25 && this.near(o, hr)) this.shake = 0.25;
@@ -2182,7 +2182,7 @@
           this.judge(res, o.x, o.y, "c");
         } else {
           o.head = true;
-          o.headT = at;
+          o.headT = at2;
           o.track = true;
           this.score(res === 300 ? 0.5 : 0.25, "tick");
           this.combo++;
@@ -8489,8 +8489,8 @@
       def: 24,
       spd: 90,
       ai: "b_witch",
-      w: 68,
-      h: 112,
+      w: 84,
+      h: 180,
       c: "#a8dcf0",
       xp: 3100,
       gold: 1600,
@@ -15022,11 +15022,11 @@
     blink: "lunge",
     burrow: "lunge"
   };
-  function movePose(K, d) {
+  function movePose(K2, d) {
     if (d.pose !== void 0) return d.pose;
-    const i = K.moves.indexOf(d);
+    const i = K2.moves.indexOf(d);
     if (i >= 0 && i < 3) return i;
-    const f = MOVE_FAM[d.k], j = K.moves.slice(0, 3).findIndex((m) => MOVE_FAM[m.k] === f);
+    const f = MOVE_FAM[d.k], j = K2.moves.slice(0, 3).findIndex((m) => MOVE_FAM[m.k] === f);
     return j >= 0 ? j : 0;
   }
 
@@ -17265,8 +17265,8 @@
       const { WW: WW2 } = this.dims, log = this._canopyLog || [];
       let n = 0;
       for (const r of log) {
-        const at = this.tiles[r.a];
-        if (at !== T.WOOD && at !== r.t) continue;
+        const at2 = this.tiles[r.a];
+        if (at2 !== T.WOOD && at2 !== r.t) continue;
         for (const k of r.c) {
           if (this.tiles[k] !== T.AIR || this.walls[k]) continue;
           const x = k % WW2, y = k / WW2 | 0;
@@ -18624,8 +18624,8 @@
         const x0 = b.x0 + RIG.edge, x1 = b.x1 - RIG.edge;
         for (let i = 0; i < n; i++) {
           const aim = Math.round(x0 + (x1 - x0) * (i + 0.5) / n);
-          let at = null;
-          for (let d = 0; d <= 120 && at === null; d++) {
+          let at2 = null;
+          for (let d = 0; d <= 120 && at2 === null; d++) {
             for (const tx of d ? [aim - d, aim + d] : [aim]) {
               if (tx < x0 || tx > x1) continue;
               const s = this.surface[tx];
@@ -18636,15 +18636,15 @@
               for (let k = -LEG; k <= LEG && flat; k++) if (this.surface[tx + k] !== s) flat = false;
               for (let k = -LEG - 2; k <= LEG + 2 && flat; k++) if (Math.abs(this.surface[tx + k] - s) > 1) flat = false;
               if (flat) {
-                at = tx;
+                at2 = tx;
                 break;
               }
             }
           }
-          if (at === null) continue;
-          const ty = this.surface[at];
-          this.objects.push(this.fitRig({ type: "rig", tx: at, ty, wake: wake++ }));
-          if (clear) this.clearRigSite(at, ty);
+          if (at2 === null) continue;
+          const ty = this.surface[at2];
+          this.objects.push(this.fitRig({ type: "rig", tx: at2, ty, wake: wake++ }));
+          if (clear) this.clearRigSite(at2, ty);
         }
       }
     },
@@ -18870,42 +18870,42 @@
         return feats[fi++ % feats.length];
       };
       for (let i = 0; i < Math.round(5 * WSX2); i++) {
-        const rw = r.int(32, 44), rh = r.int(10, 13), at = place(rw, rh, 80, feat);
-        if (!at) continue;
-        this.carveIsland(at.cx, at.cy, rw, rh, r);
-        this.skyIslands.push({ x: at.cx, y: at.cy, w: rw, k: "grand" });
+        const rw = r.int(32, 44), rh = r.int(10, 13), at2 = place(rw, rh, 80, feat);
+        if (!at2) continue;
+        this.carveIsland(at2.cx, at2.cy, rw, rh, r);
+        this.skyIslands.push({ x: at2.cx, y: at2.cy, w: rw, k: "grand" });
         const side = r.chance(0.5) ? 1 : -1;
-        this.skyGrotto(at.cx - side * Math.round(rw * 0.3), at.cy, Math.round(rw * 0.42), rh, side, r);
-        this.skyFeature(nextFeat(), at.cx + side * Math.round(rw * 0.45), at.cy, r, () => hint++);
+        this.skyGrotto(at2.cx - side * Math.round(rw * 0.3), at2.cy, Math.round(rw * 0.42), rh, side, r);
+        this.skyFeature(nextFeat(), at2.cx + side * Math.round(rw * 0.45), at2.cy, r, () => hint++);
       }
       for (let i = 0; i < Math.round(13 * WSX2); i++) {
-        const rw = r.int(11, 20), rh = r.int(6, 9), at = place(rw, rh, 60, feat);
-        if (!at) continue;
-        this.carveIsland(at.cx, at.cy, rw, rh, r);
+        const rw = r.int(11, 20), rh = r.int(6, 9), at2 = place(rw, rh, 60, feat);
+        if (!at2) continue;
+        this.carveIsland(at2.cx, at2.cy, rw, rh, r);
         const k = nextFeat();
-        this.skyIslands.push({ x: at.cx, y: at.cy, w: rw, k });
-        this.skyFeature(k, at.cx, at.cy, r, () => hint++);
+        this.skyIslands.push({ x: at2.cx, y: at2.cy, w: rw, k });
+        this.skyFeature(k, at2.cx, at2.cy, r, () => hint++);
       }
       for (let i = 0; i < Math.round(30 * WSX2); i++) {
-        const rw = r.int(3, 7), rh = r.int(2, 4), at = place(rw, rh, 30, () => r.int(SY2(5), SKY_Y2 - 15));
-        if (!at) continue;
+        const rw = r.int(3, 7), rh = r.int(2, 4), at2 = place(rw, rh, 30, () => r.int(SY2(5), SKY_Y2 - 15));
+        if (!at2) continue;
         const cloud = r.chance(0.3);
-        for (let x = at.cx - rw; x <= at.cx + rw; x++) {
-          const t = (x - at.cx) / (rw + 0.5);
+        for (let x = at2.cx - rw; x <= at2.cx + rw; x++) {
+          const t = (x - at2.cx) / (rw + 0.5);
           const d = Math.max(1, Math.round(rh * Math.sqrt(Math.max(0, 1 - t * t))));
-          for (let y = at.cy; y < at.cy + d; y++) {
-            this.set(x, y, cloud ? T.CLOUD : y === at.cy ? T.SKYGRASS : y === at.cy + 1 ? T.CLOUD : T.SKYSTONE);
+          for (let y = at2.cy; y < at2.cy + d; y++) {
+            this.set(x, y, cloud ? T.CLOUD : y === at2.cy ? T.SKYGRASS : y === at2.cy + 1 ? T.CLOUD : T.SKYSTONE);
             this.setWall(x, y, 9);
           }
-          if (!cloud && Math.abs(x - at.cx) < rw - 1) {
+          if (!cloud && Math.abs(x - at2.cx) < rw - 1) {
             const q = r.next();
-            if (q < 0.16) this.set(x, at.cy - 1, T.FLOWER);
-            else if (q < 0.22) this.set(x, at.cy - 1, T.WEED);
+            if (q < 0.16) this.set(x, at2.cy - 1, T.FLOWER);
+            else if (q < 0.22) this.set(x, at2.cy - 1, T.WEED);
           }
         }
-        if (!cloud && rh >= 3 && r.chance(0.3)) this.set(at.cx + r.int(-1, 1), at.cy + 1, T.AETHER);
-        else if (!cloud && r.chance(0.08)) this.set(at.cx, at.cy - 1, T.STARCRYSTAL);
-        this.skyIslands.push({ x: at.cx, y: at.cy, w: rw, k: cloud ? "cloud" : "islet" });
+        if (!cloud && rh >= 3 && r.chance(0.3)) this.set(at2.cx + r.int(-1, 1), at2.cy + 1, T.AETHER);
+        else if (!cloud && r.chance(0.08)) this.set(at2.cx, at2.cy - 1, T.STARCRYSTAL);
+        this.skyIslands.push({ x: at2.cx, y: at2.cy, w: rw, k: cloud ? "cloud" : "islet" });
       }
     },
     /** 섬 윗면 한 자리를 비운다 — 섬마다 난 나무가 찾아갈 거리를 덮지 않게. */
@@ -20467,27 +20467,27 @@
       let yGuard = yBot;
       const bg = spec.bg, wall = spec.wall || T.RUINBRICK, floorT = spec.floor || T.RUINTILE;
       const traps = spec.traps || ["dart", "crumble"];
-      const K = (x2, y) => y * WW2 + x2;
+      const K2 = (x2, y) => y * WW2 + x2;
       const dug = /* @__PURE__ */ new Set();
       const ok = (x2, y) => this.inB(x2, y) && this.get(x2, y) !== T.BEDROCK && !this.locked(x2, y);
       const dig = (x2, y) => {
         if (!ok(x2, y)) return;
         this.set(x2, y, T.AIR);
         this.setWall(x2, y, bg);
-        dug.add(K(x2, y));
+        dug.add(K2(x2, y));
       };
       const brick = (x2, y) => {
-        if (y < yGuard && ok(x2, y) && !dug.has(K(x2, y)) && TILE_DEF[this.get(x2, y)].solid === 1) this.set(x2, y, wall);
+        if (y < yGuard && ok(x2, y) && !dug.has(K2(x2, y)) && TILE_DEF[this.get(x2, y)].solid === 1) this.set(x2, y, wall);
       };
       const floorAt = (x2, y) => {
-        if (y < yGuard && ok(x2, y) && !dug.has(K(x2, y))) this.set(x2, y, floorT);
+        if (y < yGuard && ok(x2, y) && !dug.has(K2(x2, y))) this.set(x2, y, floorT);
       };
       let x = sx, f = sy, stop = false, inWall = false, stopAtAir = !!o.stopAtAir;
       let dir = o.dir || (rng.chance(0.5) ? 1 : -1);
       const cols = [];
       const col = (cx, cf) => {
         if (stopAtAir) {
-          const open = this.get(cx, cf) === T.AIR && !dug.has(K(cx, cf));
+          const open = this.get(cx, cf) === T.AIR && !dug.has(K2(cx, cf));
           if (open && inWall) stop = true;
           if (!open) inWall = true;
         }
@@ -20565,9 +20565,9 @@
       const well = () => {
         const D = rng.int(9, 11), Ws = D + 1;
         const xw = x, top = f - H + 1;
-        const at = (i) => xw + dir * i;
+        const at2 = (i) => xw + dir * i;
         for (let i = 0; i <= Ws + 1; i++) {
-          const cx = at(i);
+          const cx = at2(i);
           for (let y = top - 1; y <= f + D; y++) {
             const edge = i === 0 || i === Ws + 1 || y === top - 1;
             if (edge) brick(cx, y);
@@ -20578,13 +20578,13 @@
           brick(cx, top - 2);
         }
         const stepT = kind === "foothold" && rng.chance(0.4) ? T.PLATFORM : wall;
-        this.set(at(1), f + 1, stepT);
-        for (let k = 1; k <= D - 3; k++) this.set(at(1 + k), f + k + 1, stepT);
-        if (ok(at(Ws + 1), f + D - 1)) this.set(at(Ws + 1), f + D - 1, dir > 0 ? T.DART_L : T.DART_R);
-        if (kind === "nofoothold") this.set(at(D), f + D, T.SPIKE);
-        this.putDecor(at(Ws), top + 1, spec.torch || T.TORCH, "wall");
-        this._entranceSpots.push([at(Ws - 1), f + D]);
-        this._entranceRooms.push([Math.min(at(0), at(Ws + 1)), top - 1, Ws + 2, D + H + 1, f + D]);
+        this.set(at2(1), f + 1, stepT);
+        for (let k = 1; k <= D - 3; k++) this.set(at2(1 + k), f + k + 1, stepT);
+        if (ok(at2(Ws + 1), f + D - 1)) this.set(at2(Ws + 1), f + D - 1, dir > 0 ? T.DART_L : T.DART_R);
+        if (kind === "nofoothold") this.set(at2(D), f + D, T.SPIKE);
+        this.putDecor(at2(Ws), top + 1, spec.torch || T.TORCH, "wall");
+        this._entranceSpots.push([at2(Ws - 1), f + D]);
+        this._entranceRooms.push([Math.min(at2(0), at2(Ws + 1)), top - 1, Ws + 2, D + H + 1, f + D]);
         dir = -dir;
         f += D;
         col(xw, f);
@@ -23791,7 +23791,7 @@
       g.clearRect(0, 0, W, cv.height);
       for (let i = 0; i < ids.length; i++)
         g.drawImage(this.atlas, 0, ids[i] * TS, W, TS, 0, i * 4 * TS, W, TS);
-      const at = (x, y) => (y * W + x) * 4;
+      const at2 = (x, y) => (y * W + x) * 4;
       const rng = new RNG("ashfall-leaf-thin");
       const eraser = (px) => (row, n, tr2, tg, tb) => {
         for (let k = 0; k < n * this.V; k++) {
@@ -23801,7 +23801,7 @@
               if (dx * dx + dy * dy > r * r) continue;
               const x = Math.round(bx + dx), y = Math.round(by + dy);
               if (x < 0 || x >= W || y < 0 || y >= TS) continue;
-              const p = at(x, row + y);
+              const p = at2(x, row + y);
               if (!px[p + 3]) continue;
               if (Math.abs(px[p] - tr2) + Math.abs(px[p + 1] - tg) + Math.abs(px[p + 2] - tb) < 34) continue;
               px[p + 3] = 0;
@@ -33928,10 +33928,10 @@
       return n * (t -= 2.625 / d) * t + 0.984375;
     }
   };
-  function pop(t, peak = 1.5, at = 0.18) {
+  function pop(t, peak = 1.5, at2 = 0.18) {
     if (t <= 0) return 1;
-    if (t < at) return 1 + (peak - 1) * EASE.outQuad(t / at);
-    return 1 + (peak - 1) * (1 - EASE.inOutQuad(Math.min(1, (t - at) / (1 - at))));
+    if (t < at2) return 1 + (peak - 1) * EASE.outQuad(t / at2);
+    return 1 + (peak - 1) * (1 - EASE.inOutQuad(Math.min(1, (t - at2) / (1 - at2))));
   }
   var Tweens = class {
     constructor() {
@@ -36587,23 +36587,23 @@
       return this.k.length;
     }
     push(k, f) {
-      const K = this.k, F = this.f;
-      let i = K.length;
-      K.push(k);
+      const K2 = this.k, F = this.f;
+      let i = K2.length;
+      K2.push(k);
       F.push(f);
       while (i > 0) {
         const p = i - 1 >> 1;
         if (F[p] <= f) break;
-        K[i] = K[p];
+        K2[i] = K2[p];
         F[i] = F[p];
         i = p;
       }
-      K[i] = k;
+      K2[i] = k;
       F[i] = f;
     }
     pop() {
-      const K = this.k, F = this.f, top = K[0], lk = K.pop(), lf = F.pop();
-      const n = K.length;
+      const K2 = this.k, F = this.f, top = K2[0], lk = K2.pop(), lf = F.pop();
+      const n = K2.length;
       if (n) {
         let i = 0;
         for (; ; ) {
@@ -36611,11 +36611,11 @@
           if (c >= n) break;
           if (c + 1 < n && F[c + 1] < F[c]) c++;
           if (F[c] >= lf) break;
-          K[i] = K[c];
+          K2[i] = K2[c];
           F[i] = F[c];
           i = c;
         }
-        K[i] = lk;
+        K2[i] = lk;
         F[i] = lf;
       }
       return top;
@@ -36740,18 +36740,18 @@
       const dx = Math.abs(x - gx), dy = Math.abs(y - gy);
       return Math.max(dx, dy) + 0.41 * Math.min(dx, dy);
     };
-    const g = /* @__PURE__ */ new Map(), from = /* @__PURE__ */ new Map(), at = /* @__PURE__ */ new Map();
+    const g = /* @__PURE__ */ new Map(), from = /* @__PURE__ */ new Map(), at2 = /* @__PURE__ */ new Map();
     const open = new Heap(), closed = /* @__PURE__ */ new Set();
     const s0 = KEY(sx, sy);
     g.set(s0, 0);
-    at.set(s0, [sx, sy]);
+    at2.set(s0, [sx, sy]);
     open.push(s0, H(sx, sy));
     let best = s0, bestH = H(sx, sy), n = 0;
     while (open.size && n++ < maxNodes) {
       const cur = open.pop();
       if (closed.has(cur)) continue;
       closed.add(cur);
-      const [x, y] = at.get(cur), hh = H(x, y);
+      const [x, y] = at2.get(cur), hh = H(x, y);
       if (hh < bestH) {
         bestH = hh;
         best = cur;
@@ -36771,13 +36771,13 @@
         if (ng >= (g.get(k) ?? Infinity)) continue;
         g.set(k, ng);
         from.set(k, cur);
-        at.set(k, [nx, ny]);
+        at2.set(k, [nx, ny]);
         open.push(k, ng + H(nx, ny));
       }
     }
     if (best === s0) return null;
     const out = [];
-    for (let k = best; k !== void 0; k = from.get(k)) out.push(at.get(k));
+    for (let k = best; k !== void 0; k = from.get(k)) out.push(at2.get(k));
     return out.reverse();
   }
 
@@ -38320,8 +38320,8 @@
   var BossMoves = {
     /** 매 프레임(호스트) — 기술 중이면 true(몸놀림을 건너뛴다) */
     tickMoves(dt, world, p, dd) {
-      const K = BOSS_MOVES[this.type];
-      if (!K) return false;
+      const K2 = BOSS_MOVES[this.type];
+      if (!K2) return false;
       this.mvHist(dt);
       const fly = this.flies();
       const mv = this.mv;
@@ -38331,7 +38331,7 @@
           this.vx *= 0.82;
           if (fly) this.vy *= 0.82;
           this.move(dt, world, { gravMul: fly ? 0 : 1 });
-          if (mv.t >= mv.d.tele) mv.run = this.mvStart(mv.d, p, world, K) || { busy: 0 };
+          if (mv.t >= mv.d.tele) mv.run = this.mvStart(mv.d, p, world, K2) || { busy: 0 };
           return true;
         }
         const r = mv.run;
@@ -38343,37 +38343,37 @@
           this.move(dt, world, { gravMul: fly ? 0 : 1 });
         }
         if (r.t >= r.busy) {
-          const ult = mv.d === K.ult;
+          const ult = mv.d === K2.ult;
           this.mv = null;
           this.burrowT = 0;
           this.gapOpen(ult);
-          this.mvCd = K.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3) * (this.twinLive() ? 1.6 : 1);
+          this.mvCd = K2.every * (1 - this.pf * 0.3) * (0.85 + Math.random() * 0.3) * (this.twinLive() ? 1.6 : 1);
         }
         return true;
       }
-      if (this.mvCd === void 0) this.mvCd = K.every * 0.5;
+      if (this.mvCd === void 0) this.mvCd = K2.every * 0.5;
       this.mvCd -= dt;
       if (this.mvCd > 0 || dd > 900 || p.dead || p.hp <= 0) return false;
       let d;
       this.mvN = (this.mvN || 0) + 1;
-      if (K.ult && this.lastPh() && (!this.ultUsed || this.mvN % 3 === 0)) {
-        d = K.ult;
+      if (K2.ult && this.lastPh() && (!this.ultUsed || this.mvN % 3 === 0)) {
+        d = K2.ult;
         this.ultUsed = 1;
       } else {
-        d = this.mvPick(K) || K.moves[0];
+        d = this.mvPick(K2) || K2.moves[0];
       }
       this.mvLast = d;
       this.mv = { d, t: 0, run: null };
       this.gapMark();
-      app.bossHazard({ k: "call", txt: d.n, c: K.c, life: Math.max(1.6, d.tele + 0.8), ref: this, nid: this.nid, x: this.cx, y: this.y });
-      app.bossHazard({ k: "aura", c: K.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid, mk: d.k, sig: d.sig, fx: this.mvFx(d), proj: d.proj, cnt: d.cnt, sd: Math.random() * 99 });
-      app.sfxAt && app.sfxAt(d === K.ult ? "chapter" : "sk_mark", this.cx / TS, this.cy / TS);
+      app.bossHazard({ k: "call", txt: d.n, c: K2.c, life: Math.max(1.6, d.tele + 0.8), ref: this, nid: this.nid, x: this.cx, y: this.y });
+      app.bossHazard({ k: "aura", c: K2.c, life: d.tele, tele: d.tele, ref: this, nid: this.nid, mk: d.k, sig: d.sig, fx: this.mvFx(d), proj: d.proj, cnt: d.cnt, sd: Math.random() * 99 });
+      app.sfxAt && app.sfxAt(d === K2.ult ? "chapter" : "sk_mark", this.cx / TS, this.cy / TS);
       return true;
     },
     /** 마디에 맞춰 고른다 — ph 마디부터 열리고 pw[마디] 가 무게(없으면 1). 날아오른 몸은 땅 기술을 건너뛴다 · 막이 남아 있으면 또 걸지 않는다 */
-    mvPick(K) {
+    mvPick(K2) {
       const ph = this.phase || 0, air = !!this.airborne;
-      const pool = K.moves.filter((m) => m !== this.mvLast && ph >= (m.ph || 0) && !(air && GROUND_MOVE[m.k]) && !(m.k === "shield" && this.shield > 0 || m.k === "ward" && this.ward > 0 || m.k === "heal" && this.hp > this.maxHp * 0.9));
+      const pool = K2.moves.filter((m) => m !== this.mvLast && ph >= (m.ph || 0) && !(air && GROUND_MOVE[m.k]) && !(m.k === "shield" && this.shield > 0 || m.k === "ward" && this.ward > 0 || m.k === "heal" && this.hp > this.maxHp * 0.9));
       const wt = (m) => m.pw ? m.pw[Math.min(ph, m.pw.length - 1)] : 1;
       let sum = 0;
       for (const m of pool) sum += wt(m);
@@ -38412,7 +38412,7 @@
       if (d.fx) return d.fx;
       return d.k === "quake" ? "rock" : d.k === "leap" ? d.wfx || "" : "";
     },
-    strike(x, y, o, K, dm) {
+    strike(x, y, o, K2, dm) {
       const fy = this.floorY(x, y - TS * 3);
       const zoneDmg = o.zone ? this.dmg * (o.zone.dps || 0) : 0, fx = o.fx, shape = o.shape || "circle";
       const dir = o.dir || (shape === "col" ? DOWN_COL[fx] ? "down" : "up" : ARC_FX[fx] ? "arc" : fx === "spore" || fx === "burrow" ? "up" : fx === "rune" ? "mine" : "down");
@@ -38427,7 +38427,7 @@
         delay: o.delay || 0.8,
         life: (o.delay || 0.8) + 0.6,
         dmg: this.dmg * dm,
-        c: K.c,
+        c: K2.c,
         fx,
         zone: o.zone,
         zoneDmg,
@@ -38440,25 +38440,25 @@
       });
     },
     /** 기술 실행 — 돌려준 busy 동안 보스가 묶인다(tick 이 있으면 그 동안 움직임을 그것이 맡는다) */
-    mvStart(d, p, world, K) {
+    mvStart(d, p, world, K2) {
       const m = (d.m ?? 1) * BOSS_MOVE_DMG, fly = this.flies(), E = this;
       const xf = d.fx || XFX_OF[d.proj] || "rock";
       const extra = () => {
-        if (d.march) this.mvStart({ k: "march", cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: xf, m: 0.8 }, p, world, K);
-        if (d.wall) this.mvStart({ k: "wall", times: 2, spd: 280, gap: 110, every: 1.4, fx: xf, m: 0.7 }, p, world, K);
-        if (d.zones) this.mvStart({ k: "zone", at: "player", n2: 3, r: 60, life: 5, dps: 0.1, fx: "flesh" }, p, world, K);
-        if (d.homing) this.mvStart({ k: "homing", cnt: d.homing, spd: 200, turn: 2, proj: "poison", m: 0.6 }, p, world, K);
-        if (d.rain) this.mvStart({ k: "rain", form: "trail", cnt: 6, every: 0.4, delay: 0.8, r: 50, fx: "meteor", m: 0.8 }, p, world, K);
-        if (d.summon) this.mvStart({ k: "summon", mob: d.summon, cnt: 2 }, p, world, K);
+        if (d.march) this.mvStart({ k: "march", cnt: 8, gap: 60, every: 0.12, h: 130, both: 1, fx: xf, m: 0.8 }, p, world, K2);
+        if (d.wall) this.mvStart({ k: "wall", times: 2, spd: 280, gap: 110, every: 1.4, fx: xf, m: 0.7 }, p, world, K2);
+        if (d.zones) this.mvStart({ k: "zone", at: "player", n2: 3, r: 60, life: 5, dps: 0.1, fx: "flesh" }, p, world, K2);
+        if (d.homing) this.mvStart({ k: "homing", cnt: d.homing, spd: 200, turn: 2, proj: "poison", m: 0.6 }, p, world, K2);
+        if (d.rain) this.mvStart({ k: "rain", form: "trail", cnt: 6, every: 0.4, delay: 0.8, r: 50, fx: "meteor", m: 0.8 }, p, world, K2);
+        if (d.summon) this.mvStart({ k: "summon", mob: d.summon, cnt: 2 }, p, world, K2);
       };
       switch (d.k) {
         case "sig":
-          return this.sigStart(d, p, world, K);
+          return this.sigStart(d, p, world, K2);
         // 그 보스만의 기술(entity/boss-signature)
         case "heal":
         case "shield":
         case "ward":
-          return this.formMove(d, p, world, K);
+          return this.formMove(d, p, world, K2);
         // 치유 · 방어막 · 결계(entity/boss-forms)
         case "leap": {
           const times = d.times || 1;
@@ -38476,7 +38476,7 @@
               const tx = p.cx + p.vx * 0.4;
               this.vy = -860;
               this.vx = clamp((tx - this.cx) / 1.05, -720, 720);
-              this.strike(tx, p.y + p.h, { r: Math.max(90, this.w * 0.6), delay: 1.05, fx: "shadow" }, K, m * 0.9);
+              this.strike(tx, p.y + p.h, { r: Math.max(90, this.w * 0.6), delay: 1.05, fx: "shadow" }, K2, m * 0.9);
             }
             r2.at += dt;
             this.move(dt, world);
@@ -38487,10 +38487,10 @@
               app.shake = Math.max(app.shake, 12);
               const fy = this.y + this.h;
               for (let k = 0; k < (d.waves ? d.waves : 0); k++) for (const s of [-1, 1])
-                this.hz({ k: "wave", x: this.cx + s * (this.w / 2 + k * 40), y: fy, vx: s * (d.wspd || 340) * (1 - k * 0.15), w: 26, hh: 30, life: 2.6, dmg: this.dmg * m * 0.7, c: K.c, fx: d.wfx || "rock", sd: Math.random() * 99 });
-              app.vfx.shock(this.cx, fy - 4, 140, K.c, 0.4, 10, 0.3);
-              app.vfx.crack(this.cx, fy, -1, 120, K.c, 0.8);
-              app.vfx.crack(this.cx, fy, 1, 120, K.c, 0.8);
+                this.hz({ k: "wave", x: this.cx + s * (this.w / 2 + k * 40), y: fy, vx: s * (d.wspd || 340) * (1 - k * 0.15), w: 26, hh: 30, life: 2.6, dmg: this.dmg * m * 0.7, c: K2.c, fx: d.wfx || "rock", sd: Math.random() * 99 });
+              app.vfx.shock(this.cx, fy - 4, 140, K2.c, 0.4, 10, 0.3);
+              app.vfx.crack(this.cx, fy, -1, 120, K2.c, 0.8);
+              app.vfx.crack(this.cx, fy, 1, 120, K2.c, 0.8);
               if (r2.n >= times) r2.busy = r2.t + 0.35;
             }
           };
@@ -38500,18 +38500,18 @@
           let last = 0;
           if (d.form === "cage") {
             const n = d.cnt || 7, gapI = Math.floor(Math.random() * n), gx = d.gapX || 46;
-            for (let i = 0; i < n; i++) if (i !== gapI) this.strike(p.cx + (i - (n - 1) / 2) * gx, p.y + p.h, { shape: "col", w: gx - 6, h: 160, delay: d.delay, fx: d.fx, dir: "up" }, K, m);
+            for (let i = 0; i < n; i++) if (i !== gapI) this.strike(p.cx + (i - (n - 1) / 2) * gx, p.y + p.h, { shape: "col", w: gx - 6, h: 160, delay: d.delay, fx: d.fx, dir: "up" }, K2, m);
             last = d.delay;
           } else if (d.form === "trail") {
             for (let i = 0; i < d.cnt; i++) app.after(i * d.every, () => {
-              if (!E.dead) E.strike(p.cx + p.vx * 0.3, p.y + p.h, d, K, m);
+              if (!E.dead) E.strike(p.cx + p.vx * 0.3, p.y + p.h, d, K2, m);
             });
             last = d.cnt * d.every;
           } else {
             for (let i = 0; i < d.cnt; i++) {
               const x = p.cx + (Math.random() - 0.5) * (d.spread || 360);
               app.after(i * 0.08, () => {
-                if (!E.dead) E.strike(x, p.y + p.h, d, K, m);
+                if (!E.dead) E.strike(x, p.y + p.h, d, K2, m);
               });
             }
             last = d.cnt * 0.08;
@@ -38524,7 +38524,7 @@
           for (let i = 0; i < d.cnt; i++) {
             const x = p.cx + (Math.random() - 0.5) * (d.spread || 400);
             app.after(i * 0.07, () => {
-              if (!E.dead) E.strike(x, p.y + p.h, { r: 40, delay: d.delay, fx: d.fx || "rock", dir: "down" }, K, m);
+              if (!E.dead) E.strike(x, p.y + p.h, { r: 40, delay: d.delay, fx: d.fx || "rock", dir: "down" }, K2, m);
             });
           }
           extra();
@@ -38537,7 +38537,7 @@
             app.after(i * d.every, () => {
               if (E.dead) return;
               const x = d.from === "under" ? p.cx : E.cx + s * (d.gap || 56) * (i + 1);
-              E.strike(x, d.from === "under" ? p.y + p.h : E.y + E.h, { shape: "col", w: 38, h: d.h || 120, delay: 0.45, fx: d.fx }, K, m);
+              E.strike(x, d.from === "under" ? p.y + p.h : E.y + E.h, { shape: "col", w: 38, h: d.h || 120, delay: 0.45, fx: d.fx }, K2, m);
             });
           }
           if (fromSky) app.shake = Math.max(app.shake, 4);
@@ -38577,7 +38577,7 @@
               tele: 0.55,
               life: 0.55 + (d.dur || 2),
               dmg: this.dmg * m,
-              c: K.c,
+              c: K2.c,
               fx: d.fx,
               sd: Math.random() * 99,
               ref: follow ? this : void 0,
@@ -38597,7 +38597,7 @@
               const a = off + i / n * TAU;
               app.projs.push(new Proj(E.cx, E.cy, Math.cos(a) * (d.spd || 240), Math.sin(a) * (d.spd || 240), E.dmg * m, "enemy", d.proj || "dark"));
             }
-            app.vfx.shock(E.cx, E.cy, Math.max(E.w, E.h), K.c, 0.3, 6);
+            app.vfx.shock(E.cx, E.cy, Math.max(E.w, E.h), K2.c, 0.3, 6);
           });
           extra();
           return { busy: (d.times || 1) * (d.every || 0.5) + 0.3 };
@@ -38620,7 +38620,7 @@
           };
           extra();
           if (d.blink) app.after(d.dur * 0.5, () => {
-            if (!E.dead) E.mvStart({ k: "blink", times: 2, r: 90, m: 1 }, p, world, K);
+            if (!E.dead) E.mvStart({ k: "blink", times: 2, r: 90, m: 1 }, p, world, K2);
           });
           return r;
         }
@@ -38632,7 +38632,7 @@
               if (!r2.aimed) {
                 r2.aimed = 1;
                 r2.a = angleTo(this.cx, this.cy, p.cx, p.cy);
-                this.hz({ k: "line", x0: this.cx, y0: this.cy, x1: this.cx + Math.cos(r2.a) * 700, y1: this.cy + Math.sin(r2.a) * 700, life: 0.4, c: K.c, w: 3 });
+                this.hz({ k: "line", x0: this.cx, y0: this.cy, x1: this.cx + Math.cos(r2.a) * 700, y1: this.cy + Math.sin(r2.a) * 700, life: 0.4, c: K2.c, w: 3 });
               }
               this.vx *= 0.8;
               if (fly) this.vy *= 0.8;
@@ -38644,7 +38644,7 @@
               const sp = this.spd * (d.spd || 3.4);
               this.vx = Math.cos(r2.a) * sp;
               if (fly) this.vy = Math.sin(r2.a) * sp;
-              if (Math.random() < 0.6) app.parts.push(new Part(this.cx, this.cy, K.c, 0, 0.35));
+              if (Math.random() < 0.6) app.parts.push(new Part(this.cx, this.cy, K2.c, 0, 0.35));
               if (r2.pt >= 0.38) {
                 r2.ph = 2;
                 r2.pt = 0;
@@ -38668,47 +38668,47 @@
           for (let i = 0; i < (d.times || 3); i++) app.after(i * 0.62, () => {
             if (E.dead) return;
             const side = p.facing > 0 ? -1 : 1;
-            for (let q = 0; q < 14; q++) app.parts.push(new Part(E.cx, E.cy, K.c, -30, 0.6));
+            for (let q = 0; q < 14; q++) app.parts.push(new Part(E.cx, E.cy, K2.c, -30, 0.6));
             E.x = clamp(p.cx + side * 80 - E.w / 2, TS * 2, app.world.dims.WW * TS - TS * 3);
             E.y = fly ? p.cy - E.h / 2 - 10 : p.y + p.h - E.h;
             E.vx = E.vy = 0;
-            app.vfx.sigil(E.cx, E.cy, 50, K.c, 0.5, 6, 2, 1, "sigil_void");
-            E.hz({ k: "strike", x: E.cx, y: E.cy + (d.r || 90) * 0.4, r: d.r || 90, shape: "circle", delay: 0.35, life: 0.75, dmg: E.dmg * m, c: K.c, fx: d.fx || "rift", sd: Math.random() * 99 });
+            app.vfx.sigil(E.cx, E.cy, 50, K2.c, 0.5, 6, 2, 1, "sigil_void");
+            E.hz({ k: "strike", x: E.cx, y: E.cy + (d.r || 90) * 0.4, r: d.r || 90, shape: "circle", delay: 0.35, life: 0.75, dmg: E.dmg * m, c: K2.c, fx: d.fx || "rift", sd: Math.random() * 99 });
           });
           return { busy: (d.times || 3) * 0.62 + 0.3 };
         }
         case "vortex": {
-          const at = d.floor ? { x: p.cx, y: this.floorY(p.cx, p.cy) } : null;
+          const at2 = d.floor ? { x: p.cx, y: this.floorY(p.cx, p.cy) } : null;
           this.hz({
             k: "vortex",
-            x: at ? at.x : this.cx,
-            y: at ? at.y : this.cy,
+            x: at2 ? at2.x : this.cx,
+            y: at2 ? at2.y : this.cy,
             r: d.r || 300,
             pull: d.pull || 280,
             life: d.life || 2.6,
             burst: d.burst || 0,
             dmg: this.dmg * m,
-            c: K.c,
+            c: K2.c,
             floor: d.floor,
-            fixed: !!at,
-            follow: !at,
-            ref: at ? void 0 : this,
-            nid: at ? void 0 : this.nid,
+            fixed: !!at2,
+            follow: !at2,
+            ref: at2 ? void 0 : this,
+            nid: at2 ? void 0 : this.nid,
             fx: d.fx,
             sd: Math.random() * 99
           });
           app.after((d.life || 2.6) + 0.05, () => {
             if (E.dead) return;
-            if (d.then === "dash") E.mv = { d: { k: "dash", n: "", tele: 0, times: 1, spd: 4.2, m }, t: 0, run: E.mvStart({ k: "dash", times: 1, spd: 4.2, m }, p, world, K) };
-            if (d.waves) for (const s of [-1, 1]) E.hz({ k: "wave", x: E.cx, y: E.floorY(E.cx, E.cy), vx: s * 360, w: 28, hh: 32, life: 2.4, dmg: E.dmg * 0.7, c: K.c, fx: "water", sd: Math.random() * 99 });
-            if (d.rewind) E.mvStart({ k: "rewind", heal: 0.02 }, p, world, K);
+            if (d.then === "dash") E.mv = { d: { k: "dash", n: "", tele: 0, times: 1, spd: 4.2, m }, t: 0, run: E.mvStart({ k: "dash", times: 1, spd: 4.2, m }, p, world, K2) };
+            if (d.waves) for (const s of [-1, 1]) E.hz({ k: "wave", x: E.cx, y: E.floorY(E.cx, E.cy), vx: s * 360, w: 28, hh: 32, life: 2.4, dmg: E.dmg * 0.7, c: K2.c, fx: "water", sd: Math.random() * 99 });
+            if (d.rewind) E.mvStart({ k: "rewind", heal: 0.02 }, p, world, K2);
           });
           return { busy: (d.life || 2.6) + 0.2 };
         }
         case "zone": {
           for (let i = 0; i < (d.n2 || 3); i++) {
             const spread = d.at === "player" ? 140 : 440, x = p.cx + (Math.random() - 0.5) * spread;
-            this.hz({ k: "zone", x, y: this.floorY(x, p.y), r: d.r || 60, life: d.life || 6, dmg: this.dmg * (d.dps || 0.1), slow: d.slow, poison: d.poison, burn: d.burn, c: K.c, fx: d.fx, wallZ: d.wall, sd: Math.random() * 99 });
+            this.hz({ k: "zone", x, y: this.floorY(x, p.y), r: d.r || 60, life: d.life || 6, dmg: this.dmg * (d.dps || 0.1), slow: d.slow, poison: d.poison, burn: d.burn, c: K2.c, fx: d.fx, wallZ: d.wall, sd: Math.random() * 99 });
           }
           extra();
           return { busy: 0.6 };
@@ -38726,7 +38726,7 @@
               w: 34,
               life: 4.5,
               dmg: E.dmg * m,
-              c: K.c,
+              c: K2.c,
               fx: d.fx,
               sd: Math.random() * 99
             });
@@ -38739,17 +38739,17 @@
             const e = new Enemy(d.mob, this.cx + (Math.random() - 0.5) * 220, this.cy - 20, app.scale());
             e.vy = -260;
             app.ents.push(e);
-            for (let q = 0; q < 10; q++) app.parts.push(new Part(e.cx, e.cy, K.c, -40, 0.7));
+            for (let q = 0; q < 10; q++) app.parts.push(new Part(e.cx, e.cy, K2.c, -40, 0.7));
           }
           if (d.ring) for (let i = 0; i < d.ring; i++) {
             const a = i / d.ring * TAU;
             app.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 260, Math.sin(a) * 260, this.dmg * 0.5, "enemy", "bolt"));
           }
-          app.vfx.sigil(this.cx, this.y + this.h, 80, K.c, 0.8, 6, 1, 0.3, "sigil_beast");
+          app.vfx.sigil(this.cx, this.y + this.h, 80, K2.c, 0.8, 6, 1, 0.3, "sigil_beast");
           return { busy: 0.7 };
         }
         case "push": {
-          this.hz({ k: "push", x: this.cx, fy: this.y + this.h, force: d.force || 500, life: d.life || 3, c: K.c, fx: d.fx, sd: Math.random() * 99 });
+          this.hz({ k: "push", x: this.cx, fy: this.y + this.h, force: d.force || 500, life: d.life || 3, c: K2.c, fx: d.fx, sd: Math.random() * 99 });
           return { busy: d.life || 3 };
         }
         case "burrow": {
@@ -38771,7 +38771,7 @@
               if (r2.pt > (d.under || 1.4)) {
                 r2.ph = 2;
                 r2.pt = 0;
-                this.strike(this.cx, this.y + this.h, { r: d.r || 80, delay: 0.55, fx: "burrow" }, K, m);
+                this.strike(this.cx, this.y + this.h, { r: d.r || 80, delay: 0.55, fx: "burrow" }, K2, m);
               }
             } else if (r2.ph === 2) {
               if (r2.pt > 0.55) {
@@ -38790,13 +38790,13 @@
         case "rewind": {
           const h = this.hist && this.hist[0];
           if (h) {
-            this.hz({ k: "line", x0: this.cx, y0: this.cy, x1: h[0] + this.w / 2, y1: h[1] + this.h / 2, life: 0.6, c: K.c, w: 4 });
-            for (let q = 0; q < 20; q++) app.parts.push(new Part(this.cx, this.cy, K.c, -20, 0.8));
+            this.hz({ k: "line", x0: this.cx, y0: this.cy, x1: h[0] + this.w / 2, y1: h[1] + this.h / 2, life: 0.6, c: K2.c, w: 4 });
+            for (let q = 0; q < 20; q++) app.parts.push(new Part(this.cx, this.cy, K2.c, -20, 0.8));
             this.x = h[0];
             this.y = h[1];
             this.vx = this.vy = 0;
             this.hp = Math.min(this.maxHp, this.hp + this.maxHp * (d.heal || 0.025));
-            app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.7, K.c, 0.7, 6, -2, 1, "swirl");
+            app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.7, K2.c, 0.7, 6, -2, 1, "swirl");
           }
           return { busy: 0.6 };
         }
@@ -38812,7 +38812,7 @@
               this.x = q[0] - this.w / 2;
               this.y = q[1] - this.h / 2;
               this.vx = this.vy = 0;
-            } else this.hz({ k: "decoy", x: q[0], y: q[1], r: this.h, life: 1.6, c: K.c, type: this.type, flip: p.cx < q[0] });
+            } else this.hz({ k: "decoy", x: q[0], y: q[1], r: this.h, life: 1.6, c: K2.c, type: this.type, flip: p.cx < q[0] });
             app.after(0.8, () => {
               if (E.dead) return;
               const nn = d.ring || 10;
@@ -38822,7 +38822,7 @@
               }
             });
           });
-          for (let q = 0; q < 24; q++) app.parts.push(new Part(this.cx, this.cy, K.c, -20, 0.7));
+          for (let q = 0; q < 24; q++) app.parts.push(new Part(this.cx, this.cy, K2.c, -20, 0.7));
           return { busy: 1.2 };
         }
         case "homing": {
@@ -38880,65 +38880,65 @@
       } else if (r.pt > 0.6) r.busy = r.t;
       this.move(dt, world, { gravMul: r.ph >= 3 ? 1 : 0 });
     },
-    sigStart(d, p, world, K) {
+    sigStart(d, p, world, K2) {
       const m = d.m ?? 1, E = this, fy = this.floorY(p.cx, p.y), side = Math.sign(p.cx - this.cx) || 1;
       switch (d.sig) {
         case "slap":
         case "bubbles":
         case "sink":
         case "surge":
-          return this.poolSig(d, p, world, K);
+          return this.poolSig(d, p, world, K2);
         // 잿물 군체(entity/boss-pool)
         case "sweep":
         case "pipes":
         case "scatter":
         case "requiem":
-          return this.organSig(d, p, world, K);
+          return this.organSig(d, p, world, K2);
         // 뼈 오르간(entity/boss-organ)
         case "pendulum":
         case "silk":
         case "wingwind":
         case "dust":
         case "lightdive":
-          return this.cocoonSig(d, p, world, K);
+          return this.cocoonSig(d, p, world, K2);
         // 잿빛 고치(entity/boss-cocoon)
         case "fist":
         case "sandpour":
         case "quick":
         case "deadline":
-          return this.hgSig(d, p, world, K);
+          return this.hgSig(d, p, world, K2);
         // 모래시계 거상(entity/boss-hourglass)
         case "brood":
         case "bilefall":
         case "spit":
         case "bloom":
-          return this.hvSig(d, p, world, K);
+          return this.hvSig(d, p, world, K2);
         // 곪은 벌집 어미(entity/boss-hive)
         case "verdict":
         case "tablets":
         case "gavel":
         case "condemn":
         case "sentence":
-          return this.jdSig(d, p, world, K);
+          return this.jdSig(d, p, world, K2);
         // 판결석 좌상(entity/boss-judge)
         case "shand":
         case "hands2":
         case "stare":
         case "totality":
-          return this.ecSig(d, p, world, K);
+          return this.ecSig(d, p, world, K2);
         // 일식(entity/boss-eclipse)
         case "rroots":
         case "rrings":
         case "rbloom":
         case "rfell":
-          return this.rtSig(d, p, world, K);
+          return this.rtSig(d, p, world, K2);
         // 뿌리 대성당(entity/boss-root)
         case "beat": {
-          this.hz({ k: "pulse", life: 2.7, ref: this, nid: this.nid, c: K.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
+          this.hz({ k: "pulse", life: 2.7, ref: this, nid: this.nid, c: K2.c, x: this.cx, y: this.cy, follow: 1, every: 0.85 });
           for (let b = 0; b < 3; b++) app.after(b * 0.85, () => {
             if (E.dead) return;
             const y = E.y + E.h;
-            for (const s of [-1, 1]) E.hz({ k: "wave", x: E.cx + s * E.w / 2, y, vx: s * 430, w: 30, hh: 24, life: 2.2, dmg: E.dmg * m * 0.8, c: K.c, fx: "flesh", sd: Math.random() * 99 });
+            for (const s of [-1, 1]) E.hz({ k: "wave", x: E.cx + s * E.w / 2, y, vx: s * 430, w: 30, hh: 24, life: 2.2, dmg: E.dmg * m * 0.8, c: K2.c, fx: "flesh", sd: Math.random() * 99 });
             app.shake = Math.max(app.shake, 7);
           });
           return { busy: 2.5 };
@@ -38948,17 +38948,17 @@
           for (let i = 0, j = 0; i < n; i++) {
             if (i === gap) continue;
             const a = a0 + i / n * TAU;
-            this.hz({ k: "mirror", x: cx + Math.cos(a) * 190, y: cy + Math.sin(a) * 120, life: 1.6 + j * 0.24 + 0.5, fireAt: 1.2 + j * 0.24, dmg: this.dmg * m * 0.7, c: K.c, type: this.type, sd: i });
+            this.hz({ k: "mirror", x: cx + Math.cos(a) * 190, y: cy + Math.sin(a) * 120, life: 1.6 + j * 0.24 + 0.5, fireAt: 1.2 + j * 0.24, dmg: this.dmg * m * 0.7, c: K2.c, type: this.type, sd: i });
             j++;
           }
           return { busy: 1.2 };
         }
         case "veil": {
-          this.hz({ k: "veil", life: 3.8, c: K.c });
+          this.hz({ k: "veil", life: 3.8, c: K2.c });
           for (let i = 0; i < 3; i++) app.after(0.5 + i * 1, () => {
             if (E.dead) return;
             const q = p, tx = q.cx + (Math.random() - 0.5) * 80, a = Math.random() * TAU;
-            E.strike(tx, q.y + q.h, { r: 62, delay: 0.85, fx: "claw", sx: tx + Math.cos(a) * 230, sy: q.cy + Math.sin(a) * 120 }, K, m);
+            E.strike(tx, q.y + q.h, { r: 62, delay: 0.85, fx: "claw", sx: tx + Math.cos(a) * 230, sy: q.cy + Math.sin(a) * 120 }, K2, m);
           });
           return { busy: 3.2 };
         }
@@ -38966,30 +38966,30 @@
           const xs = [-1, 0, 1].map((i) => p.cx + i * 170 + (Math.random() - 0.5) * 40);
           const ys = xs.map((x) => this.floorY(x, p.y - TS * 2));
           xs.forEach((x, i) => {
-            this.hz({ k: "rod", x, y: ys[i], life: 3.8, c: K.c });
+            this.hz({ k: "rod", x, y: ys[i], life: 3.8, c: K2.c });
             app.after(0.15 * i, () => {
-              if (!E.dead) E.strike(x, ys[i], { shape: "col", w: 30, h: 420, delay: 1, fx: "bolt", dir: "down" }, K, m);
+              if (!E.dead) E.strike(x, ys[i], { shape: "col", w: 30, h: 420, delay: 1, fx: "bolt", dir: "down" }, K2, m);
             });
           });
           app.after(1.3, () => {
             if (E.dead) return;
-            for (let i = 0; i < 2; i++) E.hz({ k: "arc", x0: xs[i], y0: ys[i] - 14, x1: xs[i + 1], y1: ys[i + 1] - 14, life: 2.2, on0: 0.25, dmg: E.dmg * m * 0.7, c: K.c, sd: i });
+            for (let i = 0; i < 2; i++) E.hz({ k: "arc", x0: xs[i], y0: ys[i] - 14, x1: xs[i + 1], y1: ys[i + 1] - 14, life: 2.2, on0: 0.25, dmg: E.dmg * m * 0.7, c: K2.c, sd: i });
           });
           return { busy: 1.6 };
         }
         case "scales": {
           const doom = Math.random() < 0.5 ? -1 : 1, cx = p.cx;
-          this.hz({ k: "scales", x: cx, y: fy, life: 2.6, doom, judge: 1, c: K.c });
-          for (let i = 0; i < 6; i++) this.strike(cx + doom * (24 + i * 50), fy, { shape: "col", w: 44, h: 200, delay: 1.7 + i * 0.05, fx: "rune", dir: "up" }, K, m);
+          this.hz({ k: "scales", x: cx, y: fy, life: 2.6, doom, judge: 1, c: K2.c });
+          for (let i = 0; i < 6; i++) this.strike(cx + doom * (24 + i * 50), fy, { shape: "col", w: 44, h: 200, delay: 1.7 + i * 0.05, fx: "rune", dir: "up" }, K2, m);
           return { busy: 1.8 };
         }
         case "gaze": {
-          this.hz({ k: "gaze", life: 4.4, ex: p.cx, ey: fy, dmg: this.dmg * m, c: K.c, id: nid() });
+          this.hz({ k: "gaze", life: 4.4, ex: p.cx, ey: fy, dmg: this.dmg * m, c: K2.c, id: nid() });
           return { busy: 1.2 };
         }
         case "cart": {
           const y = this.y + this.h, x0 = this.cx;
-          this.hz({ k: "rail", x0: x0 - side * 60, x1: x0 + side * 900, y, life: 3.4, c: K.c });
+          this.hz({ k: "rail", x0: x0 - side * 60, x1: x0 + side * 900, y, life: 3.4, c: K2.c });
           const r = { busy: 99, ph: 0, pt: 0 };
           r.tick = (dt, r2) => {
             r2.pt += dt;
@@ -39006,7 +39006,7 @@
                 r2.pt = 0;
                 app.shake = Math.max(app.shake, 8);
                 for (let i = 0; i < 2; i++) app.after(i * 0.45, () => {
-                  if (!E.dead) E.hz({ k: "wall", x: x0, vx: side * 380, top: y - 34, bot: y, w: 40, life: 3.2, dmg: E.dmg * m * 0.7, c: K.c, fx: "cart", sd: Math.random() * 99 });
+                  if (!E.dead) E.hz({ k: "wall", x: x0, vx: side * 380, top: y - 34, bot: y, w: 40, life: 3.2, dmg: E.dmg * m * 0.7, c: K2.c, fx: "cart", sd: Math.random() * 99 });
                 });
               }
             } else {
@@ -39018,12 +39018,12 @@
           return r;
         }
         case "snowball": {
-          this.hz({ k: "wave", x: this.cx + side * this.w / 2, y: this.y + this.h, vx: side * 230, w: 22, hh: 22, grow: 76, life: 4.6, dmg: this.dmg * m, c: K.c, fx: "snowball", sd: Math.random() * 99 });
+          this.hz({ k: "wave", x: this.cx + side * this.w / 2, y: this.y + this.h, vx: side * 230, w: 22, hh: 22, grow: 76, life: 4.6, dmg: this.dmg * m, c: K2.c, fx: "snowball", sd: Math.random() * 99 });
           return { busy: 1 };
         }
         case "grapple": {
           const ax = p.cx + side * 220, ay = this.ceilY(ax, fy) ?? fy - 260;
-          this.hz({ k: "vine", ax, ay, life: 1.9, ref: this, nid: this.nid, c: K.c, sd: Math.random() * 99 });
+          this.hz({ k: "vine", ax, ay, life: 1.9, ref: this, nid: this.nid, c: K2.c, sd: Math.random() * 99 });
           const r = { busy: 99, ph: 0, pt: 0 };
           r.tick = (dt, r2) => {
             r2.pt += dt;
@@ -39056,13 +39056,13 @@
         case "garden": {
           for (let i = 0; i < 5; i++) {
             const x = p.cx + (i - 2) * 74 + (Math.random() - 0.5) * 20;
-            this.hz({ k: "shroom", x, y: this.floorY(x, p.y - TS * 2), life: 4.3, pop: 3.8, dmg: this.dmg * m * 0.1, burst: this.dmg * m * 0.5, c: K.c, id: nid(), sd: i });
+            this.hz({ k: "shroom", x, y: this.floorY(x, p.y - TS * 2), life: 4.3, pop: 3.8, dmg: this.dmg * m * 0.1, burst: this.dmg * m * 0.5, c: K2.c, id: nid(), sd: i });
           }
           return { busy: 1 };
         }
         case "anchor": {
           const ax = p.cx + (Math.random() - 0.5) * 80, ay = this.floorY(ax, p.y - TS * 2);
-          this.strike(ax, ay, { r: 46, delay: 0.8, fx: "anchor", dir: "arc" }, K, m);
+          this.strike(ax, ay, { r: 46, delay: 0.8, fx: "anchor", dir: "arc" }, K2, m);
           const r = { busy: 99, ph: 0, pt: 0 };
           r.tick = (dt, r2) => {
             r2.pt += dt;
@@ -39072,7 +39072,7 @@
               if (r2.pt > 0.85) {
                 r2.ph = 1;
                 r2.pt = 0;
-                this.hz({ k: "chain", ax, ay: ay - 8, life: 1, dmg: this.dmg * m * 0.6, ref: this, nid: this.nid, c: K.c });
+                this.hz({ k: "chain", ax, ay: ay - 8, life: 1, dmg: this.dmg * m * 0.6, ref: this, nid: this.nid, c: K2.c });
               }
               return;
             }
@@ -39086,7 +39086,7 @@
                 r2.pt = 0;
                 this.vx = 0;
                 app.shake = Math.max(app.shake, 10);
-                for (const s of [-1, 1]) this.hz({ k: "wave", x: this.cx + s * this.w / 2, y: this.floorY(this.cx, this.y), vx: s * 340, w: 26, hh: 30, life: 2.2, dmg: this.dmg * m * 0.6, c: K.c, fx: "water", sd: Math.random() * 99 });
+                for (const s of [-1, 1]) this.hz({ k: "wave", x: this.cx + s * this.w / 2, y: this.floorY(this.cx, this.y), vx: s * 340, w: 26, hh: 30, life: 2.2, dmg: this.dmg * m * 0.6, c: K2.c, fx: "water", sd: Math.random() * 99 });
               }
               return;
             }
@@ -39097,52 +39097,52 @@
         }
         case "islet": {
           const x = p.cx + p.vx * 0.3;
-          this.strike(x, p.y + p.h, { r: 96, delay: 1.3, fx: "boulder", dir: "arc" }, K, m * 1.2);
+          this.strike(x, p.y + p.h, { r: 96, delay: 1.3, fx: "boulder", dir: "arc" }, K2, m * 1.2);
           app.after(1.35, () => {
             if (E.dead) return;
             const y = E.floorY(x, p.y - TS * 2);
             for (let i = 0; i < 5; i++) {
               const tx = x + (i - 2) * 70 + (Math.random() - 0.5) * 20;
-              E.strike(tx, y, { r: 34, delay: 0.7, fx: "boulder", dir: "arc", sx: x, sy: y - 50 }, K, m * 0.6);
+              E.strike(tx, y, { r: 34, delay: 0.7, fx: "boulder", dir: "arc", sx: x, sy: y - 50 }, K2, m * 0.6);
             }
           });
           return { busy: 1.5 };
         }
         case "flood": {
-          this.hz({ k: "flood", y: this.y + this.h, x: this.cx, depth: 104, life: 6.5, dmg: this.dmg * m * 0.12, c: K.c });
+          this.hz({ k: "flood", y: this.y + this.h, x: this.cx, depth: 104, life: 6.5, dmg: this.dmg * m * 0.12, c: K2.c });
           return { busy: 1.2 };
         }
         case "turrets": {
           for (const ox of [-230, -100, 170]) {
             const x = p.cx + ox + (Math.random() - 0.5) * 30;
-            this.hz({ k: "turret", x, y: this.floorY(x, p.y - TS * 2), life: 5.6, every: 0.95, next: 0.9, dmg: this.dmg * m * 0.45, c: K.c, sd: ox });
+            this.hz({ k: "turret", x, y: this.floorY(x, p.y - TS * 2), life: 5.6, every: 0.95, next: 0.9, dmg: this.dmg * m * 0.45, c: K2.c, sd: ox });
           }
           return { busy: 1 };
         }
         case "pour": {
           const x = p.cx, top = Math.max(this.ceilY(x, fy) ?? -1e9, fy - 250) + 30;
-          this.hz({ k: "crucible", x, top, y: fy, life: 2.6, pour: 0.9, stop: 2, dmg: this.dmg * m * 0.5, c: K.c });
+          this.hz({ k: "crucible", x, top, y: fy, life: 2.6, pour: 0.9, stop: 2, dmg: this.dmg * m * 0.5, c: K2.c });
           app.after(1.05, () => {
             if (E.dead) return;
-            for (const s of [-1, 1]) E.hz({ k: "wave", x: x + s * 16, y: fy, vx: s * 280, w: 30, hh: 18, life: 2.4, dmg: E.dmg * m * 0.6, c: K.c, fx: "molten", sd: Math.random() * 99 });
-            E.hz({ k: "zone", x, y: fy, r: 50, life: 4, dmg: E.dmg * 0.1, burn: 1, c: K.c, fx: "fire", sd: Math.random() * 99 });
+            for (const s of [-1, 1]) E.hz({ k: "wave", x: x + s * 16, y: fy, vx: s * 280, w: 30, hh: 18, life: 2.4, dmg: E.dmg * m * 0.6, c: K2.c, fx: "molten", sd: Math.random() * 99 });
+            E.hz({ k: "zone", x, y: fy, r: 50, life: 4, dmg: E.dmg * 0.1, burn: 1, c: K2.c, fx: "fire", sd: Math.random() * 99 });
           });
           return { busy: 1.4 };
         }
         case "drones": {
-          for (const s of [-1, 1]) this.hz({ k: "drone", cx: p.cx + s * 150, y0: fy - 210, fy, life: 5.6, ph: s > 0 ? 0 : Math.PI, dmg: this.dmg * m * 0.6, c: K.c, id: nid() });
+          for (const s of [-1, 1]) this.hz({ k: "drone", cx: p.cx + s * 150, y0: fy - 210, fy, life: 5.6, ph: s > 0 ? 0 : Math.PI, dmg: this.dmg * m * 0.6, c: K2.c, id: nid() });
           return { busy: 1 };
         }
         case "project": {
           const pts = [[-1, 0], [0.3, -1], [1, 0]].map(([ax, ay]) => [p.cx + ax * 110, p.y + p.h + ay * 70]);
           pts.forEach((q, i) => {
-            this.hz({ k: "ghost", type: this.type, x: q[0], y: q[1], n: i + 1, life: 1.2 + i * 0.42 + 0.2, at: 1 + i * 0.42, c: K.c, flip: q[0] > p.cx });
+            this.hz({ k: "ghost", type: this.type, x: q[0], y: q[1], n: i + 1, life: 1.2 + i * 0.42 + 0.2, at: 1 + i * 0.42, c: K2.c, flip: q[0] > p.cx });
             app.after(1 + i * 0.42, () => {
               if (E.dead) return;
               E.x = clamp(q[0] - E.w / 2, TS * 2, app.world.dims.WW * TS - TS * 3);
               E.y = q[1] - E.h;
               E.vx = E.vy = 0;
-              E.hz({ k: "strike", x: q[0], y: q[1], r: 92, shape: "circle", delay: 0.22, life: 0.6, dmg: E.dmg * m, c: K.c, fx: "slash", sd: Math.random() * 99 });
+              E.hz({ k: "strike", x: q[0], y: q[1], r: 92, shape: "circle", delay: 0.22, life: 0.6, dmg: E.dmg * m, c: K2.c, fx: "slash", sd: Math.random() * 99 });
             });
           });
           return { busy: 2.3 };
@@ -39151,7 +39151,7 @@
           for (let i = 0; i < 7; i++) {
             const x = p.cx + (Math.random() - 0.5) * 520;
             app.after(i * 0.1, () => {
-              if (!E.dead) E.strike(x, p.y + p.h, { r: 52, delay: 1.4, fx: "ore", dir: "up" }, K, m);
+              if (!E.dead) E.strike(x, p.y + p.h, { r: 52, delay: 1.4, fx: "ore", dir: "up" }, K2, m);
             });
           }
           return { busy: 1.2 };
@@ -39191,7 +39191,7 @@
       this.move(dt, world);
     },
     /** 팔 하나 — 뿌리(보스 기준 ox) · 내리칠 자리 · 솟는 시간 */
-    poolArm(ox, tx, ty, rise, dm, K) {
+    poolArm(ox, tx, ty, rise, dm, K2) {
       const hold = 0.55, back = 0.45;
       return this.hz({
         k: "parm",
@@ -39208,12 +39208,12 @@
         life: rise + 0.14 + hold + back,
         back,
         dmg: this.dmg * dm,
-        c: K.c,
+        c: K2.c,
         sd: Math.random() * 99
       });
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    poolSig(d, p, world, K) {
+    poolSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this, half = poolHalf(this);
       switch (d.sig) {
         case "slap": {
@@ -39223,7 +39223,7 @@
             const side = i % 2 === 0 ? Math.sign(p.cx - E.cx) || 1 : -(Math.sign(p.cx - E.cx) || 1);
             const ox = side * E.w * 0.42, rx = E.cx + ox;
             const tx = clamp(p.cx + p.vx * 0.25, rx - 430, rx + 430);
-            E.poolArm(ox, tx, E.floorY(tx, p.y), 0.9, m, K);
+            E.poolArm(ox, tx, E.floorY(tx, p.y), 0.9, m, K2);
             app.sfxAt && app.sfxAt("pool_rise", rx / TS, (E.y + E.h) / TS);
           });
           return { busy: (n - 1) * gap + 1.5 };
@@ -39236,7 +39236,7 @@
             for (let i = 0; i < n; i++) {
               if (i === gapI) continue;
               const x = E.cx + s * (E.w * 0.3 + i * 72);
-              E.strike(x, E.y + E.h, { shape: "col", w: 58, h: 230, delay: 0.85, fx: "sludge", dir: "up" }, K, m);
+              E.strike(x, E.y + E.h, { shape: "col", w: 58, h: 230, delay: 0.85, fx: "sludge", dir: "up" }, K2, m);
             }
             app.sfxAt && app.sfxAt("pool_bubble", E.cx / TS, E.cy / TS);
           });
@@ -39247,7 +39247,7 @@
           app.sfxAt && app.sfxAt("pool_sink", this.cx / TS, this.cy / TS);
           app.poolSinkFx(this.cx, this.y + this.h, false);
           r.rise = () => {
-            this.strike(this.cx, this.y + this.h, { r: Math.max(90, this.w * 0.5), delay: 0.55, fx: "sludge", dir: "up" }, K, m);
+            this.strike(this.cx, this.y + this.h, { r: Math.max(90, this.w * 0.5), delay: 0.55, fx: "sludge", dir: "up" }, K2, m);
             app.sfxAt && app.sfxAt("pool_bubble", this.cx / TS, this.cy / TS);
           };
           r.tick = (dt, r2) => this.sigHide(dt, world, r2, () => p.cx, 1.5, 0.55, () => {
@@ -39270,11 +39270,11 @@
           const W = (half + 300) * 2;
           for (let b = 0; b < 3; b++) app.after(b * 1.35, () => {
             if (E.dead) return;
-            E.strike(E.cx, E.y + E.h, { shape: "col", w: W, h: 70, delay: 0.9, fx: "sludge", dir: "up" }, K, m * 0.9);
+            E.strike(E.cx, E.y + E.h, { shape: "col", w: W, h: 70, delay: 0.9, fx: "sludge", dir: "up" }, K2, m * 0.9);
             if (b < 2) app.after(0.95, () => {
               if (E.dead) return;
               const side = b % 2 ? -1 : 1, rx = E.cx + side * E.w * 0.42, tx = clamp(p.cx, rx - 430, rx + 430);
-              E.poolArm(side * E.w * 0.42, tx, E.floorY(tx, p.y), 0.75, m * 0.9, K);
+              E.poolArm(side * E.w * 0.42, tx, E.floorY(tx, p.y), 0.75, m * 0.9, K2);
             });
             app.sfxAt && app.sfxAt("pool_bubble", E.cx / TS, E.cy / TS);
           });
@@ -39380,13 +39380,13 @@
       return !!h && h.t >= h.open0 && h.t < h.life;
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    organSig(d, p, world, K) {
+    organSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this;
       switch (d.sig) {
         case "sweep": {
           const sides = d.both ? [-1, 1] : [Math.sign(p.cx - this.cx) || 1];
           const lowFirst = Math.random() < 0.5;
-          sides.forEach((s, i) => this.organSweep(s, d.both ? i === 0 === lowFirst : Math.random() < 0.55, 0.85, m, K));
+          sides.forEach((s, i) => this.organSweep(s, d.both ? i === 0 === lowFirst : Math.random() < 0.55, 0.85, m, K2));
           return { busy: 2 };
         }
         case "pipes": {
@@ -39397,14 +39397,14 @@
           }
           else if (Math.random() < 0.5) order.reverse();
           const gap = d.wild ? 0.12 : 0.16, tele = 0.9;
-          this.hz({ k: "opipes", id: nid3(), ref: this, nid: this.nid, order, gap, tele, life: tele + order.length * gap + 0.4, c: K.c });
+          this.hz({ k: "opipes", id: nid3(), ref: this, nid: this.nid, order, gap, tele, life: tele + order.length * gap + 0.4, c: K2.c });
           order.forEach((pi, i) => app.after(tele + i * gap, () => {
             if (!E.dead) E.organNote(pi, p, d.wild ? 5 : 3, m);
           }));
           return { busy: tele + order.length * gap + 0.3 };
         }
         case "scatter": {
-          this.hz({ k: "oscatter", id: nid3(), ref: this, nid: this.nid, life: 2.3, c: K.c });
+          this.hz({ k: "oscatter", id: nid3(), ref: this, nid: this.nid, life: 2.3, c: K2.c });
           const ring = (out) => {
             const n = 20, g0 = Math.floor(Math.random() * n), R = 430;
             for (let i = 0; i < n; i++) {
@@ -39426,14 +39426,14 @@
         case "requiem": {
           this.reqOn = 1;
           const dur = 5;
-          this.hz({ k: "oreq", id: nid3(), ref: this, nid: this.nid, life: dur, beat: 0.3, c: K.c });
+          this.hz({ k: "oreq", id: nid3(), ref: this, nid: this.nid, life: dur, beat: 0.3, c: K2.c });
           for (let b = 0; b * 0.3 < dur - 0.3; b++) app.after(0.3 + b * 0.3, () => {
             if (E.dead) return;
             const k = b % 12, pi = k < 7 ? k : 12 - k;
             E.organNote(pi, p, 1, m);
           });
           [0.6, 2.1, 3.6].forEach((t, i) => app.after(t, () => {
-            if (!E.dead) E.organSweep(i % 2 ? 1 : -1, i !== 1, 0.6, m, K);
+            if (!E.dead) E.organSweep(i % 2 ? 1 : -1, i !== 1, 0.6, m, K2);
           }));
           app.after(dur, () => {
             E.reqOn = 0;
@@ -39445,7 +39445,7 @@
       return { busy: 0.3 };
     },
     /** 팔 하나가 쓴다 — tele 동안 팔을 치켜들고(쓸 높이에 띠가 진다), 0.9초에 걸쳐 바깥으로 쓸어 간다 */
-    organSweep(s, low, tele, m, K) {
+    organSweep(s, low, tele, m, K2) {
       const fl = organFloor(this);
       this.hz({
         k: "osweep",
@@ -39459,7 +39459,7 @@
         life: tele + 0.9 + 0.55,
         fy: fl,
         dmg: this.dmg * m * 1.1,
-        c: K.c
+        c: K2.c
       });
       app.sfxAt && app.sfxAt("organ_lift", this.cx / TS, this.cy / TS);
     },
@@ -39614,12 +39614,12 @@
       void p;
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    cocoonSig(d, p, world, K) {
+    cocoonSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this;
       switch (d.sig) {
         case "pendulum": {
           const s = Math.sign(p.cx - this.cx) || 1, tele = d.tele2 || 0.8, dur = 1.5;
-          this.cocSwing = this.hz({ k: "cswing", id: nid4(), ref: this, nid: this.nid, s, amp: d.amp || 0.95, tele, dur, life: tele + dur + 0.6, dmg: this.dmg * m, c: K.c });
+          this.cocSwing = this.hz({ k: "cswing", id: nid4(), ref: this, nid: this.nid, s, amp: d.amp || 0.95, tele, dur, life: tele + dur + 0.6, dmg: this.dmg * m, c: K2.c });
           app.sfxAt && app.sfxAt("cocoon_creak", this.cx / TS, this.cy / TS);
           return { busy: tele + dur + 0.4 };
         }
@@ -39628,7 +39628,7 @@
           for (let i = 0; i < n; i++) {
             const x = p.cx + off + (i - (n - 1) / 2) * gap, fy = app.hzFloor(x, p.y), top = this.ceilY(x, fy) ?? fy - 460;
             app.after(i * 0.12, () => {
-              if (!E.dead) E.hz({ k: "cthread", id: nid4(), ref: E, nid: E.nid, x, top, y: fy - 14, tele: 0.7, drop: 0.35, life: d.life || 7, dmg: E.dmg * m * 0.7, c: K.c, sd: Math.random() * 99 });
+              if (!E.dead) E.hz({ k: "cthread", id: nid4(), ref: E, nid: E.nid, x, top, y: fy - 14, tele: 0.7, drop: 0.35, life: d.life || 7, dmg: E.dmg * m * 0.7, c: K2.c, sd: Math.random() * 99 });
             });
           }
           app.sfxAt && app.sfxAt("cocoon_silk", this.cx / TS, this.cy / TS);
@@ -39636,7 +39636,7 @@
         }
         case "wingwind": {
           const beats = d.beats || 3, every = 0.75;
-          this.hz({ k: "cgust", id: nid4(), ref: this, nid: this.nid, x: this.cx, y: this.cy, follow: 1, beats, every, tele: 0.6, push: d.push || 520, life: 0.6 + beats * every + 0.3, c: K.c });
+          this.hz({ k: "cgust", id: nid4(), ref: this, nid: this.nid, x: this.cx, y: this.cy, follow: 1, beats, every, tele: 0.6, push: d.push || 520, life: 0.6 + beats * every + 0.3, c: K2.c });
           for (let b = 0; b < beats; b++) app.after(0.6 + b * every, () => {
             if (E.dead) return;
             const n = d.fan || 7, a0 = Math.atan2(p.cy - E.cy, p.cx - E.cx);
@@ -39655,7 +39655,7 @@
           for (let i = 0; i < n; i++) {
             const x = x0 + s * (i + 0.5) * span / n + (Math.random() - 0.5) * 30, fy = app.hzFloor(x, p.y);
             app.after(i * 0.14, () => {
-              if (!E.dead) E.hz({ k: "cscale", id: nid4(), ref: E, nid: E.nid, x, y: fy, sy: E.cy, w: span / n * 0.9, delay: 0.9, life: 0.9 + (d.life || 4.5), dmg: E.dmg * m * 0.35, c: K.c, sd: Math.random() * 99 });
+              if (!E.dead) E.hz({ k: "cscale", id: nid4(), ref: E, nid: E.nid, x, y: fy, sy: E.cy, w: span / n * 0.9, delay: 0.9, life: 0.9 + (d.life || 4.5), dmg: E.dmg * m * 0.35, c: K2.c, sd: Math.random() * 99 });
             });
           }
           this.cocDash = { tx: x0 + s * span, ty: this.cy - 30, t: 0, dur: n * 0.14 + 0.4 };
@@ -39685,11 +39685,11 @@
               dur,
               life: tele + dur + 0.3,
               dmg: E.dmg * m,
-              c: K.c
+              c: K2.c
             });
             app.sfxAt && app.sfxAt("moth_dive", E.cx / TS, E.cy / TS);
           });
-          if (n > 1) this.hz({ k: "cdark", id: nid4(), ref: this, nid: this.nid, life: n * gap + 0.4, c: K.c });
+          if (n > 1) this.hz({ k: "cdark", id: nid4(), ref: this, nid: this.nid, life: n * gap + 0.4, c: K2.c });
           return { busy: n * gap + 0.2 };
         }
       }
@@ -39813,7 +39813,7 @@
       return this.hgDeadline() ? a * 2 : a;
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    hgSig(d, p, world, K) {
+    hgSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this;
       switch (d.sig) {
         case "fist": {
@@ -39822,7 +39822,7 @@
             const sx = hgAt(this, 42 + s * HG.SH, HG.SH_Y)[0];
             const want = i === 0 ? p.cx : sx + s * HG_REACH, tx = s > 0 ? Math.max(sx + 50, Math.min(want, sx + HG_REACH)) : Math.min(sx - 50, Math.max(want, sx - HG_REACH));
             app.after(i * 0.55, () => {
-              if (!E.dead) E.hz({ k: "hfist", id: nid5(), ref: E, nid: E.nid, s, tx, tele: 0.85, life: 0.85 + 1.35, dmg: E.dmg * m, c: K.c });
+              if (!E.dead) E.hz({ k: "hfist", id: nid5(), ref: E, nid: E.nid, s, tx, tele: 0.85, life: 0.85 + 1.35, dmg: E.dmg * m, c: K2.c });
             });
           });
           app.sfxAt && app.sfxAt("hg_lift", this.cx / TS, this.cy / TS);
@@ -39845,13 +39845,13 @@
             drain: 1.6,
             life: 2.4 + hold + 1.6,
             maxH: d.maxH || 120,
-            c: K.c,
+            c: K2.c,
             sd: Math.random() * 99
           });
           for (let i = 0; i < (d.balls || 3); i++) app.after(1.2 + i * 0.9, () => {
             if (E.dead) return;
             const s = i % 2 === 0 ? E.hgDir || 1 : -(E.hgDir || 1), x = E.cx + s * HG.THRONE * HG.K;
-            E.hz({ k: "wave", x, y: hgFloor(E), vx: s * 300, w: 34, hh: 30, life: 2.2, dmg: E.dmg * m * 0.6, c: K.c, fx: "rock", sd: Math.random() * 99 });
+            E.hz({ k: "wave", x, y: hgFloor(E), vx: s * 300, w: 34, hh: 30, life: 2.2, dmg: E.dmg * m * 0.6, c: K2.c, fx: "rock", sd: Math.random() * 99 });
           });
           app.sfxAt && app.sfxAt("hg_pour", this.cx / TS, this.cy / TS);
           return { busy: 2 };
@@ -39861,7 +39861,7 @@
           for (let i = 0; i < n; i++) {
             const x = p.cx + (i - (n - 1) / 2) * gap + (Math.random() - 0.5) * 40, fy = app.hzFloor(x, p.y);
             app.after(i * 0.15, () => {
-              if (!E.dead) E.hz({ k: "hpit", id: nid5(), ref: E, nid: E.nid, x, y: fy, r: 76, tele: 0.8, life: 0.8 + (d.life || 4.5), pull: d.pull || 260, dmg: E.dmg * m * 0.35, c: K.c, sd: Math.random() * 99 });
+              if (!E.dead) E.hz({ k: "hpit", id: nid5(), ref: E, nid: E.nid, x, y: fy, r: 76, tele: 0.8, life: 0.8 + (d.life || 4.5), pull: d.pull || 260, dmg: E.dmg * m * 0.35, c: K2.c, sd: Math.random() * 99 });
             });
           }
           app.sfxAt && app.sfxAt("hg_quick", this.cx / TS, this.cy / TS);
@@ -39869,11 +39869,11 @@
         }
         case "deadline": {
           const dur = d.dur || 8, need = this.maxHp * (d.need || 0.07);
-          this.hgDeadH = this.hz({ k: "hdead", id: nid5(), ref: this, nid: this.nid, life: dur + 1.2, dur, hp0: this.hp, need, c: K.c });
+          this.hgDeadH = this.hz({ k: "hdead", id: nid5(), ref: this, nid: this.nid, life: dur + 1.2, dur, hp0: this.hp, need, c: K2.c });
           app.after(dur, () => {
             if (!E.dead && E.hgDeadH && !E.hgDeadH.done) {
               app.hzPatch(E.hgDeadH, { done: 1, ok: 0, at: dur });
-              E.hgStorm(m, K);
+              E.hgStorm(m, K2);
             }
           });
           app.sfxAt && app.sfxAt("hg_deadline", this.cx / TS, this.cy / TS);
@@ -39883,7 +39883,7 @@
       return { busy: 0.3 };
     },
     /** 마감을 못 깼다 — 모래시계에서 틈 셋 있는 모래 고리 두 겹 + 바닥 충격파 */
-    hgStorm(m, K) {
+    hgStorm(m, K2) {
       const [x, y] = hgAt(this, 42, HG.GLASS_Y);
       for (let r = 0; r < 2; r++) app.after(r * 0.45, () => {
         if (this.dead) return;
@@ -39896,7 +39896,7 @@
           app.projs.push(pr);
         }
       });
-      for (const s of [-1, 1]) this.hz({ k: "wave", x: this.cx + s * HG.THRONE * HG.K, y: hgFloor(this), vx: s * 420, w: 40, hh: 34, life: 2.4, dmg: this.dmg * m * 1.2, c: K.c, fx: "rock", sd: Math.random() * 99 });
+      for (const s of [-1, 1]) this.hz({ k: "wave", x: this.cx + s * HG.THRONE * HG.K, y: hgFloor(this), vx: s * 420, w: 40, hh: 34, life: 2.4, dmg: this.dmg * m * 1.2, c: K2.c, fx: "rock", sd: Math.random() * 99 });
       app.sfxAt && app.sfxAt("hg_storm", this.cx / TS, this.cy / TS);
     }
   };
@@ -40010,7 +40010,7 @@
       return a * 0.12;
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    hvSig(d, p, world, K) {
+    hvSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this;
       switch (d.sig) {
         case "brood": {
@@ -40020,7 +40020,7 @@
             const i = pool[Math.floor(Math.random() * pool.length)];
             if (!cells.includes(i)) cells.push(i);
           }
-          this.hz({ k: "hvbrood", id: nid6(), ref: this, nid: this.nid, cells, tele: 0.9, life: 0.9 + 1, c: K.c });
+          this.hz({ k: "hvbrood", id: nid6(), ref: this, nid: this.nid, cells, tele: 0.9, life: 0.9 + 1, c: K2.c });
           app.sfxAt && app.sfxAt("hive_bulge", this.cx / TS, this.cy / TS);
           return { busy: 1.6 };
         }
@@ -40051,7 +40051,7 @@
               w: 24,
               r: d.r || 76,
               dmg: E.dmg * m * 0.45,
-              c: K.c,
+              c: K2.c,
               sd: Math.random() * 99
             });
           }));
@@ -40060,16 +40060,16 @@
         }
         case "spit": {
           const n = d.cnt || 3;
-          this.hz({ k: "hvspit", id: nid6(), ref: this, nid: this.nid, tele: 0.55, life: 0.55 + 0.5, n, dmg: this.dmg * m * 0.7, c: K.c });
+          this.hz({ k: "hvspit", id: nid6(), ref: this, nid: this.nid, tele: 0.55, life: 0.55 + 0.5, n, dmg: this.dmg * m * 0.7, c: K2.c });
           app.sfxAt && app.sfxAt("hive_hiss", this.cx / TS, this.cy / TS);
           return { busy: 1.1 };
         }
         case "bloom": {
-          this.hz({ k: "hvbloom", id: nid6(), ref: this, nid: this.nid, tele: 1.1, life: 4.2, dmg: this.dmg * m * 0.6, c: K.c });
+          this.hz({ k: "hvbloom", id: nid6(), ref: this, nid: this.nid, tele: 1.1, life: 4.2, dmg: this.dmg * m * 0.6, c: K2.c });
           [0, 4, 6, 11].forEach((i, k) => app.after(1.1 + k * 0.3, () => {
             if (E.dead) return;
             const [x, y] = cellAt(E, i);
-            E.hz({ k: "hvbile", id: nid6(), ref: E, nid: E.nid, cell: i, x, top: y + HIVE.R * HIVE.K * 0.6, fy: E.hvAy, tele: 0.5, flow: 2.6, life: 0.5 + 5, w: 24, r: 70, dmg: E.dmg * m * 0.4, c: K.c, sd: Math.random() * 99 });
+            E.hz({ k: "hvbile", id: nid6(), ref: E, nid: E.nid, cell: i, x, top: y + HIVE.R * HIVE.K * 0.6, fy: E.hvAy, tele: 0.5, flow: 2.6, life: 0.5 + 5, w: 24, r: 70, dmg: E.dmg * m * 0.4, c: K2.c, sd: Math.random() * 99 });
           }));
           for (let r = 0; r < 2; r++) app.after(1.2 + r * 1.1, () => {
             if (E.dead) return;
@@ -40159,7 +40159,7 @@
       void dt;
     },
     /** 판결 하나 — doom 을 주면 저울질 없이 그 쪽(선고) */
-    jdVerdict(tele, m, K, doom = 0) {
+    jdVerdict(tele, m, K2, doom = 0) {
       return this.hz({
         k: "jverdict",
         id: nid7(),
@@ -40175,16 +40175,16 @@
         doom,
         fixed: doom ? 1 : 0,
         dmg: this.dmg * m,
-        c: K.c,
+        c: K2.c,
         sd: Math.random() * 99
       });
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    jdSig(d, p, world, K) {
+    jdSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this;
       switch (d.sig) {
         case "verdict": {
-          this.jdVerdict(d.weigh || 2.6, m, K);
+          this.jdVerdict(d.weigh || 2.6, m, K2);
           app.sfxAt && app.sfxAt("jd_weigh", this.cx / TS, this.cy / TS);
           return { busy: (d.weigh || 2.6) + 1.2 };
         }
@@ -40196,14 +40196,14 @@
           while (xs.length < n) xs.push(this.cx + (Math.random() < 0.5 ? -1 : 1) * (240 + Math.random() * 360));
           xs.slice(0, n).forEach((x, i) => app.after(i * 0.35, () => {
             if (E.dead) return;
-            E.hz({ k: "jtab", id: nid7(), ref: E, nid: E.nid, x, fy: app.hzFloor(x, p.y), tele: 0.9, life: 0.9 + (d.life || 12), dmg: E.dmg * m, c: K.c, sd: Math.random() * 99 });
+            E.hz({ k: "jtab", id: nid7(), ref: E, nid: E.nid, x, fy: app.hzFloor(x, p.y), tele: 0.9, life: 0.9 + (d.life || 12), dmg: E.dmg * m, c: K2.c, sd: Math.random() * 99 });
           }));
           app.sfxAt && app.sfxAt("jd_tablet", this.cx / TS, this.cy / TS);
           return { busy: 1 + n * 0.35 };
         }
         case "gavel": {
           const s = 1, reach = 230, tx = this.cx + Math.max(120, Math.min(reach, p.cx - this.cx));
-          this.hz({ k: "jgavel", id: nid7(), ref: this, nid: this.nid, s, tx, fy: jdFloor(this), tele: 0.85, life: 0.85 + 1.3, dmg: this.dmg * m, c: K.c });
+          this.hz({ k: "jgavel", id: nid7(), ref: this, nid: this.nid, s, tx, fy: jdFloor(this), tele: 0.85, life: 0.85 + 1.3, dmg: this.dmg * m, c: K2.c });
           app.sfxAt && app.sfxAt("jd_lift", this.cx / TS, this.cy / TS);
           return { busy: 1.8 };
         }
@@ -40223,7 +40223,7 @@
             lx: p.cx,
             ly: p.cy,
             dmg: this.dmg * m,
-            c: K.c
+            c: K2.c
           });
           app.sfxAt && app.sfxAt("jd_eye", this.cx / TS, this.cy / TS);
           return { busy: n * per + 0.2 };
@@ -40231,10 +40231,10 @@
         case "sentence": {
           const s0 = Math.sign(p.cx - this.cx) || 1;
           [s0, -s0, s0].forEach((doom, i) => app.after(i * 1.7, () => {
-            if (!E.dead) E.jdVerdict(1, m * 0.9, K, doom);
+            if (!E.dead) E.jdVerdict(1, m * 0.9, K2, doom);
           }));
           app.after(5.2, () => {
-            if (!E.dead) E.hz({ k: "jgavel", id: nid7(), ref: E, nid: E.nid, s: 1, tx: E.cx + 170, fy: jdFloor(E), tele: 0.7, life: 0.7 + 1.3, dmg: E.dmg * m, c: K.c, both: 1 });
+            if (!E.dead) E.hz({ k: "jgavel", id: nid7(), ref: E, nid: E.nid, s: 1, tx: E.cx + 170, fy: jdFloor(E), tele: 0.7, life: 0.7 + 1.3, dmg: E.dmg * m, c: K2.c, both: 1 });
           });
           app.sfxAt && app.sfxAt("jd_sentence", this.cx / TS, this.cy / TS);
           return { busy: 7.2 };
@@ -40294,7 +40294,7 @@
       void dt;
     },
     /** 뿌리 하나 — x 에서 tele 뒤에 솟는다 */
-    rtRoot(x, py, tele, m, K, big = 1) {
+    rtRoot(x, py, tele, m, K2, big = 1) {
       return this.hz({
         k: "rroot",
         id: nid8(),
@@ -40307,12 +40307,12 @@
         big,
         life: tele + 0.16 + 0.9 + 0.4,
         dmg: this.dmg * m,
-        c: K.c,
+        c: K2.c,
         sd: Math.random() * 99
       });
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    rtSig(d, p, world, K) {
+    rtSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this, s = Math.sign(p.cx - this.cx) || 1;
       switch (d.sig) {
         case "rroots": {
@@ -40320,7 +40320,7 @@
           for (let i = 0; i < n; i++) {
             const x = this.cx + s * (150 + (span - 150) * i / (n - 1)) + (Math.random() - 0.5) * 30;
             app.after(i * 0.2, () => {
-              if (!E.dead) E.rtRoot(x, p.y, 0.75, m, K);
+              if (!E.dead) E.rtRoot(x, p.y, 0.75, m, K2);
             });
           }
           app.sfxAt && app.sfxAt("rt_heave", p.cx / TS, p.cy / TS);
@@ -40341,7 +40341,7 @@
               spd: 300 + i * 30,
               life: 0.55 + 3.2,
               dmg: E.dmg * m * 0.8,
-              c: K.c,
+              c: K2.c,
               sd: Math.random() * 99,
               hit: {}
             });
@@ -40362,17 +40362,17 @@
           const life = d.life || 7.5;
           xs.forEach((x, i) => app.after(i * 0.25, () => {
             if (E.dead) return;
-            E.hz({ k: "rflower", id: nid8(), ref: E, nid: E.nid, x, fy: app.hzFloor(x, p.y), tele: 1.1, life, heal: d.heal || 0.04, c: K.c, sd: Math.random() * 99 });
+            E.hz({ k: "rflower", id: nid8(), ref: E, nid: E.nid, x, fy: app.hzFloor(x, p.y), tele: 1.1, life, heal: d.heal || 0.04, c: K2.c, sd: Math.random() * 99 });
           }));
           app.sfxAt && app.sfxAt("rt_bloom", this.cx / TS, this.cy / TS);
           return { busy: 1.6 };
         }
         case "rfell": {
           const len = d.len || 760, fy = rtFloor(this);
-          this.hz({ k: "rfell", id: nid8(), ref: this, nid: this.nid, x: this.cx, fy, s, len, tele: 2.2, life: 2.2 + 0.55 + 3.2, dmg: this.dmg * m, c: K.c, sd: Math.random() * 99 });
+          this.hz({ k: "rfell", id: nid8(), ref: this, nid: this.nid, x: this.cx, fy, s, len, tele: 2.2, life: 2.2 + 0.55 + 3.2, dmg: this.dmg * m, c: K2.c, sd: Math.random() * 99 });
           app.after(2.9, () => {
             if (E.dead) return;
-            for (let i = 0; i < 4; i++) E.rtRoot(E.cx - s * (180 + i * 120), p.y, 0.6 + i * 0.12, m * 0.8, K, 0.8);
+            for (let i = 0; i < 4; i++) E.rtRoot(E.cx - s * (180 + i * 120), p.y, 0.6 + i * 0.12, m * 0.8, K2, 0.8);
           });
           app.sfxAt && app.sfxAt("rt_creak", this.cx / TS, this.cy / TS);
           return { busy: 5.4 };
@@ -40467,8 +40467,8 @@
       return a * 0.3;
     },
     /** 그림자 손 하나 — q 의 그림자 끝(at 이 있으면 거기) */
-    ecHand(q, m, K, at, tele = 1.3) {
-      const tx = at ?? shadowTip(this, q);
+    ecHand(q, m, K2, at2, tele = 1.3) {
+      const tx = at2 ?? shadowTip(this, q);
       return this.hz({
         k: "ehand",
         id: nid9(),
@@ -40482,27 +40482,27 @@
         lift: 0.7,
         life: tele + 0.14 + 1.6 + 0.7,
         dmg: this.dmg * m,
-        c: K.c,
+        c: K2.c,
         sd: Math.random() * 99
       });
     },
     /** 고유 기술 — boss-signature 의 sigStart 가 넘긴다 */
-    ecSig(d, p, world, K) {
+    ecSig(d, p, world, K2) {
       const m = d.m ?? 1, E = this;
       switch (d.sig) {
         case "shand": {
-          this.ecHand(p, m, K);
+          this.ecHand(p, m, K2);
           app.sfxAt && app.sfxAt("ec_reach", p.cx / TS, p.cy / TS);
           return { busy: 1.6 };
         }
         case "hands2": {
           const n = d.cnt || 2;
-          this.ecHand(p, m, K);
+          this.ecHand(p, m, K2);
           app.after(0.65, () => {
-            if (!E.dead) E.ecHand(p, m, K, p.cx, 1);
+            if (!E.dead) E.ecHand(p, m, K2, p.cx, 1);
           });
           if (n >= 3) app.after(1.3, () => {
-            if (!E.dead) E.ecHand(p, m, K, p.cx - (shadowTip(E, p) - p.cx), 1);
+            if (!E.dead) E.ecHand(p, m, K2, p.cx - (shadowTip(E, p) - p.cx), 1);
           });
           app.sfxAt && app.sfxAt("ec_reach", p.cx / TS, p.cy / TS);
           return { busy: 1.2 + n * 0.65 };
@@ -40512,18 +40512,18 @@
           const xs = [p.cx + (Math.random() < 0.5 ? -1 : 1) * (130 + Math.random() * 90), p.cx + (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 120)];
           if (pulses >= 3) xs.push(p.cx + (Math.random() - 0.5) * 900);
           const life = tele + gap * (pulses - 1) + 1;
-          for (const x of xs) this.hz({ k: "elight", id: nid9(), ref: this, nid: this.nid, x, fy: app.hzFloor(x, p.y), w: 120, tele: 0.7, life, c: K.c, sd: Math.random() * 99 });
-          this.hz({ k: "estare", id: nid9(), ref: this, nid: this.nid, tele, gap, pulses, life, dmg: this.dmg * m, c: K.c });
+          for (const x of xs) this.hz({ k: "elight", id: nid9(), ref: this, nid: this.nid, x, fy: app.hzFloor(x, p.y), w: 120, tele: 0.7, life, c: K2.c, sd: Math.random() * 99 });
+          this.hz({ k: "estare", id: nid9(), ref: this, nid: this.nid, tele, gap, pulses, life, dmg: this.dmg * m, c: K2.c });
           app.sfxAt && app.sfxAt("ec_open", p.cx / TS, p.cy / TS);
           return { busy: life };
         }
         case "totality": {
           const dur = 8;
-          this.hz({ k: "etotal", id: nid9(), ref: this, nid: this.nid, tele: 1.6, life: 1.6 + dur, every: 0.8, dmg: this.dmg * m * 0.35, c: K.c });
+          this.hz({ k: "etotal", id: nid9(), ref: this, nid: this.nid, tele: 1.6, life: 1.6 + dur, every: 0.8, dmg: this.dmg * m * 0.35, c: K2.c });
           for (let i = 0; i < 4; i++) app.after(2.2 + i * 1.6, () => {
             if (!E.dead) {
               const q = app.hzNear(E.hx, E.hy + EC.SKY) || p;
-              E.ecHand(q, m, K, void 0, 1);
+              E.ecHand(q, m, K2, void 0, 1);
             }
           });
           app.sfxAt && app.sfxAt("ec_total", p.cx / TS, p.cy / TS);
@@ -40547,14 +40547,14 @@
     },
     /** 기술이 끝났다 — 그 보스 갈래의 틈을 연다. 아무도 못 맞혔으면(헛손질) 더 길고 더 아프다 */
     gapOpen(ult) {
-      const k = BOSS_GAP[this.type], K = k && GAP_KIND[k];
-      if (!K) return;
+      const k = BOSS_GAP[this.type], K2 = k && GAP_KIND[k];
+      if (!K2) return;
       const hp = app.players.reduce((s, q) => s + (q.dead ? 0 : q.hp), 0);
       const miss = hp >= (this.mvHp0 || 0) - 1;
       this.gapK = k;
       this.gapMiss = miss ? 1 : 0;
-      this.gapT = this.gapMax = K.dur * (ult ? 1.5 : 1) + (miss ? K.miss : 0);
-      if (K.slow) this.slow(1 - K.slow, this.gapT);
+      this.gapT = this.gapMax = K2.dur * (ult ? 1.5 : 1) + (miss ? K2.miss : 0);
+      if (K2.slow) this.slow(1 - K2.slow, this.gapT);
       if (app.gapBurst) app.gapBurst(this);
     },
     /** 매 프레임(호스트) — 틈 동안은 새 기술을 안 고르고, 비틀거리면 몸놀림도 멈춘다(true) */
@@ -40609,7 +40609,7 @@
       return (Math.max(0, this.hp) + (t ? Math.max(0, t.hp) : 0)) / this.poolMax;
     },
     /** 치유 · 방어막 · 결계 기술(entity/boss-moves mvStart 가 부른다) */
-    formMove(d, p, world, K) {
+    formMove(d, p, world, K2) {
       const fly = this.flies();
       if (d.k === "heal") {
         const total = this.maxHp * (d.v || 0.06), dur = d.dur || 3;
@@ -40635,7 +40635,7 @@
           }
           if (Math.random() < dt * 30) {
             const a = Math.random() * TAU, R = Math.max(this.w, this.h) * 0.9 + 40;
-            const pt = new Part(this.cx + Math.cos(a) * R, this.cy + Math.sin(a) * R, Math.random() < 0.5 ? "#7dff9a" : K.c, 0, 0.45, { g: 0, glow: 1, drag: 1 });
+            const pt = new Part(this.cx + Math.cos(a) * R, this.cy + Math.sin(a) * R, Math.random() < 0.5 ? "#7dff9a" : K2.c, 0, 0.45, { g: 0, glow: 1, drag: 1 });
             pt.vx = -Math.cos(a) * R * 2;
             pt.vy = -Math.sin(a) * R * 2;
             app.parts.push(pt);
@@ -40657,7 +40657,7 @@
         this.wardT = d.life || 10;
         this.shFx = d.fx || "";
         app.texts.push(new DmgText(this.cx, this.y - 18, tr("결계"), "#ffe08a", 2));
-        app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.8, K.c, 0.7, 8, 2, 0.6, "sigil_aegis");
+        app.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.8, K2.c, 0.7, 8, 2, 0.6, "sigil_aegis");
         return { busy: 0.6 };
       }
       return { busy: 0.3 };
@@ -42574,29 +42574,29 @@
     renderBig(c, w, m, ax, ay, time, camX, camY) {
       const s = MACHINE[m.t], busy = m.on && m.act && this.SHAKE[m.t], [bx, by] = this.brokeJolt(m, time);
       const jx = (busy ? Math.round(Math.sin(time * 53 + m.x) * this.SHAKE[m.t] * 0.6) : 0) + bx;
-      const [X, Y, PW7, PH6] = this.drawBig(c, m, ax + jx, ay + by, time);
+      const [X, Y, PW8, PH7] = this.drawBig(c, m, ax + jx, ay + by, time);
       if (m.t === "drill_x") this.drawWork(c, w, m, ax, ay, time, camX, camY);
-      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW7 - TS, Y, time);
+      if (m.broke || m.fixT !== void 0 && time - m.fixT < 0.7) this.drawBroken(c, m, X + PW8 - TS, Y, time);
       if (s.rot) {
         const [dx, dy] = DIR4[m.dir & 3];
-        const ex = dx > 0 ? X + PW7 : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH6 : Y + PH6 - TS / 2;
+        const ex = dx > 0 ? X + PW8 : dx < 0 ? X : X + TS / 2, ey = dy < 0 ? Y : dy > 0 ? Y + PH7 : Y + PH7 - TS / 2;
         c.fillStyle = "rgba(255,214,120,.9)";
         c.fillRect(ex + dx * 2 - 2 - (dx > 0 ? 2 : 0), ey + dy * 2 - 2 - (dy > 0 ? 2 : 0), 4, 4);
       }
       if (m.fmax && m.fuel > 0) {
-        const h = Math.round(m.fuel / m.fmax * (PH6 - 8));
+        const h = Math.round(m.fuel / m.fmax * (PH7 - 8));
         c.fillStyle = "#e8842a";
-        c.fillRect(X + 1, Y + PH6 - 4 - h, 2, h);
+        c.fillRect(X + 1, Y + PH7 - 4 - h, 2, h);
       }
       if (m.rec >= 0 && MRECIPES[m.rec]) {
         const p = clamp(m.prog / MRECIPES[m.rec].t, 0, 1);
         c.fillStyle = "#2a2a32";
-        c.fillRect(X + 4, Y + PH6 - 3, PW7 - 8, 2);
+        c.fillRect(X + 4, Y + PH7 - 3, PW8 - 8, 2);
         c.fillStyle = "#5fc45f";
-        c.fillRect(X + 4, Y + PH6 - 3, Math.round((PW7 - 8) * p), 2);
+        c.fillRect(X + 4, Y + PH7 - 3, Math.round((PW8 - 8) * p), 2);
       }
       c.fillStyle = this.statusColor(m);
-      c.fillRect(X + PW7 - 4, Y + 2, 2, 2);
+      c.fillRect(X + PW8 - 4, Y + 2, 2, 2);
     }
   };
   mixin(Factory11, FactoryRenderPart);
@@ -43982,17 +43982,17 @@
         mx = Math.max(mx, Math.abs(x));
         my = Math.max(my, Math.abs(y));
       }
-      const PW7 = Math.round((mx + 80) * 2), PH6 = Math.round((my + 80) * 2);
+      const PW8 = Math.round((mx + 80) * 2), PH7 = Math.round((my + 80) * 2);
       const grid = document.createElement("div");
       grid.className = "bgrid";
       grid.style.height = `min(${this.TREE_H}px, calc(100vh - 380px))`;
       grid.style.setProperty("--cy", "50%");
       const plane = document.createElement("div");
       plane.className = "bplane";
-      plane.style.width = PW7 + "px";
-      plane.style.height = PH6 + "px";
-      plane.style.setProperty("--cy", PH6 / 2 + "px");
-      this._treePlane = { el: plane, grid, w: PW7, h: PH6 };
+      plane.style.width = PW8 + "px";
+      plane.style.height = PH7 + "px";
+      plane.style.setProperty("--cy", PH7 / 2 + "px");
+      this._treePlane = { el: plane, grid, w: PW8, h: PH7 };
       const svg = document.createElementNS(NS, "svg");
       svg.setAttribute("class", "blines");
       const line4 = (a, b, cls, c) => {
@@ -44511,7 +44511,7 @@
         el.querySelector(".pbar i").style.width = (capped ? 100 : Math.min(100, pr.xp / need * 100)) + "%";
         el.querySelector(".pxp").textContent = capped ? tr("더 오를 곳이 없다") : `${pr.xp} / ${need}`;
         el.querySelector(".plin").innerHTML = P2.lin.map(([n, f]) => `<span class="pl"><b>${f(pr.lv)}</b>${n}</span>`).join("");
-        el.querySelector(".pperks").innerHTML = P2.perks.map(([at, n, dsc]) => pr.lv >= at - 1 ? `<div class="perk${pr.lv >= at ? " on" : " soon"}"><span class="pk">Lv ${at}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>` : `<div class="perk sealed"><span class="pk">Lv ${at}</span><span class="pkn">???</span><span class="pkd">${tr("{lv}레벨이 되면 드러난다", { lv: at - 1 })}</span></div>`).join("");
+        el.querySelector(".pperks").innerHTML = P2.perks.map(([at2, n, dsc]) => pr.lv >= at2 - 1 ? `<div class="perk${pr.lv >= at2 ? " on" : " soon"}"><span class="pk">Lv ${at2}</span><span class="pkn">${n}</span><span class="pkd">${dsc}</span></div>` : `<div class="perk sealed"><span class="pk">Lv ${at2}</span><span class="pkn">???</span><span class="pkd">${tr("{lv}레벨이 되면 드러난다", { lv: at2 - 1 })}</span></div>`).join("");
       }
     }
   };
@@ -45864,13 +45864,13 @@
   var DEFAULT_PAUSE = { ",": 2, ".": 4, "!": 4, "?": 4, "—": 3, "…": 5, "、": 2, "。": 4 };
   function typewrite(el, text, o) {
     const n = text.length, pause = o.pause || DEFAULT_PAUSE;
-    const at = new Float32Array(n + 1);
+    const at2 = new Float32Array(n + 1);
     let acc = 0;
     for (let i = 0; i < n; i++) {
-      at[i] = acc;
+      at2[i] = acc;
       acc += 1 + (pause[text[i]] || 0);
     }
-    at[n] = acc;
+    at2[n] = acc;
     const dur = Math.max(o.min ?? 300, Math.min(o.max ?? 1100, n * (o.msPer ?? 34)));
     const unit = acc > 0 ? dur / acc : 0;
     let shown = 0, raf = 0, live2 = true;
@@ -45884,7 +45884,7 @@
       if (!live2) return;
       const t = (performance.now() - t0) / (unit || 1);
       let k = shown;
-      while (k < n && at[k] <= t) k++;
+      while (k < n && at2[k] <= t) k++;
       if (k !== shown) {
         for (let i = shown; i < k; i++) if (o.onChar && text[i] !== " ") o.onChar(text[i], i);
         shown = k;
@@ -46117,12 +46117,12 @@
         void m.offsetWidth;
         m.classList.add("bump");
       }
-      const at = this.dlg.i;
+      const at2 = this.dlg.i;
       this.speaker(false);
-      if (this.dlg.npcId) this.gesture(this.dlg.lines[at]);
-      this.typeLine(this.dlg.lines[at], () => {
-        if (!this.dlg || this.dlg.i !== at) return;
-        if (this.dlg.npcId) this.restMood(this.dlg.lines[at]);
+      if (this.dlg.npcId) this.gesture(this.dlg.lines[at2]);
+      this.typeLine(this.dlg.lines[at2], () => {
+        if (!this.dlg || this.dlg.i !== at2) return;
+        if (this.dlg.npcId) this.restMood(this.dlg.lines[at2]);
         if (last) this.showChoices();
         else $("#dlg-choices").innerHTML = `<div class="dlg-next"><span class="dlg-next-ic"></span>${tr("클릭하여 계속")}</div>`;
       });
@@ -46561,12 +46561,12 @@
       if (!ic) return;
       mats.forEach(([id, rc], k) => this.flyIcon(Art.itemUrl(id), rc, ic, k * 70, 380, 20));
       setTimeout(() => {
-        const ric = document.querySelector(`#craft-list .recipe[data-r="${i}"] .ric`), at = ric ? ric.getBoundingClientRect() : ic;
+        const ric = document.querySelector(`#craft-list .recipe[data-r="${i}"] .ric`), at2 = ric ? ric.getBoundingClientRect() : ic;
         this.pop(ric, "made");
-        this.sparkAt(at, "#ffd27a", 12, 46);
+        this.sparkAt(at2, "#ffd27a", 12, 46);
         const bag = document.querySelector('#tabbar .tb[data-tab="inv"]');
         if (bag) {
-          this.flyIcon(Art.itemUrl(r.out), at, bag.getBoundingClientRect(), 140, 560, 30);
+          this.flyIcon(Art.itemUrl(r.out), at2, bag.getBoundingClientRect(), 140, 560, 30);
           setTimeout(() => this.pop(bag, "got", 600), 700);
         }
       }, 380 + mats.length * 70);
@@ -46664,13 +46664,13 @@
         this.pop(st, "deny", 400);
         return;
       }
-      const item = st.querySelector(".as-item"), out = st.querySelector(".as-res"), at = item.getBoundingClientRect();
+      const item = st.querySelector(".as-item"), out = st.querySelector(".as-res"), at2 = item.getBoundingClientRect();
       out.textContent = res === "fail" ? "=" : "+" + (it.e || 0);
       for (const c of ["r-ok", "r-fail", "r-brk"]) st.classList.remove(c);
       const cls = res === "ok" ? "r-ok" : res === "fail" ? "r-fail" : "r-brk";
       this.pop(st, cls, 1e3);
-      if (res === "ok") this.sparkAt(at, "#ffd27a", 18, 70);
-      else if (res === "break") this.sparkAt(at, "#e0564c", 14, 54);
+      if (res === "ok") this.sparkAt(at2, "#ffd27a", 18, 70);
+      else if (res === "break") this.sparkAt(at2, "#e0564c", 14, 54);
       this.anvilShow(it);
     }
   };
@@ -47036,7 +47036,7 @@
       const u = t * rate + i / n, gen = Math.floor(u), ph = u - gen, life = 0.55 + hash(i * 3 + gen) * 0.35;
       if (ph > life) continue;
       const vx = ((hash(i * 131 + gen * 17) - 0.5) * 50 + bias * 22) * spd, vy = (-14 - hash(i * 71 + gen * 29 + 5) * 34) * spd;
-      const at = (tt2) => {
+      const at2 = (tt2) => {
         let x2 = ox + vx * tt2, y2 = oy + vy * tt2 + 70 * tt2 * tt2;
         if (y2 > floor) {
           y2 = floor - (y2 - floor) * 0.3;
@@ -47044,7 +47044,7 @@
         }
         return [x2, y2];
       };
-      const tt = ph, [x, y] = at(tt), [px, py] = at(Math.max(0, tt - 0.035));
+      const tt = ph, [x, y] = at2(tt), [px, py] = at2(Math.max(0, tt - 0.035));
       const k = ph / life;
       c.globalAlpha = 1 - k * 0.7;
       c.strokeStyle = k < 0.2 ? "#fffbe0" : k < 0.5 ? "#ffd060" : "#ff7a2a";
@@ -50033,11 +50033,11 @@
     }
   }
   function blob(p, test) {
-    const at = (x, y) => x < 0 || y < 0 || x >= EMO_PX || y >= EMO_PX ? null : test(x + 0.5, y + 0.5);
+    const at2 = (x, y) => x < 0 || y < 0 || x >= EMO_PX || y >= EMO_PX ? null : test(x + 0.5, y + 0.5);
     for (let y = 0; y < EMO_PX; y++) for (let x = 0; x < EMO_PX; x++) {
-      const c = at(x, y);
+      const c = at2(x, y);
       if (!c) continue;
-      p.px(x, y, 1, 1, !at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1) || !at(x, y + 1) ? INK : c);
+      p.px(x, y, 1, 1, !at2(x - 1, y) || !at2(x + 1, y) || !at2(x, y - 1) || !at2(x, y + 1) ? INK : c);
     }
   }
   var dot = (p, x, y, c = INK) => p.px(x, y, 2, 2, c);
@@ -51605,12 +51605,12 @@
       }
     }
     /** 몸을 도는 빛 — at() 둘레를 기울어진 고리(tilt — 세로 납작함)로 n 개가 돈다. 뒤쪽 반 바퀴는 옅게 */
-    orbit(at, r, n, c, life = 1.2, s = 7, sp = 5, tilt = 0.35) {
-      for (let i = 0; i < n; i++) this.add({ k: "orbit", at, r: r * (0.85 + this.rand() * 0.3), ph: i / n * TAU2, sp: sp * (0.9 + this.rand() * 0.2), s, tilt, c, t: life, max: life });
+    orbit(at2, r, n, c, life = 1.2, s = 7, sp = 5, tilt = 0.35) {
+      for (let i = 0; i < n; i++) this.add({ k: "orbit", at: at2, r: r * (0.85 + this.rand() * 0.3), ph: i / n * TAU2, sp: sp * (0.9 + this.rand() * 0.2), s, tilt, c, t: life, max: life });
     }
     /** 조준 — 네 모서리 괄호가 과녁(at() — 사라지면 null)으로 조여 들며 돈다 */
-    reticle(at, r, c, life = 0.8) {
-      this.add({ k: "reticle", at, r, c, t: life, max: life });
+    reticle(at2, r, c, life = 0.8) {
+      this.add({ k: "reticle", at: at2, r, c, t: life, max: life });
     }
     /** 빛줄기 — 두 점을 잇는 굵은 빛(관통 화살 · 순간이동 자국) */
     beam(x0, y0, x1, y1, c, life = 0.25, w = 8, art) {
@@ -51865,9 +51865,9 @@
             break;
           }
           case "orbit": {
-            const at = f.at();
-            if (!at) break;
-            const a = f.ph + p * f.max * f.sp, x = at[0] + Math.cos(a) * f.r - camX, y = at[1] + Math.sin(a) * f.r * f.tilt - camY;
+            const at2 = f.at();
+            if (!at2) break;
+            const a = f.ph + p * f.max * f.sp, x = at2[0] + Math.cos(a) * f.r - camX, y = at2[1] + Math.sin(a) * f.r * f.tilt - camY;
             c.globalAlpha = Math.min(1, k * 3, p * 6) * (Math.sin(a) > 0 ? 1 : 0.4);
             c.fillStyle = f.c;
             c.beginPath();
@@ -51876,9 +51876,9 @@
             break;
           }
           case "reticle": {
-            const at = f.at();
-            if (!at) break;
-            const x = at[0] - camX, y = at[1] - camY, r = f.r * (1 + 0.8 * (1 - easeOut(Math.min(1, p * 3)))), rot = p * 2.2;
+            const at2 = f.at();
+            if (!at2) break;
+            const x = at2[0] - camX, y = at2[1] - camY, r = f.r * (1 + 0.8 * (1 - easeOut(Math.min(1, p * 3)))), rot = p * 2.2;
             c.globalAlpha = Math.min(1, k * 2.5);
             c.strokeStyle = f.c;
             c.lineWidth = 2.2;
@@ -52054,10 +52054,10 @@
           q.globalCompositeOperation = "source-over";
           q.translate(S / 2, S / 2);
           q.drawImage(im, -R, -R, R * 2, R * 2);
-          const cg = q.createConicGradient(s0 - 0.2, 0, 0), span = (s1 + 0.25 - (s0 - 0.2)) / TAU2, at = (a) => Math.min(1, Math.max(0, (a - (s0 - 0.2)) / TAU2));
+          const cg = q.createConicGradient(s0 - 0.2, 0, 0), span = (s1 + 0.25 - (s0 - 0.2)) / TAU2, at2 = (a) => Math.min(1, Math.max(0, (a - (s0 - 0.2)) / TAU2));
           cg.addColorStop(0, "rgba(0,0,0,0)");
-          cg.addColorStop(at(s0 + 0.55 * h + 0.05), "rgba(0,0,0,1)");
-          cg.addColorStop(at(s1 - 0.08), "rgba(0,0,0,1)");
+          cg.addColorStop(at2(s0 + 0.55 * h + 0.05), "rgba(0,0,0,1)");
+          cg.addColorStop(at2(s1 - 0.08), "rgba(0,0,0,1)");
           cg.addColorStop(Math.min(1, span), "rgba(0,0,0,0)");
           cg.addColorStop(1, "rgba(0,0,0,0)");
           q.globalCompositeOperation = "destination-in";
@@ -52085,10 +52085,10 @@
           return true;
         }
         case "orbit": {
-          const im = art("mote", f.c), at = f.at();
-          if (!im || !at) return !!im;
+          const im = art("mote", f.c), at2 = f.at();
+          if (!im || !at2) return !!im;
           const a = f.ph + p * f.max * f.sp, front = Math.sin(a) > 0, s = f.s * (front ? 1 : 0.7);
-          const x = at[0] + Math.cos(a) * f.r * (1 - 0.3 * p) - camX, y = at[1] + Math.sin(a) * f.r * f.tilt - camY - p * 10;
+          const x = at2[0] + Math.cos(a) * f.r * (1 - 0.3 * p) - camX, y = at2[1] + Math.sin(a) * f.r * f.tilt - camY - p * 10;
           c.globalAlpha = Math.min(1, k * 3, p * 6) * (front ? 1 : 0.45);
           c.drawImage(im, x - s, y - s, s * 2, s * 2);
           return true;
@@ -55406,7 +55406,7 @@
     } },
     s_quake: { life: 1, draw(c, a, age, k, x, y, foot) {
       for (const s of [-1, 1]) for (let i = 0; i < 6; i++) {
-        const at = i * 0.06, u = clamp((age - at) / 0.18, 0, 1), dn = k > 0.6 ? (k - 0.6) / 0.4 : 0;
+        const at2 = i * 0.06, u = clamp((age - at2) / 0.18, 0, 1), dn = k > 0.6 ? (k - 0.6) / 0.4 : 0;
         if (u <= 0) continue;
         const px = x + s * (22 + i * 30), h = (14 + hs(a.sd, i + (s > 0 ? 9 : 0)) * 16) * ease2(u) * (1 - dn);
         c.save();
@@ -55613,7 +55613,7 @@
     } },
     s_nova: { life: 1.1, draw(c, a, age, k, x, y, foot) {
       for (let i = 0; i < 12; i++) {
-        const s = i % 2 ? 1 : -1, d = 26 + Math.floor(i / 2) * 26, at = Math.floor(i / 2) * 0.05, u = clamp((age - at) / 0.15, 0, 1), dn = k > 0.7 ? (k - 0.7) / 0.3 : 0;
+        const s = i % 2 ? 1 : -1, d = 26 + Math.floor(i / 2) * 26, at2 = Math.floor(i / 2) * 0.05, u = clamp((age - at2) / 0.15, 0, 1), dn = k > 0.7 ? (k - 0.7) / 0.3 : 0;
         if (u <= 0) continue;
         const h = (16 + hs(a.sd, i) * 18) * ease2(u), lean = s * (0.15 + hs(a.sd, i + 3) * 0.3);
         c.save();
@@ -56538,7 +56538,7 @@
       const S = SKILL_STAGE[id], p = who || this.me;
       if (!S || !p) return;
       const fs = this.fxScale(), st = this.stage || (this.stage = { fl: null, dim: null, ln: null });
-      const at = () => p.dead ? null : [p.cx, p.cy];
+      const at2 = () => p.dead ? null : [p.cx, p.cy];
       if (fs > 0 && p === this.me) {
         if (S.fl) st.fl = { rgb: S.fl[0], a: S.fl[1] * fs, t: S.fl[2], max: S.fl[2] };
         if (S.dim) st.dim = { a: S.dim[0] * fs, t: S.dim[1], max: S.dim[1], p };
@@ -56546,7 +56546,7 @@
         if (S.edge) this.edgeFx(S.edge[0], S.edge[1]);
       }
       const v = this.vfx;
-      if (S.ob) v.orbit(at, S.ob[2], S.ob[1], S.ob[0], S.ob[3], 7, 5.5, 0.38);
+      if (S.ob) v.orbit(at2, S.ob[2], S.ob[1], S.ob[0], S.ob[3], 7, 5.5, 0.38);
       if (S.cv) v.converge(p.cx, p.cy - 2, 70, 14, S.cv, 0.28);
       if (S.lens) v.mark(p.cx + p.facing * 14, p.cy - 4, 170, 14, 0, S.lens, 0.28, "lens");
     },
@@ -57009,17 +57009,17 @@
     /* ================= 농사 숙련 ================= */
     harvestBonus(tx, ty, def, tool) {
       const p = this.player, lv = p.profLv("farm");
-      const at = (it) => this.drops.push(new Drop((tx + 0.5) * TS, (ty + 0.5) * TS, it));
+      const at2 = (it) => this.drops.push(new Drop((tx + 0.5) * TS, (ty + 0.5) * TS, it));
       const reap = !!(tool && tool.reap);
       let seeds = (lv >= 3 ? 1 : 0) + (Math.random() < 0.5 + (lv - 1) * 0.04 ? 1 : 0);
-      if (seeds > 0) at(makeItem(def.crop.seed, seeds));
+      if (seeds > 0) at2(makeItem(def.crop.seed, seeds));
       const yieldId = def.drop;
       if (yieldId) {
         let extra = 0;
         if (Math.random() < (lv - 1) * 0.05) extra++;
         if (lv >= 6 && Math.random() < 0.25) extra++;
         if (reap) extra++;
-        if (extra > 0) at(makeItem(yieldId, extra));
+        if (extra > 0) at2(makeItem(yieldId, extra));
       }
       if (lv >= PROF_MAX && this.world.plantSeed(tx, ty, def.crop.seed)) {
         for (let i = 0; i < 4; i++)
@@ -58553,7 +58553,7 @@
       document.body.classList.add("in-duel");
       D.el = el;
       D.ctx = el.getContext("2d");
-      const at = () => D.d.t + Math.min(0.05, (performance.now() - D.wall) / 1e3);
+      const at2 = () => D.d.t + Math.min(0.05, (performance.now() - D.wall) / 1e3);
       const move = (e) => {
         const [x, y] = D.d.toField(e.clientX, e.clientY, D.rect);
         D.d.move(x, y);
@@ -58565,7 +58565,7 @@
         } catch (_) {
         }
         move(e);
-        D.d.press("p" + e.pointerId + ":" + e.button, at());
+        D.d.press("p" + e.pointerId + ":" + e.button, at2());
       };
       const up = (e) => {
         for (const b of [0, 1, 2]) D.d.release("p" + e.pointerId + ":" + b);
@@ -58584,7 +58584,7 @@
           this.endDuel("quit");
           return;
         }
-        if (e.code === "KeyZ" || e.code === "KeyX" || e.code === "Space") D.d.press(e.code, at());
+        if (e.code === "KeyZ" || e.code === "KeyX" || e.code === "Space") D.d.press(e.code, at2());
       };
       const keyUp = (e) => {
         if (e.code === "KeyZ" || e.code === "KeyX" || e.code === "Space") D.d.release(e.code);
@@ -62421,9 +62421,9 @@
   var BossGapFxPart = {
     /** 틈이 열리는 순간 — 갈래 빛깔의 고리 · 흔들림, 헛손질이면 한 겹 더 */
     gapBurst(e) {
-      const K = GAP_KIND[e.gapK];
-      if (!K) return;
-      this.ringFx(e.cx, e.cy, Math.max(e.w, e.h) * 0.8, K.c, 0.45);
+      const K2 = GAP_KIND[e.gapK];
+      if (!K2) return;
+      this.ringFx(e.cx, e.cy, Math.max(e.w, e.h) * 0.8, K2.c, 0.45);
       if (e.gapMiss) this.ringFx(e.cx, e.y + e.h, Math.max(e.w, e.h) * 1.2, "#ffffff", 0.6);
       this.shake = Math.max(this.shake || 0, e.gapMiss ? 9 : 5);
       this.sfxAt && this.sfxAt(e.gapK === "stagger" ? "sk_quake" : e.gapK === "heat" ? "sk_fire" : "hit_crit", e.cx / 22, e.cy / 22);
@@ -62445,9 +62445,9 @@
       g.globalCompositeOperation = "source-over";
       g.clearRect(0, 0, CV.width, CV.height);
       if (!Sprites.draw(g, key, this.enemyFrame(e), -ox, -oy, e.facing < 0)) return;
-      const C = this.crackOf(e, fw, fh), K = GAP_KIND[e.gapK];
+      const C = this.crackOf(e, fw, fh), K2 = GAP_KIND[e.gapK];
       g.globalCompositeOperation = "source-atop";
-      crackNet(g, C.sd, C.ox, C.oy, Math.max(fw, fh) * 0.55, Math.min(1, (this.time - C.t0) / 0.35), K ? K.c : "#cfe8ff");
+      crackNet(g, C.sd, C.ox, C.oy, Math.max(fw, fh) * 0.55, Math.min(1, (this.time - C.t0) / 0.35), K2 ? K2.c : "#cfe8ff");
       c.save();
       c.globalAlpha = Math.min(1, e.gapT * 3);
       c.drawImage(CV, 0, 0, fw, fh, x + ox, y + oy, fw, fh);
@@ -62484,7 +62484,7 @@
           c.stroke();
         }
         if (e.gapT > 0) {
-          const K = GAP_KIND[e.gapK], k = Math.min(1, e.gapT / Math.max(0.3, e.gapMax || 1)), fade = Math.min(1, e.gapT * 3);
+          const K2 = GAP_KIND[e.gapK], k = Math.min(1, e.gapT / Math.max(0.3, e.gapMax || 1)), fade = Math.min(1, e.gapT * 3);
           if (e.gapK === "stagger") {
             const hy = e.y - camY - 10;
             for (let i = 0; i < 3; i++) {
@@ -62515,7 +62515,7 @@
               c.beginPath();
               c.ellipse(x, y, e.w * 0.5, e.h * 0.5, 0, 0, TAU);
               c.clip();
-              crackNet(c, C.sd, x - e.w / 2 + C.ox, y - e.h / 2 + C.oy, Math.max(e.w, e.h) * 0.6, Math.min(1, (t - C.t0) / 0.35), K.c);
+              crackNet(c, C.sd, x - e.w / 2 + C.ox, y - e.h / 2 + C.oy, Math.max(e.w, e.h) * 0.6, Math.min(1, (t - C.t0) / 0.35), K2.c);
             }
             void k;
             if (Math.random() < 0.25) this.mfxAdd({ k: "mote", x: e.cx + (Math.random() - 0.5) * e.w, y: e.cy, vx: (Math.random() - 0.5) * 80, vy: -40, life: 0.7, r: 2.2, c: "200,230,255", c2: "255,255,255" });
@@ -66312,10 +66312,10 @@
             c.drawImage(pim, st * PW4, 0, PW4, PH4, -80, -136, PW4, PH4);
           }
           c.restore();
-          const ca = Math.cos(H.a), sa = Math.sin(H.a), at = (ox, oy) => [hx + ox * ca - oy * sa, hy + ox * sa + oy * ca];
-          e.jdHead = at(0, -56);
-          e.jdEye = at(0, -62);
-          e.jdEyes = st < 2 ? [at(-16, -62), at(16, -62)] : [at(0, -62)];
+          const ca = Math.cos(H.a), sa = Math.sin(H.a), at2 = (ox, oy) => [hx + ox * ca - oy * sa, hy + ox * sa + oy * ca];
+          e.jdHead = at2(0, -56);
+          e.jdEye = at2(0, -62);
+          e.jdEyes = st < 2 ? [at2(-16, -62), at2(16, -62)] : [at2(0, -62)];
         }
         c.restore();
       }
@@ -67127,18 +67127,155 @@
   };
   mixin(Game.prototype, BossRootFx, true);
 
+  // src/game/game/boss-witch-art.ts
+  var boss_witch_art_exports = {};
+  __export(boss_witch_art_exports, {
+    BossWitchArt: () => BossWitchArt
+  });
+  var K = 4, BW6 = 176, BH6 = 232, PW6 = 112, PH6 = 224, FROST = "#bfefff";
+  var C0 = [22, 30], SH = [7, 22], MOUTH2 = [22, 16];
+  var ease6 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
+  function at(x, y, s, a, dx, dy) {
+    const ox = (dx - C0[0]) * K * s, oy = (dy - C0[1]) * K, ca = Math.cos(a), sa = Math.sin(a);
+    return [x + ox * ca - oy * sa, y + ox * sa + oy * ca];
+  }
+  var BossWitchArt = {
+    /** 실비아 한 몸 — ghost 면 거울 분신(옅고 · 숨 없고 · 눈빛 없음) */
+    drawWitchRig(c, e, x, y, s, ghost) {
+      const im = Sprites.want("frost_witch"), pim = Sprites.want("frost_witch_parts");
+      if (!im || !pim) return false;
+      const T2 = this.time || 0, A = e.fwA || (e.fwA = { sp: 0, cast: 0, t0: T2, br: 0 });
+      const dt = this.paused ? 0 : Math.max(0, Math.min(0.1, T2 - A.t0));
+      A.t0 = T2;
+      const st = Math.min(2, Math.round((e.pf || 0) * 2)), busy = !!(e.mv && e.mv.d);
+      A.sp = ease6(A.sp, busy || ghost ? 1 : 0.08 + 0.06 * Math.sin(T2 * 1.3), dt, busy ? 5 : 2);
+      A.cast = ease6(A.cast, busy || e.atkCd !== void 0 && e.atkCd < 0.25 ? 1 : 0, dt, 6);
+      const bob = Math.sin(T2 * 1.9 + (ghost ? 1.3 : 0)) * 6, tilt = Math.max(-0.18, Math.min(0.18, (e.vx || 0) * 7e-4)) + Math.sin(T2 * 0.8) * 0.02;
+      const X = x, Y = y + bob;
+      c.save();
+      c.imageSmoothingEnabled = false;
+      if (ghost) c.globalAlpha *= 0.5 + 0.08 * Math.sin(T2 * 7);
+      for (const side of [-1, 1]) {
+        const [ax, ay] = at(X, Y, s, tilt, C0[0] + side * SH[0], SH[1] - 2);
+        const ang = 0.22 + Math.sin(T2 * 1.4 + side) * 0.04 - A.sp * 1.05;
+        c.save();
+        c.translate(ax, ay);
+        c.rotate(tilt);
+        c.scale(side * s, 1);
+        c.rotate(ang);
+        const a0 = c.globalAlpha;
+        if (A.sp < 0.98) {
+          c.globalAlpha = a0 * (1 - A.sp);
+          c.drawImage(pim, 3 * PW6, 0, PW6, PH6, -24 * 0.74, -12 * 0.74, PW6 * 0.74, PH6 * 0.74);
+        }
+        if (A.sp > 0.02) {
+          c.globalAlpha = a0 * A.sp;
+          c.drawImage(pim, 4 * PW6, 0, PW6, PH6, -24, -16, PW6 * (0.8 + 0.2 * A.sp), PH6 * (0.8 + 0.2 * A.sp));
+        }
+        c.restore();
+      }
+      const back = -1;
+      const [bsx, bsy] = at(X, Y, s, tilt, C0[0] + back * SH[0], SH[1]);
+      const ba = Math.PI / 2 - 0.55 + Math.sin(T2 * 1.1) * 0.05 - A.cast * 0.35;
+      c.save();
+      c.translate(bsx, bsy);
+      c.scale(back * s, 1);
+      c.rotate(ba);
+      c.drawImage(pim, 1 * PW6, 0, PW6, PH6, -16, -112, PW6, PH6);
+      c.restore();
+      const hx = bsx + Math.cos(ba) * 76 * back * s, hy = bsy + Math.sin(ba) * 76;
+      const sa = Math.sin(T2 * 1.1 + 0.5) * 0.06 - back * s * 0.1;
+      c.save();
+      c.translate(hx, hy);
+      c.rotate(sa);
+      c.drawImage(pim, 0, 0, PW6, PH6, -56, -136, PW6, PH6);
+      c.restore();
+      e.fwOrb = [hx + Math.sin(sa) * 112, hy - Math.cos(sa) * 112];
+      const fr = st * 2 + (T2 % 1.8 < 0.9 ? 0 : 1);
+      c.save();
+      c.translate(X, Y);
+      c.rotate(tilt);
+      if (s < 0) c.scale(-1, 1);
+      c.drawImage(im, fr * BW6, 0, BW6, BH6, -C0[0] * K, -C0[1] * K, BW6, BH6);
+      if (!ghost && e.flash > 0) {
+        c.globalCompositeOperation = "lighter";
+        c.globalAlpha = Math.min(0.5, e.flash * 4);
+        c.drawImage(im, fr * BW6, 0, BW6, BH6, -C0[0] * K, -C0[1] * K, BW6, BH6);
+      }
+      c.restore();
+      const [fsx, fsy] = at(X, Y, s, tilt, C0[0] + SH[0], SH[1]);
+      const fa = (1 - A.cast) * (1.25 + Math.sin(T2 * 1.6) * 0.06) + A.cast * (-0.25 + Math.sin(T2 * 9) * 0.04);
+      c.save();
+      c.translate(fsx, fsy);
+      c.scale(s, 1);
+      c.rotate(fa);
+      c.drawImage(pim, (A.cast > 0.5 ? 2 : 1) * PW6, 0, PW6, PH6, -16, -112, PW6, PH6);
+      c.restore();
+      e.fwHand = [fsx + Math.cos(fa) * 92 * s, fsy + Math.sin(fa) * 92];
+      c.restore();
+      if (!ghost && !this.paused) {
+        A.br += dt;
+        const decoys = (this.bhz || []).some((h) => h.k === "decoy" && h.type === "frost_witch");
+        if (A.br > (decoys ? 0.4 : 1.1)) {
+          A.br = 0;
+          const [mx, my] = at(X + (this.cam ? this.cam.x : 0), Y + (this.cam ? this.cam.y : 0), s, tilt, MOUTH2[0] + 3, MOUTH2[1] + 2);
+          this.vfx.puffs(mx + s * 10, my, 3, 9, "rgba(244,252,255,.75)", 1.2, 14);
+          for (let i = 0; i < 7; i++) {
+            const pt = new Part(mx, my, i % 2 ? "#ffffff" : "#e4f6ff", 0, 1.1 + Math.random() * 0.5, { spd: 0, r: 2.2 + Math.random() * 1.6, g: -0.05, drag: 0.94 });
+            pt.vx = s * (30 + Math.random() * 40);
+            pt.vy = -6 - Math.random() * 14;
+            this.parts.push(pt);
+          }
+        }
+      }
+      return true;
+    },
+    /** 몸(actors 단계 · drawEnemy 가 넘긴다) */
+    drawWitch(c, e, sx, sy) {
+      const q = this.hzNear(e.cx, e.cy), s = q ? q.cx >= e.cx ? 1 : -1 : e.facing || 1;
+      if (!this.drawWitchRig(c, e, sx + e.w / 2, sy + e.h / 2, s, 0)) return false;
+      const T2 = this.time || 0;
+      if (e.fwOrb) {
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        hzGlow(c, e.fwOrb[0], e.fwOrb[1], 26 + 6 * Math.sin(T2 * 3), FROST, 0.5);
+        c.restore();
+      }
+      if (e.fwHand && e.fwA && e.fwA.cast > 0.4) {
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        hzGlow(c, e.fwHand[0], e.fwHand[1], 22, FROST, 0.6 * e.fwA.cast);
+        c.restore();
+      }
+      return true;
+    },
+    /** 거울 분신 — 진짜와 같은 몸을 옅게(숨 없음) · 둘레에 거울 테 */
+    drawWitchGhost(c, h, x, y, f) {
+      const g = h.fwG || (h.fwG = { pf: 0 });
+      const b = this.boss && this.boss.def && this.boss.def.ai === "b_witch" ? this.boss : null;
+      g.pf = b ? b.pf : 0;
+      g.mv = { d: 1 };
+      g.atkCd = 1;
+      c.save();
+      c.globalAlpha = f;
+      this.drawWitchRig(c, g, x, y, h.flip ? -1 : 1, 1);
+      c.restore();
+    }
+  };
+  mixin(Game.prototype, BossWitchArt, true);
+
   // src/game/game/boss-eclipse-art.ts
   var boss_eclipse_art_exports = {};
   __export(boss_eclipse_art_exports, {
     BossEclipseArt: () => BossEclipseArt
   });
-  var BW6 = EC.W * EC.K, PW6 = 192, CORONA = "#b48aff", PALE = "#f0e0ff";
+  var BW7 = EC.W * EC.K, PW7 = 192, CORONA = "#b48aff", PALE = "#f0e0ff";
   var isEc = (e) => e && !e.dead && e.def && e.def.ai === "b_eclipse";
   function hzOf7(g, e, k) {
     for (const h of g.bhz || []) if (h.k === k && g.hzBoss(h) === e) return h;
     return null;
   }
-  var ease6 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
+  var ease7 = (cur, to, dt, rate) => cur + (to - cur) * (1 - Math.exp(-dt * rate));
   var DARK = null;
   var EYE3 = null;
   var SMALL_EYES = [
@@ -67159,8 +67296,8 @@
   }
   function lookAt(E, dx, dy, dt, mx, my) {
     const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 260);
-    E.lx = ease6(E.lx, dx / d * mx * k, dt, 4);
-    E.ly = ease6(E.ly, dy / d * my * k, dt, 4);
+    E.lx = ease7(E.lx, dx / d * mx * k, dt, 4);
+    E.ly = ease7(E.ly, dy / d * my * k, dt, 4);
   }
   function drawEye(c, x, y, P2, w, h, o, lx, ly, T2, sd, dil) {
     const F = Math.max(1, Math.round(P2 / 1.25)), Wc = Math.ceil(w * 1.18 + 8), Hc = Math.ceil(h * 1.6 + 8);
@@ -67371,11 +67508,11 @@
         c.rotate(T2 * 0.04 + Math.sin(T2 * 0.3) * 0.05);
         c.scale(S, S);
         c.imageSmoothingEnabled = false;
-        c.drawImage(im, fr * BW6, 0, BW6, BW6, -BW6 / 2, -BW6 / 2, BW6, BW6);
+        c.drawImage(im, fr * BW7, 0, BW7, BW7, -BW7 / 2, -BW7 / 2, BW7, BW7);
         if (e.flash > 0) {
           c.globalCompositeOperation = "lighter";
           c.globalAlpha = Math.min(0.4, e.flash * 3);
-          c.drawImage(im, fr * BW6, 0, BW6, BW6, -BW6 / 2, -BW6 / 2, BW6, BW6);
+          c.drawImage(im, fr * BW7, 0, BW7, BW7, -BW7 / 2, -BW7 / 2, BW7, BW7);
         }
         c.restore();
         const P2 = EC.K * S, rot = T2 * 0.04 + Math.sin(T2 * 0.3) * 0.05;
@@ -67389,7 +67526,7 @@
           const E = eyes[i], [ang, rr, sz] = SMALL_EYES[i];
           const ex = sx + Math.cos(ang + rot) * EC.R * P2 * rr, ey = sy + Math.sin(ang + rot) * EC.R * P2 * rr;
           const goal = i < nOpen ? Math.max(0.15, Math.min(busy + 0.2, 0.95)) * blinkOf(T2, E.sd) : 0;
-          E.o = ease6(E.o, goal, dt, goal < E.o ? 14 : 4);
+          E.o = ease7(E.o, goal, dt, goal < E.o ? 14 : 4);
           if (E.o < 0.02 && i >= nOpen) continue;
           lookAt(E, tx - ex, ty - ey, dt, sz * 0.32, sz * 0.12);
           hzGlow(c, ex, ey, sz * P2 * 0.9, CORONA, 0.18 * E.o);
@@ -67400,14 +67537,14 @@
         const glow4 = e.ecGlow;
         const M2 = e.ecEye || (e.ecEye = { o: 0, lx: 0, ly: 0, sd: 0 });
         const mg = busy * blinkOf(T2, 0);
-        M2.o = ease6(M2.o, mg, dt, mg < M2.o ? 16 : 5);
+        M2.o = ease7(M2.o, mg, dt, mg < M2.o ? 16 : 5);
         lookAt(M2, tx - sx, ty - sy, dt, 22, 7);
         glow4.push([sx + M2.lx * P2 / 2, sy + M2.ly * P2 / 2, 46 * 0.9 * P2 / 2, M2.o]);
         e.ecDraw.push([sx, sy, P2 / 2, 92, 46, M2.o, M2.lx, M2.ly, 0, tot ? 0.6 : 0]);
         drawEye(c, sx, sy, P2 / 2, 92, 46, M2.o, M2.lx, M2.ly, T2, 0, sr ? 1 : tot ? 0.6 : 0);
         if (M2.o > 0.5) hzGlow(c, sx + M2.lx * P2 / 2, sy + M2.ly * P2 / 2, 70 + 50 * M2.o, PALE, 0.22 * M2.o);
       }
-      this.ecDim = ease6(this.ecDim || 0, want, dt, want > (this.ecDim || 0) ? 0.8 : 0.4);
+      this.ecDim = ease7(this.ecDim || 0, want, dt, want > (this.ecDim || 0) ? 0.8 : 0.4);
     },
     /** 그림자 손(actors 단계 · drawBossLit) — 화면 위에서 팔뚝이 이어져 내려와 땅을 짚는다 */
     drawEclipseHands(c) {
@@ -67425,20 +67562,20 @@
         c.globalCompositeOperation = "lighter";
         hzGlow(c, x, wristY + 90 * s, 120 * s, CORONA, 0.22);
         c.restore();
-        for (let y = wristY - PW6 * s * 0.95; y > cy0 - PW6 * s * 1.2; y -= PW6 * s * 0.95) c.drawImage(pim, 5 * PW6, 0, PW6, PW6, x - PW6 * s / 2, y, PW6 * s, PW6 * s);
+        for (let y = wristY - PW7 * s * 0.95; y > cy0 - PW7 * s * 1.2; y -= PW7 * s * 0.95) c.drawImage(pim, 5 * PW7, 0, PW7, PW7, x - PW7 * s / 2, y, PW7 * s, PW7 * s);
         const fr = st === 2 ? 4 : 3;
         if (st === 1) for (let g2 = 3; g2 >= 1; g2--) {
           c.save();
           c.globalAlpha = 0.25 / g2;
-          c.drawImage(pim, fr * PW6, 0, PW6, PW6, x - 96 * s, wristY - 16 * s - g2 * 30, PW6 * s, PW6 * s);
+          c.drawImage(pim, fr * PW7, 0, PW7, PW7, x - 96 * s, wristY - 16 * s - g2 * 30, PW7 * s, PW7 * s);
           c.restore();
         }
-        c.drawImage(pim, fr * PW6, 0, PW6, PW6, x - 96 * s, wristY - 16 * s, PW6 * s, PW6 * s);
+        c.drawImage(pim, fr * PW7, 0, PW7, PW7, x - 96 * s, wristY - 16 * s, PW7 * s, PW7 * s);
         const b = this.hzBoss(h);
         if (b && b.flash > 0 && st === 2) {
           c.globalCompositeOperation = "lighter";
           c.globalAlpha = Math.min(0.5, b.flash * 4);
-          c.drawImage(pim, fr * PW6, 0, PW6, PW6, x - 96 * s, wristY - 16 * s, PW6 * s, PW6 * s);
+          c.drawImage(pim, fr * PW7, 0, PW7, PW7, x - 96 * s, wristY - 16 * s, PW7 * s, PW7 * s);
         }
         c.restore();
       }
@@ -69113,7 +69250,8 @@
             drawPush(c, h, cx0, cy0, this.W, this.H, T02, Math.min(1, h.t * 4, (h.life - h.t) * 3));
             break;
           case "decoy":
-            drawDecoy(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4), T02);
+            if (h.type === "frost_witch" && this.spritesOn) this.drawWitchGhost(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4));
+            else drawDecoy(c, h, h.x - cx0, h.y - cy0, Math.min(1, h.t * 4, (h.life - h.t) * 4), T02);
             break;
           case "aura":
             {
@@ -69690,9 +69828,9 @@
         let x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry + riseY;
         if (this.starGain && i === n - 1) {
           const gk = Math.min(1, this.starGain.t / this.starGain.dur);
-          const ease7 = 1 - Math.pow(1 - gk, 3);
-          y -= (1 - ease7) * 240;
-          x += (1 - ease7) * 40;
+          const ease8 = 1 - Math.pow(1 - gk, 3);
+          y -= (1 - ease8) * 240;
+          x += (1 - ease8) * 40;
         }
         const back = riseK > 0.9 || Math.sin(a) >= 0 ? 1 : 0.45;
         const r = (2.6 + mg * 2.2 + riseK * 1.6) * (0.85 + 0.15 * Math.sin(t * 3 + i));
@@ -69729,7 +69867,7 @@
     onProfUp(kind, lv) {
       const P2 = PROFS[kind];
       if (!P2) return;
-      const perk = P2.perks.find(([at]) => at === lv);
+      const perk = P2.perks.find(([at2]) => at2 === lv);
       this.toast(tr("{P} {P2} 숙련 {lv}{v}", { P: P2.i, P2: P2.n, lv, v: perk ? ` — ${perk[1]}` : "" }), "good");
       const p = this.player;
       this.ringFx(p.cx, p.cy, perk ? 74 : 46, P2.c, perk ? 0.55 : 0.35);
@@ -71023,12 +71161,12 @@
       return true;
     },
     /** 운석을 띄운다. */
-    startMeteor(at) {
+    startMeteor(at2) {
       const { WW: WW2 } = dimsOf(this.world);
       if (this.meteor) return false;
       const w = this.world, M2 = this.METEOR;
       let x = -1, R = M2.rMin + Math.floor(Math.random() * (M2.rMax - M2.rMin + 1));
-      if (at !== void 0) x = clamp(Math.round(at), 40, WW2 - 40);
+      if (at2 !== void 0) x = clamp(Math.round(at2), 40, WW2 - 40);
       else for (let i = 0; i < 400 && x < 0; i++) {
         const c = 40 + Math.floor(Math.random() * (WW2 - 80));
         if (this.meteorSiteOk(c, R)) x = c;
@@ -71373,8 +71511,8 @@
         this.toast(tr("홀씨가 한꺼번에 터졌다"), "bad");
         this._ruinSpawn(e.ruin, 5, 150);
       } else if (e.ev === "password") {
-        const c = this.ruinCipher(e.ruin), K = c && CIPHER_KIND[c.kind];
-        this.toast(K ? tr("벽 너머에 빈 곳이 있다 — {K}이다", { K: K.n }) : tr("벽 너머에 빈 곳이 있다"));
+        const c = this.ruinCipher(e.ruin), K2 = c && CIPHER_KIND[c.kind];
+        this.toast(K2 ? tr("벽 너머에 빈 곳이 있다 — {K}이다", { K: K2.n }) : tr("벽 너머에 빈 곳이 있다"));
         this.sfx("open");
       }
     },
@@ -71427,7 +71565,7 @@
       const ck = this.world.seed + ":" + id;
       if (this._cipherCache[ck]) return this._cipherCache[ck];
       const h = hashStr(ck);
-      const K = CIPHER_KIND[kind];
+      const K2 = CIPHER_KIND[kind];
       let ans = "", shown = "", notes = [];
       const ord = [tr("첫"), tr("둘째"), tr("셋째")];
       if (kind === "digits") {
@@ -71467,7 +71605,7 @@
           ]]
         ];
       }
-      return this._cipherCache[ck] = { id, kind, ans, shown, notes, len: K.len, numeric: K.numeric };
+      return this._cipherCache[ck] = { id, kind, ans, shown, notes, len: K2.len, numeric: K2.numeric };
     },
     /** 암호 쪽지 하나를 읽는다 — 그 유적 자물쇠의 세 조각 중 하나 */
     readCipherNote(o) {
@@ -71496,12 +71634,12 @@
       }
       const el = $("#code-screen"), inp = $("#code-input"), msg = $("#code-msg");
       const c = this.ruinCipher(o.ruin);
-      const K = c ? CIPHER_KIND[c.kind] : null;
+      const K2 = c ? CIPHER_KIND[c.kind] : null;
       inp.value = "";
       msg.textContent = "";
       msg.classList.remove("ok");
-      $("#code-title").textContent = K ? K.n : tr("돌판의 홈");
-      $("#code-door").textContent = K ? K.door : tr("홈이 셋.");
+      $("#code-title").textContent = K2 ? K2.n : tr("돌판의 홈");
+      $("#code-door").textContent = K2 ? K2.door : tr("홈이 셋.");
       const seen = (this.cipherSeen || {})[o.ruin] || {};
       $("#code-hint").textContent = tr("유적 안에 흩어진 쪽지 셋이 답을 나눠 들고 있다 (찾은 것 {keysCount}/3)", { keysCount: Object.keys(seen).length });
       const carved = $("#code-carved");
@@ -71553,7 +71691,7 @@
       if (!o) return;
       const w = this.world, inp = $("#code-input"), msg = $("#code-msg");
       const c = this.ruinCipher(o.ruin);
-      const K = c ? CIPHER_KIND[c.kind] : null;
+      const K2 = c ? CIPHER_KIND[c.kind] : null;
       const got = inp.value.replace(/\s/g, "");
       if (!c) {
         msg.textContent = tr("이 문은 여기서 열 수 없다");
@@ -71561,7 +71699,7 @@
       }
       if (got.length < c.len) {
         msg.classList.remove("ok");
-        msg.textContent = tr("{ask|을} 다 넣어야 한다", { ask: K.ask });
+        msg.textContent = tr("{ask|을} 다 넣어야 한다", { ask: K2.ask });
         return;
       }
       if (got.toLowerCase() !== c.ans.toLowerCase()) {
@@ -71643,12 +71781,12 @@
     evSpot(here, a, b) {
       return this.pulseSpot(here, a, b) || this.pulseSpot(here, a, b + 10) || this.pulseSpot(here, 2, b + 24);
     },
-    evMob(type, at, mul) {
+    evMob(type, at2, mul) {
       const w = this.world, p = this.player;
       const m = this.scale() * w.ruinMobMul(Math.floor(p.cx / TS), Math.floor(p.cy / TS)) * (mul || 1);
-      const e = new Enemy(type, at[0] * TS, at[1] * TS, m);
-      e.x = at[0] * TS + TS / 2 - e.w / 2;
-      e.y = (at[1] + 1) * TS - e.h;
+      const e = new Enemy(type, at2[0] * TS, at2[1] * TS, m);
+      e.x = at2[0] * TS + TS / 2 - e.w / 2;
+      e.y = (at2[1] + 1) * TS - e.h;
       this.ents.push(e);
       for (let q = 0; q < 10; q++) this.parts.push(new Part(e.cx, e.cy, "#e8303c", -40, 0.7));
       return e;
@@ -71691,9 +71829,9 @@
         ev.seen = /* @__PURE__ */ new Set();
         const n = 3 + Math.min(2, st);
         for (let i = 0; i < n; i++) {
-          const at = this.evSpot(here, 4, 16);
-          if (!at) break;
-          const e = this.evMob(i % 3 === 2 ? "rimeguard" : "frostbound", at);
+          const at2 = this.evSpot(here, 4, 16);
+          if (!at2) break;
+          const e = this.evMob(i % 3 === 2 ? "rimeguard" : "frostbound", at2);
           e.frozenT = 7 + i * 6;
           ev.max0.push(e.frozenT);
           e.evTag = "thaw";
@@ -71725,9 +71863,9 @@
         return true;
       }
       if (k === "scale") {
-        const at = this.evSpot(here, 3, 7);
-        if (!at) return false;
-        ev.obj = { x: at[0] * TS - 6, y: (at[1] + 1) * TS - 44, w: 34, h: 44, fx: (at[0] + 0.5) * TS, fy: at[1] + 1 };
+        const at2 = this.evSpot(here, 3, 7);
+        if (!at2) return false;
+        ev.obj = { x: at2[0] * TS - 6, y: (at2[1] + 1) * TS - 44, w: 34, h: 44, fx: (at2[0] + 0.5) * TS, fy: at2[1] + 1 };
         ev.chosen = null;
         return true;
       }
@@ -71742,8 +71880,8 @@
               break;
             }
         for (let g = 0; plates.length < 4 && g < 40; g++) {
-          const at = this.evSpot(here, 2, 9);
-          if (at && plates.every((q) => Math.abs(q[0] - at[0]) > 3 || Math.abs(q[1] - at[1] - 1) > 2)) plates.push([at[0], at[1] + 1]);
+          const at2 = this.evSpot(here, 2, 9);
+          if (at2 && plates.every((q) => Math.abs(q[0] - at2[0]) > 3 || Math.abs(q[1] - at2[1] - 1) > 2)) plates.push([at2[0], at2[1] + 1]);
         }
         if (plates.length < 4) return false;
         ev.plates = plates.map((q) => ({ x: (q[0] + 0.5) * TS, y: q[1] * TS, on: false, lit: false }));
@@ -71755,9 +71893,9 @@
         return true;
       }
       if (k === "thief") {
-        const at = this.evSpot(here, 3, 8);
-        if (!at) return false;
-        const e = this.evMob("lampthief", at, 1.3);
+        const at2 = this.evSpot(here, 3, 8);
+        if (!at2) return false;
+        const e = this.evMob("lampthief", at2, 1.3);
         e.lampT = ev.t;
         e.evLamp = true;
         e.evTag = "thief";
@@ -71794,9 +71932,9 @@
         ev.got = 0;
         ev.host = this.evNearestMob(p.cx, p.cy, 600, null);
         if (!ev.host) {
-          const at = this.evSpot(here, 5, 12);
-          if (!at) return false;
-          ev.host = this.evMob("blightleech", at);
+          const at2 = this.evSpot(here, 5, 12);
+          if (!at2) return false;
+          ev.host = this.evMob("blightleech", at2);
         }
         ev.host.evTag = "host";
         ev.hop = null;
@@ -71805,13 +71943,13 @@
       if (k === "heartbeat") {
         ev.sacs = [];
         for (let i = 0; i < 5; i++) {
-          let at = null;
-          for (let g = 0; g < 12 && !at; g++) {
+          let at2 = null;
+          for (let g = 0; g < 12 && !at2; g++) {
             const c = this.evSpot(here, 3, 16);
-            if (c && ev.sacs.every((e2) => Math.abs(e2.cx / TS - c[0]) > 3)) at = c;
+            if (c && ev.sacs.every((e2) => Math.abs(e2.cx / TS - c[0]) > 3)) at2 = c;
           }
-          if (!at) break;
-          const e = this.evMob("nestsac", at);
+          if (!at2) break;
+          const e = this.evMob("nestsac", at2);
           e.evTag = "sac";
           ev.sacs.push(e);
         }
@@ -71857,9 +71995,9 @@
       if (k === "hush") {
         ev.mobs = [];
         for (let i = 0; i < 3 + Math.min(2, st); i++) {
-          const at = this.evSpot(here, 3, 14);
-          if (!at) break;
-          const e = this.evMob("pagewisp", at);
+          const at2 = this.evSpot(here, 3, 14);
+          if (!at2) break;
+          const e = this.evMob("pagewisp", at2);
           e.y -= TS * 2;
           e.evTag = "hush";
           ev.mobs.push(e);
@@ -71901,9 +72039,9 @@
       if (k === "statues") {
         ev.mobs = [];
         for (let i = 0; i < 3; i++) {
-          const at = this.evSpot(here, 9, 20);
-          if (!at) break;
-          const e = this.evMob("froststatue", at);
+          const at2 = this.evSpot(here, 9, 20);
+          if (!at2) break;
+          const e = this.evMob("froststatue", at2);
           e.evTag = "statue";
           ev.mobs.push(e);
         }
@@ -71933,22 +72071,22 @@
         ev.cells = /* @__PURE__ */ new Map();
         ev.gone = [];
         for (let i = 0; i < 2 + Math.min(2, st); i++) {
-          const at = this.evSpot(here, 4, 14);
-          if (at) this.evMob("hollowling", at).evTag = "sink";
+          const at2 = this.evSpot(here, 4, 14);
+          if (at2) this.evMob("hollowling", at2).evTag = "sink";
         }
         return true;
       }
       if (k === "seed") {
         if (!site) return false;
-        const at = this.evSpot(here, 3, 8);
-        if (!at) return false;
+        const at2 = this.evSpot(here, 3, 8);
+        if (!at2) return false;
         const main = site.rooms[0];
         let goalR = main;
         if (Math.hypot(main.x + main.w / 2 - p.cx / TS, main.y + main.h / 2 - p.cy / TS) < 18)
           goalR = site.rooms.slice().sort((a, b) => Math.hypot(b.x - p.cx / TS, b.y - p.cy / TS) - Math.hypot(a.x - p.cx / TS, a.y - p.cy / TS))[0];
         const g = this.evStand(goalR);
         if (!g) return false;
-        ev.seed = { x: (at[0] + 0.5) * TS, y: (at[1] + 1) * TS, carry: false, vy: 0 };
+        ev.seed = { x: (at2[0] + 0.5) * TS, y: (at2[1] + 1) * TS, carry: false, vy: 0 };
         ev.goal = { x: (g[0] + 0.5) * TS, y: g[1] * TS };
         ev.hp0 = p.hp;
         for (let i = 0; i < 2 + Math.min(2, st); i++) {
@@ -72088,8 +72226,8 @@
               this.shake = 8;
               p.hurt(p.d.maxHp * 0.1, q.x);
               for (let n = 0; n < 30; n++) this.parts.push(new Part(q.x, q.y - 40, "#e8c888", 80, 1));
-              const at = this.pulseSpot(here, 3, 8);
-              if (at) this.evMob("sunscarab", at);
+              const at2 = this.pulseSpot(here, 3, 8);
+              if (at2) this.evMob("sunscarab", at2);
               if (ev.miss >= 3) return false;
               this.toast(tr("틀렸다 — 해가 순서를 다시 보여 준다 ({n}/3)", { n: ev.miss }), "bad");
               for (const z of ev.plates) z.lit = false;
@@ -72178,8 +72316,8 @@
           }
           let to = this.evNearestMob(ev.host.cx, ev.host.cy, 700, ev.host);
           if (!to) {
-            const at = this.pulseSpot(here, 5, 14);
-            if (at) to = this.evMob(Math.random() < 0.5 ? "blightleech" : "sacling", at);
+            const at2 = this.pulseSpot(here, 5, 14);
+            if (at2) to = this.evMob(Math.random() < 0.5 ? "blightleech" : "sacling", at2);
           }
           if (!to) return void 0;
           ev.hop = { fx: ev.host.cx, fy: ev.host.cy, to, t: 0 };
@@ -72202,9 +72340,9 @@
         if (ev.waveT <= 0) {
           ev.waveT = 6.5;
           for (let i = 0; i < 1 + Math.min(2, ev.stage); i++) {
-            const at = this.pulseSpot(here, 9, 20);
-            if (!at) continue;
-            const e = this.evMob(i % 2 ? "sporeling" : "sporegnaw", at);
+            const at2 = this.pulseSpot(here, 9, 20);
+            if (!at2) continue;
+            const e = this.evMob(i % 2 ? "sporeling" : "sporegnaw", at2);
             e.goal = { x: c.x, y: c.y - 10 };
             e.evTag = "crown";
             ev.mobs.push(e);
@@ -72518,8 +72656,8 @@
             const here = this.pulseRuinAt(Math.floor(p.cx / TS), Math.floor(p.cy / TS));
             ev.mobs = [];
             if (here) for (const type of ["sunscarab", "sunscarab", "jarhusk"]) {
-              const at = this.pulseSpot(here, 3, 9);
-              if (at) ev.mobs.push(this.evMob(type, at));
+              const at2 = this.pulseSpot(here, 3, 9);
+              if (at2) ev.mobs.push(this.evMob(type, at2));
             }
             this.shake = 12;
             this.sfx("danger");
@@ -73121,11 +73259,11 @@
       const mul = this.scale() * w.ruinMobMul(ptx, pty) * (mulX || 1);
       const out = [];
       for (let k = 0; k < n; k++) {
-        const at = this.pulseSpot(here, 6, 20);
-        if (!at) break;
-        const e = new Enemy(pool[(k + (Math.random() * pool.length | 0)) % pool.length], at[0] * TS, at[1] * TS, mul);
-        e.x = at[0] * TS + TS / 2 - e.w / 2;
-        e.y = (at[1] + 1) * TS - e.h;
+        const at2 = this.pulseSpot(here, 6, 20);
+        if (!at2) break;
+        const e = new Enemy(pool[(k + (Math.random() * pool.length | 0)) % pool.length], at2[0] * TS, at2[1] * TS, mul);
+        e.x = at2[0] * TS + TS / 2 - e.w / 2;
+        e.y = (at2[1] + 1) * TS - e.h;
         this.ents.push(e);
         out.push(e);
         for (let q = 0; q < 10; q++) this.parts.push(new Part(e.cx, e.cy, "#e8303c", -40, 0.7));
@@ -74309,16 +74447,16 @@
     /** 거울 — 들어오는 해(왼쪽 아래) · 지금 빛줄기 · 이어야 할 태양 문장 */
     drawPuzzleBeam(c, pz, cx0, cy0, t) {
       const N = pz.nodes, cols = pz.cols, gap = cols > 1 ? N[1].x - N[0].x : 48, dy = N[0].y - N[cols].y;
-      const at = (cc, r) => [N[0].x + cc * gap - cx0, N[0].y - r * dy - cy0];
+      const at2 = (cc, r) => [N[0].x + cc * gap - cx0, N[0].y - r * dy - cy0];
       const { out, path } = beamExit(N.map((v) => v.s), cols);
       const exitPt = (o) => {
         const s = o[0], n = +o.slice(1);
-        if (s === "u") return at(n, 1.8);
-        if (s === "d") return at(n, -0.8);
-        if (s === "r") return at(cols - 0.2, n);
-        return at(-0.8, n);
+        if (s === "u") return at2(n, 1.8);
+        if (s === "d") return at2(n, -0.8);
+        if (s === "r") return at2(cols - 0.2, n);
+        return at2(-0.8, n);
       };
-      const src = at(-0.8, 0), tg = exitPt(pz.tgt);
+      const src = at2(-0.8, 0), tg = exitPt(pz.tgt);
       const sig = Sprites.vfxArt("sigil", pz.c), im = Sprites.vfxArt("flare", "#ffe08a");
       c.globalCompositeOperation = "lighter";
       if (sig) {
@@ -74333,7 +74471,7 @@
         c.globalAlpha = 0.9;
         c.drawImage(im, src[0] - 22, src[1] - 22, 44, 44);
       }
-      const pts = [src, ...path.slice(1).map(([cc, r]) => at(cc, r)), exitPt(out)];
+      const pts = [src, ...path.slice(1).map(([cc, r]) => at2(cc, r)), exitPt(out)];
       for (const [lw, a] of [[9, 0.25], [3, 0.9]]) {
         c.globalAlpha = a * (0.85 + 0.15 * Math.sin(t * 9));
         c.strokeStyle = lw > 5 ? pz.c : "#fffbe8";
@@ -74434,31 +74572,31 @@
     },
     /** 그 단계 열쇠를 채웠나 · 문 위에 띄울 글(진행까지) */
     deepKey(site, L = 0) {
-      const K = (DEEP_KEYS[site.id] || [])[L];
-      if (!K) return { ok: true, t: "", K: null };
+      const K2 = (DEEP_KEYS[site.id] || [])[L];
+      if (!K2) return { ok: true, t: "", K: null };
       const sv = this.surveyOf(site.id), spec = this.ruinSpec(site.id) || {};
       let ok = false, prog = "";
-      if (K.k === "heat") {
+      if (K2.k === "heat") {
         const g = this.deepGate(site, L), n = g ? this.deepHeat(g) : 0;
         if (sv.heat0 === void 0) sv.heat0 = n;
         const got = Math.max(0, n - sv.heat0);
-        ok = got >= K.n;
-        prog = ` (${Math.min(got, K.n)}/${K.n})`;
-      } else if (K.k === "hour") {
+        ok = got >= K2.n;
+        prog = ` (${Math.min(got, K2.n)}/${K2.n})`;
+      } else if (K2.k === "hour") {
         const h = (this.dayT || 0) / 60;
-        ok = K.a <= K.b ? h >= K.a && h < K.b : h >= K.a || h < K.b;
-      } else if (K.k === "offer") ok = !!(sv.off || {})[L];
-      else if (K.k === "feed") {
-        ok = (sv.feed || 0) >= K.n;
-        prog = ` (${Math.min(sv.feed || 0, K.n)}/${K.n})`;
-      } else if (K.k === "code") ok = this.ruinCodeDone(site.id);
-      else if (K.k === "walk") {
+        ok = K2.a <= K2.b ? h >= K2.a && h < K2.b : h >= K2.a || h < K2.b;
+      } else if (K2.k === "offer") ok = !!(sv.off || {})[L];
+      else if (K2.k === "feed") {
+        ok = (sv.feed || 0) >= K2.n;
+        prog = ` (${Math.min(sv.feed || 0, K2.n)}/${K2.n})`;
+      } else if (K2.k === "code") ok = this.ruinCodeDone(site.id);
+      else if (K2.k === "walk") {
         const n = Object.keys(sv.rooms || {}).length;
         ok = n >= site.rooms.length;
         prog = ` (${n}/${site.rooms.length})`;
-      } else if (K.k === "tablet") ok = !!(this.tabletsRead || {})[spec.story];
-      else if (K.k === "rage") ok = (sv.peak || 0) >= 3;
-      return { ok, t: tr(K.t, { n: K.n || "" }) + prog, K };
+      } else if (K2.k === "tablet") ok = !!(this.tabletsRead || {})[spec.story];
+      else if (K2.k === "rage") ok = (sv.peak || 0) >= 3;
+      return { ok, t: tr(K2.t, { n: K2.n || "" }) + prog, K: K2 };
     },
     /** 문 둘레(좌우 4칸 · 바닥 위 세 줄)에 선 횃불 수 */
     deepHeat(g) {
@@ -74472,15 +74610,15 @@
       const p = this.me;
       if (!p || p.dead || !this.world) return;
       for (const site of this.world.ruinSites || []) {
-        const L = this.deepLevels(site).length, K = (DEEP_KEYS[site.id] || [])[L];
-        if (!K || K.k !== "offer" || (this.surveyOf(site.id).off || {})[L]) continue;
+        const L = this.deepLevels(site).length, K2 = (DEEP_KEYS[site.id] || [])[L];
+        if (!K2 || K2.k !== "offer" || (this.surveyOf(site.id).off || {})[L]) continue;
         const g = this.deepGate(site, L);
         if (!g || Math.abs(p.cx - (g.x + 0.5) * TS) > TS * 3 || Math.abs(p.y + p.h - g.fy * TS) > TS * 2) continue;
-        if (p.countItem(K.item) < K.n) continue;
-        p.removeItem(K.item, K.n);
+        if (p.countItem(K2.item) < K2.n) continue;
+        p.removeItem(K2.item, K2.n);
         this.deepOffered(site.id, L);
         if (this.net && this.net.role === "guest") this.netBroadcast({ k: "doff", id: site.id, L });
-        this.toast(tr("{item} {n}개를 바쳤다", { item: ITEMS[K.item].n, n: K.n }), "good");
+        this.toast(tr("{item} {n}개를 바쳤다", { item: ITEMS[K2.item].n, n: K2.n }), "good");
         this.sfx("unseal");
         for (let q = 0; q < 30; q++) this.parts.push(new Part((g.x + 0.5) * TS + (Math.random() - 0.5) * 40, g.fy * TS - 6, "#e8dcff", -90, 0.9));
       }
@@ -74494,7 +74632,7 @@
       if (this.net && this.net.role === "guest") return;
       const tx = e.cx / TS, ty = e.cy / TS;
       for (const site of this.world.ruinSites || []) {
-        if (!(DEEP_KEYS[site.id] || []).some((K) => K.k === "feed")) continue;
+        if (!(DEEP_KEYS[site.id] || []).some((K2) => K2.k === "feed")) continue;
         if (Math.abs(tx - site.x) > site.w / 2 || Math.abs(ty - site.y) > site.h / 2) continue;
         const sv = this.surveyOf(site.id);
         sv.feed = (sv.feed || 0) + 1;
@@ -76209,9 +76347,9 @@
     /** 바다 수면 칸에서 물이 차 있는 높이(0~1, 칸 아래에서부터). */
     waveFrac(tx) {
       const t = this.time;
-      const K = 0.34, W = 1.15;
-      const main = Math.sin(tx * K - t * W);
-      const sub = Math.sin(tx * K * 2.7 - t * W * 1.6) * 0.32;
+      const K2 = 0.34, W = 1.15;
+      const main = Math.sin(tx * K2 - t * W);
+      const sub = Math.sin(tx * K2 * 2.7 - t * W * 1.6) * 0.32;
       const jit = (tileHash(Math.floor(tx), 0) - 0.5) * 0.12;
       return clamp(0.66 + (main * 0.68 + sub + jit) * 0.32, 0.34, 1);
     },
@@ -77166,21 +77304,21 @@
       const len = Math.min(o.maxLen ?? 220, (floorY - by) / uy);
       if (len < 2) return;
       const b = this.silhouette(w, h, draw);
-      const SW = Math.ceil(W + Math.abs(ux) * len) + 2, SH = Math.ceil(H + uy * len) + 2;
+      const SW = Math.ceil(W + Math.abs(ux) * len) + 2, SH2 = Math.ceil(H + uy * len) + 2;
       if (!this.sw) {
         this.sw = document.createElement("canvas");
         this.sc = this.sw.getContext("2d");
       }
       const s = this.sw, sc = this.sc;
-      if (s.width < SW || s.height < SH) {
+      if (s.width < SW || s.height < SH2) {
         s.width = Math.max(s.width, SW);
-        s.height = Math.max(s.height, SH);
+        s.height = Math.max(s.height, SH2);
       }
       sc.setTransform(1, 0, 0, 1, 0, 0);
       sc.clearRect(0, 0, s.width, s.height);
       const ox = ux < 0 ? -ux * len : 0, step = o.step ?? 2;
       for (let t = 0; t <= len; t += step) sc.drawImage(b, Math.round(ox + ux * t), Math.round(uy * t));
-      this.fadeAlong(sc, SW, SH, ox + W / 2, H / 2, ox + W / 2 + ux * (len + H * 0.5), H / 2 + uy * (len + H * 0.5), o.fadeFrom ?? 0.25);
+      this.fadeAlong(sc, SW, SH2, ox + W / 2, H / 2, ox + W / 2 + ux * (len + H * 0.5), H / 2 + uy * (len + H * 0.5), o.fadeFrom ?? 0.25);
       c.save();
       c.beginPath();
       if (o.floor) {
@@ -77190,7 +77328,7 @@
       } else c.rect(bx - ox - 2, by - 2, SW + 4, Math.max(0, floorY - by + 2));
       c.clip();
       c.globalAlpha *= (o.alpha ?? 0.3) * sun.k;
-      c.drawImage(s, 0, 0, SW, SH, bx - ox, by, SW, SH);
+      c.drawImage(s, 0, 0, SW, SH2, bx - ox, by, SW, SH2);
       c.restore();
     }
     /** 그린 판을 (x0,y0) → (x1,y1) 쪽으로 옅게 — from 몫까지는 그대로, 끝에서 0 */
@@ -77289,10 +77427,10 @@
     /** 보스 기술 자세 — 예고 · 내지르기 동안은 자세 시트(<보스>_pose, tools/mkbossart.py)의 그 칸. 아니면 null.
         한 줄 = 한 마디 · 칸 0 은 손대지 않은 그림, 1 + 기술 번호×2 + (내지르기면 1). 기술 번호 3 = 필살기 */
     bossPose(e) {
-      const K = BOSS_MOVES[e.type];
+      const K2 = BOSS_MOVES[e.type];
       let code = -1;
-      if (e.mv && K) {
-        const i = e.mv.d === K.ult ? 3 : movePose(K, e.mv.d);
+      if (e.mv && K2) {
+        const i = e.mv.d === K2.ult ? 3 : movePose(K2, e.mv.d);
         if (i >= 0) code = i * 2 + (e.mv.run ? 1 : 0);
       } else if (e.ghost && e.poseNet >= 0) code = e.poseNet;
       return code;
@@ -77617,6 +77755,7 @@
         return;
       }
       if (e.def.ai === "b_organ" || e.def.ai === "b_hourglass" || e.def.ai === "b_hive" || e.def.ai === "b_judge" || e.def.ai === "b_eclipse" || e.def.ai === "b_root") return;
+      if (e.def.ai === "b_witch" && this.spritesOn && this.drawWitch(c, e, sx, sy)) return;
       if (e.def.ai === "b_cocoon") {
         this.drawCocoon(c, e, sx, sy);
         if (!this.paused) this.cocoonAmbient(e);
@@ -78609,9 +78748,9 @@
           c.stroke();
           c.setLineDash([]);
         }
-        const lock = Math.min(1, pa / 0.35), ease7 = 1 - Math.pow(1 - lock, 3);
-        const pad = 3 + (1 - ease7) * 22 + beat * 2.5, rot = (1 - ease7) * 1.6;
-        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease7) * 4;
+        const lock = Math.min(1, pa / 0.35), ease8 = 1 - Math.pow(1 - lock, 3);
+        const pad = 3 + (1 - ease8) * 22 + beat * 2.5, rot = (1 - ease8) * 1.6;
+        const x = e.x - camX - pad, y = e.y - camY - pad, ew = e.w + pad * 2, eh = e.h + pad * 2, k = 6 + (1 - ease8) * 4;
         c.save();
         c.translate(x + ew / 2, y + eh / 2);
         c.rotate(rot);
@@ -78694,8 +78833,8 @@
         UI5.refreshStatAlloc();
       }
       if (qs.get("debug") === "meteor") {
-        const at = qs.get("at"), me = Math.floor(this.player.cx / TS);
-        setTimeout(() => this.startMeteor(at === "me" ? me : at ? +at : me + (+qs.get("dx") || 30)), 2500);
+        const at2 = qs.get("at"), me = Math.floor(this.player.cx / TS);
+        setTimeout(() => this.startMeteor(at2 === "me" ? me : at2 ? +at2 : me + (+qs.get("dx") || 30)), 2500);
       }
       if (qs.get("debug") === "village") {
         this.villageUnlocked = true;
@@ -79003,11 +79142,11 @@
         give("potion_hp", 20);
         give("bomb_small", 10);
         give("torch", 60);
-        let at = null;
+        let at2 = null;
         const tun = kq && (w.tunnels || []).filter((q) => q.k === kq).sort((a, b) => Math.abs(a.cx - w.spawnX) - Math.abs(b.cx - w.spawnX))[0];
         if (tun) {
           const fy = w._tunFloor(tun.cx, tun.cy, 40);
-          if (fy > 0) at = [tun.cx, fy];
+          if (fy > 0) at2 = [tun.cx, fy];
         } else if (kq) {
           const k = CAVE_TYPES.findIndex((c) => c.id === (kq === "frond" ? "moss" : kq));
           const cx0 = w.spawnX;
@@ -79017,22 +79156,22 @@
             for (let dx = -8; dx <= 8; dx++) for (let dy = -8; dy <= 3; dy++) if (w.get(x + dx, y + dy) === mark) n++;
             return n >= (kq === "fume" ? 1 : 3);
           };
-          for (let r = 0; r < WW2 && !at; r += 7)
+          for (let r = 0; r < WW2 && !at2; r += 7)
             for (const x of [cx0 + r, cx0 - r]) {
-              if (x < 5 || x >= WW2 - 5 || at) continue;
+              if (x < 5 || x >= WW2 - 5 || at2) continue;
               for (let y = w.surface[x] + 14; y < HELL_Y2 - 4; y++)
                 if (w.caveKindAt(x, y) === k && w.get(x, y) === T.AIR && w.get(x, y - 1) === T.AIR && w.solid(x, y + 1) && near(x, y)) {
-                  at = [x, y];
+                  at2 = [x, y];
                   break;
                 }
             }
         } else {
           const f = (w.faults || []).filter((q) => !q.done).sort((a, b) => Math.abs(a.x - w.spawnX) - Math.abs(b.x - w.spawnX))[0];
-          if (f) at = [f.x - f.dir * 3, f.y + 1];
+          if (f) at2 = [f.x - f.dir * 3, f.y + 1];
         }
-        if (at) {
-          p.x = at[0] * TS + TS / 2 - p.w / 2;
-          p.y = (at[1] + 1) * TS - p.h;
+        if (at2) {
+          p.x = at2[0] * TS + TS / 2 - p.w / 2;
+          p.y = (at2[1] + 1) * TS - p.h;
           p.vx = p.vy = 0;
           this.cam.x = clamp(p.cx - this.W / 2, 0, WW2 * TS - this.W);
           this.cam.y = clamp(p.cy - this.H / 2, 0, WH2 * TS - this.H);
@@ -79531,9 +79670,9 @@
   var ShowcasePart = {
     showcaseStart(qs) {
       const p = this.player, w = this.world, { WW: WW2, WH: WH2 } = w.dims;
-      const sess = clamp(+qs.get("sess") || 2, 1, SESSIONS.length), K = KIT[sess];
+      const sess = clamp(+qs.get("sess") || 2, 1, SESSIONS.length), K2 = KIT[sess];
       const [br, main] = ROLE[p.charId] || ROLE.wanderer;
-      this.chapter = qs.get("ch") !== null ? +qs.get("ch") : SESSIONS[sess - 1].ch0 + K.ch;
+      this.chapter = qs.get("ch") !== null ? +qs.get("ch") : SESSIONS[sess - 1].ch0 + K2.ch;
       if (sess >= 2) {
         this.villageUnlocked = true;
         w.restoreDawnCity();
@@ -79542,7 +79681,7 @@
         w.dawnCity.lv = vlv;
       }
       if (sess === 1) p.starOrbits = p.starLit = this.chapter;
-      const plv = +qs.get("plv") || K.lv;
+      const plv = +qs.get("plv") || K2.lv;
       while (p.level < plv) {
         p.level++;
         p.statPts += 3;
@@ -79583,20 +79722,20 @@
       for (const t of [1, 2, 3]) learn(BRANCHES.filter((b) => b.id !== br).flatMap((b) => b.nodes.filter((id) => SKILLS[id].tier <= t)));
       const gear = (id) => {
         if (!ITEMS[id]) return null;
-        const [lo, hi] = K.rar;
+        const [lo, hi] = K2.rar;
         for (let i = 0; i < 400; i++) {
           const it = rollGear(id, this.rng, 2);
           if (it && it.r >= lo && it.r <= hi) return it;
         }
         return makeItem(id, 1, lo);
       };
-      p.equip.weapon = gear(K.weapon[br]);
-      [p.equip.helm, p.equip.chest, p.equip.boots] = K.armor.map(gear);
-      [p.equip.acc1, p.equip.acc2] = K.acc.map(gear);
-      p.equip.util1 = makeItem(K.util[0], 1, 0);
-      p.equip.util2 = K.util[1] ? makeItem(K.util[1], 1, 0) : null;
-      if (ITEMS[K.bag]) p.equip.bag = makeItem(K.bag, 1, 0);
-      K.pets.forEach(([id, lv], i) => {
+      p.equip.weapon = gear(K2.weapon[br]);
+      [p.equip.helm, p.equip.chest, p.equip.boots] = K2.armor.map(gear);
+      [p.equip.acc1, p.equip.acc2] = K2.acc.map(gear);
+      p.equip.util1 = makeItem(K2.util[0], 1, 0);
+      p.equip.util2 = K2.util[1] ? makeItem(K2.util[1], 1, 0) : null;
+      if (ITEMS[K2.bag]) p.equip.bag = makeItem(K2.bag, 1, 0);
+      K2.pets.forEach(([id, lv], i) => {
         const it = makeItem("pet_" + id, 1);
         if (!it) return;
         it.lv = lv;
@@ -79604,14 +79743,14 @@
       });
       p.recalc();
       p.bag = new Array(p.bag.length).fill(null);
-      if (p.charId === "digger") p.equip.weapon = gear(sess >= 3 ? "pick_abyss" : K.pick);
-      else p.addItem(gear(K.pick));
-      for (const [id, n] of K.items) if (ITEMS[id]) {
+      if (p.charId === "digger") p.equip.weapon = gear(sess >= 3 ? "pick_abyss" : K2.pick);
+      else p.addItem(gear(K2.pick));
+      for (const [id, n] of K2.items) if (ITEMS[id]) {
         const max = ITEMS[id].stack || 1;
         for (let m = n; m > 0; m -= max) p.addItem(makeItem(id, Math.min(max, m), 0));
       }
-      for (const [id, n] of K.mats) if (ITEMS[id]) p.addItem(makeItem(id, n, 0));
-      p.gold = +qs.get("gold") || K.gold + Math.floor(this.rng.next() * K.gold * 0.2);
+      for (const [id, n] of K2.mats) if (ITEMS[id]) p.addItem(makeItem(id, n, 0));
+      p.gold = +qs.get("gold") || K2.gold + Math.floor(this.rng.next() * K2.gold * 0.2);
       p.prof.farm.lv = 1 + sess * 2;
       p.prof.fish.lv = 1 + sess * 2;
       p.prof.craft.lv = 1 + sess * 3;
@@ -80482,8 +80621,8 @@
       const n = this.net, t = now();
       for (const o of [UI5.chestRef, UI5.storeRef]) if (o) n.watch.set(o, t);
       if (UI5.machRef && UI5.open === "machine") n.mwatch.set(UI5.machRef, t);
-      for (const [m, at] of n.mwatch) {
-        if (t - at > 3) {
+      for (const [m, at2] of n.mwatch) {
+        if (t - at2 > 3) {
           n.mwatch.delete(m);
           continue;
         }
@@ -80493,8 +80632,8 @@
           this.netMachState(m);
         }
       }
-      for (const [o, at] of n.watch) {
-        if (t - at > 3) {
+      for (const [o, at2] of n.watch) {
+        if (t - at2 > 3) {
           n.watch.delete(o);
           continue;
         }
@@ -81266,8 +81405,8 @@
       if (!peer || !peer.pid || !peer.rp) return;
       this.mpGuests = this.mpGuests || {};
       const rec = this.mpGuests[peer.pid] || (this.mpGuests[peer.pid] = {});
-      const at = peer.last || peer.rp;
-      Object.assign(rec, { x: Math.round(at.x), y: Math.round(at.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
+      const at2 = peer.last || peer.rp;
+      Object.assign(rec, { x: Math.round(at2.x), y: Math.round(at2.y), n: peer.rp.name, c: peer.rp.charId, t: Date.now() });
       if (char && typeof char === "object" && !peer.own && JSON.stringify(char).length < 6e4) rec.char = char;
     },
     /** 호스트 — 손님 기록만 제 슬롯에 바로 적는다(세계는 마지막 저장 그대로). 호스트가 저장을 잊어도 손님 캐릭터는 남게 —
@@ -81530,9 +81669,9 @@
         }
         const b = e.target.closest("button[data-k]");
         if (!b) return;
-        const at = inp.selectionStart ?? inp.value.length, ins = ":" + b.dataset.k + ":";
-        inp.value = (inp.value.slice(0, at) + ins + inp.value.slice(at)).slice(0, CHAT_MAX);
-        inp.setSelectionRange(at + ins.length, at + ins.length);
+        const at2 = inp.selectionStart ?? inp.value.length, ins = ":" + b.dataset.k + ":";
+        inp.value = (inp.value.slice(0, at2) + ins + inp.value.slice(at2)).slice(0, CHAT_MAX);
+        inp.setSelectionRange(at2 + ins.length, at2 + ins.length);
       };
       emos.onmouseover = (e) => {
         const b = e.target.closest("button[data-k]");
@@ -81953,7 +82092,7 @@
     localizeDom(document.documentElement);
     document.documentElement.lang = LANG;
   }
-  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_root_exports, boss_eclipse_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_gap_fx_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_root_art_exports, boss_root_fx_exports, boss_eclipse_art_exports, boss_eclipse_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
+  for (const m of [math_exports, rng_exports, noise_exports, color_exports, rle_exports, seal_exports, upgrade_exports, store_exports, url_exports, music_exports, sfx_exports, ambient_exports, image_exports, loop_exports, viewport_exports, actions_exports, pointer_exports, touch_exports, tilemap_exports, light_exports, pipeline_exports, atlas_exports, conn_exports, entity_exports, scenes_exports, panels_exports, tooltip_exports, slots_exports, ko_exports, format_exports, i18n_exports, mixin_exports, duel_exports, util_exports, lang_exports, size_exports, data_exports, items_exports, recipes_exports, start_exports, enemies_exports, materials_exports, skills_exports, ruins_exports, npcs_exports, pets_exports, story_exports, quests_exports, values_exports, mobskills_exports, bossmoves_exports, achievements_exports, world_exports, plants_exports, village_exports, sky_exports, dungeon_exports, traps_exports, ruins_exports2, ruin_site_exports, caves_exports, sea_exports, water_exports, strata_exports, glacier_exports, tileart_exports, ground_exports, misc_exports, factory_exports, water_exports2, village_exports2, ruins_exports3, cave_exports, itemart_exports, glyphs_exports, gear_exports, weird_exports, trinket_exports, goods_exports, farm_exports, loot_exports, forms_exports, skills_exports2, ui_exports, misc_exports2, sprites_exports, titlebg_exports, items_exports2, entity_exports2, player_combat_exports, player_ride_exports, player_weird_exports, player_move_exports, enemy_ai_exports, enemy_skills_exports, enemy_traits_exports, enemy_kits_exports, boss_ai_exports, boss_moves_exports, boss_signature_exports, boss_pool_exports, boss_organ_exports, boss_cocoon_exports, boss_hourglass_exports, boss_hive_exports, boss_judge_exports, boss_root_exports, boss_eclipse_exports, boss_gaps_exports, boss_forms_exports, factory_exports2, tick_exports, render_exports, big_exports, ui_exports2, tree_exports, quest_exports, craft_exports, machine_exports, shop_exports, tip_exports, portrait_exports, dialogue_exports, hud_exports, motion_exports, process_exports, mach_kit_exports, mach_inside_exports, mach_scene_exports, craft_scene_exports, mach_view_exports, emoji_exports, music_exports2, savefmt_exports, game_exports, shell_exports, save_exports, sound_exports, fx_exports, skill_art_exports, status_fx_exports, mob_fx_exports, stage_fx_exports, boss_form_fx_exports, mine_exports, farm_exports2, fishing_exports, fish_duel_art_exports, fish_duel_exports, rides_exports, repair_exports, weird_fx_exports, trinkets_exports, interact_exports, talk_exports, quests_exports2, shop_exports2, village_exports3, pets_exports2, boss_exports, boss_hazard_art_exports, boss_gap_fx_exports, boss_field_art_exports, boss_tell_art_exports, boss_pool_art_exports, boss_pool_fx_exports, boss_organ_art_exports, boss_organ_fx_exports, boss_cocoon_art_exports, boss_cocoon_fx_exports, boss_hourglass_art_exports, boss_hourglass_fx_exports, boss_hive_art_exports, boss_hive_fx_exports, boss_judge_art_exports, boss_judge_fx_exports, boss_root_art_exports, boss_root_fx_exports, boss_witch_art_exports, boss_eclipse_art_exports, boss_eclipse_fx_exports, boss_arena_exports, boss_sig_art_exports, boss_sig_exports, boss_hazards_exports, progress_exports, life_exports, spawn_exports, weather_exports, rigs_exports, zones_exports, caves_exports2, meteor_exports, ruins_exports4, ruin_events_exports, ruin_events_draw_exports, ruin_pulse_exports, ruin_puzzle_exports, ruin_puzzle_draw_exports, ruin_deep_exports, citadel_exports, memory_exports, minimap_exports, render_exports2, render_sky_exports, render_world_exports, render_actors_exports, utility_exports, debug_start_exports, debug_showcase_exports, net_exports, netui_exports, netchat_exports, netprog_exports]) {
     for (const k of Object.keys(m)) {
       if (k in window) continue;
       Object.defineProperty(window, k, { get: () => m[k], configurable: true });

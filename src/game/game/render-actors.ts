@@ -336,6 +336,7 @@ export const RenderActorsPart: Bag = {
       return;
     }
     if (e.def.ai === 'b_organ' || e.def.ai === 'b_hourglass' || e.def.ai === 'b_hive' || e.def.ai === 'b_judge' || e.def.ai === 'b_eclipse' || e.def.ai === 'b_root') return;                                  // 뒷벽의 오르간 — 몸은 objects · 팔은 actors 단계에서(game/boss-organ-art)
+    if (e.def.ai === 'b_witch' && this.spritesOn && this.drawWitch(c, e, sx, sy)) return;   // 서리 마녀 실비아(game/boss-witch-art)
     if (e.def.ai === 'b_cocoon') { this.drawCocoon(c, e, sx, sy); if (!this.paused) this.cocoonAmbient(e); return; }   // 잿빛 고치 · 불나방(game/boss-cocoon-art)
     if (e.def.ai === 'flotsam') { this.drawFlotsam(c, e, sx, sy); return; }
     if (e.def.tame) { this.drawWildHorse(c, e, sx, sy); return; }

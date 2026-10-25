@@ -1388,6 +1388,144 @@ def root_parts(f):
     return F.render()
 
 
+# ===== 서리 마녀 실비아(frost_witch) — 떠 있는 서리의 여왕: 얼음 왕관 · 은빛 머리 · 끝이 얼음 조각으로 부서지는 치맛자락 =====
+SKIN, SKIN_D = '#f2e0d6', '#c8a8a4'
+HAIR, HAIR_D, HAIR_L = '#cfe4f4', '#86aacc', '#f4fbff'
+GOWN, GOWN_D, GOWN_L = '#5d8cc4', '#34588c', '#9ccaf0'
+FUR, ICE_C, ICE_E, FROSTG = '#f0f6ff', '#dff6ff', '#6fb8e8', '#bfefff'
+FW_W, FW_H = 44, 58                                           # 게임 entity/boss-witch.ts FW 와 같게(가운데 22, 31 · 어깨 22±7, 22 · 머리 22, 13)
+
+
+def witch_head(F, cx, hy, st, look=0):
+    """머리 — 얼굴 · 앞머리 · 얼음 왕관(st 2: 금 · 눈이 빛난다)"""
+    F.part('clay', SKIN, bevel=1.5).ell(cx, hy, 4.4, 5.2)
+    F.part('clay', '#e6cec6', bevel=0.5).ell(cx, hy + 4.2, 2.0, 0.6)                       # 턱 그늘(옅게 — 짙으면 수염처럼 보였다)
+    for s2 in (-1, 1):                                                                   # 눈 — 길게 내리깐 눈 · 옅은 하늘빛 눈동자
+        ex = cx + s2 * 1.9 + look * 0.4
+        F.part('cloth', '#2a3048', flat=True).box(ex - 1.1, hy - 0.2, 2.2, 0.9, 0.3)
+        F.part('glow', FROSTG if st >= 2 else '#9cc8e8', glow=st >= 2).box(ex - 0.5 + look * 0.2, hy + 0.3, 1.0, 0.7, 0.2)
+        fine(F, (ex - 1.4, hy - 1.4), (ex + 1.2, hy - 1.7 + s2 * 0.2), HAIR_D, 220)       # 가는 눈썹
+    F.part('flesh', '#b86a78', bevel=0.4).box(cx - 1.0, hy + 2.6, 2.0, 0.6, 0.3)         # 입술
+    F.part('cloth', HAIR, bevel=1.5).poly([(cx - 5, hy - 2), (cx - 3, hy - 5.6), (cx + 1, hy - 6), (cx + 4.8, hy - 4), (cx + 5, hy), (cx + 2.5, hy - 3), (cx - 1, hy - 2.6), (cx - 3.5, hy - 1)])
+    for k in range(5):                                                                   # 왕관 — 다섯 얼음 가시(가운데가 높다)
+        x = cx - 4 + k * 2; hgt = 3 + (2 - abs(k - 2)) * 1.6
+        F.part('ice', ICE_E, bevel=0.8).poly([(x - 1.1, hy - 5.4), (x, hy - 5.4 - hgt), (x + 1.1, hy - 5.4)])
+        F.part('glow', ICE_C, glow=True).poly([(x - 0.4, hy - 5.6), (x, hy - 5.0 - hgt * 0.8), (x + 0.3, hy - 5.6)])
+    F.part('ice', '#a8dcf0', bevel=0.6).box(cx - 5, hy - 6.2, 10, 1.3, 0.5)
+    if st >= 2:
+        crack(F, [(cx + 2, hy - 7.5), (cx + 2.6, hy - 6.0)], 0.3, FROSTG)
+        F.glow(cx, hy + 0.5, 4, FROSTG, 0.35)
+
+
+def witch_body(f):
+    """몸 시트 8장(44×58 · 떠 있다 — 발 없음) — 0·1 숨(머리카락 · 치맛자락 끝 조각이 흔들림) · 2·3 서리가 치마를 타고 오른다 · 4·5 금 · 하얗게 센 머리 · 빛나는 눈 · 6·7 산산이 부서짐.
+       팔 · 지팡이 · 망토는 조각이라 게임이 움직인다"""
+    F = ZFig(FW_W, FW_H)
+    cx = 22
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    brk = 0 if f < 6 else (1 if f == 6 else 2)
+    hy = 13 + brk * 2
+    hair = HAIR_L if st >= 2 else HAIR
+    # 뒷머리 — 어깨 뒤로 허리까지 흘러내린다(숨마다 끝이 흔들린다)
+    sway = (-0.8 if b else 0.8)
+    F.part('cloth', HAIR_D, bevel=2).poly([(cx - 6, hy - 3), (cx + 6, hy - 3), (cx + 8, hy + 10), (cx + 9 + sway, hy + 20), (cx + 5 + sway, hy + 24), (cx - 5 + sway, hy + 24), (cx - 9 + sway, hy + 20), (cx - 8, hy + 10)])
+    F.part('cloth', hair, bevel=1.5).poly([(cx - 5, hy - 3), (cx + 5, hy - 3), (cx + 7, hy + 10), (cx + 7.5 + sway, hy + 19), (cx + 4 + sway, hy + 22), (cx - 4 + sway, hy + 22), (cx - 7.5 + sway, hy + 19), (cx - 7, hy + 10)])
+    for k in range(3):                                                                   # 머릿결 — 얼굴 양옆에만(얼굴 위로 줄이 그어졌다)
+        for s2 in (-1, 1):
+            fine(F, (cx + s2 * (5.6 + k * 0.8), hy + 6), (cx + s2 * (6.4 + k * 1.2) + sway, hy + 21), HAIR_D, 150)
+    # 치마 — 허리에서 넓어지고, 끝은 얼음 조각으로 부서져 떠 있다(발이 없다)
+    wy, hem = 28, 49
+    sk = [(cx - 5, wy), (cx + 5, wy), (cx + 9, 37), (cx + 13, hem - 2), (cx + 11, hem), (cx - 11, hem), (cx - 13, hem - 2), (cx - 9, 37)]
+    F.part('cloth', GOWN_D, bevel=3).poly(sk)
+    F.part('cloth', GOWN, bevel=2).poly([(cx - 4, wy + 1), (cx + 4, wy + 1), (cx + 7, 37), (cx + 10, hem - 2), (cx - 10, hem - 2), (cx - 7, 37)])
+    for k in range(6):                                                                   # 주름 — 허리에서 퍼지는 결
+        x0 = cx - 3 + k * 1.2; x1 = cx - 11 + k * 4.4
+        fine(F, (x0, wy + 2), (x1, hem - 3), GOWN_D, 190)
+        fine(F, (x0 + 0.5, wy + 2), (x1 + 0.9, hem - 3), GOWN_L, 120)
+    for k in range(7):                                                                   # 치맛자락 끝 — 얼음 조각(장마다 조금씩 떨어져 떠 있다)
+        x = cx - 10 + k * 3.3; dy = (k + b) % 2 * 1.2 + brk * (k % 2)
+        F.part('ice', ICE_E, bevel=0.8).poly([(x - 1.4, hem - 1 + dy), (x + 1.4, hem - 1 + dy), (x, hem + 3 + (k % 3) + dy)])
+        F.part('glow', ICE_C, glow=True).poly([(x - 0.4, hem - 0.6 + dy), (x + 0.3, hem - 0.6 + dy), (x, hem + 1.6 + dy)])
+    if st >= 1:                                                                          # 서리가 치마를 타고 오른다 — 결정 무늬
+        for k in range(9):
+            x = cx - 9 + (k * 37) % 18; y = 39 + (k * 11) % 9
+            for a in range(3):
+                an = a / 3 * math.pi + k
+                fine(F, (x - math.cos(an) * 1.6, y - math.sin(an) * 1.6), (x + math.cos(an) * 1.6, y + math.sin(an) * 1.6), FROSTG, 230)
+        F.glow(cx, 43, 9, FROSTG, 0.18 + 0.06 * b)
+    # 몸통 — 좁은 허리 · 털 깃 · 가슴의 서리 브로치
+    F.part('cloth', GOWN_D, bevel=2).poly([(cx - 6, hy + 8), (cx + 6, hy + 8), (cx + 5, wy + 1), (cx - 5, wy + 1)])
+    F.part('cloth', GOWN, bevel=1.5).poly([(cx - 4.6, hy + 8.5), (cx + 4.6, hy + 8.5), (cx + 3.6, wy), (cx - 3.6, wy)])
+    F.part('cloth', '#2a4470', bevel=1).box(cx - 5, wy - 1.2, 10, 1.6, 0.6)               # 허리띠
+    F.part('cloth', FUR, bevel=2).poly([(cx - 8, hy + 7), (cx - 3, hy + 5.6), (cx, hy + 7), (cx + 3, hy + 5.6), (cx + 8, hy + 7), (cx + 7, hy + 10), (cx, hy + 11), (cx - 7, hy + 10)])
+    for k in range(6):
+        fine(F, (cx - 7 + k * 2.8, hy + 7.4), (cx - 6.6 + k * 2.8, hy + 9.8), '#c8d8ec', 200)
+    F.part('ice', ICE_E, bevel=0.8).poly([(cx, hy + 11), (cx + 1.6, hy + 13), (cx, hy + 15), (cx - 1.6, hy + 13)])
+    F.part('glow', ICE_C, glow=True).ell(cx, hy + 13, 0.7, 0.9)
+    F.glow(cx, hy + 13, 3 + b, FROSTG, 0.35)
+    F.part('clay', SKIN, bevel=1).box(cx - 1.5, hy + 4, 3, 3, 1)                       # 목
+    witch_head(F, cx, hy, st)
+    F.part('cloth', hair, bevel=1).poly([(cx - 5, hy - 2), (cx - 6.4, hy + 6), (cx - 5, hy + 9), (cx - 3.6, hy + 2)])   # 옆머리 — 얼굴 양옆
+    F.part('cloth', hair, bevel=1).poly([(cx + 5, hy - 2), (cx + 6.4, hy + 6), (cx + 5, hy + 9), (cx + 3.6, hy + 2)])
+    if st >= 2:
+        crack(F, [(cx + 3, hy + 9), (cx + 4, wy - 2), (cx + 7, 36)], 0.4, FROSTG)
+        crack(F, [(cx - 6, 39), (cx - 8, 44), (cx - 7, hem - 3)], 0.4, FROSTG)
+    if brk:                                                                              # 부서짐 — 몸에서 얼음 조각이 떨어져 나간다
+        for k in range(10 * brk):
+            x = 6 + (k * 29) % 32; y = 8 + (k * 17) % 40
+            F.part('ice', ICE_E, bevel=0.6).poly([(x, y), (x + 1.8, y + 0.6), (x + 0.8, y + 2.4)])
+        crack(F, [(cx - 2, hy - 4), (cx + 1, hy + 6), (cx - 1, wy + 4), (cx + 2, hem - 6)], 0.6, FROSTG)
+    return F.render()
+
+
+def witch_parts(f):
+    """조각 5장(28×56 설계 칸) — 0 지팡이(쥔 자리 (14, 34) · 꼭대기 수정 (14, 6)) · 1 팔(어깨 (4, 28) → 손 (23, 28) · 소매가 종처럼 퍼진다)
+       · 2 주문 손(같은 팔 · 손바닥에 서리) · 3 망토 천(걸이 (6, 3) → 아래 · 바깥) · 4 얼음 결정 날개(같은 걸이)"""
+    F = ZFig(28, 56)
+    if f == 0:
+        F.part('wood', '#c8dcec', bevel=1.2).cap(14, 52, 14, 12, 1.1, 0.9)               # 서리 낀 은빛 자루
+        for k in range(5):
+            fine(F, (13.2, 16 + k * 7), (14.8, 18 + k * 7), '#7aa0c0', 220)
+        F.part('ice', ICE_E, bevel=0.8).poly([(11, 13), (14, 9), (17, 13), (14, 15)])
+        for (dx, h) in ((-3.5, 4), (3.5, 4), (0, 7)):                                     # 수정 가지 — 오브를 감싼다
+            F.part('ice', ICE_E, bevel=0.6).poly([(14 + dx - 0.8, 10), (14 + dx * 1.2, 10 - h), (14 + dx + 0.8, 10)])
+        F.part('glow', ICE_C, glow=True).ell(14, 6, 3.6, 3.6)
+        F.part('glow', '#ffffff', glow=True).ell(13.2, 5.2, 1.2, 1.2)
+        F.glow(14, 6, 7, FROSTG, 0.45)
+    elif f in (1, 2):
+        F.part('cloth', GOWN_D, bevel=2).poly([(3, 25.5), (14, 25.6), (19, 24), (21, 28), (19, 32), (14, 30.5), (3, 30.5)])   # 종 소매
+        F.part('cloth', GOWN, bevel=1.5).poly([(4, 26.2), (14, 26.4), (18, 25.2), (19.5, 28), (14, 29.6), (4, 29.6)])
+        F.part('cloth', FUR, bevel=1).poly([(17.5, 24), (19.5, 23.6), (21.5, 28), (19.5, 32.4), (17.5, 32)])
+        F.part('clay', SKIN, bevel=1.2).ell(23.2, 28, 2.1, 1.7)                         # 손
+        if f == 1:
+            for k in range(3):
+                F.part('flesh', SKIN, bevel=0.6).cap(24.5, 27 + k * 1, 26.2, 27.4 + k * 1.2, 0.5, 0.4)
+        else:
+            for k in range(4):                                                           # 편 손가락 · 손바닥의 서리 꽃
+                a = -0.7 + k * 0.45
+                F.part('flesh', SKIN, bevel=0.6).cap(24.5, 28, 24.5 + math.cos(a) * 2.6, 28 + math.sin(a) * 2.6, 0.5, 0.4)
+            for a in range(6):
+                an = a / 6 * math.tau
+                fine(F, (24, 28), (24 + math.cos(an) * 2.6, 28 + math.sin(an) * 2.6), FROSTG, 230)
+            F.glow(24, 28, 4, FROSTG, 0.5)
+    elif f == 3:
+        F.part('cloth', '#2c4878', bevel=3).poly([(6, 3), (12, 4), (18, 16), (24, 34), (26, 50), (20, 47), (14, 51), (9, 46), (5, 26), (4, 8)])
+        F.part('cloth', '#4a6ea4', bevel=2).poly([(7, 5), (11, 6), (16, 17), (21, 33), (22, 46), (16, 44), (11, 47), (8, 26)])
+        for k in range(4):
+            fine(F, (8 + k * 2, 8 + k * 2), (10 + k * 4, 46 - k), '#2c4878', 170)
+        F.part('cloth', FUR, bevel=1.5).poly([(4, 2), (12, 2.5), (12, 6), (5, 6)])
+    else:
+        for k in range(6):                                                               # 얼음 날개 — 걸이에서 부채꼴로 뻗는 결정 깃
+            a = 0.45 + k * 0.2
+            L = 26 + (2.5 - abs(k - 2.5)) * 6
+            ex, ey = 6 + math.cos(a) * L * 0.62, 4 + math.sin(a) * L
+            F.part('ice', ICE_E, bevel=1).poly([(6, 4), (ex + math.sin(a) * 2.4, ey - math.cos(a) * 2.4), (ex + math.cos(a) * 3, ey + math.sin(a) * 3), (ex - math.sin(a) * 2.4, ey + math.cos(a) * 2.4)])
+            F.part('glow', ICE_C, glow=True).poly([(6.5, 5), (ex * 0.94 + 0.4, ey * 0.94), (ex * 0.9, ey * 0.92 + 0.8)])
+        F.glow(10, 20, 10, FROSTG, 0.3)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -1397,6 +1535,7 @@ RIGS = {
     'blight_maw': {'body': (HIVE_W, HIVE_H, 8, 2, hive_body), 'parts': (40, 36, 5, hive_parts)},
     'first_keeper': {'body': (JD_W, JD_H, 8, 2, judge_body), 'parts': (40, 44, 11, judge_parts)},
     'pursuer': {'body': (EC_W, EC_W, 8, 2, eclipse_body), 'parts': (48, 48, 7, eclipse_parts, (5,))},
+    'frost_witch': {'body': (FW_W, FW_H, 8, 2, witch_body), 'parts': (28, 56, 5, witch_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 
