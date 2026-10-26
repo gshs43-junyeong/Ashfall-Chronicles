@@ -230,7 +230,7 @@ export const XFX_OF: Record<string, string> = { rune: 'rune', fire: 'fire', fros
 /** 깨어날 때 넓혀 둘 싸움터(칸 — 너비 · 바닥에서 높이) — 몸 그림이 바위에 묻히지 않게(game/boss-arena) */
 export const BOSS_ARENA: Record<string, { w: number; h: number }> = {
   king_slime: { w: 40, h: 12 }, bone_lord: { w: 44, h: 21 }, corrupt_heart: { w: 42, h: 26 }, sand_guardian: { w: 56, h: 24 }, blight_maw: { w: 46, h: 21 }, first_keeper: { w: 58, h: 26 }, void_king: { w: 60, h: 24 }, vine_lord: { w: 66, h: 34 }, hepha: { w: 64, h: 30 },
-  mine_horror: { w: 56, h: 16 }, ice_warden: { w: 50, h: 26 }, spore_queen: { w: 50, h: 30 }, proliferator: { w: 46, h: 18 }, overseer: { w: 50, h: 20 }, archetype: { w: 52, h: 20 }
+  mine_horror: { w: 56, h: 16 }, ice_warden: { w: 50, h: 26 }, spore_queen: { w: 50, h: 30 }, proliferator: { w: 46, h: 18 }, overseer: { w: 50, h: 20 }, archetype: { w: 52, h: 20 }, shaft_maw: { w: 64, h: 18 }
 };
 export const BOSS_GAP: Record<string, string> = {
   king_slime: 'stagger', bone_lord: 'stagger', first_keeper: 'stagger', pursuer: 'stagger', mine_horror: 'stagger', ice_warden: 'stagger',

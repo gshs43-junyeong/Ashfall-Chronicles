@@ -3839,6 +3839,9 @@
   "흔들대를 움직인다": [
    "ui/process.pump"
   ],
+  "흙더미에 묻혀 있다": [
+   "entity/boss-shaft.smHurt"
+  ],
   "흙이나 풀 위에서만 밭을 갈 수 있다": [
    "game/mine.rightClick"
   ],

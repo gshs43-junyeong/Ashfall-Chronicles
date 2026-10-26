@@ -312,7 +312,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 300, def: 118, spd: 92, ai: 'b_keeper', w: 88, h: 96, c: '#4a7a86', boss: 1,
                  xp: 24000, gold: 240000, minion: 'reef_shark', aggro: 3200,
                  drops: [['abyss_pearl', 1, 6, 10], ['abyss_core', 1, 2, 3], ['coconut', 1, 8, 14]] },
-  shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_heart', w: 184, h: 168, c: '#3a342c', ph: 5, boss: 1,
+  shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_shaft', w: 240, h: 230, c: '#3a342c', ph: 5, boss: 1,
                  xp: 20000, gold: 300000, minion: 'gloom_crawler', aggro: 3600,
                  drops: [['gloom_pearl', 1, 3, 4], ['deep_alloy', 1, 40, 60], ['miner_tag', 1, 2, 3], ['hammer_cave', 1, 1, 1]] }
 };

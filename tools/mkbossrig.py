@@ -2708,6 +2708,104 @@ def restorer_parts(f):
     return F.render()
 
 
+# ===== 갱을 메운 것(shaft_maw) — 갱 바닥 흙이 몸: 다져진 잡석 턱 · 박힌 버팀목 · 휜 레일 · 깨진 등 · 어둠 진주 눈 둘 · 아래턱은 조각 =====
+SM_ROCK, SM_ROCK_D, SM_ROCK_L, SM_DIRT, SM_WOOD, SM_EYE = '#5a5248', '#2e2a24', '#8a8070', '#4a3a2a', '#6a4a2a', '#b8a0ff'
+SM_W, SM_H = 64, 48                                           # 게임 game/boss-shaft-art.ts SM 와 같게(가운데 32 · 땅 46 · 턱 경첩 (32, 34) · 눈 (22, 16) · (42, 16))
+
+
+def shaft_head(f):
+    """윗턱 8장(64×48 · 아래턱은 조각) — 0·1 진주 눈이 숨 쉰다 · 2·3 금 · 버팀목이 부러짐 · 4·5 이마가 갈라져 진주가 더 드러난다 · 6·7 무너짐"""
+    F = ZFig(SM_W, SM_H)
+    cx = 32
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = 0 if f < 6 else (1 if f == 6 else 2)
+    sag = dead * 4
+    # 머리 — 다져진 잡석 둥근 지붕(울퉁불퉁) · 아래가 입
+    head = []
+    for k in range(25):
+        a = math.pi * (1 - k / 24)
+        r = 1.0 + 0.06 * math.sin(k * 2.7) + 0.04 * math.cos(k * 5.1)
+        head.append((cx + math.cos(a) * 29 * r, 34 + sag - math.sin(a) * (28 - sag) * r))
+    F.part('stone', SM_ROCK_D, bevel=4).poly(head + [(cx + 29, 38), (cx - 29, 38)])
+    F.part('stone', SM_ROCK, bevel=3).poly([(x + (cx - x) * 0.07, y + 1.4) for (x, y) in head] + [(cx + 26, 37), (cx - 26, 37)])
+    for (x, y, r) in [(cx - 18, 18, 4), (cx + 14, 12, 5), (cx - 6, 9, 3.4), (cx + 22, 24, 3.6), (cx - 23, 28, 3), (cx + 4, 22, 2.6)]:   # 박힌 바위
+        F.part('stone', SM_ROCK_L if (x + y) % 2 else SM_ROCK, bevel=1.5).ell(x, y + sag, r, r * 0.8)
+    for k in range(9):                                                                             # 흙이 흘러내린 결
+        x = cx - 24 + k * 6
+        F.part('stone', SM_DIRT, flat=True).poly([(x, 30 + sag), (x + 2.4, 30 + sag), (x + 1.6, 36), (x + 0.6, 36)])
+    # 박힌 것들 — 버팀목(막 1 부터 부러짐) · 휜 레일 · 깨진 등
+    if st < 1:
+        F.part('wood', SM_WOOD, bevel=1).cap(cx - 30, 14 + sag, cx - 12, 4 + sag, 1.6, 1.4)
+    else:
+        F.part('wood', SM_WOOD, bevel=1).cap(cx - 30, 14 + sag, cx - 20, 9 + sag, 1.6, 1.4)
+        F.part('wood', '#4a3420', flat=True).poly([(cx - 21, 7.6 + sag), (cx - 18, 8.6 + sag), (cx - 20, 10.6 + sag)])
+    F.part('metal', '#6a6e78', bevel=0.8).cap(cx + 10, 4 + sag, cx + 27, 11 + sag, 0.8, 0.8)       # 휜 레일
+    F.part('metal', '#6a6e78', bevel=0.8).cap(cx + 27, 11 + sag, cx + 28.6, 19 + sag, 0.8, 0.8)
+    for k in range(4):
+        F.part('wood', '#3e2a18', bevel=0.4).box(cx + 12 + k * 4.6, 5 + k * 1.8 + sag, 1.6, 3, 0.3)
+    F.part('metal', '#3a3020', bevel=0.8).box(cx - 3, 3 + sag, 6, 5, 1.2)                           # 깨진 갱도 등
+    F.part('glow' if not dead else 'metal', '#ffb050' if (b and not dead) else '#8a5a28', glow=not dead and b == 1).ell(cx, 5.6 + sag, 1.4, 1.4)
+    # 눈 — 잡석 사이 어둠 진주 둘
+    for s2 in (-1, 1):
+        ex, ey = cx + s2 * 10, 16 + sag
+        F.part('stone', '#14100c', flat=True).ell(ex, ey, 4.4 + st * 0.4, 3.4 + st * 0.3)
+        if not dead:
+            F.part('glow', SM_EYE, glow=True).ell(ex, ey + 0.4, 2.6 + b * 0.3, 2.2 + b * 0.3)
+            F.part('glow', '#f0e8ff', glow=True).ell(ex - 0.8, ey - 0.3, 0.8, 0.7)
+            F.glow(ex, ey, 6 + b, SM_EYE, 0.35)
+        else:
+            F.part('stone', '#3a3048', flat=True).ell(ex, ey + 0.4, 2.2, 1.8)
+        F.part('stone', SM_ROCK_D, bevel=1).poly([(ex - s2 * 6, ey - 4.6), (ex + s2 * 5, ey - 6), (ex + s2 * 5.4, ey - 4.2), (ex - s2 * 6, ey - 3)])   # 눈두덩 바위
+    # 입 — 위 이빨(석순처럼 늘어진 바위 · 광석 결정 몇)
+    F.part('stone', '#0e0a08', flat=True).poly([(cx - 24, 34 + sag), (cx + 24, 34 + sag), (cx + 22, 38), (cx - 22, 38)])
+    for k in range(11):
+        x = cx - 21 + k * 4.2
+        ln = 4 + (k * 7) % 4 + (2 if k in (2, 8) else 0)
+        col = '#9fd8e8' if k in (4, 7) else ('#c8bca0' if k % 2 else '#a89c84')
+        F.part('stone', col, bevel=0.6).poly([(x - 1.6, 33.6 + sag), (x + 1.6, 33.6 + sag), (x + 0.2, 33.6 + sag + ln)])
+    if st >= 1:
+        crack(F, [(cx + 18, 8 + sag), (cx + 13, 16), (cx + 17, 24)], 0.45, SM_EYE)
+    if st >= 2:
+        crack(F, [(cx - 4, 8 + sag), (cx - 1, 13), (cx - 5, 19)], 0.5, SM_EYE)
+        F.part('glow', SM_EYE, glow=True).ell(cx - 2, 13 + sag, 1.4, 1.1)                         # 이마 속 진주가 드러난다
+    if dead:
+        for k in range(8):
+            x = 5 + k * 7
+            F.part('stone', SM_ROCK if k % 2 else SM_ROCK_D, bevel=1).poly([(x, 46), (x + 3, 42.6), (x + 6, 46), (x + 3, 47.4)])
+    return F.render()
+
+
+def shaft_parts(f):
+    """조각 5장(64×24) — 0 아래턱(경첩 (32, 2) · 아래 이빨이 위로) · 1 바윗덩이(가운데 (32, 12)) · 2 부러진 버팀목 · 3 휜 레일 토막 · 4 금 간 아래턱"""
+    F = ZFig(64, 24)
+    if f in (0, 4):
+        jaw = [(6, 4), (58, 4), (54, 14), (44, 20), (20, 20), (10, 14)]
+        F.part('stone', SM_ROCK_D, bevel=3).poly(jaw)
+        F.part('stone', SM_ROCK, bevel=2).poly([(x + (32 - x) * 0.06, y + (12 - y) * 0.08) for (x, y) in jaw])
+        F.part('stone', '#0e0a08', flat=True).poly([(9, 3), (55, 3), (53, 6), (11, 6)])
+        for k in range(10):
+            x = 11 + k * 4.6
+            F.part('stone', '#c8bca0' if k % 2 else '#a89c84', bevel=0.6).poly([(x - 1.5, 6), (x + 1.5, 6), (x + 0.1, 6 - 3.6 - (k % 3))])
+        for (x, y, r) in [(20, 12, 3), (40, 14, 3.4), (30, 16, 2.4)]:
+            F.part('stone', SM_ROCK_L, bevel=1).ell(x, y, r, r * 0.8)
+        if f == 4:
+            crack(F, [(24, 8), (28, 13), (25, 18)], 0.4, SM_EYE)
+    elif f == 1:
+        F.part('stone', SM_ROCK_D, bevel=2).poly([(26, 6), (36, 4), (41, 11), (37, 19), (27, 19), (23, 12)])
+        F.part('stone', SM_ROCK, bevel=1.5).poly([(27, 7), (35, 5.6), (39, 11), (35, 17), (28, 17), (25, 12)])
+    elif f == 2:
+        F.part('wood', SM_WOOD, bevel=1).cap(12, 12, 50, 10, 1.8, 1.6)
+        F.part('wood', '#4a3420', flat=True).poly([(49, 8), (53, 7), (51, 11.6)])
+        fine(F, (16, 11.4), (46, 9.8), '#3e2a18', 200)
+    else:
+        F.part('metal', '#6a6e78', bevel=0.8).cap(10, 14, 34, 10, 0.9, 0.9)
+        F.part('metal', '#6a6e78', bevel=0.8).cap(34, 10, 52, 16, 0.9, 0.9)
+        for k in range(4):
+            F.part('wood', '#3e2a18', bevel=0.4).box(14 + k * 9, 11.6 - (k < 3) * k * 0.6, 2, 4, 0.3)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2728,6 +2826,7 @@ RIGS = {
     'overseer': {'body': (OV_W, OV_H, 8, 2, overseer_body), 'parts': (16, 30, 5, overseer_parts)},
     'archetype': {'body': (AR_W, AR_H, 8, 2, arche_body), 'parts': (12, 26, 6, arche_parts)},
     'restorer': {'body': (RS_W, RS_H, 8, 2, restorer_core), 'parts': (64, 64, 6, restorer_parts)},
+    'shaft_maw': {'body': (SM_W, SM_H, 8, 2, shaft_head), 'parts': (64, 24, 5, shaft_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

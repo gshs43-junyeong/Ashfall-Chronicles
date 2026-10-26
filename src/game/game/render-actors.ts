@@ -336,6 +336,7 @@ export const RenderActorsPart: Bag = {
       return;
     }
     if (e.def.ai === 'b_organ' || e.def.ai === 'b_hourglass' || e.def.ai === 'b_hive' || e.def.ai === 'b_judge' || e.def.ai === 'b_eclipse' || e.def.ai === 'b_root' || e.def.ai === 'b_void') return;                                  // 뒷벽의 오르간 — 몸은 objects · 팔은 actors 단계에서(game/boss-organ-art)
+    if (e.def.ai === 'b_shaft' && this.spritesOn && this.drawShaft(c, e, sx, sy)) return;     // 갱을 메운 것(game/boss-shaft-art)
     if (e.def.ai === 'b_restorer' && this.spritesOn && this.drawRestorer(c, e, sx, sy)) return;   // 환원기(game/boss-restorer-art)
     if (e.def.ai === 'b_arche' && this.spritesOn && this.drawArche(c, e, sx, sy)) return;     // 원형(game/boss-arche-art)
     if (e.def.ai === 'b_overseer' && this.spritesOn && this.drawOverseer(c, e, sx, sy)) return;   // 공창의 관리자(game/boss-overseer-art)

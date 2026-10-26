@@ -4080,13 +4080,15 @@ window.SPRITE_MANIFEST = {
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
-        "frameW": 184,
-        "frameH": 168,
-        "count": 12,
+        "frameW": 256,
+        "frameH": 192,
+        "count": 8,
+        "foot": 25,
+        "side": -4,
+        "death": 2,
+        "scale": 1,
         "gap": 0,
-        "foot": -0.75,
-        "side": 3,
-        "death": 2
+        "rig": 1
       },
       "drowned_keeper": {
         "file": "boss/drowned_keeper.png",
@@ -4114,18 +4116,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "shaft_maw_pose": {
-        "file": "boss/shaft_maw_pose.png",
-        "frameW": 296,
-        "frameH": 227,
-        "count": 45,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -0.75,
-        "side": 3,
-        "pose": 1
       },
       "drowned_keeper_pose": {
         "file": "boss/drowned_keeper_pose.png",
@@ -4357,6 +4347,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 256,
         "frameH": 256,
         "count": 6,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "shaft_maw_parts": {
+        "file": "boss/shaft_maw_parts.png",
+        "frameW": 256,
+        "frameH": 96,
+        "count": 5,
         "scale": 1,
         "gap": 0,
         "rig": 1
