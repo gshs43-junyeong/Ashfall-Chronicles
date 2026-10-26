@@ -73,7 +73,7 @@ export const BossSigPart: Bag = {
       case 'rroot': case 'rring': case 'rflower': case 'rfell': return this.rootHz(h, dt, host, me);   // 뿌리 대성당(game/boss-root-fx)
       case 'mycel': return this.sporeHz(h, dt, host, me);           // 포자 여왕 균사 깔개(game/boss-spore-art)
       case 'iwtur': return this.watchHz(h, dt, host);               // 얼음 감시자 바닥 포탑(game/boss-watch-art)
-      case 'pulse': case 'veil': case 'rod': case 'rail': case 'mhtent': case 'scales': case 'vine': case 'ghost': return true;
+      case 'pulse': case 'veil': case 'rod': case 'rail': case 'mhtent': case 'flip': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로
         h.fired = 1;
         const q = this.hzNear(h.x, h.y);

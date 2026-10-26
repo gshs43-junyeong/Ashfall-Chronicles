@@ -37,6 +37,7 @@ export const RenderPart: Bag = {
   /** 렌더 단계 — 순서가 곧 겹침 순서다(엔진 render/pipeline). */
   buildPipeline() {
     this.pipe = createPipeline(['sky', 'light', 'far', 'tiles', 'machines', 'objects', 'ground', 'drops', 'actors', 'lighting', 'fx', 'screen']);
+    this.pipe.add('sky', (f: any) => this.flipBegin(f));           // 되감기 — 화면이 뒤집힌다(game/boss-restorer-art) · 맨 앞
     this.pipe.add('sky', (f: any) => this.rSky(f));
     this.pipe.add('sky', (f: any) => this.drawEclipseSky(f));      // 하늘의 일식 원판 · 외눈(game/boss-eclipse-art)
     this.pipe.add('light', (f: any) => this.rLightCalc(f));
@@ -84,9 +85,11 @@ export const RenderPart: Bag = {
     this.pipe.add('fx', (f: any) => this.drawSporeGlow(f));
     this.pipe.add('fx', (f: any) => this.drawProlifGlow(f));
     this.pipe.add('fx', (f: any) => this.drawHephaGlow(f));
-    this.pipe.add('fx', (f: any) => this.drawOverseerGlow(f));      // 안테나 불         // 현창 눈 · 열린 화로        // 핵의 렌즈 빛         // 열린 주름의 빛         // 렌즈의 빛줄기          // 등불 눈이 비추는 빛         // 폭풍의 눈 · 뿔끝          // 왕의 눈 · 문장 · 쏘는 손
+    this.pipe.add('fx', (f: any) => this.drawOverseerGlow(f));
+    this.pipe.add('fx', (f: any) => this.drawRestorerGlow(f));      // 시계 눈      // 안테나 불         // 현창 눈 · 열린 화로        // 핵의 렌즈 빛         // 열린 주름의 빛         // 렌즈의 빛줄기          // 등불 눈이 비추는 빛         // 폭풍의 눈 · 뿔끝          // 왕의 눈 · 문장 · 쏘는 손
     this.pipe.add('fx', (f: any) => this.drawRootGlow(f));          // 옹이 눈빛 · 장미창 · 꽃빛
     this.pipe.add('fx', (f: any) => this.drawEclipseGlow(f));       // 응시의 조임 · 개기일식의 어둠
+    this.pipe.add('screen', (f: any) => this.flipEnd(f));          // 뒤집기를 푼다 — 화면 글은 바로 서게 · 맨 앞
     this.pipe.add('screen', (f: any) => this.rScreen(f));
     this.pipe.add('screen', (f: any) => this.drawStage(f));       // 스킬 무대 — 집중선 · 화면 섬광
     this.pipe.add('screen', (f: any) => this.rTimeStop(f));       // 멈춘 모래시계(game/trinkets)

@@ -348,6 +348,7 @@ export const BossMoves: Bag & ThisType<Enemy> = {
           this.hz({ k: 'line', x0: this.cx, y0: this.cy, x1: h[0] + this.w / 2, y1: h[1] + this.h / 2, life: 0.6, c: K.c, w: 4 });
           for (let q = 0; q < 20; q++) G.parts.push(new Part(this.cx, this.cy, K.c, -20, .8));
           this.x = h[0]; this.y = h[1]; this.vx = this.vy = 0;
+          if (this.def.ai === 'b_restorer') this.hz({ k: 'flip', life: 1.6 });   // 환원기 — 되감는 동안 화면이 뒤집힌다(game/boss-restorer-art)
           this.hp = Math.min(this.maxHp, this.hp + this.maxHp * (d.heal || 0.025));
           G.vfx.sigil(this.cx, this.cy, Math.max(this.w, this.h) * 0.7, K.c, 0.7, 6, -2, 1, 'swirl');
         }

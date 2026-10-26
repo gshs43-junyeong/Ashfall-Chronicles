@@ -2617,6 +2617,97 @@ def arche_parts(f):
     return F.render()
 
 
+# ===== 환원기(restorer) — 하늘의 고리 장치: 시계 눈 핵 · 저마다 다른 축으로 도는 고리 셋(별 · 톱니 · 눈금) · 시곗바늘 · 위성 =====
+RS_GOLD, RS_GOLD_D, RS_IVORY, RS_NIGHT, RS_GLOW = '#d8b060', '#7a5a28', '#f0e8d0', '#1e2a48', '#bcd8f4'
+RS_W = RS_H = 48                                              # 게임 game/boss-restorer-art.ts RS 와 같게(핵 가운데 (24, 24) · 반지름 18)
+
+
+def _star4(F, x, y, r, col):
+    F.part('glow', col, glow=True).poly([(x, y - r), (x + r * 0.28, y - r * 0.28), (x + r, y), (x + r * 0.28, y + r * 0.28), (x, y + r), (x - r * 0.28, y + r * 0.28), (x - r, y), (x - r * 0.28, y - r * 0.28)])
+
+
+def restorer_core(f):
+    """핵 8장(48×48) — 0·1 눈동자가 숨 쉰다 · 2·3 금 · 4·5 유리가 깨져 별빛이 샌다 · 6·7 멎음"""
+    F = ZFig(RS_W, RS_H)
+    cx = cy = 24
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = f >= 6
+    F.part('metal', RS_GOLD_D, bevel=3).ell(cx, cy, 18.6, 18.6)
+    F.part('metal', RS_GOLD, bevel=2).ell(cx - 0.3, cy - 0.3, 17.4, 17.4)
+    for k in range(24):                                                                           # 테의 홈
+        a = k / 24 * math.tau
+        fine(F, (cx + math.cos(a) * 16.2, cy + math.sin(a) * 16.2), (cx + math.cos(a) * 17.6, cy + math.sin(a) * 17.6), RS_GOLD_D, 230)
+    F.part('metal', RS_NIGHT if not dead else '#14182a', flat=True).ell(cx, cy, 15.2, 15.2)
+    for (x, y) in [(cx - 8, cy - 9), (cx - 5, cy - 11), (cx + 9, cy - 6), (cx + 11, cy + 3), (cx - 10, cy + 7), (cx + 3, cy + 11), (cx - 3, cy + 12.4)]:   # 별자리
+        F.part('glow' if not dead else 'metal', RS_GLOW if not dead else '#2a3048', glow=not dead).ell(x, y, 0.45, 0.45)
+    fine(F, (cx - 8, cy - 9), (cx - 5, cy - 11), '#6a7ab0', 160); fine(F, (cx + 9, cy - 6), (cx + 11, cy + 3), '#6a7ab0', 160)
+    for k in range(12):                                                                           # 눈금 — 3 · 6 · 9 · 12 는 길게
+        a = k / 12 * math.tau - math.pi / 2
+        r0 = 11.6 if k % 3 else 10.2
+        F.part('metal', RS_IVORY, bevel=0.3).cap(cx + math.cos(a) * r0, cy + math.sin(a) * r0, cx + math.cos(a) * 14.2, cy + math.sin(a) * 14.2, 0.45 if k % 3 else 0.7, 0.4)
+    # 눈 — 홍채 고리 · 렌즈 · 동공
+    F.part('metal', RS_GOLD_D, bevel=1).ell(cx, cy, 7.6, 7.6)
+    F.part('metal', '#6a88b8' if not dead else '#2a3048', bevel=1).ell(cx, cy, 6.6, 6.6)
+    for k in range(16):
+        a = k / 16 * math.tau
+        fine(F, (cx + math.cos(a) * 2.6, cy + math.sin(a) * 2.6), (cx + math.cos(a) * 6.2, cy + math.sin(a) * 6.2), '#3a5080', 200)
+    if not dead:
+        F.part('glow', RS_GLOW, glow=True).ell(cx, cy, 2.6 + b * 0.5, 2.6 + b * 0.5)
+        F.part('glow', '#ffffff', glow=True).ell(cx - 0.6, cy - 0.6, 1.0, 1.0)
+        F.glow(cx, cy, 10 + b * 2, RS_GLOW, 0.3)
+    else:
+        F.part('metal', '#0a0c14', flat=True).ell(cx, cy, 2.4, 2.4)
+    F.part('metal', RS_IVORY, flat=True).ell(cx - 7, cy - 9, 3.2, 1.4)                            # 유리 반사
+    if st >= 1:
+        crack(F, [(cx + 10, cy - 10), (cx + 6, cy - 5), (cx + 8, cy)], 0.35, RS_GLOW)
+    if st >= 2:
+        crack(F, [(cx - 12, cy + 4), (cx - 7, cy + 6), (cx - 9, cy + 11)], 0.4, RS_GLOW)
+        for (x, y) in [(cx + 4, cy + 8), (cx - 6, cy - 3)]:
+            _star4(F, x, y, 1.6, '#ffffff')
+    return F.render()
+
+
+def restorer_parts(f):
+    """조각 6장(64×64 · 가운데 (32, 32)) — 0 별 고리(반지름 30) · 1 톱니 고리(26) · 2 눈금 고리(22) · 3 긴 바늘((32, 32) → (32, 8)) · 4 짧은 바늘(→ (32, 16)) · 5 위성"""
+    F = ZFig(64, 64)
+    cx = cy = 32
+    def band(r0, r1, n, col, col2):
+        for k in range(n):
+            a0, a1 = k / n * math.tau, (k + 0.94) / n * math.tau
+            F.part('metal', col if k % 2 else col2, bevel=0.8).poly([(cx + math.cos(a0) * r1, cy + math.sin(a0) * r1), (cx + math.cos(a1) * r1, cy + math.sin(a1) * r1),
+                                                                     (cx + math.cos(a1) * r0, cy + math.sin(a1) * r0), (cx + math.cos(a0) * r0, cy + math.sin(a0) * r0)])
+    if f == 0:
+        band(27.6, 30.6, 56, RS_GOLD, '#c8a050')
+        for k in range(8):
+            a = k / 8 * math.tau
+            _star4(F, cx + math.cos(a) * 29.1, cy + math.sin(a) * 29.1, 1.5, '#fff4d0')
+    elif f == 1:
+        band(23.4, 25.6, 48, '#a8804a', '#8a6a3a')
+        for k in range(36):                                                                       # 톱니(바깥)
+            a = k / 36 * math.tau
+            F.part('metal', '#8a6a3a', bevel=0.4).poly([(cx + math.cos(a - 0.04) * 25.4, cy + math.sin(a - 0.04) * 25.4), (cx + math.cos(a - 0.025) * 27.2, cy + math.sin(a - 0.025) * 27.2),
+                                                        (cx + math.cos(a + 0.025) * 27.2, cy + math.sin(a + 0.025) * 27.2), (cx + math.cos(a + 0.04) * 25.4, cy + math.sin(a + 0.04) * 25.4)])
+    elif f == 2:
+        band(19.6, 22.4, 60, RS_IVORY, '#d8d0b8')
+        for k in range(12):                                                                       # 숫자 대신 금 묶음(1~12)
+            a = k / 12 * math.tau - math.pi / 2
+            for j in range(min(4, k % 4 + 1)):
+                aa = a + (j - 1.5) * 0.03
+                fine(F, (cx + math.cos(aa) * 20.2, cy + math.sin(aa) * 20.2), (cx + math.cos(aa) * 21.8, cy + math.sin(aa) * 21.8), RS_GOLD_D, 255)
+    elif f in (3, 4):
+        L = 24 if f == 3 else 16
+        F.part('metal', RS_GOLD_D, bevel=0.6).poly([(cx - 1.1, cy + 3), (cx + 1.1, cy + 3), (cx + 0.7, cy - L + 4), (cx, cy - L), (cx - 0.7, cy - L + 4)])
+        F.part('metal', RS_GOLD, bevel=0.4).poly([(cx - 0.6, cy + 2), (cx + 0.2, cy + 2), (cx, cy - L + 3)])
+        F.part('metal', RS_GOLD, bevel=0.8).ell(cx, cy, 1.8, 1.8)
+    else:
+        F.part('metal', '#3a4a6a', bevel=1.5).ell(cx, cy, 4.4, 4.4)
+        F.part('metal', '#7a90c0', bevel=1).ell(cx - 0.8, cy - 0.8, 3.0, 3.0)
+        F.part('metal', RS_GOLD, bevel=0.6).ell(cx, cy, 6.4, 1.0)                                   # 위성의 고리
+        F.part('glow', RS_GLOW, glow=True).ell(cx - 1.4, cy - 1.6, 0.9, 0.9)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2636,6 +2727,7 @@ RIGS = {
     'hepha': {'body': (HP_W, HP_H, 8, 2, hepha_body), 'parts': (40, 48, 7, hepha_parts)},
     'overseer': {'body': (OV_W, OV_H, 8, 2, overseer_body), 'parts': (16, 30, 5, overseer_parts)},
     'archetype': {'body': (AR_W, AR_H, 8, 2, arche_body), 'parts': (12, 26, 6, arche_parts)},
+    'restorer': {'body': (RS_W, RS_H, 8, 2, restorer_core), 'parts': (64, 64, 6, restorer_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

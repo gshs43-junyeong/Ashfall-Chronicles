@@ -4068,13 +4068,15 @@ window.SPRITE_MANIFEST = {
       },
       "restorer": {
         "file": "boss/restorer.png",
-        "frameW": 236,
-        "frameH": 264,
-        "count": 12,
+        "frameW": 192,
+        "frameH": 192,
+        "count": 8,
+        "foot": 21,
+        "side": 0,
+        "death": 2,
+        "scale": 1,
         "gap": 0,
-        "foot": 11.25,
-        "side": 1,
-        "death": 2
+        "rig": 1
       },
       "shaft_maw": {
         "file": "boss/shaft_maw.png",
@@ -4112,18 +4114,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "restorer_pose": {
-        "file": "boss/restorer_pose.png",
-        "frameW": 378,
-        "frameH": 357,
-        "count": 45,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": 11.25,
-        "side": 1,
-        "pose": 1
       },
       "shaft_maw_pose": {
         "file": "boss/shaft_maw_pose.png",
@@ -4357,6 +4347,15 @@ window.SPRITE_MANIFEST = {
         "file": "boss/archetype_parts.png",
         "frameW": 48,
         "frameH": 104,
+        "count": 6,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "restorer_parts": {
+        "file": "boss/restorer_parts.png",
+        "frameW": 256,
+        "frameH": 256,
         "count": 6,
         "scale": 1,
         "gap": 0,
