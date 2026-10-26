@@ -74,7 +74,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
         const xs = [-1, 0, 1].map(i => p.cx + i * 170 + (Math.random() - 0.5) * 40);
         const ys = xs.map(x => this.floorY(x, p.y - TS * 2));
         xs.forEach((x, i) => {
-          this.hz({ k: 'rod', x, y: ys[i], life: 3.8, c: K.c });
+          this.hz({ k: 'rod', x, y: ys[i], life: 3.8, c: K.c, sx: this.cx + (i - 1) * 60, sy: this.cy - 20 });
           G.after(0.15 * i, () => { if (!E.dead) E.strike(x, ys[i], { shape: 'col', w: 30, h: 420, delay: 1.0, fx: 'bolt', dir: 'down' }, K, m); });
         });
         G.after(1.3, () => {

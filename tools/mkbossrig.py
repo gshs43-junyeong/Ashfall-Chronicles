@@ -1645,6 +1645,98 @@ def void_parts(f):
     return F.render()
 
 
+# ===== 폭풍의 수호자(storm_warden) — 하늘 신전의 풍화된 석상: 피뢰침 뿔 · 폭풍의 눈 핵 · 아래는 구름으로 풀린다 · 팔 대신 도는 두 고리 =====
+SGRAY, SGRAY_D, SGRAY_L, SBOLT, SCOPPER = '#8c98ac', '#4c5668', '#c4ccd8', '#cfe6ff', '#b07848'
+SW_W, SW_H = 60, 60                                           # 게임 game/boss-storm-art.ts SW 와 같게(가운데 30, 32 · 뿔끝 30±9, 4 · 핵 30, 30)
+
+
+def storm_body(f):
+    """몸 8장(60×60 · 아래 끝은 구름이 덮는다 — 게임이 그린다) — 0·1 핵이 숨 쉰다 · 2·3 금 · 이끼 대신 서리 · 4·5 깨진 어깨 · 핵이 사납다 · 6·7 무너짐"""
+    F = ZFig(SW_W, SW_H)
+    cx = 30
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    sag = 0 if f < 6 else (4 if f == 6 else 10)
+    # 뿔 — 머리 양쪽에서 솟은 피뢰침(구리 감김 · 끝이 번개빛)
+    for s2 in (-1, 1):
+        F.part('metal', '#3e4452', bevel=1).cap(cx + s2 * 7, 12 + sag, cx + s2 * 10, 6 + sag, 1.6, 1.1)       # 휘어 오르는 뿔 — 두 마디
+        F.part('metal', '#3e4452', bevel=1).cap(cx + s2 * 10, 6 + sag, cx + s2 * 12.5, 1.6 + sag, 1.1, 0.6)
+        for k in range(3):
+            F.part('metal', SCOPPER, bevel=0.6).ell(cx + s2 * (7.8 + k * 1.1), 10.0 - k * 2.0 + sag, 1.6, 0.6, s2 * 0.6)
+        F.part('glow', SBOLT, glow=True).ell(cx + s2 * 12.5, 1.6 + sag, 1.0, 1.0)
+        F.glow(cx + s2 * 12.5, 1.8 + sag, 3 + b, SBOLT, 0.4)
+    # 몸통 — 넓은 어깨 · 좁아지는 허리 · 아래는 깨진 돌(구름이 덮는다)
+    body = [(cx - 19, 22 + sag), (cx - 14, 18 + sag), (cx + 14, 18 + sag), (cx + 19, 22 + sag), (cx + 21, 30), (cx + 15, 36), (cx + 11, 48), (cx + 8, 56), (cx + 3, 53), (cx - 2, 57), (cx - 7, 54), (cx - 11, 48), (cx - 15, 36), (cx - 21, 30)]
+    F.part('stone', SGRAY_D, bevel=4).poly(body)
+    F.part('stone', SGRAY, bevel=3).poly([(x + (cx - x) * 0.1, y + 1) for (x, y) in body])
+    F.part('stone', SGRAY_L, bevel=2).poly([(cx - 17, 23 + sag), (cx - 12, 20 + sag), (cx - 4, 20 + sag), (cx - 6, 27), (cx - 16, 29)])   # 왼쪽 위 — 빛 받는 면
+    for s2 in (-1, 1):                                                                   # 어깨 판 · 새긴 룬 줄
+        sx = cx + s2 * 17                                                                # 모난 어깨 갑주 — 위로 솟은 돌 날
+        F.part('stone', SGRAY_D, bevel=2).poly([(sx - s2 * 7, 20 + sag), (sx + s2 * 2, 13 + sag), (sx + s2 * 8, 21 + sag), (sx + s2 * 7, 29), (sx - s2 * 4, 28)])
+        F.part('stone', SGRAY, bevel=1.5).poly([(sx - s2 * 5.5, 20.5 + sag), (sx + s2 * 2, 15 + sag), (sx + s2 * 6.4, 21.5 + sag), (sx + s2 * 5.6, 27), (sx - s2 * 3.6, 26.4)])
+        F.part('glow', SBOLT, glow=True).poly([(sx - s2 * 3, 22 + sag), (sx + s2 * 4, 21.6 + sag), (sx + s2 * 3.6, 22.6 + sag), (sx - s2 * 3, 23 + sag)])
+    for k in range(4):                                                                   # 몸에 새긴 번개 홈
+        y = 36 + k * 4.5
+        fine(F, (cx - 9 + k, y), (cx - 5 + k, y + 2), SGRAY_D, 220)
+        fine(F, (cx + 9 - k, y), (cx + 5 - k, y + 2), SGRAY_D, 220)
+    # 폭풍의 눈 — 가슴의 둥근 틀 · 안은 게임이 돌린다(소용돌이 · 번개)
+    F.part('stone', SGRAY_D, bevel=2).ell(cx, 30, 7.4, 7.4)
+    F.part('metal', SCOPPER, bevel=1.2).ell(cx, 30, 6.4, 6.4)
+    F.part('stone', '#141a26', flat=True).ell(cx, 30, 5.2, 5.2)
+    F.part('glow', '#9cd0ff' if b else '#bfe2ff', glow=True).ell(cx, 30, 2.4 + b * 0.4, 2.4 + b * 0.4)
+    F.glow(cx, 30, 8 + b * 2, SBOLT, 0.3 + 0.1 * b)
+    # 머리 — 볏 솟은 투구 · 아래로 꺾인 볼가리개 · 가늘게 빛나는 눈 틈 하나
+    hy = 4 + sag
+    F.part('stone', SGRAY_D, bevel=3).poly([(cx - 8, hy + 16), (cx - 9, hy + 8), (cx - 6, hy + 3), (cx, hy), (cx + 6, hy + 3), (cx + 9, hy + 8), (cx + 8, hy + 16), (cx + 4, hy + 18), (cx - 4, hy + 18)])
+    F.part('stone', SGRAY, bevel=2).poly([(cx - 6.6, hy + 15), (cx - 7.4, hy + 8), (cx - 5, hy + 4), (cx, hy + 1.6), (cx + 5, hy + 4), (cx + 7.4, hy + 8), (cx + 6.6, hy + 15), (cx + 3.4, hy + 16.6), (cx - 3.4, hy + 16.6)])
+    F.part('stone', SGRAY_L, bevel=1).poly([(cx - 1.2, hy + 0.6), (cx + 1.2, hy + 0.6), (cx + 0.8, hy + 8), (cx - 0.8, hy + 8)])   # 볏
+    for s2 in (-1, 1):
+        F.part('stone', SGRAY_D, bevel=1).poly([(cx + s2 * 3, hy + 12), (cx + s2 * 8, hy + 10), (cx + s2 * 7.4, hy + 16), (cx + s2 * 4, hy + 17.4)])
+    F.part('stone', '#141a26', flat=True).poly([(cx - 6, hy + 9), (cx + 6, hy + 9), (cx + 5, hy + 11.4), (cx - 5, hy + 11.4)])
+    F.part('glow', SBOLT, glow=True).box(cx - 4.6, hy + 9.7, 9.2, 0.9, 0.4)
+    F.glow(cx, hy + 10.2, 5, SBOLT, 0.4)
+    if st >= 1:
+        crack(F, [(cx + 12, 22 + sag), (cx + 9, 30), (cx + 12, 38)], 0.45, SBOLT)
+        crack(F, [(cx - 4, 7 + sag), (cx - 3, 12 + sag)], 0.3, SBOLT)
+    if st >= 2:
+        crack(F, [(cx - 14, 24 + sag), (cx - 10, 33), (cx - 13, 42)], 0.5, SBOLT)
+        crack(F, [(cx + 4, 37), (cx + 6, 45), (cx + 3, 51)], 0.45, SBOLT)
+        F.part('stone', '#141a26', flat=True).poly([(cx + 19, 22 + sag), (cx + 22, 26), (cx + 18, 27)])   # 깨진 어깨 끝
+    if sag:
+        for k in range(8):
+            x = 12 + k * 5; y = 50 + (k % 3) * 3
+            F.part('stone', SGRAY if k % 2 else SGRAY_D, bevel=1.5).poly([(x, y), (x + 3, y - 2), (x + 5, y + 1), (x + 2, y + 3)])
+    return F.render()
+
+
+def storm_parts(f):
+    """조각 3장(64×64 설계 칸) — 0 고리(가운데 (32, 32) · 반지름 28 · 룬을 새긴 돌 띠) · 1 금 간 고리 · 2 피뢰침(밑 (32, 62) → 끝 (32, 4))"""
+    F = ZFig(64, 64)
+    if f <= 1:
+        n = 48
+        for k in range(n):                                                               # 띠 — 마디마다 돌 덩이(한 장짜리 원보다 무게가 있다)
+            a0, a1 = k / n * math.tau, (k + 0.92) / n * math.tau
+            pts = [(32 + math.cos(a0) * 30, 32 + math.sin(a0) * 30), (32 + math.cos(a1) * 30, 32 + math.sin(a1) * 30),
+                   (32 + math.cos(a1) * 25.5, 32 + math.sin(a1) * 25.5), (32 + math.cos(a0) * 25.5, 32 + math.sin(a0) * 25.5)]
+            if f == 1 and k in (7, 8, 30):
+                continue
+            F.part('stone', SGRAY if k % 2 else SGRAY_D, bevel=1).poly(pts)
+            if k % 4 == 0:
+                am = (a0 + a1) / 2
+                F.part('glow', SBOLT, glow=True).ell(32 + math.cos(am) * 27.8, 32 + math.sin(am) * 27.8, 0.7, 0.7)
+        for k in range(4):                                                               # 구리 죔쇠 넷
+            a = k / 4 * math.tau + 0.4
+            F.part('metal', SCOPPER, bevel=0.8).ell(32 + math.cos(a) * 27.8, 32 + math.sin(a) * 27.8, 2.2, 2.2)
+    else:
+        F.part('metal', '#3e4452', bevel=1).cap(32, 60, 32, 8, 1.6, 1.0)
+        for k in range(5):
+            F.part('metal', SCOPPER, bevel=0.6).ell(32, 22 + k * 5, 2.4, 0.9)
+        F.part('metal', '#c8ccd6', bevel=0.8).poly([(30, 9), (34, 9), (32, 3)])
+        F.part('stone', SGRAY_D, bevel=1.5).poly([(26, 62), (38, 62), (35, 57), (29, 57)])   # 박히는 쐐기 발
+        F.part('glow', SBOLT, glow=True).ell(32, 5, 1.2, 1.2)
+        F.glow(32, 6, 4, SBOLT, 0.4)
+    return F.render()
+
 
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
@@ -1657,6 +1749,7 @@ RIGS = {
     'pursuer': {'body': (EC_W, EC_W, 8, 2, eclipse_body), 'parts': (48, 48, 7, eclipse_parts, (5,))},
     'frost_witch': {'body': (FW_W, FW_H, 8, 2, witch_body), 'parts': (28, 56, 5, witch_parts)},
     'void_king': {'body': (VK_W, VK_H, 8, 2, void_cloak), 'parts': (48, 48, 6, void_parts)},
+    'storm_warden': {'body': (SW_W, SW_H, 8, 2, storm_body), 'parts': (64, 64, 3, storm_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

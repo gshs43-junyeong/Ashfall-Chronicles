@@ -1760,6 +1760,9 @@
   "바람 막힘": [
    "factory/tick.tick"
   ],
+  "바람에 흩어진다": [
+   "entity/boss-storm.swHurt"
+  ],
   "바람을 받는다": [
    "ui/process.windmill"
   ],

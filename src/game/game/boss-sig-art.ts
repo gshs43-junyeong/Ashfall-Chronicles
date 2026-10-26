@@ -185,7 +185,7 @@ export const BossSigArtPart: Bag = {
         c.fillStyle = g; c.fillRect(0, 0, this.W, this.H);
         return true;
       }
-      case 'rod': { const x = h.x - cx0, y = h.y - cy0, up = Math.min(1, h.t * 5); c.globalAlpha = f; rod(c, x, y, 54 * up); c.globalAlpha = 1; if (h.t > 1.0 && h.t < 1.3) hzGlow(c, x, y - 54, 24, '#cfe6ff', 0.9); return true; }
+      case 'rod': { if (this.spritesOn && this.drawStormRod(c, h, cx0, cy0, f)) return true; const x = h.x - cx0, y = h.y - cy0, up = Math.min(1, h.t * 5); c.globalAlpha = f; rod(c, x, y, 54 * up); c.globalAlpha = 1; if (h.t > 1.0 && h.t < 1.3) hzGlow(c, x, y - 54, 24, '#cfe6ff', 0.9); return true; }
       case 'arc': {                                                    // 침과 침 사이 무릎 높이 전류 — 켜지고 꺼진다
         const on = h.t > h.on0 && (h.t - h.on0) % 0.7 < 0.38, x0 = h.x0 - cx0, y0 = h.y0 - cy0, x1 = h.x1 - cx0, y1 = h.y1 - cy0;
         if (!on) { c.globalAlpha = 0.3 * f; c.setLineDash([3, 6]); strokePath(c, [x0, y0, x1, y1], '#cfe6ff', 1); c.setLineDash([]); c.globalAlpha = 1; return true; }

@@ -244,7 +244,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   void_king:   { n: '공허의 왕', hp: 12000, dmg: 82, def: 32, spd: 0, ai: 'b_void', w: 110, h: 120, wall: 1, c: '#5e3fa8', xp: 4500, gold: 5000, boss: 1,
                  drops: [['void_frag', 1, 30, 50], ['charm_star', 1, 1, 1], ['star_heart', 1, 1, 1]] },
 
-  storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 117, def: 38, spd: 150, ai: 'b_storm', w: 132, h: 140, c: '#bcd8f0', xp: 6500, gold: 8000, boss: 1,
+  storm_warden: { n: '폭풍의 수호자', hp: 13000, dmg: 117, def: 38, spd: 150, ai: 'b_storm', w: 150, h: 200, c: '#bcd8f0', xp: 6500, gold: 8000, boss: 1,
                  drops: [['sky_feather', 1, 30, 50], ['aether_shard', 1, 20, 35], ['charm_feather', 1, 1, 1], ['star_heart', 1, 1, 1]] },
   first_keeper: { n: '최초의 파수꾼 · 판결석 좌상', cw: '기', hp: 20000, dmg: 120, def: 52, spd: 0, ai: 'b_judge', w: 120, h: 200, wall: 1, ph: 3, c: '#c8b98a', xp: 8600, gold: 20000, boss: 1,
                  minion: 'ruin_guard',

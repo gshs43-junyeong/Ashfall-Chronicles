@@ -3912,15 +3912,15 @@ window.SPRITE_MANIFEST = {
       },
       "storm_warden": {
         "file": "boss/storm_warden.png",
-        "frameW": 132,
-        "frameH": 140,
+        "frameW": 240,
+        "frameH": 240,
         "count": 8,
-        "foot": -1.5,
+        "foot": 7,
         "side": 0,
         "death": 2,
         "scale": 1,
         "gap": 0,
-        "big": 2
+        "rig": 1
       },
       "first_keeper": {
         "file": "boss/first_keeper.png",
@@ -4103,18 +4103,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "storm_warden_pose": {
-        "file": "boss/storm_warden_pose.png",
-        "frameW": 212,
-        "frameH": 189,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 0,
-        "pose": 1
       },
       "overseer_pose": {
         "file": "boss/overseer_pose.png",
@@ -4373,6 +4361,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 192,
         "frameH": 192,
         "count": 6,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "storm_warden_parts": {
+        "file": "boss/storm_warden_parts.png",
+        "frameW": 256,
+        "frameH": 256,
+        "count": 3,
         "scale": 1,
         "gap": 0,
         "rig": 1
