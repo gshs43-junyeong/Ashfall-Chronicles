@@ -4029,13 +4029,15 @@ window.SPRITE_MANIFEST = {
       },
       "proliferator": {
         "file": "boss/proliferator.png",
-        "frameW": 76,
-        "frameH": 66,
+        "frameW": 128,
+        "frameH": 128,
         "count": 8,
+        "foot": 17,
+        "side": 0,
+        "death": 2,
+        "scale": 1,
         "gap": 0,
-        "foot": 0.25,
-        "side": 0.5,
-        "death": 2
+        "rig": 1
       },
       "hepha": {
         "file": "boss/hepha.png",
@@ -4114,18 +4116,6 @@ window.SPRITE_MANIFEST = {
         "gap": 0,
         "foot": 1.25,
         "side": 0,
-        "pose": 1
-      },
-      "proliferator_pose": {
-        "file": "boss/proliferator_pose.png",
-        "frameW": 122,
-        "frameH": 90,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": 0.25,
-        "side": 0.5,
         "pose": 1
       },
       "hepha_pose": {
@@ -4361,6 +4351,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 320,
         "frameH": 144,
         "count": 5,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "proliferator_parts": {
+        "file": "boss/proliferator_parts.png",
+        "frameW": 56,
+        "frameH": 56,
+        "count": 6,
         "scale": 1,
         "gap": 0,
         "rig": 1

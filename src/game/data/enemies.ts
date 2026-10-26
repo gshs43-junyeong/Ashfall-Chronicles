@@ -256,7 +256,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['void_frag', 1, 60, 90], ['star_heart', 1, 3, 3], ['charm_dawn', 1, 1, 1], ['scythe_void', 1, 1, 1]] },
 
   /* 7단계 보스 */
-  proliferator: { n: '증식체', cw: '기', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_prolif', w: 88, h: 72, c: '#9a8a76', boss: 1,
+  proliferator: { n: '증식체', cw: '기', hp: 46000, dmg: 150, def: 62, spd: 112, ai: 'b_prolif', w: 230, h: 190, c: '#9a8a76', boss: 1,
                  xp: 17000, gold: 70000, minion: 'splitter',
                  drops: [['core_shard', 1, 40, 60], ['machine_frame', 1, 6, 10], ['power_core', 1, 25, 40]] },
   hepha:        { n: '헤파 · 최초의 기계', cw: '기', hp: 72000, dmg: 190, def: 80, spd: 120, ai: 'b_hepha', w: 172, h: 216, c: '#c8a05a', ph: 5, boss: 1,

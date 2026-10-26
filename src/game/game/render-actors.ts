@@ -336,6 +336,8 @@ export const RenderActorsPart: Bag = {
       return;
     }
     if (e.def.ai === 'b_organ' || e.def.ai === 'b_hourglass' || e.def.ai === 'b_hive' || e.def.ai === 'b_judge' || e.def.ai === 'b_eclipse' || e.def.ai === 'b_root' || e.def.ai === 'b_void') return;                                  // 뒷벽의 오르간 — 몸은 objects · 팔은 actors 단계에서(game/boss-organ-art)
+    if (e.def.ai === 'b_prolif' && this.spritesOn && this.drawProlif(c, e, sx, sy)) return;  // 증식체(game/boss-prolif-art)
+    if (e.shed && this.spritesOn && this.drawShed(c, e, sx, sy)) return;                     // 증식체에서 떨어져 나온 모듈
     if (e.def.ai === 'b_spore' && this.spritesOn && this.drawSpore(c, e, sx, sy)) return;    // 포자 여왕(game/boss-spore-art)
     if (e.def.ai === 'b_watch' && this.spritesOn && this.drawWatch(c, e, sx, sy)) return;    // 얼음 감시자(game/boss-watch-art)
     if (e.def.ai === 'b_cart' && this.spritesOn && this.drawCart(c, e, sx, sy)) return;      // 갱도의 것(game/boss-cart-art)

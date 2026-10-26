@@ -254,7 +254,6 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
         /* 2페이즈 — 바닥이 언다. */
         if (ph >= lock) { this.iceFloor = 1; this.layHeat(world, p); }
         break;
-      case 'b_prolif': if (ph >= lock) this.guard = 1; break;      // 핵만 약점
       case 'b_hepha':  if (ph >= lock) this.guard = 1; break;      // 정지 핵을 써야 열린다
       case 'b_arche':
         /* 받침대를 깨야 열린다 — 그런데 방에 받침대가 없으면 규칙이 걸리지도 않는다. */

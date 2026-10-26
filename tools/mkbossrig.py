@@ -2153,6 +2153,82 @@ def spore_parts(f):
     return F.render()
 
 
+# ===== 증식체(proliferator) — 핵 하나에 꽂힌 모듈 덩어리: 맞을수록 모듈이 떨어져 나가 기어 다니고, 핵은 작아지고 빨라진다 =====
+PF_STEEL, PF_STEEL_D, PF_STEEL_L, PF_RUST, PF_CORE = '#8a8478', '#4a463e', '#b8b0a0', '#9a6a42', '#ffc860'
+PF_W, PF_H = 32, 32                                           # 게임 game/boss-prolif-art.ts PF 와 같게(핵 가운데 (16, 16) · 반지름 11 · 꽂는 구멍 여섯)
+
+
+def prolif_core(f):
+    """핵 8장(32×32) — 0·1 렌즈가 숨 쉰다 · 2·3 금 · 4·5 드러난 핵(구멍이 비어 빛이 샌다) · 6·7 꺼짐"""
+    F = ZFig(PF_W, PF_H)
+    cx = cy = 16
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = f >= 6
+    F.part('metal', PF_STEEL_D, bevel=3).ell(cx, cy, 11.4, 11.4)
+    F.part('metal', PF_STEEL, bevel=2).ell(cx - 0.4, cy - 0.4, 10, 10)
+    F.part('metal', PF_STEEL_L, flat=True).ell(cx - 4, cy - 5, 3.4, 1.8)
+    for k in range(6):                                                                          # 꽂는 구멍 — 모듈이 박히는 자리
+        a = k / 6 * math.tau + 0.26
+        x, y = cx + math.cos(a) * 8.4, cy + math.sin(a) * 8.4
+        F.part('metal', '#2a2620', flat=True).ell(x, y, 1.6, 1.6)
+        if st >= 2 and not dead:
+            F.part('glow', PF_CORE, glow=True).ell(x, y, 0.9, 0.9)
+        F.part('metal', '#6a6458', bevel=0.4).ell(x + math.cos(a) * 1.8, y + math.sin(a) * 1.8, 0.5, 0.5)
+    for k in range(12):                                                                         # 리벳 테
+        a = k / 12 * math.tau
+        F.part('metal', '#c8c0b0', bevel=0.3).ell(cx + math.cos(a) * 10.6, cy + math.sin(a) * 10.6, 0.45, 0.45)
+    # 렌즈 — 조리개 날 · 가운데 빛
+    F.part('metal', '#2a2620', bevel=1).ell(cx, cy, 5.6, 5.6)
+    for k in range(6):
+        a = k / 6 * math.tau + b * 0.3
+        F.part('metal', '#5a5448', bevel=0.4).poly([(cx + math.cos(a) * 5.2, cy + math.sin(a) * 5.2), (cx + math.cos(a + 1.0) * 5.2, cy + math.sin(a + 1.0) * 5.2),
+                                                    (cx + math.cos(a + 0.7) * 2.2, cy + math.sin(a + 0.7) * 2.2)])
+    if not dead:
+        r = 2.0 + b * 0.4 + (1.0 if st >= 2 else 0)
+        F.part('glow', PF_CORE, glow=True).ell(cx, cy, r, r)
+        F.part('glow', '#fff4d0', glow=True).ell(cx - 0.4, cy - 0.4, r * 0.4, r * 0.4)
+        F.glow(cx, cy, 7 + b + st, PF_CORE, 0.35)
+    else:
+        F.part('metal', '#3a3428', flat=True).ell(cx, cy, 2.2, 2.2)
+    if st >= 1:
+        crack(F, [(cx + 6, cy - 8), (cx + 3, cy - 4)], 0.3, PF_CORE)
+    if st >= 2:
+        crack(F, [(cx - 8, cy + 5), (cx - 4, cy + 2)], 0.35, PF_CORE)
+    return F.render()
+
+
+def prolif_parts(f):
+    """모듈 6장(14×14 · 가운데 (7, 7) · 한 변 11) — 0 판 · 1 리벳 포 · 2 피스톤 · 3 배기구 · 4 다리 · 5 떨어져 나온 모듈의 작은 다리 셋"""
+    F = ZFig(14, 14)
+    if f <= 4:
+        F.part('metal', PF_STEEL_D, bevel=2).box(1.5, 1.5, 11, 11, 1.4)
+        F.part('metal', PF_STEEL, bevel=1.5).box(2.3, 2.1, 9.4, 9.4, 1.0)
+        F.part('metal', PF_STEEL_L, flat=True).box(2.8, 2.6, 4.4, 1.2, 0.4)
+        for (x, y) in [(3.2, 3.2), (10.8, 3.2), (3.2, 10.8), (10.8, 10.8)]:
+            F.part('metal', '#c8c0b0', bevel=0.3).ell(x, y, 0.55, 0.55)
+        if f == 0:
+            fine(F, (3.4, 7), (10.6, 7), PF_STEEL_D, 220); F.part('metal', PF_RUST, flat=True).poly([(5, 8), (8, 8.2), (6.4, 10.6)])
+        elif f == 1:
+            F.part('metal', '#2a2620', bevel=0.8).ell(7, 7, 3.0, 3.0)
+            F.part('metal', '#6a6458', bevel=0.8).cap(7, 7, 11.8, 7, 1.5, 1.2)                   # 포신(오른쪽)
+            F.part('metal', '#2a2620', flat=True).ell(11.8, 7, 0.7, 0.7)
+        elif f == 2:
+            F.part('metal', '#6a6458', bevel=0.6).box(4.4, 4.2, 5.2, 5.6, 0.6)
+            F.part('metal', '#d8d0c0', bevel=0.4).cap(7, 4, 7, 1.7, 0.8, 0.8)                    # 피스톤 대
+        elif f == 3:
+            for k in range(4):
+                F.part('metal', '#2a2620', flat=True).box(3.6, 3.8 + k * 1.8, 6.8, 0.9, 0.3)
+            F.part('glow', PF_CORE, glow=True).box(4.2, 4.0, 5.6, 0.5, 0.2)
+        else:
+            F.part('metal', '#6a6458', bevel=0.8).cap(7, 9, 7, 13.0, 1.6, 1.2)                   # 발목
+            F.part('metal', PF_STEEL_D, bevel=0.8).box(3.4, 12.0, 7.2, 1.6, 0.6)
+    else:
+        for (x0, x1) in [(4, 1.4), (7, 7), (10, 12.6)]:
+            F.part('metal', '#4a463e', bevel=0.4).cap(x0, 9, x1, 12.8, 0.6, 0.45)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2168,6 +2244,7 @@ RIGS = {
     'mine_horror': {'body': (MH_W, MH_H, 8, 2, mine_body), 'parts': (24, 24, 5, mine_parts)},
     'ice_warden': {'body': (IW_W, IW_H, 8, 2, watch_body), 'parts': (20, 36, 5, watch_parts)},
     'spore_queen': {'body': (SQ_W, SQ_H, 8, 2, spore_body), 'parts': (80, 36, 5, spore_parts)},
+    'proliferator': {'body': (PF_W, PF_H, 8, 2, prolif_core), 'parts': (14, 14, 6, prolif_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

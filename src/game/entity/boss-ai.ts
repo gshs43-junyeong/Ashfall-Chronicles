@@ -201,35 +201,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
       } else this.vx *= 0.9;
       this.move(dt, world);
     } else if (AI === 'b_prolif') {
-      /* 증식체 — 뛰지 않는다. */
-      this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.35, dt * 2);
-      if (this.stateT <= 0) {
-        this.stateT = 2.4 - this.pf * 0.8;
-        const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
-        if (kids < 3 + this.pf * 2) {                    // 쵸크 금지 — 한 번에 셋까지
-          const n = 1 + this.pf * 2;
-          for (let i = 0; i < n; i++) {
-            const e = new Enemy(this.def.minion || 'splitter',
-              this.cx + (i - (n - 1) / 2) * 46, this.cy, G.scale());
-            e.vy = -220; e.vx = (i - (n - 1) / 2) * 90;
-            G.ents.push(e);
-          }
-          G.ringFx(this.cx, this.cy, this.w, '#9a8a76', .4);
-        }
-      }
-      if (this.lastPh()) {
-        // 갈라진 것이 다 없어지면 핵이 드러난다 — 그때만 제대로 들어간다
-        const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'splitter')).length;
-        const open = kids === 0;
-        if (open && this.guard) { this.guard = 0; G.toast(tr('핵이 드러났다'), 'good'); }
-        else if (!open && !this.guard) this.guard = 1;
-      }
-      if (this.atkCd <= 0 && dd < 320) {
-        this.atkCd = 1.4;
-        const a = angleTo(this.cx, this.cy, p.cx, p.cy);
-        G.projs.push(new Proj(this.cx, this.cy, Math.cos(a) * 340, Math.sin(a) * 340, this.dmg * 0.5, 'enemy', 'bolt'));
-      }
-      this.move(dt, world);
+      this.pfAI(dt, world, p, dx);                                     // 증식체 — 모듈이 떨어져 나가며 작아지고 빨라진다(entity/boss-prolif)
 
     } else if (AI === 'b_overseer') {
       /* 공창의 관리자 — 파수꾼의 룬 광선이 아니라 **단말로 명령을 내린다**. 제가 직접 때리는 일이 거의 없고, 방 안의 기계를 깨워 대신 싸우게 한다. */
