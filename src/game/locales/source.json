@@ -874,7 +874,7 @@
    "world/village.buildWorks"
   ],
   "관리자가 명령을 내린다": [
-   "entity/boss-ai.bossAI"
+   "entity/boss-overseer.ovAI"
   ],
   "광맥 없음": [
    "factory/tick.runDrill"

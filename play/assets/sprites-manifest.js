@@ -3948,12 +3948,15 @@ window.SPRITE_MANIFEST = {
       },
       "overseer": {
         "file": "boss/overseer.png",
-        "frameW": 80,
-        "frameH": 95,
-        "count": 9,
-        "foot": 1.25,
+        "frameW": 160,
+        "frameH": 220,
+        "count": 8,
+        "foot": 10,
         "side": 0,
-        "death": 2
+        "death": 2,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
       },
       "ice_warden": {
         "file": "boss/ice_warden.png",
@@ -4107,18 +4110,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "overseer_pose": {
-        "file": "boss/overseer_pose.png",
-        "frameW": 128,
-        "frameH": 129,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": 1.25,
-        "side": 0,
-        "pose": 1
       },
       "archetype_pose": {
         "file": "boss/archetype_pose.png",
@@ -4359,6 +4350,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 160,
         "frameH": 192,
         "count": 7,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "overseer_parts": {
+        "file": "boss/overseer_parts.png",
+        "frameW": 64,
+        "frameH": 120,
+        "count": 5,
         "scale": 1,
         "gap": 0,
         "rig": 1

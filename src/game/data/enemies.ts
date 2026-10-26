@@ -264,7 +264,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['hepha_heart', 1, 1, 1], ['core_shard', 1, 60, 90], ['aether_shard', 1, 30, 45]] },
 
   /* 세션 2 — 지하 공창의 관리자 */
-  overseer:     { n: '공창의 관리자', cw: '기', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_overseer', w: 68, h: 88, c: '#8a8a96', xp: 14000, gold: 44000, boss: 1,
+  overseer:     { n: '공창의 관리자', cw: '기', hp: 30000, dmg: 140, def: 60, spd: 104, ai: 'b_overseer', w: 84, h: 216, c: '#8a8a96', xp: 14000, gold: 44000, boss: 1,
                  minion: 'riveter',
                  drops: [['steel_plate', 1, 60, 90], ['power_core', 1, 20, 30], ['blueprint_core', 1, 1, 1], ['pick_drill', 1, 1, 1]] },
 

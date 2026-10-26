@@ -152,8 +152,12 @@ export const BossSigPart: Bag = {
       } return true;
       case 'drone': {                                                 // 점검 드론 — 좌우로 훑는 빛, 걸리면 경보와 미사일
         h.x = h.cx + Math.sin(h.t * 1.3 + h.ph) * 150; h.y = h.y0 + Math.sin(h.t * 2.1 + h.ph) * 10;
+        if (h.dock !== undefined) {                                  // 관리자 드론 — 거치대에서 날아오르고(0.6초) 끝에 돌아간다
+          const b = this.hzBoss(h);
+          if (b) { const [dx, dy] = b.ovDock(h.dock), u = Math.min(1, h.t / 0.6, Math.max(0, (h.life - h.t) / 0.6)), e = u * u * (3 - 2 * u); h.x = dx + (h.x - dx) * e; h.y = dy + (h.y - dy) * e; }
+        }
         h.cd = (h.cd || 0) - dt;
-        if (host && h.t > 0.6 && h.cd <= 0 && (h.al || 0) < 2) {
+        if (host && h.t > 0.6 && (h.dock === undefined || h.t < h.life - 0.6) && h.cd <= 0 && (h.al || 0) < 2) {
           const tan = Math.tan(0.3);
           for (const q of this.players) {
             if (q.dead || q.hp <= 0) continue;

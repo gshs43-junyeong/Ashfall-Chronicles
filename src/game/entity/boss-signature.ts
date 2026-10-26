@@ -203,7 +203,8 @@ export const BossSignature: Bag & ThisType<Enemy> = {
         return { busy: 1.4 };
       }
       case 'drones': {                                            // 점검 드론 — 훑는 빛에 걸리면 경보 · 미사일
-        for (const s of [-1, 1]) this.hz({ k: 'drone', cx: p.cx + s * 150, y0: fy - 210, fy, life: 5.6, ph: s > 0 ? 0 : Math.PI, dmg: this.dmg * m * 0.6, c: K.c, id: nid() });
+        const ov = this.def.ai === 'b_overseer';                   // 관리자는 등 거치대 셋에서 날아오른다(game/boss-overseer-art)
+        (ov ? [-1, 0, 1] : [-1, 1]).forEach((s, i) => this.hz({ k: 'drone', cx: p.cx + s * (ov ? 170 : 150), y0: fy - 210 + (ov && s === 0 ? -40 : 0), fy, life: 5.6, ph: s > 0 ? 0 : s < 0 ? Math.PI : Math.PI / 2, dmg: this.dmg * m * 0.6, c: K.c, id: nid(), dock: ov ? i : undefined, nid: ov ? this.nid : undefined, ref: ov ? this : undefined }));
         return { busy: 1.0 };
       }
       case 'project': {                                           // 설계도 투영 — 다음 세 걸음을 설계선으로 먼저 보이고 그대로 벤다

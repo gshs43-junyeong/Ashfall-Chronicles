@@ -310,9 +310,10 @@ export const BossSigArtPart: Bag = {
       case 'drone': {                                                  // 점검 드론 — 훑는 빛 원뿔(경보면 붉게)
         if (h.x === undefined) return true;
         const x = h.x - cx0, y = h.y - cy0, fy = h.fy - cy0, w = (fy - y) * Math.tan(0.3), al = h.alT !== undefined && h.t - h.alT < 0.8;
-        c.globalAlpha = f * 0.35; c.fillStyle = al ? '#ff4030' : '#fff6c0';
-        poly(c, [x, y + 6, x + w, fy, x - w, fy]); c.fill();
+        const docked = h.dock !== undefined && (h.t < 0.6 || h.t > h.life - 0.6);   // 관리자 드론 — 거치대를 오가는 동안은 빛을 끈다
+        if (!docked) { c.globalAlpha = f * 0.35; c.fillStyle = al ? '#ff4030' : '#fff6c0'; poly(c, [x, y + 6, x + w, fy, x - w, fy]); c.fill(); }
         c.globalAlpha = f;
+        if (h.dock !== undefined && this.spritesOn && this.drawOverseerDrone(c, h, cx0, cy0, f)) { if (!docked) hzGlow(c, x, y + 10, 8, al ? '#ff4030' : '#ffe08a', 0.9); c.globalAlpha = 1; return true; }
         c.fillStyle = '#5a5e68'; c.strokeStyle = '#1e2026'; c.lineWidth = 1.2; c.beginPath(); c.ellipse(x, y, 14, 7, 0, 0, TAU); c.fill(); c.stroke();
         for (const s of [-1, 1]) { c.fillStyle = 'rgba(200,210,220,.6)'; c.fillRect(x + s * 14 - 7, y - 9 + Math.sin(T * 60) * 0.5, 14, 2); }
         hzGlow(c, x, y + 4, 8, al ? '#ff4030' : '#ffe08a', 0.9);

@@ -204,36 +204,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
       this.pfAI(dt, world, p, dx);                                     // 증식체 — 모듈이 떨어져 나가며 작아지고 빨라진다(entity/boss-prolif)
 
     } else if (AI === 'b_overseer') {
-      /* 공창의 관리자 — 파수꾼의 룬 광선이 아니라 **단말로 명령을 내린다**. 제가 직접 때리는 일이 거의 없고, 방 안의 기계를 깨워 대신 싸우게 한다. */
-      this.term = (this.term || 0) + dt;
-      if (this.stateT <= 0) {
-        this.state = (this.state + 1) % 3;
-        this.stateT = 3.0 - this.pf * 0.8;
-        if (this.state === 0) G.toast(tr('관리자가 명령을 내린다'), 'bad');
-      }
-      if (this.state === 0) {                    // 명령 — 바닥에서 압착기가 솟는다
-        this.vx *= 0.9;
-        if (this.atkCd <= 0) {
-          this.atkCd = 0.55 - this.pf * 0.16;
-          const fx = p.cx + (Math.random() - 0.5) * 260;
-          G.warnFx(fx, p.cy + 20, 34, 0.6, '#c8843a');
-          G.after(0.6, () => {
-            G.hitPlayers(fx, p.cy + 20, 40, this.dmg * 0.6); G.ringFx(fx, p.cy + 20, 40, '#c8843a', .3);   // ★ G.aoe 는 몹을 때린다 — 보스 공격은 플레이어에게
-            for (let k = 0; k < 8; k++) G.parts.push(new Part(fx, p.cy + 20, '#c8843a', -160, .6));
-          });
-        }
-      } else if (this.state === 1) {             // 물러서며 재장전 — 유일하게 붙을 틈
-        this.vx = lerp(this.vx, -Math.sign(dx) * this.spd! * 0.9, dt * 3);
-      } else {                                   // 호출
-        this.vx *= 0.92;
-        if (this.atkCd <= 0) {
-          this.atkCd = 1.6;
-          const kids = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === (this.def.minion || 'riveter')).length;
-          if (kids < 3) G.ents.push(new Enemy(this.def.minion || 'riveter',
-            this.cx + (Math.random() - 0.5) * 220, this.cy - 20, G.scale()));
-        }
-      }
-      this.move(dt, world);
+      this.ovAI(dt, world, p, dx);                                     // 공창의 관리자 — 지시봉 · 화면 얼굴 · 드론 거치대(entity/boss-overseer)
 
     } else if (AI === 'b_hepha') {
       this.hpAI(dt, world, p);                                         // 헤파 — 공장 앞면 · 화로 문 박자 · 기중기 팔(entity/boss-hepha)

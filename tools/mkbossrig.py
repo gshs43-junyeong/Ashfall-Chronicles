@@ -2405,6 +2405,119 @@ def hepha_parts(f):
     return F.render()
 
 
+# ===== 공창의 관리자(overseer) — 브라운관 얼굴의 감독 기계: 단말기와 지시봉 · 등의 드론 거치대 셋 · 가는 유압 다리 =====
+OV_S, OV_S_D, OV_S_L, OV_Y, OV_SCR = '#7a8090', '#3a3e4a', '#b0b8c8', '#e8c040', '#1a2a20'
+OV_W, OV_H, OV_DY = 40, 55, 3                                 # 게임 game/boss-overseer-art.ts OV 와 같게(그린 뒤 OV_DY 내린 자리: 가운데 20 · 엉덩이 (15, 50) · (25, 50) · 어깨 (9, 25) · (31, 25) · 거치대 (8, 7.6) · (20, 3.2) · (32, 7.6))
+
+
+def overseer_body(f):
+    """몸 8장(40×52 · 다리 · 팔 · 드론은 조각 · 화면 글은 게임) — 0·1 안테나가 깜빡 · 2·3 금 · 경고 줄 벗겨짐 · 4·5 화면 테가 깨짐 · 6·7 꺼짐"""
+    F = ZFig(OV_W, OV_H - OV_DY)
+    cx = 20
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = f >= 6
+    sag = 0 if f < 6 else (2 if f == 6 else 5)
+    # 등의 드론 거치대 — 머리 뒤 반원 틀 · 받침 셋
+    F.part('metal', OV_S_D, bevel=1.2).cap(cx - 13, 18 + sag, cx - 12, 7 + sag, 1.0, 0.9)
+    F.part('metal', OV_S_D, bevel=1.2).cap(cx + 13, 18 + sag, cx + 12, 7 + sag, 1.0, 0.9)
+    prev = None
+    for k in range(13):                                                                           # 반원 틀
+        a = math.pi * (1 - k / 12)
+        pt = (cx + math.cos(a) * 12, 8 + sag - math.sin(a) * 6)
+        if prev:
+            F.part('metal', OV_S_D, bevel=0.8).cap(prev[0], prev[1], pt[0], pt[1], 0.9, 0.9)
+        prev = pt
+    for (x, y) in [(8, 6), (20, 1.6), (32, 6)]:                                                   # 받침(드론이 앉는 곳)
+        F.part('metal', '#5a6070', bevel=0.8).box(x - 3, y + sag + 1.8, 6, 1.6, 0.5)
+        F.part('glow' if not dead else 'metal', '#80e0ff' if not dead else '#2a3038', glow=not dead).box(x - 1.4, y + sag + 2.2, 2.8, 0.6, 0.2)
+    # 몸통 — 좁은 사물함 같은 몸 · 경고 줄 띠 · 명찰
+    torso = [(cx - 9, 18 + sag), (cx + 9, 18 + sag), (cx + 8, 44), (cx - 8, 44)]
+    F.part('metal', OV_S_D, bevel=2.5).poly(torso)
+    F.part('metal', OV_S, bevel=2).poly([(x + (cx - x) * 0.1, y + 0.8) for (x, y) in torso])
+    F.part('metal', OV_S_L, flat=True).poly([(cx - 7, 20 + sag), (cx - 3, 20 + sag), (cx - 4, 30), (cx - 7, 30)])
+    for k in range(7):                                                                            # 경고 줄(노랑 · 검정 빗금)
+        x = cx - 8 + k * 2.4
+        if st >= 1 and k in (2, 5):
+            continue
+        F.part('metal', OV_Y, flat=True).poly([(x, 37), (x + 1.2, 37), (x + 2.4, 39.4), (x + 1.2, 39.4)])
+    F.part('metal', '#1e2026', flat=True).box(cx - 8, 36.4, 16, 0.5, 0.1); F.part('metal', '#1e2026', flat=True).box(cx - 8, 39.4, 16, 0.5, 0.1)
+    F.part('metal', '#e8e4d8', bevel=0.5).box(cx + 1.6, 23 + sag, 5, 3.4, 0.4)                     # 명찰 — 바코드
+    for k in range(6):
+        fine(F, (cx + 2.4 + k * 0.7, 23.6 + sag), (cx + 2.4 + k * 0.7, 25.6 + sag), '#2a2a2a', 255 if k % 3 else 160)
+    for k in range(3):                                                                            # 상태등
+        F.part('glow' if not dead else 'metal', ['#7dff9a', OV_Y, '#ff6050'][k] if not dead else '#2a3038', glow=not dead).ell(cx - 5 + k * 2.2, 33, 0.7, 0.7)
+    # 허리 — 유압 골반
+    F.part('metal', OV_S_D, bevel=1.5).box(cx - 8, 43, 16, 4, 1.2)
+    for s2 in (-1, 1):
+        F.part('metal', '#5a6070', bevel=1).ell(cx + s2 * 5, 47, 2.2, 2.2)
+    # 머리 — 브라운관 상자 · 화면(게임이 글을 띄운다) · 안테나
+    hy = 4 + sag
+    F.part('metal', OV_S_D, bevel=2).box(cx - 8.4, hy, 16.8, 13.6, 1.8)
+    F.part('metal', '#c8c0b0', bevel=1.5).box(cx - 7.6, hy + 0.6, 15.2, 12.2, 1.4)                 # 베이지 브라운관 테
+    F.part('metal', '#1e2026', flat=True).box(cx - 6.2, hy + 1.8, 12.4, 9.2, 1.6)
+    F.part('metal', OV_SCR, flat=True).box(cx - 5.6, hy + 2.2, 11.2, 8.4, 1.4)
+    if not dead:
+        F.part('glow', '#2a5a3a', glow=True).box(cx - 5.4, hy + 2.4, 10.8, 8.0, 1.3)
+    for k in range(3):                                                                            # 아래 단추 · 통풍구
+        F.part('metal', '#8a8478', bevel=0.3).ell(cx - 4 + k * 2, hy + 12, 0.5, 0.5)
+    fine(F, (cx + 2, hy + 12), (cx + 6, hy + 12), '#6a645a', 220)
+    if st >= 2:                                                                                   # 깨진 화면 테
+        crack(F, [(cx + 6.4, hy + 1), (cx + 4.4, hy + 4), (cx + 6, hy + 7)], 0.35, '#e8f8ff')
+    F.part('metal', OV_S_D, bevel=0.6).cap(cx + 5, hy, cx + 7, hy - 3.4, 0.5, 0.4)                   # 안테나
+    F.part('glow' if not dead else 'metal', '#ff6050' if b else '#7a2a20', glow=not dead and b == 1).ell(cx + 7, hy - 3.6, 0.8, 0.8)
+    if st >= 1:
+        crack(F, [(cx - 7, 24 + sag), (cx - 5, 30), (cx - 7, 35)], 0.35, OV_Y)
+    if st >= 2:
+        crack(F, [(cx + 6, 28), (cx + 4, 34), (cx + 6, 41)], 0.4, OV_Y)
+    if dead:
+        for k in range(5):
+            x = 8 + k * 6
+            F.part('metal', OV_S if k % 2 else OV_S_D, bevel=0.8).poly([(x, 50), (x + 3, 48.4), (x + 5, 50.4), (x + 2, 51.6)])
+    out = Image.new('RGBA', (OV_W * K, OV_H * K), (0, 0, 0, 0))
+    out.paste(F.render(), (0, OV_DY * K))
+    return out
+
+
+def overseer_parts(f):
+    """조각 5장(16×30) — 0 다리(엉덩이 (8, 3) → 발 (8, 29)) · 1 윗팔((8, 3) → 팔꿈치 (8, 14)) · 2 아래팔 + 단말기(팔꿈치 (8, 3) → 손 (8, 12) · 단말 판)
+       3 아래팔 + 지시봉(팔꿈치 (8, 3) → 봉 끝 (8, 28)) · 4 점검 드론(가운데 (8, 8) · 아래 렌즈)"""
+    F = ZFig(16, 30)
+    if f == 0:
+        F.part('metal', OV_S_D, bevel=1.2).cap(8, 3.4, 8, 15, 2.4, 2.0)
+        F.part('metal', '#d8d4c8', bevel=0.6).cap(8, 6, 8, 14, 0.8, 0.8)                           # 유압 대
+        F.part('metal', '#5a6070', bevel=1).ell(8, 15.6, 2.4, 2.0)
+        F.part('metal', OV_S, bevel=1.2).cap(8, 16, 8, 26, 2.2, 1.8)
+        F.part('metal', OV_Y, flat=True).box(6.4, 20, 3.2, 1.2, 0.3)
+        F.part('metal', OV_S_D, bevel=1).poly([(3.4, 29.4), (12.6, 29.4), (11, 26.6), (5, 26.6)])
+    elif f == 1:
+        F.part('metal', '#5a6070', bevel=1).ell(8, 3.4, 2.4, 2.4)
+        F.part('metal', OV_S, bevel=1).cap(8, 4, 8, 13.4, 1.8, 1.6)
+        F.part('metal', '#5a6070', bevel=0.8).ell(8, 14, 1.8, 1.8)
+    elif f == 2:
+        F.part('metal', OV_S, bevel=1).cap(8, 3.4, 8, 11.6, 1.6, 1.4)
+        F.part('metal', '#3a3430', bevel=1).box(2.4, 11, 11.2, 8, 1.0)                            # 단말 판
+        F.part('metal', OV_SCR, flat=True).box(3.4, 12, 9.2, 5.6, 0.6)
+        F.part('glow', '#7dff9a', glow=True).box(4.0, 12.8, 5, 0.6, 0.2); F.part('glow', '#7dff9a', glow=True).box(4.0, 14.4, 7, 0.6, 0.2)
+        F.part('glow', OV_Y, glow=True).box(4.0, 16.0, 3, 0.6, 0.2)
+        F.part('metal', OV_S_D, bevel=0.6).ell(8, 11.4, 1.6, 1.2)                                  # 쥔 손
+    elif f == 3:
+        F.part('metal', OV_S, bevel=1).cap(8, 3.4, 8, 11.6, 1.6, 1.4)
+        F.part('metal', OV_S_D, bevel=0.6).ell(8, 12, 1.7, 1.4)
+        F.part('metal', '#2a2a2e', bevel=0.5).cap(8, 12, 8, 27, 0.55, 0.45)                         # 지시봉
+        F.part('glow', '#ff6050', glow=True).ell(8, 27.6, 0.9, 0.9)
+    else:
+        F.part('metal', OV_S_D, bevel=1.2).ell(8, 8, 6.4, 3.4)
+        F.part('metal', OV_S, bevel=1).ell(8, 7.4, 5.4, 2.6)
+        F.part('metal', OV_S_L, flat=True).ell(6.4, 6.4, 2.2, 0.8)
+        for s2 in (-1, 1):                                                                        # 날개 팔 · 회전 날개 자리
+            F.part('metal', OV_S_D, bevel=0.4).cap(8 + s2 * 5, 6.4, 8 + s2 * 7.2, 4.4, 0.5, 0.4)
+        F.part('metal', '#1e2026', bevel=0.6).ell(8, 10.4, 2.0, 1.4)                                # 렌즈
+        F.part('glow', '#ffe08a', glow=True).ell(8, 10.6, 1.0, 0.7)
+        F.part('metal', OV_Y, flat=True).box(4.4, 7.8, 7.2, 0.6, 0.2)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2422,6 +2535,7 @@ RIGS = {
     'spore_queen': {'body': (SQ_W, SQ_H, 8, 2, spore_body), 'parts': (80, 36, 5, spore_parts)},
     'proliferator': {'body': (PF_W, PF_H, 8, 2, prolif_core), 'parts': (14, 14, 6, prolif_parts)},
     'hepha': {'body': (HP_W, HP_H, 8, 2, hepha_body), 'parts': (40, 48, 7, hepha_parts)},
+    'overseer': {'body': (OV_W, OV_H, 8, 2, overseer_body), 'parts': (16, 30, 5, overseer_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 
