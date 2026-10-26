@@ -4056,13 +4056,15 @@ window.SPRITE_MANIFEST = {
       },
       "archetype": {
         "file": "boss/archetype.png",
-        "frameW": 192,
-        "frameH": 232,
-        "count": 12,
+        "frameW": 128,
+        "frameH": 176,
+        "count": 8,
+        "foot": 9,
+        "side": 0,
+        "death": 2,
+        "scale": 1,
         "gap": 0,
-        "foot": -0.75,
-        "side": 1.5,
-        "death": 2
+        "rig": 1
       },
       "restorer": {
         "file": "boss/restorer.png",
@@ -4110,18 +4112,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "archetype_pose": {
-        "file": "boss/archetype_pose.png",
-        "frameW": 308,
-        "frameH": 314,
-        "count": 45,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -0.75,
-        "side": 1.5,
-        "pose": 1
       },
       "restorer_pose": {
         "file": "boss/restorer_pose.png",
@@ -4359,6 +4349,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 64,
         "frameH": 120,
         "count": 5,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "archetype_parts": {
+        "file": "boss/archetype_parts.png",
+        "frameW": 48,
+        "frameH": 104,
+        "count": 6,
         "scale": 1,
         "gap": 0,
         "rig": 1

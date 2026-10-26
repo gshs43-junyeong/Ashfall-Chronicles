@@ -1786,7 +1786,7 @@
    "entity/enemy-ai.raisePedestals"
   ],
   "받침대가 무너졌다": [
-   "entity/boss-ai.bossAI"
+   "entity/boss-arche.arAI"
   ],
   "발밑이 내려앉는다": [
    "game/ruins.fireRuinEvent"

@@ -277,7 +277,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['archestone', 1, 4, 9], ['proto_ash', .6, 2, 4], ['draft_glass', .4, 1, 2]] },
 
   /* 세션 2 최종 — 사람을 본떠 만든 첫 번째 것 */
-  archetype:    { n: '원형 · 첫 번째 설계', cw: '기', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 192, h: 232, c: '#e8dcc0', ph: 5, boss: 1,
+  archetype:    { n: '원형 · 첫 번째 설계', cw: '기', hp: 105000, dmg: 215, def: 92, spd: 126, ai: 'b_arche', w: 100, h: 232, c: '#e8dcc0', ph: 5, boss: 1,
                  xp: 20000, gold: 400000, minion: 'draft_form', aggro: 4000,
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 

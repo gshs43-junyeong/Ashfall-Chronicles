@@ -2,7 +2,6 @@
 import { app as G, ui as UI } from '../ctx.js';
 import { TAU, angleTo, clamp, lerp } from '../../engine/core/math.js';
 import { mixin } from '../../engine/core/mixin.js';
-import { tr } from '../lang.js';
 import { dimsOf } from '../size.js';
 import { T } from '../data.js';
 import { TS } from '../world.js';
@@ -210,31 +209,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
       this.hpAI(dt, world, p);                                         // 헤파 — 공장 앞면 · 화로 문 박자 · 기중기 팔(entity/boss-hepha)
 
     } else if (AI === 'b_arche') {
-      /* 원형 — 사람을 본떠 만든 첫 번째 것. */
-      if (this.stateT <= 0) {
-        this.state = (this.state + 1) % 3;
-        this.stateT = this.state === 1 ? 1.5 : 2.2;
-        if (this.state === 1) { this.combo = 0; this.atkCd = 0.2; }
-      }
-      if (this.state === 1) {                    // 연격 — 세 번 파고든다
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 2.2, dt * 6);
-        if (this.atkCd <= 0 && this.combo < 3) {
-          this.combo++; this.atkCd = 0.42;
-          G.hitPlayers(this.cx + Math.sign(dx) * 44, this.cy, 52, this.dmg * 0.8); G.ringFx(this.cx + Math.sign(dx) * 44, this.cy, 52, '#e8dcc0', .3);
-          G.shake = Math.max(G.shake, 6);
-        }
-      } else if (this.state === 0) {             // 겨눔 — 천천히 붙는다
-        this.vx = lerp(this.vx, Math.sign(dx) * this.spd! * 0.6, dt * 3);
-        if (this.onGround && dy < -50) this.vy = -580;
-      } else {                                   // 숨 고르기 — 붙을 틈
-        this.vx *= 0.86;
-      }
-      if (this.lastPh() && this.guard) {
-        // 받침대(제단석)를 다 깨면 열린다.
-        const ped = G.ents.filter(e => e instanceof Enemy && !e.dead && e.type === 'draft_form').length;
-        if (!ped) { this.guard = 0; G.toast(tr('받침대가 무너졌다'), 'good'); }
-      }
-      this.move(dt, world);
+      this.arAI(dt, world, p, dx, dy);                                 // 원형 — 자 칼날 연격 · 흩어졌다 다시 모이는 몸(entity/boss-arche)
 
     } else if (AI === 'b_restorer') {
       /* 부유 성채의 환원기 — 지금까지 나온 무엇보다 세다. */

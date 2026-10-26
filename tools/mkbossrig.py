@@ -2518,6 +2518,105 @@ def overseer_parts(f):
     return F.render()
 
 
+# ===== 원형(archetype) — 첫 번째 설계: 사람을 본뜬 상아빛 마네킹 · 판마다 설계 치수선이 새겨졌다 · 자 칼날 팔 · 얼굴 없는 가면에 컴퍼스 표 =====
+AR_IV, AR_IV_D, AR_IV_L, AR_JOINT, AR_LINE, AR_GLOW = '#e8dcc0', '#9a8e74', '#f8f2e4', '#5a5448', '#4a7aa8', '#9fd0ff'
+AR_W, AR_H = 32, 44                                           # 게임 game/boss-arche-art.ts AR 와 같게(몸통 · 머리 — 가운데 16 · 엉덩이 (12, 40) · (20, 40) · 어깨 (7, 15) · (25, 15) · 목 (16, 10))
+
+
+def _measure(F, a, b, col=AR_LINE):
+    """치수선 — 양끝 짧은 가름선 · 가운데 눈금(설계도 결)"""
+    fine(F, a, b, col, 200)
+    dx, dy = b[0] - a[0], b[1] - a[1]; L = math.hypot(dx, dy) or 1; nx, ny = -dy / L, dx / L
+    for p in (a, b):
+        fine(F, (p[0] - nx * 0.8, p[1] - ny * 0.8), (p[0] + nx * 0.8, p[1] + ny * 0.8), col, 220)
+    m = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+    fine(F, (m[0] - nx * 0.5, m[1] - ny * 0.5), (m[0] + nx * 0.5, m[1] + ny * 0.5), col, 220)
+
+
+def arche_body(f):
+    """몸통 · 머리 8장(32×44 · 팔다리는 조각) — 0·1 이음매 빛이 숨 쉰다 · 2·3 판이 벌어진다 · 4·5 설계선이 몸 밖으로 번진다 · 6·7 흩어짐"""
+    F = ZFig(AR_W, AR_H)
+    cx = 16
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = 0 if f < 6 else (1 if f == 6 else 2)
+    gap = st * 0.6 + dead * 1.6                                                                   # 판 사이 틈 — 막이 오를수록 벌어진다
+    # 골반
+    F.part('metal', AR_JOINT, bevel=1).ell(cx, 39, 6, 2.4)
+    F.part('stone', AR_IV_D, bevel=2).poly([(cx - 7, 34 + gap), (cx + 7, 34 + gap), (cx + 6, 40 + gap), (cx - 6, 40 + gap)])
+    F.part('stone', AR_IV, bevel=1.5).poly([(cx - 6.2, 34.6 + gap), (cx + 6.2, 34.6 + gap), (cx + 5.4, 39.4 + gap), (cx - 5.4, 39.4 + gap)])
+    # 허리 관절(구슬)
+    F.part('metal', AR_JOINT, bevel=1).ell(cx, 32.4 + gap * 0.5, 3.4, 2.2)
+    # 가슴판 — 위가 넓은 방패꼴 · 가운데 이음매
+    for s2 in (-1, 1):                                                                            # 좌우 두 판 — 가운데가 틈으로 벌어진다
+        pts = [(cx + s2 * gap * 0.5, 13), (cx + s2 * (9 + gap * 0.5), 13), (cx + s2 * (8 + gap * 0.5), 22), (cx + s2 * (5 + gap * 0.5), 30), (cx + s2 * gap * 0.5, 30)]
+        F.part('stone', AR_IV_D, bevel=2).poly(pts)
+        F.part('stone', AR_IV if s2 < 0 else '#ddd0b2', bevel=1.5).poly([(x + (cx - x) * 0.08, y + 0.6) for (x, y) in pts])
+    F.part('stone', AR_IV_L, flat=True).poly([(cx - 7.4, 14.4), (cx - 3, 14.4), (cx - 4, 20), (cx - 7, 20)])
+    if not dead:
+        F.part('glow', AR_GLOW, glow=True).box(cx - 0.4, 14, 0.8, 15, 0.3)                          # 가운데 이음매 빛
+        F.glow(cx, 21, 4 + b, AR_GLOW, 0.25 + 0.1 * st)
+    # 새긴 설계 치수선 — 가슴 · 골반
+    _measure(F, (cx - 8, 24), (cx - 1.6, 24))
+    _measure(F, (cx + 1.6, 17), (cx + 8, 17))
+    _measure(F, (cx - 5, 37 + gap), (cx + 5, 37 + gap))
+    for k in range(3):                                                                            # 판 번호 눈금
+        fine(F, (cx + 3 + k * 1.4, 27), (cx + 3 + k * 1.4, 28.2), AR_LINE, 200)
+    # 목 · 머리 — 얼굴 없는 달걀 가면 · 이마에 컴퍼스 표 · 가늘게 빛나는 눈 틈
+    F.part('metal', AR_JOINT, bevel=0.8).cap(cx, 12.6, cx, 9.6, 1.4, 1.2)
+    hy = max(1.3, 1.6 - gap * 0.6)                                                               # 머리가 벌어져 뜨되 칸 벽엔 닿지 않게
+    F.part('stone', AR_IV_D, bevel=2).ell(cx, hy + 4.4, 4.6, 5.0)
+    F.part('stone', AR_IV, bevel=1.5).ell(cx - 0.3, hy + 4.0, 3.9, 4.4)
+    F.part('stone', AR_IV_L, flat=True).ell(cx - 1.6, hy + 2.4, 1.4, 1.0)
+    fine(F, (cx, hy + 0.6), (cx - 1.4, hy + 3.2), AR_LINE, 230); fine(F, (cx, hy + 0.6), (cx + 1.4, hy + 3.2), AR_LINE, 230)   # 컴퍼스 다리
+    F.part('metal', AR_LINE, flat=True).ell(cx, hy + 0.7, 0.4, 0.4)
+    if not dead:
+        F.part('glow', AR_GLOW, glow=True).box(cx - 2.6, hy + 4.8, 5.2, 0.7, 0.3)
+    else:
+        fine(F, (cx - 2.6, hy + 5.1), (cx + 2.6, hy + 5.1), AR_IV_D, 230)
+    if st >= 2 and not dead:                                                                      # 몸 밖으로 번지는 설계선
+        for (a, bb) in [((cx - 13, 12), (cx - 9, 13)), ((cx + 9, 30), (cx + 14, 34)), ((cx - 14, 30), (cx - 6, 30))]:
+            fine(F, a, bb, AR_GLOW, 200)
+    if st >= 1:
+        crack(F, [(cx + 6, 15), (cx + 4, 20)], 0.3, AR_GLOW)
+    return F.render()
+
+
+def arche_parts(f):
+    """조각 6장(12×26) — 0 넓적다리((6, 3) → 무릎 (6, 13)) · 1 정강이((6, 3) → 발끝 (6, 25) · 발) · 2 윗팔((6, 3) → 팔꿈치 (6, 12))
+       3 아래팔 = 자 칼날((6, 3) → 날끝 (6, 25) · 눈금 · 빛 날) · 4 아래팔 = 손(빈손 · 손가락 셋) · 5 흩어진 판 조각"""
+    F = ZFig(12, 26)
+    def limb(y0, y1, r0, r1):
+        F.part('metal', AR_JOINT, bevel=0.8).ell(6, y0, r0 * 0.9, r0 * 0.9)
+        F.part('stone', AR_IV_D, bevel=1.2).cap(6, y0 + 0.6, 6, y1, r0, r1)
+        F.part('stone', AR_IV, bevel=1).cap(5.7, y0 + 0.8, 5.7, y1 - 0.4, r0 * 0.78, r1 * 0.78)
+        _measure(F, (6 + r0 * 0.4, y0 + 2), (6 + r1 * 0.3, y1 - 1.4))
+    if f == 0:
+        limb(3, 13, 2.6, 2.2)
+    elif f == 1:
+        limb(3, 21, 2.2, 1.6)
+        F.part('stone', AR_IV_D, bevel=1).poly([(3.4, 21), (8, 21), (10.6, 24.4), (3.2, 24.6)])
+        F.part('stone', AR_IV, bevel=0.6).poly([(3.8, 21.4), (7.8, 21.4), (9.6, 23.8), (3.6, 24)])
+    elif f == 2:
+        limb(3, 12, 2.2, 1.9)
+    elif f == 3:
+        F.part('metal', AR_JOINT, bevel=0.8).ell(6, 3, 2.0, 2.0)
+        F.part('stone', AR_IV_D, bevel=1).cap(6, 3.6, 6, 8, 1.8, 1.6)
+        F.part('metal', '#c8c0b0', bevel=0.8).poly([(4.4, 8), (7.6, 8), (7.2, 23), (6, 25.4), (4.8, 23)])   # 자 칼날
+        for k in range(8):
+            fine(F, (4.8, 9.4 + k * 1.7), (5.8 + (k % 2) * 0.6, 9.4 + k * 1.7), '#3a3430', 230)        # 눈금
+        F.part('glow', AR_GLOW, glow=True).poly([(7.0, 9), (7.5, 9), (7.1, 22.8), (6.3, 24.6)])       # 빛 날
+    elif f == 4:
+        limb(3, 9, 1.9, 1.6)
+        for k in range(3):
+            F.part('stone', AR_IV, bevel=0.5).cap(5 + k, 10, 4.6 + k * 1.3, 13.4, 0.55, 0.45)
+    else:
+        for (x, y, w, h, a) in [(3, 4, 5, 3, 0.3), (6, 11, 4, 4, -0.4), (2.6, 18, 6, 2.6, 0.1)]:
+            F.part('stone', AR_IV, bevel=0.8).poly([(x, y), (x + w, y + a), (x + w - 0.6, y + h), (x + 0.4, y + h - a)])
+            fine(F, (x + 0.6, y + h / 2), (x + w - 0.8, y + h / 2), AR_LINE, 200)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2536,6 +2635,7 @@ RIGS = {
     'proliferator': {'body': (PF_W, PF_H, 8, 2, prolif_core), 'parts': (14, 14, 6, prolif_parts)},
     'hepha': {'body': (HP_W, HP_H, 8, 2, hepha_body), 'parts': (40, 48, 7, hepha_parts)},
     'overseer': {'body': (OV_W, OV_H, 8, 2, overseer_body), 'parts': (16, 30, 5, overseer_parts)},
+    'archetype': {'body': (AR_W, AR_H, 8, 2, arche_body), 'parts': (12, 26, 6, arche_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

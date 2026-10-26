@@ -257,6 +257,7 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       case 'b_hepha':  if (ph >= lock) this.guard = 1; break;      // 정지 핵을 써야 열린다
       case 'b_arche':
         /* 받침대를 깨야 열린다 — 그런데 방에 받침대가 없으면 규칙이 걸리지도 않는다. */
+        this.arRebuild();                                          // 흩어졌다 설계선을 따라 다시 모인다(entity/boss-arche)
         if (ph >= lock) { this.guard = 1; this.raisePedestals(); }
         break;
       case 'b_overseer': if (ph >= 1) this.term = 0; break;
