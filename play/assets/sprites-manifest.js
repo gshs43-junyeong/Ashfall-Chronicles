@@ -4116,24 +4116,15 @@ window.SPRITE_MANIFEST = {
       },
       "isle_keeper": {
         "file": "boss/isle_keeper.png",
-        "frameW": 88,
-        "frameH": 99,
+        "frameW": 288,
+        "frameH": 240,
         "count": 8,
-        "foot": -0.75,
-        "side": 0,
-        "death": 2
-      },
-      "isle_keeper_pose": {
-        "file": "boss/isle_keeper_pose.png",
-        "frameW": 142,
-        "frameH": 134,
-        "count": 27,
-        "cols": 9,
+        "foot": 0,
+        "side": 10.5,
+        "death": 2,
         "scale": 1,
         "gap": 0,
-        "foot": -0.75,
-        "side": 0,
-        "pose": 1
+        "rig": 1
       },
       "king_slime_parts": {
         "file": "boss/king_slime_parts.png",
@@ -4356,6 +4347,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 80,
         "frameH": 160,
         "count": 4,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "isle_keeper_parts": {
+        "file": "boss/isle_keeper_parts.png",
+        "frameW": 320,
+        "frameH": 160,
+        "count": 3,
         "scale": 1,
         "gap": 0,
         "rig": 1

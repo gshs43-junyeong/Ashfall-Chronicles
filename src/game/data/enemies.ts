@@ -309,7 +309,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
 
   /* 무너진 갱의 주인 — 스토리와 무관한 순수 탐험 보상 */
   /* 떠 있는 섬을 붙들고 있는 것 — 스토리와 무관하다. */
-  isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 300, def: 118, spd: 92, ai: 'b_keeper', w: 88, h: 96, c: '#4a7a86', boss: 1,
+  isle_keeper:  { n: '섬을 든 것', hp: 34000, dmg: 300, def: 118, spd: 92, ai: 'b_isle', w: 300, h: 260, c: '#4a7a86', boss: 1,
                  xp: 24000, gold: 240000, minion: 'reef_shark', aggro: 3200,
                  drops: [['abyss_pearl', 1, 6, 10], ['abyss_core', 1, 2, 3], ['coconut', 1, 8, 14]] },
   shaft_maw:    { n: '갱을 메운 것', hp: 88000, dmg: 244, def: 112, spd: 74, ai: 'b_shaft', w: 240, h: 230, c: '#3a342c', ph: 5, boss: 1,

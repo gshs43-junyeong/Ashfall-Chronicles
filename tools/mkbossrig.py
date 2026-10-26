@@ -3020,6 +3020,99 @@ def tide_parts(f):
     return F.render()
 
 
+# ===== 섬을 든 것(isle_keeper) — 등에 섬을 진 웅크린 돌 거인: 이끼 덮인 등 · 앞으로 숙인 머리(정수리에 빛나는 문양) · 기둥 같은 앞팔 · 섬은 조각(발판) =====
+IK_ST, IK_ST_D, IK_ST_L, IK_MOSS, IK_MOSS_D, IK_RUNE = '#6a7a72', '#34403a', '#9aaaa0', '#5a8a4a', '#3a5a30', '#9ff0d8'
+IK_W, IK_H = 72, 60                                           # 게임 game/boss-isle-art.ts IK 와 같게(오른쪽을 본다 · 땅 59 · 등(섬 자리) (32, 20) · 정수리 (60, 30) · 앞팔 어깨 (52, 28))
+
+
+def isle_body(f):
+    """몸 8장(72×60 · 섬 · 앞팔은 조각) — 0·1 숨(등이 오르내린다) · 2·3 금 · 이끼가 벗겨진다 · 4·5 정수리 문양이 깨져 빛이 샌다 · 6·7 무너짐"""
+    F = ZFig(IK_W, IK_H)
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = f >= 6
+    sag = 0 if f < 6 else (4 if f == 6 else 9)
+    # 뒷다리 — 굵은 돌 기둥 둘(무릎을 굽혔다)
+    for (hx, kx, fx) in [(18, 12, 14), (30, 26, 30)]:
+        F.part('stone', IK_ST_D, bevel=2).cap(hx, 38, kx, 48, 6, 5.4)
+        F.part('stone', IK_ST_D, bevel=2).cap(kx, 48, fx, 57, 5.4, 5)
+        F.part('stone', IK_ST, bevel=1.4).cap(kx - 0.6, 48, fx - 0.4, 56, 4, 3.6)
+        F.part('stone', IK_ST_D, bevel=1.2).poly([(fx - 7, 59.4), (fx + 7, 59.4), (fx + 5, 55), (fx - 5, 55)])
+    # 몸통 — 앞으로 숙인 등(위가 평평 — 섬이 앉는다) · 배 쪽은 그늘
+    body = [(8, 30 + sag), (12, 22 + sag), (24, 18 + sag), (44, 18 + sag), (56, 22 + sag), (62, 30 + sag), (58, 40), (44, 46), (24, 46), (12, 42)]
+    F.part('stone', IK_ST_D, bevel=4).poly(body)
+    F.part('stone', IK_ST, bevel=3).poly([(x + (36 - x) * 0.06, y + 1.2) for (x, y) in body])
+    F.part('stone', IK_ST_L, flat=True).poly([(14, 24 + sag), (24, 20.6 + sag), (34, 20.6 + sag), (28, 27), (16, 29)])
+    # 등의 이끼 — 섬 밑동에서 흘러내린다(막 1 부터 벗겨진다)
+    moss = [(12, 22 + sag), (24, 18.4 + sag), (44, 18.4 + sag), (56, 22.4 + sag), (54, 26 + sag), (46, 24 + sag), (40, 27), (32, 24.6 + sag), (24, 27), (16, 25.6 + sag)]
+    F.part('leaf', IK_MOSS_D, bevel=1.5).poly(moss)
+    F.part('leaf', IK_MOSS, bevel=1).poly([(x, y - 0.6) for (x, y) in moss[:5]] + [(x, y - 1.2) for (x, y) in moss[5:]])
+    for k in range(9 - st * 3):                                                                     # 늘어진 이끼 줄
+        x = 14 + k * 4.6
+        F.part('leaf', IK_MOSS_D, bevel=0.4).cap(x, 25 + sag, x + 0.4, 29 + (k % 3) * 1.6 + sag, 0.8, 0.5)
+    # 머리 — 앞으로 숙여 어깨 아래로 · 돌 수염 · 눈썹 밑 작은 눈 · 정수리 문양(약점)
+    hx, hy = 62, 34 + sag
+    F.part('stone', IK_ST_D, bevel=3).ell(hx, hy, 8.6, 7.4)
+    F.part('stone', IK_ST, bevel=2).ell(hx - 0.4, hy - 0.4, 7.6, 6.4)
+    F.part('leaf', IK_MOSS, bevel=1).ell(hx - 1.4, hy - 5.4, 6.4, 2.6)                               # 정수리 이끼
+    F.part('stone', IK_ST_D, bevel=1).poly([(hx - 3, hy - 1.6), (hx + 8, hy - 2.6), (hx + 8, hy - 0.8), (hx - 2, hy)])   # 눈썹
+    if not dead:
+        F.part('glow', '#ffd27a', glow=True).ell(hx + 4.6, hy + 0.6, 0.9, 0.7)
+    for k in range(5):                                                                              # 돌 수염
+        x = hx - 1 + k * 2.2
+        F.part('stone', IK_ST_D if k % 2 else IK_ST, bevel=0.6).poly([(x - 1, hy + 4), (x + 1, hy + 4), (x + 0.2, hy + 9 + (k % 2) * 1.6)])
+    # 정수리 문양 — 둥근 룬(섬 위에서만 닿는 곳)
+    rx, ry = hx - 2, hy - 6
+    F.part('stone', '#1a2420', flat=True).ell(rx, ry, 3.4, 1.6)
+    if not dead:
+        F.part('glow', IK_RUNE, glow=True).ell(rx, ry, 2.4 + b * 0.3, 1.0)
+        F.glow(rx, ry, 5 + b, IK_RUNE, 0.4)
+    if st >= 2 and not dead:
+        crack(F, [(rx - 3, ry - 0.6), (rx, ry + 2.4), (rx + 3, ry + 4)], 0.35, IK_RUNE)
+    for (x, y) in [(20, 36), (38, 40), (48, 33), (30, 31)]:                                         # 따개비 · 돌 결
+        F.part('stone', '#c8c0a8', bevel=0.5).ell(x, y, 1.0, 0.8)
+    if st >= 1:
+        crack(F, [(40, 22 + sag), (36, 30), (40, 38)], 0.45, IK_RUNE)
+    if st >= 2:
+        crack(F, [(20, 26 + sag), (17, 34), (21, 41)], 0.5, IK_RUNE)
+    return F.render()
+
+
+def isle_parts(f):
+    """조각 3장(80×40) — 0 섬(밑 가운데 (40, 36) · 윗면(발판) y 10 · x 6~74 · 나무 둘 · 작은 사당 · 가장자리에서 물이 흐른다) · 1 앞팔 기둥(어깨 (8, 20) → 손 (64, 20) · 가로로 그려 게임이 세운다) · 2 금 간 섬"""
+    F = ZFig(80, 40)
+    if f in (0, 2):
+        under = [(6, 10), (74, 10), (68, 18), (56, 26), (46, 33), (40, 37), (34, 33), (24, 26), (12, 18)]
+        F.part('stone', IK_ST_D, bevel=3).poly(under)
+        F.part('stone', IK_ST, bevel=2).poly([(x + (40 - x) * 0.06, y + (20 - y) * 0.05) for (x, y) in under])
+        for (x, y, r) in [(20, 16, 2.4), (52, 18, 3), (40, 26, 2)]:
+            F.part('stone', IK_ST_L, bevel=1).ell(x, y, r, r * 0.8)
+        F.part('stone', '#4a3a2a', bevel=1).box(6, 9.4, 68, 3, 1)                                     # 흙 층
+        F.part('leaf', IK_MOSS, bevel=1).box(6, 7.6, 68, 2.6, 1.2)                                     # 풀 윗면(발판)
+        for k in range(24):
+            x = 7 + k * 2.8
+            F.part('leaf', '#7aaa5a', flat=True).poly([(x, 7.8), (x + 0.6, 6.2 - (k % 3) * 0.5), (x + 1.2, 7.8)])
+        for (tx, th) in [(18, 6), (62, 5)]:                                                           # 나무 둘(윗면 위로)
+            F.part('wood', '#5a4028', bevel=0.6).cap(tx, 7.8, tx, 7.8 - th * 0.6, 0.7, 0.5)
+            F.part('leaf', IK_MOSS_D, bevel=1).ell(tx, 7.8 - th * 0.6 - 1.4, 2.8, 2.0)
+            F.part('leaf', IK_MOSS, bevel=0.8).ell(tx - 0.6, 7.8 - th * 0.6 - 1.8, 2.0, 1.4)
+        F.part('stone', '#8a8478', bevel=0.8).box(36, 4, 8, 1.2, 0.3)                                # 작은 사당(문 꼴)
+        for x in (37, 43):
+            F.part('stone', '#8a8478', bevel=0.4).box(x - 0.6, 5, 1.2, 3, 0.2)
+        F.part('stone', IK_ST_D, bevel=0.6).box(35.4, 3.2, 9.2, 1.0, 0.3)
+        F.part('glow', '#9fd8ff', glow=True).box(73.4, 10, 1.0, 9, 0.3)                              # 가장자리 물줄기
+        if f == 2:
+            crack(F, [(30, 12), (34, 20), (31, 28)], 0.5, IK_RUNE)
+    else:
+        F.part('stone', IK_ST_D, bevel=2.4).cap(8, 20, 60, 20, 6, 5)
+        F.part('stone', IK_ST, bevel=1.6).cap(9, 19, 59, 19, 4.6, 3.8)
+        F.part('leaf', IK_MOSS, bevel=0.8).cap(10, 15.6, 30, 15.8, 1.6, 1.2)
+        F.part('stone', IK_ST_D, bevel=1.6).ell(64, 20, 6, 6.4)                                      # 주먹(땅을 짚는다)
+        for k in range(3):
+            F.part('stone', IK_ST, bevel=0.6).cap(66, 15 + k * 4.4, 70, 15.6 + k * 4.4, 1.4, 1.2)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -3043,6 +3136,7 @@ RIGS = {
     'shaft_maw': {'body': (SM_W, SM_H, 8, 2, shaft_head), 'parts': (64, 24, 5, shaft_parts)},
     'drowned_keeper': {'body': (DK_W, DK_H, 8, 2, drowned_body), 'parts': (20, 36, 6, drowned_parts)},
     'tide_warden': {'body': (TW_W, TW_H, 8, 2, tide_body), 'parts': (20, 40, 4, tide_parts)},
+    'isle_keeper': {'body': (IK_W, IK_H, 8, 2, isle_body), 'parts': (80, 40, 3, isle_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

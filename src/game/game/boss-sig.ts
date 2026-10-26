@@ -74,7 +74,7 @@ export const BossSigPart: Bag = {
       case 'mycel': return this.sporeHz(h, dt, host, me);           // 포자 여왕 균사 깔개(game/boss-spore-art)
       case 'tide': return this.tideHz(h, dt, me);                   // 조수의 파수꾼 물(game/boss-tide-art)
       case 'iwtur': return this.watchHz(h, dt, host);               // 얼음 감시자 바닥 포탑(game/boss-watch-art)
-      case 'pulse': case 'veil': case 'rod': case 'rail': case 'mhtent': case 'flip': case 'scales': case 'vine': case 'ghost': return true;
+      case 'pulse': case 'veil': case 'rod': case 'rail': case 'mhtent': case 'flip': case 'kneel': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로
         h.fired = 1;
         const q = this.hzNear(h.x, h.y);

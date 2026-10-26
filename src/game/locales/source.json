@@ -1778,6 +1778,9 @@
   "바로 곁에": [
    "game/meteor.meteorImpact"
   ],
+  "바위 껍질에 막힌다": [
+   "entity/boss-isle.ikHurt"
+  ],
   "바이스에 물린다": [
    "ui/craft-scene.sceneWork",
    "ui/process.craftPlan"
