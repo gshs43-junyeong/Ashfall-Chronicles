@@ -1398,6 +1398,7 @@ FW_W, FW_H = 44, 58                                           # 게임 entity/bo
 
 def witch_head(F, cx, hy, st, look=0):
     """머리 — 얼굴 · 앞머리 · 얼음 왕관(st 2: 금 · 눈이 빛난다)"""
+    F.part('cloth', HAIR, bevel=1.5).ell(cx, hy - 3.0, 5.4, 3.6)                        # 정수리 — 얼굴 뒤에 먼저(왕관이 그 위에 얹힌다 · 떠 있던 틈을 메운다)
     F.part('clay', SKIN, bevel=1.5).ell(cx, hy, 4.4, 5.2)
     F.part('clay', '#e6cec6', bevel=0.5).ell(cx, hy + 4.2, 2.0, 0.6)                       # 턱 그늘(옅게 — 짙으면 수염처럼 보였다)
     for s2 in (-1, 1):                                                                   # 눈 — 길게 내리깐 눈 · 옅은 하늘빛 눈동자
@@ -1407,13 +1408,14 @@ def witch_head(F, cx, hy, st, look=0):
         fine(F, (ex - 1.4, hy - 1.4), (ex + 1.2, hy - 1.7 + s2 * 0.2), HAIR_D, 220)       # 가는 눈썹
     F.part('flesh', '#b86a78', bevel=0.4).box(cx - 1.0, hy + 2.6, 2.0, 0.6, 0.3)         # 입술
     F.part('cloth', HAIR, bevel=1.5).poly([(cx - 5, hy - 2), (cx - 3, hy - 5.6), (cx + 1, hy - 6), (cx + 4.8, hy - 4), (cx + 5, hy), (cx + 2.5, hy - 3), (cx - 1, hy - 2.6), (cx - 3.5, hy - 1)])
+    band = lambda dx: hy - 4.6 + 0.9 * (dx / 4.6) ** 2                                   # 머리 곡선을 따라 휜 띠
     for k in range(5):                                                                   # 왕관 — 다섯 얼음 가시(가운데가 높다)
-        x = cx - 4 + k * 2; hgt = 3 + (2 - abs(k - 2)) * 1.6
-        F.part('ice', ICE_E, bevel=0.8).poly([(x - 1.1, hy - 5.4), (x, hy - 5.4 - hgt), (x + 1.1, hy - 5.4)])
-        F.part('glow', ICE_C, glow=True).poly([(x - 0.4, hy - 5.6), (x, hy - 5.0 - hgt * 0.8), (x + 0.3, hy - 5.6)])
-    F.part('ice', '#a8dcf0', bevel=0.6).box(cx - 5, hy - 6.2, 10, 1.3, 0.5)
+        dx = -3.6 + k * 1.8; x = cx + dx; hgt = 2.6 + (2 - abs(k - 2)) * 1.5; by = band(dx)
+        F.part('ice', ICE_E, bevel=0.8).poly([(x - 1.0, by), (x, by - hgt), (x + 1.0, by)])
+        F.part('glow', ICE_C, glow=True).poly([(x - 0.35, by - 0.2), (x, by - hgt * 0.8), (x + 0.3, by - 0.2)])
+    F.part('ice', '#a8dcf0', bevel=0.6).poly([(cx + dx, band(dx) - 0.5) for dx in (-4.6, -2.3, 0, 2.3, 4.6)] + [(cx + dx, band(dx) + 0.8) for dx in (4.6, 2.3, 0, -2.3, -4.6)])
     if st >= 2:
-        crack(F, [(cx + 2, hy - 7.5), (cx + 2.6, hy - 6.0)], 0.3, FROSTG)
+        crack(F, [(cx + 2, hy - 7.2), (cx + 2.5, hy - 5.2)], 0.3, FROSTG)
         F.glow(cx, hy + 0.5, 4, FROSTG, 0.35)
 
 
@@ -1429,8 +1431,8 @@ def witch_body(f):
     hair = HAIR_L if st >= 2 else HAIR
     # 뒷머리 — 어깨 뒤로 허리까지 흘러내린다(숨마다 끝이 흔들린다)
     sway = (-0.8 if b else 0.8)
-    F.part('cloth', HAIR_D, bevel=2).poly([(cx - 6, hy - 3), (cx + 6, hy - 3), (cx + 8, hy + 10), (cx + 9 + sway, hy + 20), (cx + 5 + sway, hy + 24), (cx - 5 + sway, hy + 24), (cx - 9 + sway, hy + 20), (cx - 8, hy + 10)])
-    F.part('cloth', hair, bevel=1.5).poly([(cx - 5, hy - 3), (cx + 5, hy - 3), (cx + 7, hy + 10), (cx + 7.5 + sway, hy + 19), (cx + 4 + sway, hy + 22), (cx - 4 + sway, hy + 22), (cx - 7.5 + sway, hy + 19), (cx - 7, hy + 10)])
+    F.part('cloth', HAIR_D, bevel=2).poly([(cx - 6.4, hy), (cx - 4.6, hy - 3.6), (cx, hy - 4.6), (cx + 4.6, hy - 3.6), (cx + 6.4, hy), (cx + 8, hy + 10), (cx + 9 + sway, hy + 20), (cx + 5 + sway, hy + 24), (cx - 5 + sway, hy + 24), (cx - 9 + sway, hy + 20), (cx - 8, hy + 10)])
+    F.part('cloth', hair, bevel=1.5).poly([(cx - 5.4, hy), (cx - 3.8, hy - 3), (cx, hy - 3.8), (cx + 3.8, hy - 3), (cx + 5.4, hy), (cx + 7, hy + 10), (cx + 7.5 + sway, hy + 19), (cx + 4 + sway, hy + 22), (cx - 4 + sway, hy + 22), (cx - 7.5 + sway, hy + 19), (cx - 7, hy + 10)])
     for k in range(3):                                                                   # 머릿결 — 얼굴 양옆에만(얼굴 위로 줄이 그어졌다)
         for s2 in (-1, 1):
             fine(F, (cx + s2 * (5.6 + k * 0.8), hy + 6), (cx + s2 * (6.4 + k * 1.2) + sway, hy + 21), HAIR_D, 150)
@@ -1641,6 +1643,7 @@ def void_parts(f):
             for k in range(4):
                 fine(F, (20, 20.5 + k * 2.8), (26.5, 20.5 + k * 2.8), '#120c1e', 220)
     return F.render()
+
 
 
 RIGS = {
