@@ -71,6 +71,7 @@ export const BossSigPart: Bag = {
       case 'jverdict': case 'jtab': case 'jgavel': case 'jeye': return this.judgeHz(h, dt, host, me);   // 판결석 좌상(game/boss-judge-fx)
       case 'ehand': case 'elight': case 'estare': case 'etotal': return this.eclipseHz(h, dt, host, me);   // 일식(game/boss-eclipse-fx)
       case 'rroot': case 'rring': case 'rflower': case 'rfell': return this.rootHz(h, dt, host, me);   // 뿌리 대성당(game/boss-root-fx)
+      case 'mycel': return this.sporeHz(h, dt, host, me);           // 포자 여왕 균사 깔개(game/boss-spore-art)
       case 'iwtur': return this.watchHz(h, dt, host);               // 얼음 감시자 바닥 포탑(game/boss-watch-art)
       case 'pulse': case 'veil': case 'rod': case 'rail': case 'mhtent': case 'scales': case 'vine': case 'ghost': return true;
       case 'mirror': if (host && !h.fired && h.t >= h.fireAt) {      // 거울마다 차례로 — 쏘는 순간 플레이어가 선 자리로

@@ -4017,15 +4017,15 @@ window.SPRITE_MANIFEST = {
       },
       "spore_queen": {
         "file": "boss/spore_queen.png",
-        "frameW": 128,
-        "frameH": 162,
-        "count": 6,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 0,
+        "frameW": 176,
+        "frameH": 304,
+        "count": 8,
+        "foot": 0,
+        "side": 1.5,
         "death": 2,
         "scale": 1,
-        "big": 2
+        "gap": 0,
+        "rig": 1
       },
       "proliferator": {
         "file": "boss/proliferator.png",
@@ -4113,18 +4113,6 @@ window.SPRITE_MANIFEST = {
         "scale": 1,
         "gap": 0,
         "foot": 1.25,
-        "side": 0,
-        "pose": 1
-      },
-      "spore_queen_pose": {
-        "file": "boss/spore_queen_pose.png",
-        "frameW": 206,
-        "frameH": 219,
-        "count": 18,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
         "side": 0,
         "pose": 1
       },
@@ -4362,6 +4350,15 @@ window.SPRITE_MANIFEST = {
       "ice_warden_parts": {
         "file": "boss/ice_warden_parts.png",
         "frameW": 80,
+        "frameH": 144,
+        "count": 5,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "spore_queen_parts": {
+        "file": "boss/spore_queen_parts.png",
+        "frameW": 320,
         "frameH": 144,
         "count": 5,
         "scale": 1,

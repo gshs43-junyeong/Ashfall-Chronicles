@@ -224,6 +224,7 @@ export const BossSigArtPart: Bag = {
         c.strokeStyle = 'rgba(180,138,255,.25)'; c.lineWidth = 10; c.beginPath(); c.moveTo(x, y + 16); c.lineTo(x, h.ey - cy0); c.stroke();
         c.globalAlpha = 1; return true;
       }
+      case 'mycel': return !!this.drawSporeMat(c, h, cx0, cy0, f);     // 균사 깔개(game/boss-spore-art)
       case 'iwtur': return !!this.drawWatchTurret(c, h, cx0, cy0, f);   // 떨어져 나간 포탑(game/boss-watch-art)
       case 'mhtent': return !!this.drawCartTentacle(c, h, cx0, cy0, f);   // 땅에서 솟는 촉수(game/boss-cart-art)
       case 'rail': {                                                   // 광차 레일

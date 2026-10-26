@@ -214,7 +214,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   sand_guardian:{ n: '모래시계 거상', hp: 5600, dmg: 92, def: 46, spd: 0, ai: 'b_hourglass', w: 92, h: 140, wall: 1, c: '#c8a46a', xp: 3100, gold: 2100, ph: 3, boss: 1,
                  drops: [['sun_disc', 1, 2, 3], ['gold_ore', 1, 15, 25], ['venom_sting', 1, 6, 10], ['caged_sun', 1, 1, 1]] },
   /* rank 5 — 입구가 없는 굴. */
-  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_heart', w: 100, h: 144, c: '#6fe0c0', xp: 3600, gold: 2800, ph: 2, boss: 1,
+  spore_queen:  { n: '포자 여왕', hp: 7200, dmg: 110, def: 42, spd: 92, ai: 'b_spore', w: 110, h: 280, c: '#6fe0c0', xp: 3600, gold: 2800, ph: 2, boss: 1,
                  drops: [['queen_spore', 1, 2, 3], ['spore_sac', 1, 12, 20], ['glowcap', 1, 15, 25], ['cap_signet', 1, 1, 1]] },
   /* rank 6 — 동쪽 끝, 가장 깊은 곳 */
   blight_maw:   { n: '곪은 벌집 어미', hp: 9400, dmg: 132, def: 58, spd: 0, ai: 'b_hive', w: 76, h: 70, wall: 1, c: '#7a3f9c', ph: 3, xp: 4200, gold: 4000, boss: 1,

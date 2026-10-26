@@ -2013,6 +2013,146 @@ def watch_parts(f):
     return F.render()
 
 
+# ===== 포자 여왕(spore_queen) — 포자 굴의 버섯 여왕: 망사 치마(망태버섯)를 두른 대 · 갓 아래 가면 같은 얼굴 · 갓은 조각(닫힘 · 열림 · 펼침) =====
+SQ_STALK, SQ_STALK_D, SQ_LACE, SQ_CAP, SQ_CAP_D, SQ_CAP_L, SQ_GILL, SQ_GLOW = '#e6dcc4', '#9a8e74', '#f4eedc', '#8a5a7a', '#4e2e48', '#b884a4', '#d8c8b0', '#8ff0c8'
+SQ_W, SQ_H = 44, 76                                           # 게임 game/boss-spore-art.ts SQ 와 같게(가운데 22 · 갓 자리 (22, 9) · 땅 74 · 팔 어깨 (15, 24) · (29, 24))
+
+
+def spore_body(f):
+    """몸 8장(44×76 · 갓은 조각) — 0·1 망사가 숨 쉰다 · 2·3 망사가 길게 · 균사가 감긴다 · 4·5 매달린 몸(대 아래가 실로 풀린다) · 6·7 시듦"""
+    F = ZFig(SQ_W, SQ_H)
+    cx = 22
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = 0 if f < 6 else (1 if f == 6 else 2)
+    sag = dead * 3
+    hang = st >= 2 and not dead
+    # 대 — 망사 뒤로 비치는 줄기(위는 매끈 · 아래는 대주머니)
+    bot = 58 if hang else 70
+    F.part('flesh', SQ_STALK_D, bevel=2).cap(cx, 12 + sag, cx, bot - 2, 4.4, 5.2)
+    F.part('flesh', SQ_STALK, bevel=1.5).cap(cx - 0.6, 12 + sag, cx - 0.6, bot - 6, 3.4, 4.0)
+    if not hang:
+        F.part('flesh', '#b8a888', bevel=2).poly([(cx - 8, bot + 4), (cx - 7, bot - 2), (cx - 3, bot - 4), (cx + 3, bot - 4), (cx + 7, bot - 2), (cx + 8, bot + 4)])   # 대주머니
+        for k in range(5):                                                                      # 뿌리 균사
+            x0 = cx - 6 + k * 3
+            fine(F, (x0, bot + 3.6), (x0 + (k - 2) * 2.4, bot + 5.6), '#f0ead8', 220)
+    else:
+        for k in range(6):                                                                      # 매달린 몸 — 대 아래가 실로 풀린다
+            x0 = cx - 3 + k * 1.2
+            fine(F, (x0, bot - 2), (x0 + (k - 2.5) * 1.8 + b * 0.4, bot + 8 + (k % 3) * 2), '#f0ead8', 230)
+    # 망사 치마 — 고리에서 늘어진 그물(망태버섯) · 마름모 그물눈 사이로 대가 비친다
+    sk = 13 + b * 0.6 + st * 1.2
+    y0, y1 = 18 + sag, bot - 1
+    half = lambda y: 5.6 + (sk - 5.6) * ((y - y0) / (y1 - y0)) ** 0.8 + math.sin(y * 0.9 + b) * 0.3
+    N = 5
+    for fam in (-1, 1):                                                                         # 두 갈래 비스듬한 실 — 마름모 그물
+        for i in range(-N - 9, N + 10):
+            prev = None
+            for k in range(41):
+                y = y0 + (y1 - y0) * k / 40
+                v = i / N + fam * (y - y0) / (y1 - y0) * 1.2
+                if abs(v) > 1:
+                    prev = None; continue
+                pt = (cx + v * half(y), y)
+                if prev:
+                    F.line(prev[0], prev[1], pt[0], pt[1], '#d8ceb4' if fam > 0 else SQ_LACE, 215)
+                prev = pt
+    for s2 in (-1, 1):                                                                          # 가장자리 실
+        prev = None
+        for k in range(41):
+            y = y0 + (y1 - y0) * k / 40; pt = (cx + s2 * half(y), y)
+            if prev:
+                F.line(prev[0], prev[1], pt[0], pt[1], SQ_LACE, 255)
+            prev = pt
+    hem = [(cx - half(y1), y1)] + [(cx + v / 6 * half(y1), y1 + 0.8 + (abs(v) % 2) * 0.8) for v in range(-6, 7)] + [(cx + half(y1), y1)]
+    for (p0, p1) in zip(hem, hem[1:]):                                                          # 치맛단 — 매듭진 끝
+        F.line(p0[0], p0[1], p1[0], p1[1], SQ_LACE, 255)
+    F.part('cloth', SQ_LACE, bevel=1).ell(cx, 18 + sag, 7, 1.8)                                 # 고리(턱받이)
+    # 얼굴 — 갓 그늘의 가면: 감은 눈 · 이마의 빛 점(막 1 부터 눈을 뜬다)
+    hy = 8 + sag
+    F.part('flesh', '#d8ccb0', bevel=2).ell(cx, hy + 4, 4.6, 5.4)
+    F.part('flesh', '#efe6d0', bevel=1).ell(cx - 0.6, hy + 3.4, 3.4, 4.0)
+    for s2 in (-1, 1):
+        if st == 0 or dead:
+            fine(F, (cx + s2 * 1.0, hy + 4), (cx + s2 * 2.6, hy + 4.4), '#4e3e38', 230)
+        else:
+            F.part('flesh', '#1e2a24', flat=True).ell(cx + s2 * 1.8, hy + 4.2, 1.0, 0.6)
+            F.part('glow', SQ_GLOW, glow=True).ell(cx + s2 * 1.8, hy + 4.2, 0.5, 0.35)
+    fine(F, (cx - 0.8, hy + 7.2), (cx + 0.8, hy + 7.2), '#8a6a5a', 220)
+    F.part('glow', SQ_GLOW, glow=True).ell(cx, hy + 1.4, 0.7, 0.7)
+    for (x, y) in [(cx - 2.6, hy + 6.4), (cx + 2.8, hy + 5.8), (cx - 3.4, hy + 2.6)]:          # 볼의 작은 버섯 반점
+        F.part('flesh', SQ_CAP_L, flat=True).ell(x, y, 0.5, 0.4)
+    if st >= 1:                                                                                  # 감긴 균사 · 줄기에 돋은 새끼 버섯
+        for k in range(4):
+            y = 28 + k * 7
+            fine(F, (cx - 5, y + sag), (cx + 5, y + 2.4 + sag), '#f0ead8', 200)
+        for (x, y, r) in [(cx - 5, 34, 1.6), (cx + 4.6, 41, 1.2), (cx - 3, 48, 1.0)]:
+            F.part('flesh', SQ_CAP, bevel=0.6).ell(x, y + sag - 0.8, r * 1.4, r * 0.8)
+            F.part('glow', SQ_GLOW, glow=True).ell(x, y + sag, r * 0.6, r * 0.3)
+    if dead:
+        for k in range(5):
+            x = 10 + k * 6
+            F.part('cloth', '#a89e86', bevel=0.6).poly([(x, 72), (x + 3, 70 - k % 2), (x + 5, 72.4), (x + 2, 73.6)])
+    return F.render()
+
+
+def spore_parts(f):
+    """조각 5장(80×36) — 갓 자리 (40, 30) 가 대 꼭대기(얼굴 위)에 앉는다.
+       0 닫힌 갓(둥근 지붕) · 1 들린 갓(주름이 보이고 빛난다) · 2 펼친 갓(넓고 납작 — 매달림) · 3 펼친 갓 주름 열림 · 4 균사 팔((4, 18) → (36, 18) · 끝이 가늘게 갈라진다)"""
+    F = ZFig(80, 36)
+    def spots(cx, cy, rx, ry, n):
+        for k in range(n):
+            a = math.pi * (0.12 + 0.76 * k / max(1, n - 1))
+            r = 0.55 + 0.3 * ((k * 7) % 3) / 2
+            x, y = cx - math.cos(a) * rx * r, cy - math.sin(a) * ry * r
+            F.part('flesh', '#e8d8e0', bevel=0.5).ell(x, y, 1.4 + (k % 2) * 0.6, 0.9 + (k % 2) * 0.3)
+    if f in (0, 1):
+        lift = 2.4 if f == 1 else 0
+        if f == 1:                                                                               # 주름 — 갓 아래 부채살 · 빛
+            F.part('flesh', SQ_GILL, bevel=1).ell(40, 30 - lift + 0.6, 17, 3.6)
+            for k in range(23):
+                x = 24 + k * 1.45
+                fine(F, (40 + (x - 40) * 0.2, 29.4 - lift), (x, 31.8 - lift + abs(x - 40) * 0.04), '#9a8a74', 230)
+            F.part('glow', SQ_GLOW, glow=True).ell(40, 31 - lift, 12, 1.0)
+            F.glow(40, 31 - lift, 10, SQ_GLOW, 0.35)
+        dome = [(40 + math.cos(a) * 19, 29 - lift - math.sin(a) * 17) for a in [math.pi * k / 24 for k in range(25)]]
+        dome += [(57, 31 - lift), (23, 31 - lift)]
+        F.part('flesh', SQ_CAP_D, bevel=4).poly(dome)
+        F.part('flesh', SQ_CAP, bevel=3).poly([(40 + (x - 40) * 0.9, y + 1) for (x, y) in dome])
+        F.part('flesh', SQ_CAP_L, flat=True).ell(34, 18 - lift, 6, 3)
+        spots(40, 29 - lift, 17, 15, 7)
+        F.part('flesh', '#3a2236', bevel=0.8).box(22, 29.4 - lift, 36, 1.8, 0.8)                 # 갓 테두리
+    elif f in (2, 3):
+        if f == 3:
+            F.part('flesh', SQ_GILL, bevel=1).ell(40, 29.6, 34, 3.4)
+            for k in range(45):
+                x = 8 + k * 1.45
+                fine(F, (40 + (x - 40) * 0.15, 28.4), (x, 31.0 + abs(x - 40) * 0.02), '#9a8a74', 230)
+            F.part('glow', SQ_GLOW, glow=True).ell(40, 30.2, 26, 1.0)
+            F.glow(40, 30.2, 16, SQ_GLOW, 0.4)
+        flat = [(40 + math.cos(a) * 36, 29 - math.sin(a) * 9) for a in [math.pi * k / 30 for k in range(31)]]
+        flat += [(75, 30), (5, 30)]
+        F.part('flesh', SQ_CAP_D, bevel=3).poly(flat)
+        F.part('flesh', SQ_CAP, bevel=2).poly([(40 + (x - 40) * 0.94, y + 0.8) for (x, y) in flat])
+        F.part('flesh', SQ_CAP_L, flat=True).ell(30, 23.4, 10, 1.8)
+        spots(40, 29, 33, 8, 11)
+        for k in range(9):                                                                       # 펼친 갓 테두리 — 물결 · 늘어진 망사 실
+            x = 8 + k * 8
+            F.part('flesh', '#3a2236', bevel=0.5).ell(x, 29.8, 4.4, 1.0)
+            fine(F, (x + 2, 30.4), (x + 2.4, 33.6 + (k % 3)), '#f0ead8', 200)
+    else:
+        pts = [(4 + t * 32, 18 + math.sin(t * 5.2) * 3 * t) for t in [k / 12 for k in range(13)]]
+        for (a, b2), k in zip(zip(pts, pts[1:]), range(12)):
+            r = 1.8 - k * 0.11
+            F.part('flesh', SQ_STALK_D if k % 3 == 0 else SQ_STALK, bevel=0.6).cap(a[0], a[1], b2[0], b2[1], r, r - 0.1)
+        x, y = pts[-1]
+        for s2 in (-1, 0, 1):                                                                    # 갈라진 끝 — 실 셋
+            fine(F, (x - 0.6, y), (x + 4, y + s2 * 2.6 + 0.4), '#f0ead8', 240)
+        for k in range(3):
+            F.part('glow', SQ_GLOW, glow=True).ell(pts[3 + k * 3][0], pts[3 + k * 3][1] - 1.0, 0.5, 0.5)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2027,6 +2167,7 @@ RIGS = {
     'storm_warden': {'body': (SW_W, SW_H, 8, 2, storm_body), 'parts': (64, 64, 3, storm_parts)},
     'mine_horror': {'body': (MH_W, MH_H, 8, 2, mine_body), 'parts': (24, 24, 5, mine_parts)},
     'ice_warden': {'body': (IW_W, IW_H, 8, 2, watch_body), 'parts': (20, 36, 5, watch_parts)},
+    'spore_queen': {'body': (SQ_W, SQ_H, 8, 2, spore_body), 'parts': (80, 36, 5, spore_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 
