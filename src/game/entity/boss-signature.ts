@@ -193,8 +193,8 @@ export const BossSignature: Bag & ThisType<Enemy> = {
         return { busy: 1.0 };
       }
       case 'pour': {                                              // 쇳물 붓기 — 머리 위 도가니가 기울어 쏟고, 쇳물이 바닥을 따라 흐른다
-        const x = p.cx, top = Math.max(this.ceilY(x, fy) ?? -1e9, fy - 250) + 30;
-        this.hz({ k: 'crucible', x, top, y: fy, life: 2.6, pour: 0.9, stop: 2.0, dmg: this.dmg * m * 0.5, c: K.c });
+        const hepha = this.def.ai === 'b_hepha', x = hepha ? clamp(p.cx, this.cx - 480, this.cx + 480) : p.cx, top = Math.max(this.ceilY(x, fy) ?? -1e9, fy - 250) + 30;
+        this.hz({ k: 'crucible', x, top, y: fy, life: 2.6, pour: 0.9, stop: 2.0, dmg: this.dmg * m * 0.5, c: K.c, arm: hepha ? (x < this.cx ? 0 : 1) : undefined });   // 헤파는 팔 끝 국자로 붓는다(game/boss-hepha-art)
         G.after(1.05, () => {
           if (E.dead) return;
           for (const s of [-1, 1]) E.hz({ k: 'wave', x: x + s * 16, y: fy, vx: s * 280, w: 30, hh: 18, life: 2.4, dmg: E.dmg * m * 0.6, c: K.c, fx: 'molten', sd: Math.random() * 99 });

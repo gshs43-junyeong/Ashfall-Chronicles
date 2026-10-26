@@ -236,43 +236,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
       this.move(dt, world);
 
     } else if (AI === 'b_hepha') {
-      /* 헤파 — 컨베이어 위에 서 있는 것. */
-      this.vx *= 0.88;
-      // 컨베이어 — 가까이 있으면 계속 끌려온다
-      if (dd < 420) p.vx += Math.sign(this.cx - p.cx) * 150 * dt;
-      if (this.stateT <= 0) {
-        this.state = (this.state + 1) % 3;
-        this.stateT = 2.6 - this.pf * 0.7;
-      }
-      if (this.state === 0) {                    // 팔 휘두르기 — 좌우로 퍼지는 충격
-        if (this.atkCd <= 0) {
-          this.atkCd = 0.9 - this.pf * 0.3;
-          for (const dir of [-1, 1]) for (let k = 0; k < 4; k++) {
-            const x = this.cx + dir * (50 + k * 44);
-            G.after(k * 0.06, () => {
-              G.hitPlayers(x, this.y + this.h - 12, 34, this.dmg * 0.45); G.ringFx(x, this.y + this.h - 12, 34, '#c8a05a', .3);
-              for (let i = 0; i < 3; i++) G.parts.push(new Part(x, this.y + this.h - 6, '#c8a05a', -140, .5));
-            });
-          }
-        }
-      } else if (this.state === 1) {             // 불티 — 위로 뿌려 떨어뜨린다
-        if (this.atkCd <= 0) {
-          this.atkCd = 0.4;
-          const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
-          const pr = new Proj(this.cx, this.cy - 20, Math.cos(a) * 320, Math.sin(a) * 420, this.dmg * 0.4, 'enemy', 'fire');
-          pr.grav = 300; G.projs.push(pr);
-        }
-      }
-      if (this.lastPh() && this.guard) {
-        /* 정지 핵을 들고 붙어 있으면 열린다. */
-        const held = p.held();
-        if (held && held.id === 'stop_core' && dd < 90) {
-          this.stopT = (this.stopT || 0) + dt;
-          for (let i = 0; i < 2; i++) G.parts.push(new Part(this.cx, this.cy, '#9fd4ff', -40, .5));
-          if (this.stopT > 1.2) { this.guard = 0; G.toast(tr('정지 핵이 물렸다 — 지금이다'), 'good'); G.shake = 12; }
-        } else this.stopT = 0;
-      }
-      this.move(dt, world);
+      this.hpAI(dt, world, p);                                         // 헤파 — 공장 앞면 · 화로 문 박자 · 기중기 팔(entity/boss-hepha)
 
     } else if (AI === 'b_arche') {
       /* 원형 — 사람을 본떠 만든 첫 번째 것. */

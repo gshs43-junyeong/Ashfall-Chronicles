@@ -4041,13 +4041,15 @@ window.SPRITE_MANIFEST = {
       },
       "hepha": {
         "file": "boss/hepha.png",
-        "frameW": 188,
-        "frameH": 226,
-        "count": 12,
-        "gap": 0,
-        "foot": -0.75,
+        "frameW": 800,
+        "frameH": 416,
+        "count": 8,
+        "foot": 0,
         "side": 0,
-        "death": 2
+        "death": 2,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
       },
       "archetype": {
         "file": "boss/archetype.png",
@@ -4115,18 +4117,6 @@ window.SPRITE_MANIFEST = {
         "scale": 1,
         "gap": 0,
         "foot": 1.25,
-        "side": 0,
-        "pose": 1
-      },
-      "hepha_pose": {
-        "file": "boss/hepha_pose.png",
-        "frameW": 302,
-        "frameH": 306,
-        "count": 45,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -0.75,
         "side": 0,
         "pose": 1
       },
@@ -4360,6 +4350,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 56,
         "frameH": 56,
         "count": 6,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "hepha_parts": {
+        "file": "boss/hepha_parts.png",
+        "frameW": 160,
+        "frameH": 192,
+        "count": 7,
         "scale": 1,
         "gap": 0,
         "rig": 1

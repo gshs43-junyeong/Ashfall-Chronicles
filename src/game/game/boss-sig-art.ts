@@ -290,12 +290,14 @@ export const BossSigArtPart: Bag = {
       case 'crucible': {                                               // 도가니 — 기울어 쇳물을 쏟는다
         const x = h.x - cx0, top = h.top - cy0, y = h.y - cy0, tilt = Math.min(1, h.t / h.pour) * 1.1;
         c.globalAlpha = f;
-        strokePath(c, [x - 60, top - 40, x - 14, top - 6], '#3a3a40', 3);
-        c.save(); c.translate(x - 14, top); c.rotate(tilt);
-        c.fillStyle = '#4a3a30'; c.strokeStyle = '#1a1008'; c.lineWidth = 1.5;
-        poly(c, [-22, -18, 22, -18, 16, 12, -16, 12]); c.fill(); c.stroke();
-        c.fillStyle = '#ffb050'; c.fillRect(-18, -18, 36, 4);
-        c.restore();
+        if (h.arm === undefined || !this.spritesOn) {                 // 헤파는 팔 끝 국자가 그린다(game/boss-hepha-art)
+          strokePath(c, [x - 60, top - 40, x - 14, top - 6], '#3a3a40', 3);
+          c.save(); c.translate(x - 14, top); c.rotate(tilt);
+          c.fillStyle = '#4a3a30'; c.strokeStyle = '#1a1008'; c.lineWidth = 1.5;
+          poly(c, [-22, -18, 22, -18, 16, 12, -16, 12]); c.fill(); c.stroke();
+          c.fillStyle = '#ffb050'; c.fillRect(-18, -18, 36, 4);
+          c.restore();
+        }
         if (h.t > h.pour && h.t < h.stop) {
           const op = c.globalCompositeOperation; c.globalCompositeOperation = 'lighter';
           const g = c.createLinearGradient(x - 10, 0, x + 10, 0); g.addColorStop(0, 'rgba(255,120,30,0)'); g.addColorStop(0.5, 'rgba(255,230,140,1)'); g.addColorStop(1, 'rgba(255,120,30,0)');

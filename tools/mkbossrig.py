@@ -2229,6 +2229,182 @@ def prolif_parts(f):
     return F.render()
 
 
+# ===== 헤파(hepha) — 최초의 기계: 공장 건물째가 몸 · 가운데 용광로 탑(현창 눈 둘 · 아래 화로 문이 입) · 양 날개 · 굴뚝 · 기중기 팔 둘 =====
+HP_IRON, HP_IRON_D, HP_IRON_L, HP_BRICK, HP_BRICK_D, HP_BRASS, HP_FIRE = '#5a5450', '#2e2a28', '#8a8278', '#7a4a36', '#4a2a20', '#c8a05a', '#ffb050'
+HP_W, HP_H = 200, 104                                         # 게임 game/boss-hepha-art.ts HP 와 같게(가운데 100 · 바닥 103 · 화로 문 82~118 × 56~103 · 눈 (88, 24) · (112, 24) · 팔 어깨 (62, 40) · (138, 40) · 굴뚝 (30, 4) · (170, 4))
+
+
+def hepha_body(f):
+    """몸 8장(200×104 · 화로 문 · 핵 · 팔은 조각) — 0·1 창이 숨 쉰다 · 2·3 금 · 깨진 창 · 4·5 이음매가 달아오른다 · 6·7 꺼짐"""
+    F = ZFig(HP_W, HP_H)
+    cx = 100
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = f >= 6
+    lit = (lambda c: '#3a2a20') if dead else (lambda c: c)
+    # 양 날개 — 벽돌 벽 · 쇠 틀 · 지붕
+    for s2 in (-1, 1):
+        x0, x1 = (12, 74) if s2 < 0 else (126, 188)
+        F.part('stone', HP_BRICK_D, bevel=2).poly([(x0, 32), (x1, 26), (x1, 103), (x0, 103)] if s2 < 0 else [(x0, 26), (x1, 32), (x1, 103), (x0, 103)])
+        F.part('stone', HP_BRICK, bevel=1.5).poly([(x0 + 1.5, 33.5), (x1 - 1.5, 27.6), (x1 - 1.5, 101.5), (x0 + 1.5, 101.5)] if s2 < 0 else [(x0 + 1.5, 27.6), (x1 - 1.5, 33.5), (x1 - 1.5, 101.5), (x0 + 1.5, 101.5)])
+        for row in range(int((103 - 34) / 3)):                                                   # 벽돌 줄눈
+            y = 34 + row * 3
+            fine(F, (x0 + 2, y), (x1 - 2, y), HP_BRICK_D, 120)
+            for k in range(int((x1 - x0) / 6)):
+                x = x0 + 3 + k * 6 + (3 if row % 2 else 0)
+                if x < x1 - 2:
+                    fine(F, (x, y), (x, y + 3), HP_BRICK_D, 110)
+        F.part('metal', HP_IRON_D, bevel=1.5).poly([(x0 - 1, 33 if s2 < 0 else 27), (x1 + 1, 27 if s2 < 0 else 33), (x1 + 1, 30 if s2 < 0 else 36), (x0 - 1, 36 if s2 < 0 else 30)])   # 처마 쇠띠
+        for k in range(3):                                                                        # 창 — 아치 · 안이 달아오른다
+            wx = x0 + 10 + k * 18
+            for wy in (48, 70):
+                F.part('metal', HP_IRON_D, bevel=1).box(wx - 4, wy - 5, 8, 12, 3.4)
+                broken = st >= 1 and (k + wy) % 3 == 0
+                F.part('glow' if not dead else 'metal', '#1a1210' if broken else lit('#ff9a40' if b else '#ffb050'), glow=not dead and not broken).box(wx - 3, wy - 4, 6, 10, 2.8)
+                fine(F, (wx, wy - 4), (wx, wy + 6), HP_IRON_D, 240); fine(F, (wx - 3, wy + 1), (wx + 3, wy + 1), HP_IRON_D, 240)
+        # 굴뚝
+        chx = 30 if s2 < 0 else 170
+        F.part('metal', HP_IRON_D, bevel=1.5).box(chx - 4.5, 4, 9, 28, 1)
+        F.part('stone', HP_BRICK, bevel=1).box(chx - 3.6, 5, 7.2, 26, 0.6)
+        for y in (8, 16, 24):
+            F.part('metal', HP_IRON, bevel=0.6).box(chx - 4.8, y, 9.6, 1.6, 0.4)
+        F.part('metal', HP_IRON_D, bevel=1).box(chx - 5.4, 3, 10.8, 2.2, 0.6)
+        # 압력계
+        gx = x0 + 31 if s2 < 0 else x1 - 31
+        F.part('metal', HP_BRASS, bevel=1).ell(gx, 90, 3.4, 3.4)
+        F.part('metal', '#e8e0d0', flat=True).ell(gx, 90, 2.4, 2.4)
+        fine(F, (gx, 90), (gx + 1.6 * s2 * (1 if st < 2 else -1), 88.4), '#a03020', 255)
+    # 날개 → 탑으로 잇는 관
+    for s2 in (-1, 1):
+        F.part('metal', HP_IRON, bevel=1).cap(cx + s2 * 44, 60, cx + s2 * 32, 46, 2.2, 2.2)
+        F.part('metal', HP_BRASS, bevel=0.6).ell(cx + s2 * 38, 53, 2.6, 2.6)
+    # 용광로 탑 — 아래가 넓다 · 쇠 띠 · 리벳
+    tower = [(cx - 26, 10), (cx + 26, 10), (cx + 33, 103), (cx - 33, 103)]
+    F.part('metal', HP_IRON_D, bevel=4).poly(tower)
+    F.part('metal', HP_IRON, bevel=3).poly([(x + (cx - x) * 0.05, y + 1.2) for (x, y) in tower])
+    F.part('metal', HP_IRON_L, flat=True).poly([(cx - 22, 12), (cx - 14, 12), (cx - 18, 50), (cx - 26, 50)])
+    for y in (16, 38, 52):
+        w = 26 + (y - 10) / 93 * 7
+        F.part('metal', HP_IRON_D, bevel=1).box(cx - w, y, w * 2, 2.4, 0.6)
+        for k in range(9):
+            F.part('metal', '#b0a898', bevel=0.3).ell(cx - w + 3 + k * (w * 2 - 6) / 8, y + 1.2, 0.55, 0.55)
+    # 탑 꼭대기 — 굴뚝 왕관 · 불빛
+    F.part('metal', HP_IRON_D, bevel=1.5).poly([(cx - 20, 10), (cx - 16, 2), (cx + 16, 2), (cx + 20, 10)])
+    for k in range(5):
+        x = cx - 12 + k * 6
+        F.part('metal', HP_IRON, bevel=0.6).box(x - 1.4, 1, 2.8, 4, 0.4)
+    if not dead:
+        F.part('glow', HP_FIRE, glow=True).box(cx - 14, 3.4, 28, 1.6, 0.6)
+    # 눈 — 현창 둘 · 무거운 쇠 눈썹 · 가운데 쇠창살 코
+    for s2 in (-1, 1):
+        ex = cx + s2 * 12
+        F.part('metal', HP_IRON_D, bevel=1.5).ell(ex, 25, 6.4, 6.4)
+        F.part('metal', HP_BRASS, bevel=1).ell(ex, 25, 5.4, 5.4)
+        F.part('metal', '#1a1210', flat=True).ell(ex, 25, 4.2, 4.2)
+        if not dead:
+            F.part('glow', HP_FIRE, glow=True).ell(ex, 25.4, 2.8 + b * 0.4, 2.2 + b * 0.3)
+            F.part('glow', '#fff0c0', glow=True).ell(ex - 0.6, 24.8, 1.0, 0.8)
+            F.glow(ex, 25, 7, HP_FIRE, 0.3)
+        for k in range(8):
+            a = k / 8 * math.tau
+            F.part('metal', '#d8c090', bevel=0.3).ell(ex + math.cos(a) * 5.4, 25 + math.sin(a) * 5.4, 0.5, 0.5)
+        F.part('metal', HP_IRON_D, bevel=1.2).poly([(ex - s2 * 8, 18 + (0 if st < 2 else 1)), (ex + s2 * 7, 16.4), (ex + s2 * 7.4, 18.6), (ex - s2 * 8, 20.4)])   # 눈썹
+    for k in range(4):
+        F.part('metal', HP_IRON_D, flat=True).box(cx - 4 + k * 2.4, 31, 1.2, 8, 0.3)
+    # 화로 문 자리 — 아치 테(문 · 핵은 게임이 그린다) · 위의 '1호' 판
+    arch = [(cx - 18 + 36 * k / 20, 74 - math.sqrt(max(0, 1 - ((k - 10) / 10) ** 2)) * 18) for k in range(21)]
+    F.part('metal', HP_IRON_D, bevel=2).poly([(cx - 21, 103), (cx - 21, 74)] + [(x + (x - cx) * 0.16, y - 3) for (x, y) in arch] + [(cx + 21, 74), (cx + 21, 103)])
+    F.part('metal', '#100a08', flat=True).poly([(cx - 18, 103), (cx - 18, 74)] + arch + [(cx + 18, 74), (cx + 18, 103)])
+    if not dead:
+        for (x, y) in arch[2:19:2]:
+            F.part('glow', '#ff7a30', glow=True).ell(x, y + 0.6, 0.7, 0.5)
+    for k in range(11):                                                                           # 아치 쐐기돌
+        x, y = arch[k * 2]
+        F.part('metal', HP_IRON_L if k % 2 else HP_IRON, bevel=0.5).ell(x + (x - cx) * 0.1, y - 1.6, 1.2, 1.2)
+    F.part('metal', HP_BRASS, bevel=1).box(cx - 6, 44, 12, 6, 1)
+    fine(F, (cx - 1, 45.4), (cx + 0.4, 45), '#3a2a18'); fine(F, (cx + 0.4, 45), (cx + 0.4, 48.6), '#3a2a18')     # '1'
+    fine(F, (cx - 1.2, 48.6), (cx + 2, 48.6), '#3a2a18')
+    # 팔 어깨 — 톱니 집
+    for s2 in (-1, 1):
+        sx = cx + s2 * 38
+        F.part('metal', HP_IRON_D, bevel=1.5).ell(sx, 40, 6.6, 6.6)
+        for k in range(10):
+            a = k / 10 * math.tau + b * 0.3
+            F.part('metal', HP_IRON, bevel=0.4).box(sx + math.cos(a) * 6.4 - 0.8, 40 + math.sin(a) * 6.4 - 0.8, 1.6, 1.6, 0.3)
+        F.part('metal', HP_BRASS, bevel=1).ell(sx, 40, 3.6, 3.6)
+    if st >= 1:
+        crack(F, [(cx + 20, 14), (cx + 16, 24), (cx + 22, 34)], 0.5, HP_FIRE)
+        crack(F, [(52, 40), (46, 52), (50, 62)], 0.45, HP_FIRE)
+    if st >= 2:
+        crack(F, [(cx - 22, 56), (cx - 26, 70), (cx - 22, 84)], 0.55, HP_FIRE)
+        crack(F, [(150, 44), (156, 58), (152, 70)], 0.5, HP_FIRE)
+        for x in (cx - 30, cx + 30):                                                              # 달아오른 이음매
+            F.part('glow', '#ff7a30', glow=True).box(x - 0.5, 60, 1.0, 40, 0.3)
+    if dead:
+        for k in range(10):
+            x = 20 + k * 17
+            F.part('stone', HP_BRICK if k % 2 else HP_IRON_D, bevel=1).poly([(x, 101), (x + 4, 98), (x + 7, 101.6), (x + 3, 103)])
+    return F.render()
+
+
+def hepha_parts(f):
+    """조각 7장(40×48) — 0 화로 문 왼쪽 반(경첩 (2, 47) · 문 18×44, 오른쪽 위가 아치) · 1 핵(가운데 (20, 24)) · 2 팔 윗마디((4, 24) → (36, 24) 격자 들보)
+       3 팔 아랫마디((4, 24) → (30, 24) · 끝에 걸쇠 (33, 24)) · 4 국자(걸이 (20, 8) · 그릇 아래 · 위에 쇳물) · 5 문 — 막 2(찌그러짐 · 금) · 6 금 간 핵"""
+    F = ZFig(40, 48)
+    if f in (0, 5):
+        pts = [(2, 47), (2, 22)] + [(20 - 18 * math.cos(math.pi / 2 * k / 10), 22 - 18 * math.sin(math.pi / 2 * k / 10)) for k in range(11)] + [(20, 47)]
+        F.part('metal', HP_IRON_D, bevel=2).poly(pts)
+        F.part('metal', '#6a625a', bevel=1.5).poly([(x + (11 - x) * 0.08, y + (30 - y) * 0.04) for (x, y) in pts])
+        for y in (14, 26, 38):                                                                    # 띠 · 리벳
+            F.part('metal', HP_IRON_D, bevel=0.8).box(2.6, y, 16.8, 2, 0.4)
+            for k in range(5):
+                F.part('metal', '#b0a898', bevel=0.3).ell(4 + k * 3.6, y + 1, 0.5, 0.5)
+        F.part('metal', HP_BRASS, bevel=1).ell(12, 31, 2.6, 2.6)                                  # 들여다보는 구멍
+        F.part('glow', HP_FIRE, glow=True).ell(12, 31, 1.4, 1.4)
+        F.part('metal', HP_IRON_D, bevel=0.8).box(16, 28, 3, 8, 0.8)                              # 손잡이
+        for y in (8, 42):
+            F.part('metal', '#3a3430', bevel=0.8).box(1.4, y, 4, 3, 0.6)                          # 경첩
+        if f == 5:
+            crack(F, [(6, 18), (9, 24), (7, 30)], 0.4, HP_FIRE)
+            F.part('metal', '#3a3430', flat=True).ell(14, 40, 3, 2)
+    elif f in (1, 6):
+        F.glow(20, 24, 14, HP_FIRE, 0.5)
+        F.part('glow', '#ff7a30', glow=True).ell(20, 24, 12, 12)
+        F.part('glow', HP_FIRE, glow=True).ell(19, 23, 8.6, 8.6)
+        F.part('glow', '#fff0c0', glow=True).ell(17.6, 21.4, 3.6, 3.2)
+        for k in range(6):                                                                        # 쇠 갈비 우리
+            a = k / 6 * math.pi + 0.26
+            fine(F, (20 + math.cos(a) * 12.6, 24 - math.sin(a) * 12.6), (20 + math.cos(a) * 12.6, 24 + math.sin(a) * 12.6), HP_IRON_D, 240)
+            F.part('metal', HP_IRON_D, bevel=0.6).cap(20 + math.cos(a) * 12.4, 24 - math.sin(a) * 12.4, 20 + math.cos(a) * 12.4, 24 + math.sin(a) * 12.4, 0.8, 0.8)
+        F.part('metal', HP_IRON_D, bevel=1).box(6, 23, 28, 2, 0.6)
+        if f == 6:
+            crack(F, [(12, 16), (16, 22), (13, 30)], 0.5, '#1a1210')
+    elif f in (2, 3):
+        L = 36 if f == 2 else 30
+        for s2 in (-1, 1):                                                                        # 위아래 현
+            F.part('metal', HP_IRON_D, bevel=1).cap(4, 24 + s2 * 3.4, L, 24 + s2 * 2.6, 1.1, 1.0)
+        for k in range(int((L - 4) / 4)):                                                         # 격자
+            x = 4 + k * 4
+            fine(F, (x, 20.6), (x + 4, 27.4), HP_IRON, 255); fine(F, (x, 27.4), (x + 4, 20.6), HP_IRON, 255)
+        F.part('metal', HP_BRASS, bevel=1).ell(4, 24, 3.2, 3.2)                                   # 관절
+        F.part('metal', '#3a3430', bevel=0.6).ell(4, 24, 1.2, 1.2)
+        if f == 3:
+            F.part('metal', HP_IRON_D, bevel=1).poly([(L, 21), (L + 4, 22), (L + 4, 26), (L, 27)])
+            F.part('metal', HP_BRASS, bevel=0.8).ell(L + 3, 24, 2.0, 2.0)
+    else:
+        F.part('metal', '#3a3430', bevel=0.8).cap(20, 8, 12, 14, 0.8, 0.8)                         # 걸이줄
+        F.part('metal', '#3a3430', bevel=0.8).cap(20, 8, 28, 14, 0.8, 0.8)
+        F.part('metal', HP_BRASS, bevel=0.8).ell(20, 8, 1.6, 1.6)
+        bowl = [(9, 14), (31, 14), (29, 24), (24, 30), (16, 30), (11, 24)]
+        F.part('metal', HP_IRON_D, bevel=2).poly(bowl)
+        F.part('metal', HP_IRON, bevel=1.5).poly([(x + (20 - x) * 0.1, y + 0.6) for (x, y) in bowl])
+        F.part('glow', HP_FIRE, glow=True).ell(20, 15, 10, 1.6)                                   # 쇳물 면
+        F.part('glow', '#fff0c0', glow=True).ell(17, 14.8, 3, 0.6)
+        F.part('metal', HP_IRON_D, bevel=0.8).poly([(31, 14), (35, 12.6), (35.6, 14.2), (31, 16)])  # 주둥이
+        F.part('metal', '#7a4a2a', flat=True).poly([(14, 22), (18, 22.4), (15, 26)])
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2245,6 +2421,7 @@ RIGS = {
     'ice_warden': {'body': (IW_W, IW_H, 8, 2, watch_body), 'parts': (20, 36, 5, watch_parts)},
     'spore_queen': {'body': (SQ_W, SQ_H, 8, 2, spore_body), 'parts': (80, 36, 5, spore_parts)},
     'proliferator': {'body': (PF_W, PF_H, 8, 2, prolif_core), 'parts': (14, 14, 6, prolif_parts)},
+    'hepha': {'body': (HP_W, HP_H, 8, 2, hepha_body), 'parts': (40, 48, 7, hepha_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

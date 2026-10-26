@@ -1651,6 +1651,9 @@
   "문을 여는 것은 수가 아니라 말이다. 세 글자짜리 말.": [
    "game/ruins.ruinCipher"
   ],
+  "문이 닫혀 있다": [
+   "entity/boss-hepha.hpHurt"
+  ],
   "문지기가 하루에 한 번씩 더하던 수다.": [
    "game/ruins.ruinCipher"
   ],
@@ -3193,7 +3196,7 @@
    "ui/machine.machLive"
   ],
   "정지 핵이 물렸다 — 지금이다": [
-   "entity/boss-ai.bossAI"
+   "entity/boss-hepha.hpAI"
   ],
   "제단": [
    "game/boss.altar",
