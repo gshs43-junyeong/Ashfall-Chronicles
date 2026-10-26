@@ -1738,6 +1738,144 @@ def storm_parts(f):
     return F.render()
 
 
+# ===== 갱도의 것(mine_horror) — 길 잃은 광부들을 삼킨 살덩이가 녹슨 광차에 실려 레일 위만 달린다 · 삼킨 투구의 등불이 눈이다 =====
+MH_FL, MH_FL_D, MH_FL_L = '#7a2e34', '#4a1a22', '#a8464a'
+MH_IRON, MH_IRON_D, MH_RUST, MH_HELM, MH_LAMP = '#555a64', '#2c2f36', '#8a5232', '#b89a4a', '#ffd27a'
+MH_W, MH_H = 72, 56                                           # 게임 game/boss-cart-art.ts MH 와 같게(바퀴 (21, 47) · (51, 47) r6.5 · 땅 54 · 판정 52×46 · 가운데 36)
+MH_LAMPS = [(26, 15, -0.3), (44, 12, 0.25), (35, 21, 0.0), (52, 19, 0.5)]   # 투구 등불(눈) — 넷째는 막 2 부터
+
+
+def mh_helmet(F, x, y, a, lit):
+    """삼킨 투구 하나 — 살에 반쯤 묻혀 기울었다 · 등불이 눈"""
+    ca, sa = math.cos(a), math.sin(a)
+    R = lambda dx, dy: (x + dx * ca - dy * sa, y + dx * sa + dy * ca)
+    F.part('metal', MH_HELM, bevel=1.2).poly([R(-4.6, 1.6), R(-4.2, -1.6), R(-2.4, -3.6), R(0, -4.2), R(2.4, -3.6), R(4.2, -1.6), R(4.6, 1.6)])
+    F.part('metal', '#7a6430', bevel=0.6).poly([R(-5.6, 1.2), R(5.6, 1.2), R(5.4, 2.2), R(-5.4, 2.2)])     # 챙
+    F.part('metal', '#3a3020', bevel=0.5).ell(*R(0, -1.8), 1.8, 1.6)
+    if lit:
+        F.part('glow', MH_LAMP, glow=True).ell(*R(0, -1.8), 1.2, 1.1)
+        F.glow(*R(0, -1.8), 4.5, MH_LAMP, 0.35)
+    else:
+        F.part('metal', '#4a4030', flat=True).ell(*R(0, -1.8), 1.1, 1.0)
+
+
+def mine_body(f):
+    """몸 8장(72×56) — 0·1 살이 숨 쉰다(입 틈이 열린다) · 2·3 녹 · 고름 · 4·5 앞판이 찢겨 살이 비어져 나온다 · 6·7 무너짐(등불이 꺼진다)"""
+    F = ZFig(MH_W, MH_H)
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = 0 if f < 6 else (1 if f == 6 else 2)
+    sag = dead * 4
+    # 살 무더기 — 광차 위로 솟고 가장자리로 흘러넘친다(뒤 겹)
+    top = 7 - b * 0.8 + sag
+    mound = [(11, 30), (12, 24), (16, 17 + sag * 0.6), (22, top + 4), (30, top), (40, top - 1 + b * 0.3), (50, top + 2), (57, 13 + sag * 0.7), (61, 20), (62, 30)]
+    F.part('flesh', MH_FL_D, bevel=4).poly(mound)
+    F.part('flesh', MH_FL, bevel=3).poly([(x + (36 - x) * 0.07, y + 1.4) for (x, y) in mound])
+    for (x, y, rx, ry) in [(24, 14 + sag, 6, 4), (42, 11 + sag, 7, 4.5), (54, 18 + sag, 4.5, 3.4), (33, 22, 5, 3)]:     # 불룩한 혹
+        F.part('flesh', MH_FL_L, bevel=2).ell(x - 1, y - 1 + b * 0.3, rx, ry)
+    for (x0, y0, x1, y1) in [(20, 18, 27, 24), (39, 14, 46, 20), (48, 22, 55, 27), (29, 12, 33, 19)]:   # 핏줄
+        fine(F, (x0, y0 + sag), (x1, y1 + sag * 0.5), '#3a1218', 200)
+    # 꽂힌 것들 — 부러진 버팀목 · 곡괭이 자루(삼킨 갱도의 흔적)
+    F.part('wood', '#6a4a2a', bevel=1).cap(15, 20 + sag, 6, 6 + sag, 1.4, 1.1)
+    F.part('wood', '#4a3420', flat=True).poly([(5.2, 5 + sag), (7.6, 4.2 + sag), (6.8, 7.4 + sag)])      # 쪼개진 끝
+    F.part('wood', '#7a5a34', bevel=0.6).cap(57, 16 + sag, 64, 5 + sag, 0.6, 0.6)
+    F.part('metal', '#6a6e78', bevel=0.8).poly([(61, 3.4 + sag), (67, 6.6 + sag), (66.4, 7.6 + sag), (62.4, 5.4 + sag), (60, 6 + sag)])
+    # 입 — 살 가운데 가로로 갈라진 틈 · 이빨은 부러진 광석 조각
+    my = 25 + sag * 0.5
+    F.part('flesh', '#1e0a0e', flat=True).poly([(28, my), (36, my - 1.2 - b * 1.4), (45, my), (36, my + 1.2 + b * 1.6)])
+    for k in range(6):
+        x = 30 + k * 2.6
+        F.part('stone', '#c8bca0', bevel=0.4).poly([(x, my - 0.6), (x + 1.2, my - 0.6), (x + 0.6, my + 0.8 + (k % 2) * 0.6)])
+    # 투구 등불 — 막이 오를수록 하나 더 · 쓰러지면 꺼진다
+    for i, (x, y, a) in enumerate(MH_LAMPS):
+        if i == 3 and st < 2:
+            continue
+        mh_helmet(F, x, y + sag + (b * 0.4 if i % 2 else 0), a + dead * 0.4, not dead)
+    # 광차 — 아래로 좁아지는 쇠 통 · 리벳 · 녹물 · 번호판
+    cart = [(9, 28), (63, 28), (60, 46), (12, 46)]
+    F.part('metal', MH_IRON_D, bevel=2).poly(cart)
+    F.part('metal', MH_IRON, bevel=1.5).poly([(10.6, 29.4), (61.4, 29.4), (58.8, 44.6), (13.2, 44.6)])
+    F.part('metal', '#6a707c', bevel=1).box(8, 27, 56, 2.4, 0.8)                                       # 테두리 쇠띠
+    for k in range(4):                                                                                    # 판 이음 · 리벳
+        x = 16 + k * 13
+        fine(F, (x, 29.6), (x - 0.6 + k * 0.4, 44.4), MH_IRON_D, 230)
+        for y in (31, 37.5, 43):
+            F.part('metal', '#8a8e98', bevel=0.4).ell(x + 1.2, y, 0.55, 0.55)
+    for (x, ln) in [(20, 9), (33, 6), (47, 11), (55, 5)]:                                                 # 녹물 줄
+        F.part('metal', MH_RUST, flat=True).poly([(x, 29.6), (x + 1.4, 29.6), (x + 1.0, 29.6 + ln), (x + 0.4, 29.6 + ln)])
+    F.part('metal', '#3a3020', bevel=0.6).box(32, 33, 9, 6, 0.6)                                          # 번호판 — 7호차
+    fine(F, (34, 34.4), (39, 34.4), '#d8c890'); fine(F, (39, 34.4), (36, 38), '#d8c890')
+    for s2 in (-1, 1):                                                                                    # 완충 고무
+        bx = 36 + s2 * 28
+        F.part('metal', MH_IRON_D, bevel=1).box(bx - 2 + (s2 > 0) * 0.5, 36, 4, 4, 1)
+        F.part('metal', '#6a6e78', bevel=0.8).ell(bx + s2 * 1.6, 38, 1.4, 2.2)
+    # 차축 받침
+    for wx in (21, 51):
+        F.part('metal', MH_IRON_D, bevel=1).box(wx - 4, 44, 8, 3, 1)
+    # 흘러내린 살 — 테두리를 넘어 판 위로 늘어진 혀
+    for (x, ln, w) in [(14, 7 + st * 2, 2.6), (27, 4 + st, 2), (49, 6 + st * 2, 2.4), (59, 4, 1.8)]:
+        F.part('flesh', MH_FL, bevel=1).cap(x, 28, x - 0.4, 28 + ln + b * 0.6, w, w * 0.6)
+        F.part('flesh', MH_FL_L, flat=True).ell(x - 0.6, 28.6, w * 0.5, 0.7)
+    if st >= 1:                                                                                           # 고름 방울 · 녹 구멍
+        for (x, y) in [(23, 17), (47, 15), (40, 21)]:
+            F.part('flesh', '#d8c070', bevel=0.6).ell(x, y + sag, 1.2, 1.0)
+        F.part('metal', '#1a1a1e', flat=True).poly([(44, 40), (47, 39), (48, 42), (45, 43)])
+    if st >= 2:                                                                                           # 찢긴 앞판 — 살이 비어져 나온다
+        F.part('metal', '#1a1a1e', flat=True).poly([(20, 31), (30, 30.6), (31, 38), (26, 41), (19, 37)])
+        F.part('flesh', MH_FL, bevel=2).ell(25, 35, 5, 4)
+        F.part('flesh', MH_FL_L, flat=True).ell(24, 34, 2.2, 1.6)
+        F.part('flesh', '#1e0a0e', flat=True).ell(26, 36.5, 1.8, 0.8)                                     # 그 안에도 틈
+        for (x0, y0, x1, y1) in [(20, 31, 17, 28.6), (30, 30.6, 32.6, 28.4)]:                            # 젖혀진 쇠판 끝
+            F.part('metal', MH_IRON, bevel=0.6).poly([(x0, y0), (x1, y1), (x1 + 1.2, y1 + 0.6), (x0 + 1, y0 + 0.6)])
+    if dead:
+        for k in range(6):                                                                                # 흘러내린 살 웅덩이
+            x = 12 + k * 9
+            F.part('flesh', MH_FL_D, bevel=1).ell(x, 46 + dead, 4 + (k % 2), 1.4)
+    return F.render()
+
+
+def mine_parts(f):
+    """조각 5장(24×24) — 0 바퀴(가운데 (12, 12) · r 6.5 · 살이 엉긴 바퀴살) · 1 팔 마디(살 촉수 (3, 12) → (21, 12))
+       2 곡괭이 손((3, 12) 에서 쥔 녹슨 곡괭이 · 날끝 (21, 4)) · 3 솟는 촉수(밑 (12, 23) → 끝 (12, 2) · 갈고리 이빨) · 4 금 간 바퀴"""
+    F = ZFig(24, 24)
+    if f in (0, 4):
+        F.part('metal', MH_IRON_D, bevel=1).ell(12, 12, 6.6, 6.6)
+        F.part('metal', MH_IRON, bevel=1).ell(12, 12, 5.6, 5.6)
+        F.part('metal', '#1e2026', flat=True).ell(12, 12, 4.2, 4.2)
+        for k in range(6):                                                                                # 바퀴살 — 돌 때 보이게 하나는 살이 감겼다
+            a = k / 6 * math.tau
+            F.part('metal', '#6a6e78', bevel=0.4).cap(12, 12, 12 + math.cos(a) * 4.4, 12 + math.sin(a) * 4.4, 0.6, 0.5)
+        F.part('flesh', MH_FL, bevel=0.6).cap(12, 12, 12 + 4.2, 12 - 0.6, 1.1, 0.7)
+        F.part('metal', '#8a8e98', bevel=0.6).ell(12, 12, 1.4, 1.4)
+        F.part('metal', '#6a707c', bevel=0.4).ell(12 - 4.6, 12 - 3.4, 0.6, 0.6)
+        if f == 4:
+            crack(F, [(12, 6), (14, 9), (13, 12)], 0.3, '#ffb050')
+    elif f == 1:
+        F.part('flesh', MH_FL_D, bevel=1.5).cap(4.5, 12, 20, 12, 3.4, 2.6)
+        F.part('flesh', MH_FL, bevel=1).cap(4.8, 11.4, 19.6, 11.6, 2.4, 1.8)
+        for k in range(4):
+            fine(F, (6 + k * 4, 9.6), (7 + k * 4, 14.4), '#3a1218', 180)                                 # 주름
+    elif f == 2:
+        F.part('wood', '#6a4a2a', bevel=0.6).cap(5, 16, 17, 5, 0.8, 0.8)                                 # 자루
+        F.part('metal', '#6a6e78', bevel=0.8).poly([(12, 2.4), (21.4, 4), (22, 5.4), (17.6, 5.2), (14.4, 8.6), (13, 7.6), (15.6, 4.4)])
+        F.part('metal', MH_RUST, flat=True).poly([(18, 4.2), (20.4, 4.4), (19.6, 5.0)])
+        F.part('flesh', MH_FL_D, bevel=1.2).cap(3.6, 13, 8, 13.6, 2.8, 2.6)                                 # 감아쥔 촉수 끝
+        F.part('flesh', MH_FL, bevel=1).ell(8.4, 13.4, 2.6, 2.4)
+        for k in range(3):
+            F.part('flesh', MH_FL_L, bevel=0.6).cap(7 + k * 1.2, 11.4, 9.6 + k * 1.2, 16 - k * 0.6, 0.7, 0.5)
+    elif f == 3:
+        pts = [(12 + math.sin(t * 2.4) * 2.2 * (1 - t), 23 - t * 20) for t in [k / 10 for k in range(11)]]
+        for (a, b2), k in zip(zip(pts, pts[1:]), range(10)):
+            r = 3.2 - k * 0.24
+            F.part('flesh', MH_FL_D if k % 2 else MH_FL, bevel=1).cap(a[0], a[1], b2[0], b2[1], r, r - 0.24)
+        for k in range(4):                                                                                # 갈고리 이빨
+            x, y = pts[2 + k * 2]
+            s2 = 1 if k % 2 else -1
+            F.part('stone', '#d8ccb0', bevel=0.3).poly([(x + s2 * 1.8, y), (x + s2 * 3.8, y - 1.6), (x + s2 * 1.6, y - 1.2)])
+        F.part('flesh', '#1e0a0e', flat=True).ell(pts[-1][0], pts[-1][1] + 1, 0.8, 1.1)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -1750,6 +1888,7 @@ RIGS = {
     'frost_witch': {'body': (FW_W, FW_H, 8, 2, witch_body), 'parts': (28, 56, 5, witch_parts)},
     'void_king': {'body': (VK_W, VK_H, 8, 2, void_cloak), 'parts': (48, 48, 6, void_parts)},
     'storm_warden': {'body': (SW_W, SW_H, 8, 2, storm_body), 'parts': (64, 64, 3, storm_parts)},
+    'mine_horror': {'body': (MH_W, MH_H, 8, 2, mine_body), 'parts': (24, 24, 5, mine_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

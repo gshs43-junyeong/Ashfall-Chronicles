@@ -48,29 +48,8 @@ export const BossAI: Bag & ThisType<Enemy> = {
     else if (AI === 'b_judge') this.jdAI(dt, world);                  // 판결석 좌상(entity/boss-judge)
     else if (AI === 'b_eclipse') this.ecAI(dt, world);                // 일식(entity/boss-eclipse)
     else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
-    else if (AI === 'b_slime') {
-      if (this.onGround) {
-        this.vx *= 0.86;
-        /* 2페이즈 — 껍데기가 굳는다(onPhaseChange 에서 guard=1). */
-        if (this.lastPh() && this.landT !== 1) {
-          this.landT = 1; this.guard = 0; this.openT = 0.9;
-          G.ringFx(this.cx, this.cy, this.w * 0.9, '#9fe0ff', .4);
-        }
-        if (this.jumpCd <= 0) {
-          this.landT = 0;
-          /* 2페이즈는 일부러 느리게 뛴다. */
-          this.jumpCd = this.lastPh() ? 2.2 : 1.5 - this.pf * 0.7;
-          this.vy = -680 - this.pf * 120;
-          this.vx = Math.sign(dx) * (200 + this.pf * 140);
-          if (Math.random() < 0.35 + this.pf * 0.4) {
-            for (let i = 0; i < 2 + this.pf * 2; i++) {
-              const e = new Enemy('slime', this.cx + (Math.random() - 0.5) * 60, this.y, G.scale());
-              e.vy = -300; G.ents.push(e);
-            }
-          }
-        }
-      }
-      this.move(dt, world);
+    else if (AI === 'b_cart') {
+      this.mhAI(dt, world, p);                                         // 갱도의 것 — 레일 위만 달리는 광차(entity/boss-cart)
     } else if (AI === 'b_bone') {
       if (this.stateT <= 0) {
         this.state = (this.state + 1) % 3; this.stateT = this.state === 1 ? 2.2 : 2.6;

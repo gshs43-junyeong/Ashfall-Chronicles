@@ -87,11 +87,11 @@ export const BOSS_MOVES: Record<string, Bag> = {
   /* ---------------- 유적의 주인 ---------------- */
   mine_horror: { c: '#c8a878', every: 7, moves: [
     { k: 'quake', n: '갱도 붕괴', tele: 0.7, cnt: 7, spread: 380, delay: 0.95, fx: 'rock', m: 0.9 },
-    { k: 'burrow', n: '땅굴 기습', tele: 0.5, under: 1.4, r: 70, m: 1.2 },
+    { k: 'sig', sig: 'dig', n: '땅굴 기습', tele: 0.5, r: 66, m: 1.2 },
     { k: 'summon', n: '광부 망령을 깨운다', tele: 0.8, mob: 'minerghost', cnt: 2 },
     { k: 'sig', sig: 'cart', n: '광차 돌진', tele: 0.6, pose: 1, m: 1 },
     { k: 'homing', n: '녹슨 못 세례', tele: 0.6, cnt: 5, spd: 220, turn: 1.8, proj: 'rivet', m: 0.6, pw: [0.6, 1] },
-    { k: 'leap', n: '갱도 짓누르기', tele: 0.7, times: 2, waves: 1, wspd: 330, wfx: 'rock', m: 1, ph: 1, pw: [0, 1.6] }],
+    { k: 'sig', sig: 'slam', n: '갱도 짓누르기', tele: 0.7, times: 2, wspd: 330, m: 1, ph: 1, pw: [0, 1.6] }],
     ult: { k: 'quake', n: '붕락', tele: 1, cnt: 14, spread: 520, delay: 1.1, fx: 'rock', m: 1 } },
   ice_warden: { c: '#9fe0ff', every: 7, moves: [
     { k: 'wall', n: '빙벽 밀기', tele: 0.8, times: 1, spd: 240, gap: 120, fx: 'ice', m: 0.9 },

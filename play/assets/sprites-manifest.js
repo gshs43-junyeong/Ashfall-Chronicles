@@ -3981,15 +3981,15 @@ window.SPRITE_MANIFEST = {
       },
       "mine_horror": {
         "file": "boss/mine_horror.png",
-        "frameW": 216,
-        "frameH": 183,
-        "count": 6,
-        "gap": 0,
-        "foot": -2.25,
+        "frameW": 288,
+        "frameH": 224,
+        "count": 8,
+        "foot": 35,
         "side": 0,
         "death": 2,
         "scale": 1,
-        "big": 3
+        "gap": 0,
+        "rig": 1
       },
       "blight_maw": {
         "file": "boss/blight_maw.png",
@@ -4126,18 +4126,6 @@ window.SPRITE_MANIFEST = {
         "gap": 0,
         "foot": -1.5,
         "side": 1,
-        "pose": 1
-      },
-      "mine_horror_pose": {
-        "file": "boss/mine_horror_pose.png",
-        "frameW": 346,
-        "frameH": 248,
-        "count": 18,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -2.25,
-        "side": 0,
         "pose": 1
       },
       "spore_queen_pose": {
@@ -4370,6 +4358,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 256,
         "frameH": 256,
         "count": 3,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "mine_horror_parts": {
+        "file": "boss/mine_horror_parts.png",
+        "frameW": 96,
+        "frameH": 96,
+        "count": 5,
         "scale": 1,
         "gap": 0,
         "rig": 1

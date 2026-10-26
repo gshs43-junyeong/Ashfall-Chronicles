@@ -224,7 +224,9 @@ export const BossSigArtPart: Bag = {
         c.strokeStyle = 'rgba(180,138,255,.25)'; c.lineWidth = 10; c.beginPath(); c.moveTo(x, y + 16); c.lineTo(x, h.ey - cy0); c.stroke();
         c.globalAlpha = 1; return true;
       }
+      case 'mhtent': return !!this.drawCartTentacle(c, h, cx0, cy0, f);   // 땅에서 솟는 촉수(game/boss-cart-art)
       case 'rail': {                                                   // 광차 레일
+        if (this.drawCartRail(c, h, cx0, cy0, f)) return true;
         const y = h.y - cy0, x0 = h.x0 - cx0, x1 = h.x1 - cx0, n = Math.min(1, h.t * 3), xe = x0 + (x1 - x0) * n;
         c.globalAlpha = f;
         for (let xx = Math.min(x0, xe); xx < Math.max(x0, xe); xx += 14) { c.fillStyle = '#5a3a1e'; c.fillRect(xx, y - 3, 8, 3); }

@@ -37,6 +37,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
       case 'pendulum': case 'silk': case 'wingwind': case 'dust': case 'lightdive': return this.cocoonSig(d, p, world, K);   // 잿빛 고치(entity/boss-cocoon)
       case 'fist': case 'sandpour': case 'quick': case 'deadline': return this.hgSig(d, p, world, K);   // 모래시계 거상(entity/boss-hourglass)
       case 'brood': case 'bilefall': case 'spit': case 'bloom': return this.hvSig(d, p, world, K);   // 곪은 벌집 어미(entity/boss-hive)
+      case 'dig': case 'slam': return this.mhSig(d, p, world, K);   // 갱도의 것(entity/boss-cart)
       case 'verdict': case 'tablets': case 'gavel': case 'condemn': case 'sentence': return this.jdSig(d, p, world, K);   // 판결석 좌상(entity/boss-judge)
       case 'shand': case 'hands2': case 'stare': case 'totality': return this.ecSig(d, p, world, K);   // 일식(entity/boss-eclipse)
       case 'vleap': return this.vkSig(d, p, world, K);   // 공허의 왕(entity/boss-void)
@@ -95,7 +96,7 @@ export const BossSignature: Bag & ThisType<Enemy> = {
       }
       case 'cart': {                                              // 광차 돌진 — 레일을 깔고 끝까지, 뒤따라 광석 광차
         const y = this.y + this.h, x0 = this.cx;
-        this.hz({ k: 'rail', x0: x0 - side * 60, x1: x0 + side * 900, y, life: 3.4, c: K.c });
+        if (this.mhLay) this.mhLay(x0 - side * 60, x0 + side * 900, y); else this.hz({ k: 'rail', x0: x0 - side * 60, x1: x0 + side * 900, y, life: 3.4, c: K.c });   // 갱도의 것은 레일이 남아 길이 된다
         const r: Run = { busy: 99, ph: 0, pt: 0 };
         r.tick = (dt, r) => {
           r.pt += dt;

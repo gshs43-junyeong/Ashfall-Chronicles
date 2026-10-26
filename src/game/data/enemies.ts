@@ -202,7 +202,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   /* --- 유적 미니보스 --- */
   /* 이제 갱도(rank 1)와 부패(rank 6)가 체력 4배 · 공격력 3배 가까이 차이 난다 — 사연: docs/code-history.md#h9 */
   /* rank 1 — 베이스캠프 옆. */
-  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_slime', w: 180, h: 156, c: '#6a5a4a', xp: 1100, gold: 620, ph: 2, boss: 1,
+  mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_cart', w: 208, h: 184, c: '#6a5a4a', xp: 1100, gold: 620, ph: 2, boss: 1,
                  drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2], ['foreman_tag', 1, 1, 1]] },
   /* rank 2 */
   ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 80, h: 108, c: '#9fd8f0', xp: 1600, gold: 950, ph: 2, boss: 1,
