@@ -221,7 +221,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['blight_bile', 1, 2, 3], ['corrupt_ess', 1, 15, 25], ['ebon_chunk', 1, 10, 18], ['nest_crown', 1, 1, 1]] },
 
   /* ★ 다른 보스 열여섯은 전부 0.49~1.12배다 — 보스는 한 대가 센 것이 아니라 체력과 마디로 버티는 것이 이 게임의 규칙이다. */
-  drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 290, def: 110, spd: 84, ai: 'b_keeper', w: 54, h: 62, c: '#3f6a7a', xp: 25000, gold: 7400, boss: 1,
+  drowned_keeper:{ n: '가라앉은 지킴이', hp: 18000, dmg: 290, def: 110, spd: 84, ai: 'b_drowned', w: 100, h: 240, c: '#3f6a7a', xp: 25000, gold: 7400, boss: 1,
                  drops: [['keeper_seal', 1, 1, 1], ['abyss_pearl', 1, 6, 10], ['pressure_plate_m', 1, 8, 14]] },
 
   /* --- 폭주로 --- */

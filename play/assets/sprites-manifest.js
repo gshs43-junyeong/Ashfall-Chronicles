@@ -4092,12 +4092,15 @@ window.SPRITE_MANIFEST = {
       },
       "drowned_keeper": {
         "file": "boss/drowned_keeper.png",
-        "frameW": 60,
-        "frameH": 62,
+        "frameW": 160,
+        "frameH": 176,
         "count": 8,
-        "foot": -0.75,
-        "side": 2.5,
-        "death": 2
+        "foot": 23,
+        "side": -1.5,
+        "death": 2,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
       },
       "tide_warden": {
         "file": "boss/tide_warden.png",
@@ -4116,18 +4119,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "drowned_keeper_pose": {
-        "file": "boss/drowned_keeper_pose.png",
-        "frameW": 96,
-        "frameH": 84,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -0.75,
-        "side": 2.5,
-        "pose": 1
       },
       "tide_warden_pose": {
         "file": "boss/tide_warden_pose.png",
@@ -4356,6 +4347,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 256,
         "frameH": 96,
         "count": 5,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "drowned_keeper_parts": {
+        "file": "boss/drowned_keeper_parts.png",
+        "frameW": 80,
+        "frameH": 144,
+        "count": 6,
         "scale": 1,
         "gap": 0,
         "rig": 1

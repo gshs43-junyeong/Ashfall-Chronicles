@@ -47,6 +47,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
     else if (AI === 'b_judge') this.jdAI(dt, world);                  // 판결석 좌상(entity/boss-judge)
     else if (AI === 'b_eclipse') this.ecAI(dt, world);                // 일식(entity/boss-eclipse)
     else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
+    else if (AI === 'b_drowned') this.dkAI(dt, world, p, dx);        // 가라앉은 지킴이 — 잠수복 · 닻 사슬(entity/boss-drowned)
     else if (AI === 'b_shaft') this.smAI(dt, world, p, dx);          // 갱을 메운 것 — 묻힘 · 솟음 · 갱 벽 무너짐(entity/boss-shaft)
     else if (AI === 'b_spore') this.sqAI(dt, world, p);              // 포자 여왕 — 주름 · 균사 · 매달림(entity/boss-spore)
     else if (AI === 'b_watch') this.iwAI(dt, world, p);              // 얼음 감시자 — 빛줄기 · 포탑(entity/boss-watch)

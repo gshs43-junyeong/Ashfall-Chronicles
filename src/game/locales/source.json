@@ -2991,6 +2991,9 @@
   "잠수": [
    "ui.refreshStatSheet"
   ],
+  "잠수복에 막힌다": [
+   "entity/boss-drowned.dkHurt"
+  ],
   "장비": [
    "ui/craft.refreshCraft",
    "index.html"

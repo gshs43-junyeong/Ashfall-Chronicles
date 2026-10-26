@@ -2806,6 +2806,114 @@ def shaft_parts(f):
     return F.render()
 
 
+# ===== 가라앉은 지킴이(drowned_keeper) — 가라앉은 유적의 잠수 기사: 녹슨 놋쇠 잠수 투구(청록 현창) · 따개비 갑옷 · 해초 · 사슬에 매단 닻 =====
+DK_BRASS, DK_BRASS_D, DK_VERD, DK_ARMOR, DK_ARMOR_D, DK_WEED, DK_GLOW = '#a8884a', '#5a4422', '#5a9a8a', '#3e5a62', '#22343a', '#4a7a3a', '#7fe8d8'
+DK_W, DK_H = 40, 44                                           # 게임 game/boss-drowned-art.ts DK 와 같게(가운데 20 · 엉덩이 (15, 40) · (25, 40) · 어깨 (8, 19) · (32, 19) · 현창 (20, 9))
+
+
+def drowned_body(f):
+    """몸통 · 투구 8장(40×44 · 팔다리 · 닻은 조각) — 0·1 현창이 숨 쉰다(거품) · 2·3 따개비가 번진다 · 4·5 투구 유리가 금 가 물이 샌다 · 6·7 무너짐"""
+    F = ZFig(DK_W, DK_H)
+    cx = 20
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = f >= 6
+    sag = 0 if f < 6 else (2 if f == 6 else 5)
+    # 몸통 — 둥근 잠수복 가슴 · 놋쇠 목 받침(코르셋) · 허리 띠 · 납 추
+    F.part('metal', DK_ARMOR_D, bevel=3).poly([(cx - 12, 19 + sag), (cx + 12, 19 + sag), (cx + 11, 30), (cx + 8, 38), (cx - 8, 38), (cx - 11, 30)])
+    F.part('metal', DK_ARMOR, bevel=2).poly([(cx - 10.6, 20 + sag), (cx + 10.6, 20 + sag), (cx + 9.6, 30), (cx + 7, 37), (cx - 7, 37), (cx - 9.6, 30)])
+    F.part('metal', DK_BRASS_D, bevel=1.5).ell(cx, 19 + sag, 12.4, 4.4)                               # 목 받침
+    F.part('metal', DK_BRASS, bevel=1).ell(cx, 18.6 + sag, 11.4, 3.6)
+    for k in range(8):
+        a = math.pi * (0.1 + 0.8 * k / 7)
+        F.part('metal', '#d8c080', bevel=0.3).ell(cx - math.cos(a) * 10.4, 19.4 + sag + math.sin(a) * 2.6, 0.55, 0.55)
+    F.part('metal', DK_BRASS_D, bevel=1).box(cx - 9, 33, 18, 3, 0.8)                                  # 허리 띠 · 납 추
+    for s2 in (-1, 1):
+        F.part('metal', '#4a4a50', bevel=1).box(cx + s2 * 6 - 2, 26, 4, 6, 1)
+    F.part('metal', DK_BRASS, bevel=0.6).ell(cx, 34.5, 1.6, 1.2)
+    # 따개비 · 녹 — 막이 오를수록 번진다
+    spots = [(cx - 8, 24), (cx + 7, 29), (cx - 5, 31)] + ([(cx + 9, 23), (cx - 9, 34), (cx + 3, 27)] if st >= 1 else []) + ([(cx - 2, 22), (cx + 6, 35), (cx - 10, 28)] if st >= 2 else [])
+    for (x, y) in spots:
+        F.part('stone', '#c8c0a8', bevel=0.6).ell(x, y + (sag if y < 25 else 0), 1.4, 1.1)
+        F.part('stone', '#5a5448', flat=True).ell(x, y - 0.2 + (sag if y < 25 else 0), 0.5, 0.4)
+    for (x, y) in [(cx - 6, 27), (cx + 4, 32)]:
+        F.part('metal', DK_VERD, flat=True).ell(x, y, 2.2, 1.2)
+    # 투구 — 둥근 놋쇠 잠수 투구 · 큰 앞 현창 · 옆 작은 현창 · 위 공기 밸브
+    hy = 3 + sag
+    F.part('metal', DK_BRASS_D, bevel=3).ell(cx, hy + 7.6, 9.2, 9.0)
+    F.part('metal', DK_BRASS, bevel=2).ell(cx - 0.4, hy + 7.2, 8.2, 8.0)
+    F.part('metal', '#d8c080', flat=True).ell(cx - 3.6, hy + 3.4, 2.6, 1.6)
+    for (x, y) in [(cx - 8.6, hy + 8), (cx + 8.6, hy + 8)]:                                          # 옆 현창
+        F.part('metal', DK_BRASS_D, bevel=0.8).ell(x, y, 2.0, 2.4)
+        F.part('glow' if not dead else 'metal', '#2a5a58' if not dead else '#1a2a2a', glow=not dead).ell(x, y, 1.2, 1.6)
+    F.part('metal', DK_BRASS_D, bevel=1.4).ell(cx, hy + 8.4, 5.6, 5.4)                               # 앞 현창 테
+    F.part('metal', '#0e1a1c', flat=True).ell(cx, hy + 8.4, 4.4, 4.2)
+    if not dead:
+        F.part('glow', DK_GLOW, glow=True).ell(cx, hy + 8.6, 2.6 + b * 0.3, 2.4 + b * 0.3)
+        F.part('glow', '#e8fff8', glow=True).ell(cx - 0.8, hy + 7.8, 0.9, 0.8)
+        F.glow(cx, hy + 8.6, 6 + b, DK_GLOW, 0.35)
+    for k in range(4):                                                                               # 현창 창살
+        a = k / 4 * math.pi
+        fine(F, (cx + math.cos(a) * 4.4, hy + 8.4 + math.sin(a) * 4.2), (cx - math.cos(a) * 4.4, hy + 8.4 - math.sin(a) * 4.2), DK_BRASS_D, 230)
+    for k in range(10):
+        a = k / 10 * math.tau
+        F.part('metal', '#d8c080', bevel=0.3).ell(cx + math.cos(a) * 5.2, hy + 8.4 + math.sin(a) * 5.0, 0.45, 0.45)
+    F.part('metal', DK_BRASS_D, bevel=0.8).box(cx + 4, hy - 1.4, 3, 3, 0.8)                           # 공기 밸브
+    F.part('metal', DK_VERD, flat=True).ell(cx + 6, hy + 2, 1.6, 0.9)
+    if st >= 2:
+        crack(F, [(cx + 2, hy + 5), (cx + 3.4, hy + 8), (cx + 1.6, hy + 11)], 0.3, '#e8fff8')
+    # 해초 — 투구와 어깨에서 늘어진다
+    for (x0, y0, ln, w) in [(cx - 7, hy + 12, 10, 1.0), (cx + 9, 21 + sag, 12, 0.9), (cx - 11, 22 + sag, 9, 0.8)]:
+        pts = [(x0 + math.sin(t * 3 + x0) * 1.4, y0 + t * ln) for t in [k / 6 for k in range(7)]]
+        for (a, bb) in zip(pts, pts[1:]):
+            F.part('cloth', DK_WEED, bevel=0.4).cap(a[0], a[1], bb[0], bb[1], w, w * 0.8)
+    if dead:
+        for k in range(5):
+            x = 8 + k * 6
+            F.part('metal', DK_ARMOR if k % 2 else DK_BRASS_D, bevel=0.8).poly([(x, 42), (x + 3, 40.4), (x + 5, 42.4), (x + 2, 43.6)])
+    return F.render()
+
+
+def drowned_parts(f):
+    """조각 6장(20×36) — 0 다리((10, 3) → 발 (10, 33) · 납 장화) · 1 윗팔((10, 3) → (10, 14)) · 2 아래팔 + 집게 장갑((10, 3) → 손 (10, 14))
+       3 닻(고리 (10, 3) · 아래 갈고리 둘 · 따개비) · 4 사슬 고리 하나(가운데 (10, 18)) · 5 금 간 닻"""
+    F = ZFig(20, 36)
+    if f == 0:
+        F.part('metal', DK_ARMOR_D, bevel=1.5).cap(10, 4, 10, 18, 3.4, 3.0)
+        F.part('metal', DK_ARMOR, bevel=1).cap(9.6, 5, 9.6, 17, 2.4, 2.2)
+        F.part('metal', DK_BRASS, bevel=1).ell(10, 19, 3.2, 2.4)
+        F.part('metal', DK_ARMOR_D, bevel=1.5).cap(10, 20, 10, 28, 3.0, 2.8)
+        F.part('metal', '#4a4a50', bevel=1.4).poly([(4, 34.6), (16.4, 34.6), (15, 28.4), (5.4, 28.4)])   # 납 장화
+        F.part('metal', DK_BRASS, bevel=0.6).box(5.4, 28.4, 9.6, 1.4, 0.4)
+    elif f == 1:
+        F.part('metal', DK_BRASS, bevel=1).ell(10, 3.4, 3.0, 3.0)
+        F.part('metal', DK_ARMOR, bevel=1).cap(10, 4, 10, 13.4, 2.6, 2.4)
+    elif f == 2:
+        F.part('metal', DK_ARMOR, bevel=1).cap(10, 3.4, 10, 11, 2.4, 2.2)
+        F.part('metal', DK_BRASS_D, bevel=1).ell(10, 12.6, 3.0, 2.6)
+        for s2 in (-1, 1):
+            F.part('metal', DK_BRASS, bevel=0.6).cap(10 + s2 * 1.4, 13.6, 10 + s2 * 2.4, 17, 1.0, 0.7)
+    elif f in (3, 5):
+        F.part('metal', '#4a4e54', bevel=1.2).ell(10, 3.4, 2.4, 2.4)                                   # 고리
+        F.part('metal', '#1e2226', flat=True).ell(10, 3.4, 1.2, 1.2)
+        F.part('metal', '#4a4e54', bevel=1.4).cap(10, 5.6, 10, 30, 1.6, 1.6)                          # 자루
+        F.part('metal', '#4a4e54', bevel=1.2).box(5, 9, 10, 2.2, 0.8)                                  # 가로대
+        arc = [(10 + math.sin(a) * 8, 30 - math.cos(a) * 4 + 4) for a in [math.pi * (-0.5 + k / 10) for k in range(11)]]
+        for (a, bb) in zip(arc, arc[1:]):
+            F.part('metal', '#4a4e54', bevel=1).cap(a[0], a[1], bb[0], bb[1], 1.5, 1.5)
+        for s2 in (-1, 1):
+            F.part('metal', '#5a5e64', bevel=0.8).poly([(10 + s2 * 8, 30), (10 + s2 * 9.6, 26), (10 + s2 * 6.8, 28.6)])
+        for (x, y) in [(8.6, 16), (11.4, 22), (14, 33)]:
+            F.part('stone', '#c8c0a8', bevel=0.5).ell(x, y, 1.1, 0.9)
+        F.part('metal', DK_VERD, flat=True).ell(9.4, 26, 1.0, 2.0)
+        if f == 5:
+            crack(F, [(9, 12), (11, 18), (9.6, 24)], 0.35, DK_GLOW)
+    else:
+        F.part('metal', '#4a4e54', bevel=0.8).ell(10, 18, 2.6, 3.6)
+        F.part('metal', '#1e2226', flat=True).ell(10, 18, 1.2, 2.2)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2827,6 +2935,7 @@ RIGS = {
     'archetype': {'body': (AR_W, AR_H, 8, 2, arche_body), 'parts': (12, 26, 6, arche_parts)},
     'restorer': {'body': (RS_W, RS_H, 8, 2, restorer_core), 'parts': (64, 64, 6, restorer_parts)},
     'shaft_maw': {'body': (SM_W, SM_H, 8, 2, shaft_head), 'parts': (64, 24, 5, shaft_parts)},
+    'drowned_keeper': {'body': (DK_W, DK_H, 8, 2, drowned_body), 'parts': (20, 36, 6, drowned_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 
