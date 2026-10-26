@@ -247,7 +247,8 @@ export const EnemyAI: Bag & ThisType<Enemy> = {
       case 'b_judge': G.judgePhaseFx(this); break;
       case 'b_root': G.rootPhaseFx(this); break;                     // 잎과 수액빛이 쏟아진다(game/boss-root-fx)                   // 눈가리개가 갈라진다(game/boss-judge-fx)
       case 'b_eclipse': G.eclipsePhaseFx(this); break;               // 원판이 떨고 별 파편이 진다(game/boss-eclipse-fx)
-      case 'b_cart': G.cartPhaseFx(this); break;                     // 앞판이 찢긴다(game/boss-cart-art)
+      case 'b_cart': G.cartPhaseFx(this); break;
+      case 'b_watch': if (ph >= lock) this.iwDetach(); break;      // 어깨 포탑이 떨어져 나간다(entity/boss-watch)                     // 앞판이 찢긴다(game/boss-cart-art)
       case 'b_witch':
         /* 2페이즈 — 바닥이 언다. */
         if (ph >= lock) { this.iceFloor = 1; this.layHeat(world, p); }

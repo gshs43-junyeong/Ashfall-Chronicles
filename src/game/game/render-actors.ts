@@ -336,6 +336,7 @@ export const RenderActorsPart: Bag = {
       return;
     }
     if (e.def.ai === 'b_organ' || e.def.ai === 'b_hourglass' || e.def.ai === 'b_hive' || e.def.ai === 'b_judge' || e.def.ai === 'b_eclipse' || e.def.ai === 'b_root' || e.def.ai === 'b_void') return;                                  // 뒷벽의 오르간 — 몸은 objects · 팔은 actors 단계에서(game/boss-organ-art)
+    if (e.def.ai === 'b_watch' && this.spritesOn && this.drawWatch(c, e, sx, sy)) return;    // 얼음 감시자(game/boss-watch-art)
     if (e.def.ai === 'b_cart' && this.spritesOn && this.drawCart(c, e, sx, sy)) return;      // 갱도의 것(game/boss-cart-art)
     if (e.def.ai === 'b_storm' && this.spritesOn && this.drawStorm(c, e, sx, sy)) return;    // 폭풍의 수호자(game/boss-storm-art)
     if (e.def.ai === 'b_witch' && this.spritesOn && this.drawWitch(c, e, sx, sy)) return;   // 서리 마녀 실비아(game/boss-witch-art)

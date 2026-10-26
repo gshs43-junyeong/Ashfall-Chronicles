@@ -1876,6 +1876,143 @@ def mine_parts(f):
     return F.render()
 
 
+# ===== 얼음 감시자(ice_warden) — 얼음 유적의 망루 구조물: 청동 띠로 묶은 빙하 덩이 몸 · 등롱 머리의 큰 렌즈 하나가 눈 · 어깨 포탑 둘 =====
+IW_ICE, IW_ICE_D, IW_ICE_L, IW_BRZ, IW_BRZ_D, IW_LENS = '#8cc8e0', '#3e6a84', '#d4f0fa', '#9a7444', '#5a4228', '#e8fbff'
+IW_W, IW_H, IW_DY = 56, 68, 4                                 # 게임 game/boss-watch-art.ts IW 와 같게(가운데 28 · 엉덩이 (19, 60) · (37, 60) · 렌즈 (28, 15) · 어깨 받침 (11, 29) · (45, 29)) — 그린 뒤 IW_DY 만큼 내린다(지붕 고드름)
+
+
+def watch_body(f):
+    """몸 8장(56×64 · 다리는 조각) — 0·1 속의 톱니가 돈다 · 2·3 금 · 서리 결정이 자란다 · 4·5 어깨 받침이 비었다(포탑이 떨어져 나감) · 금이 깊다 · 6·7 무너짐"""
+    F = ZFig(IW_W, IW_H - IW_DY)
+    cx = 28
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    sag = 0 if f < 6 else (3 if f == 6 else 8)
+    # 몸통 — 넓은 가슴에서 허리로 좁아지는 빙하 덩이
+    body = [(cx - 19, 22 + sag), (cx - 13, 16 + sag), (cx + 13, 16 + sag), (cx + 19, 22 + sag), (cx + 17, 34), (cx + 11, 47), (cx - 11, 47), (cx - 17, 34)]
+    F.part('ice', IW_ICE_D, bevel=4).poly(body)
+    F.part('ice', IW_ICE, bevel=3).poly([(x + (cx - x) * 0.09, y + 1.2) for (x, y) in body])
+    F.part('ice', IW_ICE_L, bevel=2).poly([(cx - 15, 22 + sag), (cx - 11, 18.4 + sag), (cx - 3, 18.4 + sag), (cx - 5, 26), (cx - 14, 29)])
+    # 허리 아래 — 청동 비늘 치마(엉덩이 관절을 덮는다 · 다리는 그 밑에서 나온다)
+    F.part('metal', IW_BRZ_D, bevel=2).poly([(cx - 12, 45), (cx + 12, 45), (cx + 15, 52), (cx - 15, 52)])
+    for k in range(-1, 2):
+        x = cx + k * 9
+        F.part('metal', IW_BRZ, bevel=1.2).poly([(x - 4.6, 46), (x + 4.6, 46), (x + 5.2 + k * 0.8, 55 - abs(k)), (x - 5.2 + k * 0.8, 55 - abs(k))])
+        F.part('metal', '#c8a060', bevel=0.4).ell(x, 48, 0.7, 0.7)
+        fine(F, (x - 4.4 + k * 0.4, 53.6 - abs(k)), (x + 4.4 + k * 0.8, 53.6 - abs(k)), IW_BRZ_D, 230)
+    # 얼음 속에 갇힌 시계 장치 — 망루의 톱니(장마다 조금 돈다)
+    F.part('ice', '#2a4a60', flat=True).ell(cx, 33, 8.4, 8.4)
+    a0 = b * 0.26 + st * 0.5
+    for k in range(10):
+        a = a0 + k / 10 * math.tau
+        F.part('metal', IW_BRZ, bevel=0.5).poly([(cx + math.cos(a - 0.12) * 6.2, 33 + math.sin(a - 0.12) * 6.2), (cx + math.cos(a - 0.08) * 7.6, 33 + math.sin(a - 0.08) * 7.6),
+                                                   (cx + math.cos(a + 0.08) * 7.6, 33 + math.sin(a + 0.08) * 7.6), (cx + math.cos(a + 0.12) * 6.2, 33 + math.sin(a + 0.12) * 6.2)])
+    F.part('metal', IW_BRZ, bevel=1).ell(cx, 33, 6.3, 6.3)
+    F.part('metal', '#2a3a48', flat=True).ell(cx, 33, 4.6, 4.6)
+    F.part('metal', '#c8a060', bevel=0.6).cap(cx, 33, cx + math.cos(a0 * 3) * 3.6, 33 + math.sin(a0 * 3) * 3.6, 0.5, 0.3)   # 바늘
+    F.part('metal', '#c8a060', bevel=0.6).ell(cx, 33, 1.0, 1.0)
+    F.part('ice', IW_ICE_L, flat=True).poly([(cx - 7, 27), (cx - 3, 26), (cx - 6, 30)])                                  # 얼음 겉의 반사
+    for (y, w) in ((21.5 + sag * 0.6, 14.6), (42.5, 12.2)):                                                              # 청동 띠
+        F.part('metal', IW_BRZ_D, bevel=1).poly([(cx - w, y - 1.2), (cx + w, y - 1.2), (cx + w - 0.4, y + 1.4), (cx - w + 0.4, y + 1.4)])
+        F.part('metal', IW_BRZ, bevel=0.6).poly([(cx - w + 0.4, y - 1.0), (cx + w - 0.4, y - 1.0), (cx + w - 0.6, y + 0.2), (cx - w + 0.6, y + 0.2)])
+        for k in range(5):
+            F.part('metal', '#c8a060', bevel=0.3).ell(cx - w * 0.8 + k * w * 0.4, y + 0.2, 0.6, 0.6)
+    # 어깨 — 빙하 견갑 위에 포탑이 앉는 청동 고리(포탑은 게임이 그린다) · 막 2 엔 비어 서리가 낀다
+    for s2 in (-1, 1):
+        sx = cx + s2 * 18
+        F.part('ice', IW_ICE_D, bevel=3).ell(sx, 25 + sag, 7.4, 6.4)
+        F.part('ice', IW_ICE, bevel=2).ell(sx - s2 * 0.4, 24.4 + sag, 6.2, 5.2)
+        F.part('ice', IW_ICE_L, flat=True).ell(sx - 2, 22.4 + sag, 2.4, 1.4)
+        F.part('metal', IW_BRZ_D, bevel=1.2).ell(sx, 21.2 + sag, 4.8, 1.8)
+        F.part('metal', IW_BRZ, bevel=0.8).ell(sx, 20.8 + sag, 4.0, 1.3)
+        for k in range(4):
+            F.part('metal', '#c8a060', bevel=0.3).ell(sx - 3 + k * 2, 21.4 + sag, 0.45, 0.45)
+        if st >= 2:
+            F.part('metal', '#1e2a34', flat=True).ell(sx, 20.8 + sag, 2.8, 0.8)
+            for k in range(3):
+                F.part('ice', IW_ICE_L, bevel=0.4).poly([(sx - 3 + k * 2.6, 20.6 + sag), (sx - 2.2 + k * 2.6, 17.4 + sag - (k % 2)), (sx - 1.4 + k * 2.6, 20.6 + sag)])
+    # 머리 — 등롱: 청동 틀 · 큰 렌즈 하나(눈 · 빛은 게임이 돌린다) · 지붕의 뾰족한 서리 꼭지
+    hy = 2 + sag
+    F.part('metal', IW_BRZ_D, bevel=2).poly([(cx - 9, hy + 15), (cx - 10, hy + 6), (cx - 6, hy + 2), (cx + 6, hy + 2), (cx + 10, hy + 6), (cx + 9, hy + 15)])
+    F.part('metal', IW_BRZ, bevel=1.5).poly([(cx - 11, hy + 3.4), (cx - 4, hy - 1.2), (cx + 4, hy - 1.2), (cx + 11, hy + 3.4), (cx + 9, hy + 4.2), (cx - 9, hy + 4.2)])   # 처마 진 지붕
+    F.part('ice', IW_ICE_L, bevel=0.6).poly([(cx - 1, hy - 1), (cx, hy - 5.4), (cx + 1, hy - 1)])                        # 꼭지 고드름
+    F.part('metal', '#1a2632', flat=True).ell(cx, hy + 9, 6.6, 6.0)
+    F.part('ice', '#6aa8c8', bevel=1).ell(cx, hy + 9, 5.4, 5.0)
+    F.part('ice', IW_LENS, bevel=0.6).ell(cx - 1.2, hy + 7.8, 2.2, 1.8)
+    F.part('glow', '#bff0ff', glow=True).ell(cx, hy + 9, 1.6 + b * 0.3, 1.6 + b * 0.3)
+    F.glow(cx, hy + 9, 6 + b, '#bff0ff', 0.3)
+    for s2 in (-1, 1):                                                                                                    # 렌즈 틀의 살 · 볼트
+        fine(F, (cx + s2 * 6.6, hy + 4), (cx + s2 * 6.6, hy + 14), '#c8a060', 220)
+        F.part('metal', '#c8a060', bevel=0.4).ell(cx + s2 * 8.4, hy + 13, 0.7, 0.7)
+    F.part('metal', IW_BRZ_D, bevel=0.8).box(cx - 11, hy + 14.4, 22, 1.6, 0.4)                                            # 망루 난간
+    for k in range(6):
+        fine(F, (cx - 10 + k * 4, hy + 14.4), (cx - 10 + k * 4, hy + 12.4), IW_BRZ, 230)
+    fine(F, (cx - 10.4, hy + 12.4), (cx + 10.4, hy + 12.4), IW_BRZ, 230)
+    # 서리 결정 — 막이 오를수록 많이
+    crys = [(cx - 23, 24 + sag, -1.0, 4), (cx + 23, 23 + sag, 0.9, 5), (cx - 7, 17 + sag, -0.2, 3)]
+    if st >= 1:
+        crys += [(cx + 7, 17 + sag, 0.25, 4), (cx - 15, 36, -1.2, 3.5), (cx + 13, 41, 1.1, 3)]
+    if st >= 2:
+        crys += [(cx + 21, 20 + sag, 0.5, 6), (cx - 21, 20 + sag, -0.5, 5)]
+    for (x, y, a, ln) in crys:
+        tx, ty = x + math.sin(a) * ln, y - math.cos(a) * ln
+        F.part('ice', IW_ICE_L, bevel=0.6).poly([(x - math.cos(a) * 1.1, y - math.sin(a) * 1.1), (tx, ty), (x + math.cos(a) * 1.1, y + math.sin(a) * 1.1)])
+    if st >= 1:
+        crack(F, [(cx + 10, 18 + sag), (cx + 7, 26), (cx + 11, 34)], 0.4, '#e8fbff')
+    if st >= 2:
+        crack(F, [(cx - 12, 30), (cx - 8, 38), (cx - 12, 48)], 0.5, '#e8fbff')
+        crack(F, [(cx + 3, 42), (cx + 6, 49)], 0.35, '#e8fbff')
+    if sag:
+        for k in range(7):
+            x = 12 + k * 5.4; y = 56 + (k % 3) * 1.6
+            F.part('ice', IW_ICE if k % 2 else IW_ICE_D, bevel=1).poly([(x, y), (x + 3, y - 2.4), (x + 5, y + 0.6), (x + 1.6, y + 2.4)])
+    out = Image.new('RGBA', (IW_W * K, IW_H * K), (0, 0, 0, 0))
+    out.paste(F.render(), (0, IW_DY * K))
+    return out
+
+
+def watch_parts(f):
+    """조각 5장(20×36) — 0 다리(엉덩이 (10, 5) → 발 (10, 33) · 얼음 덮인 청동 기둥 · 넓은 발) · 1 어깨 포탑(받침 (10, 22) · 포신 → (10, 4) 위로)
+       2 내려앉은 포탑(세 다리 · 바닥 (10, 34) · 렌즈 (10, 14)) · 3 다리 — 막 2(서리 덮임) · 4 금 간 포탑"""
+    F = ZFig(20, 36)
+    if f in (0, 3):
+        F.part('metal', IW_BRZ_D, bevel=1.5).cap(10, 5.4, 10, 18, 4.4, 4.0)
+        F.part('ice', IW_ICE_D, bevel=1.5).poly([(3.6, 8), (16.4, 8), (15.2, 17), (4.8, 17)])          # 넓적다리 얼음 갑
+        F.part('ice', IW_ICE, bevel=1).poly([(4.8, 8.8), (14.6, 8.8), (13.8, 15.6), (5.8, 15.6)])
+        F.part('metal', IW_BRZ, bevel=1).ell(10, 19, 5.0, 3.0)                                    # 무릎
+        F.part('metal', '#c8a060', bevel=0.4).ell(10, 19, 1.0, 1.0)
+        F.part('metal', IW_BRZ_D, bevel=1.5).cap(10, 21, 10, 30, 4.2, 4.0)
+        F.part('ice', IW_ICE_L if f == 3 else IW_ICE, bevel=1).poly([(4.8, 22), (15.2, 22), (14.4, 30), (5.6, 30)])   # 정강이 얼음 갑
+        F.part('metal', IW_BRZ_D, bevel=1.2).poly([(2.4, 35), (17.6, 35), (16, 31), (4, 31)])           # 발
+        F.part('metal', IW_BRZ, bevel=0.6).box(4, 31, 12, 1.4, 0.4)
+        if f == 3:
+            for k in range(3):
+                F.part('ice', IW_ICE_L, bevel=0.4).poly([(6 + k * 3, 31), (6.8 + k * 3, 27.6), (7.6 + k * 3, 31)])
+    elif f in (1, 4):
+        F.part('metal', IW_BRZ_D, bevel=1.4).box(5, 17, 10, 6, 1.4)                                # 받침
+        F.part('metal', IW_BRZ, bevel=1.2).ell(10, 15, 4.6, 4.2)                                    # 회전 머리
+        F.part('metal', '#4a5868', bevel=1.2).cap(10, 13, 10, 3.4, 2.2, 1.8)                         # 포신
+        F.part('metal', IW_BRZ, bevel=0.6).box(7.4, 6, 5.2, 1.4, 0.5)
+        F.part('ice', '#6aa8c8', bevel=0.6).ell(10, 3.0, 1.9, 1.2)
+        F.part('glow', '#bff0ff', glow=True).ell(10, 3.0, 1.0, 0.7)
+        F.part('ice', '#6aa8c8', bevel=0.6).ell(10, 15, 2.2, 2.0)                                   # 작은 렌즈(제 눈)
+        F.part('glow', '#bff0ff', glow=True).ell(10, 15, 1.0, 1.0)
+        if f == 4:
+            crack(F, [(7, 17), (9, 20), (8, 22)], 0.3, '#e8fbff')
+    else:
+        for (x0, x1) in [(10, 3.4), (10, 16.6), (10, 10)]:                                          # 세 다리
+            F.part('metal', IW_BRZ_D, bevel=0.8).cap(x0, 22, x1, 33.4, 1.0, 0.8)
+        F.part('metal', IW_BRZ, bevel=0.6).box(2, 33, 16, 1.6, 0.6)
+        F.part('metal', IW_BRZ_D, bevel=1.4).box(5, 19, 10, 5, 1.4)
+        F.part('metal', IW_BRZ, bevel=1.2).ell(10, 15, 4.6, 4.2)
+        F.part('metal', '#4a5868', bevel=1.2).cap(10, 13, 10, 3.4, 2.2, 1.8)
+        F.part('ice', '#6aa8c8', bevel=0.6).ell(10, 3.0, 1.9, 1.2)
+        F.part('glow', '#bff0ff', glow=True).ell(10, 3.0, 1.0, 0.7)
+        F.part('ice', '#6aa8c8', bevel=0.6).ell(10, 15, 2.2, 2.0)
+        F.part('glow', '#bff0ff', glow=True).ell(10, 15, 1.0, 1.0)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -1889,6 +2026,7 @@ RIGS = {
     'void_king': {'body': (VK_W, VK_H, 8, 2, void_cloak), 'parts': (48, 48, 6, void_parts)},
     'storm_warden': {'body': (SW_W, SW_H, 8, 2, storm_body), 'parts': (64, 64, 3, storm_parts)},
     'mine_horror': {'body': (MH_W, MH_H, 8, 2, mine_body), 'parts': (24, 24, 5, mine_parts)},
+    'ice_warden': {'body': (IW_W, IW_H, 8, 2, watch_body), 'parts': (20, 36, 5, watch_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

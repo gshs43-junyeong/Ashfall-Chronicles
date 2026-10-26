@@ -205,7 +205,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   mine_horror:  { n: '갱도의 것', hp: 1900, dmg: 42, def: 16, spd: 96, ai: 'b_cart', w: 208, h: 184, c: '#6a5a4a', xp: 1100, gold: 620, ph: 2, boss: 1,
                  drops: [['rust_gear', 1, 2, 3], ['iron_ore', 1, 20, 30], ['lost_lamp', 1, 1, 2], ['foreman_tag', 1, 1, 1]] },
   /* rank 2 */
-  ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_witch', w: 80, h: 108, c: '#9fd8f0', xp: 1600, gold: 950, ph: 2, boss: 1,
+  ice_warden:   { n: '얼음 감시자', hp: 2800, dmg: 56, def: 24, spd: 74, ai: 'b_watch', w: 150, h: 320, c: '#9fd8f0', xp: 1600, gold: 950, ph: 2, boss: 1,
                  drops: [['frozen_core', 1, 2, 3], ['frost_core', 1, 8, 14], ['ice_shard', 1, 20, 30], ['warden_seal', 1, 1, 1]] },
   /* rank 3 */
   vine_lord:    { n: '덩굴 군주 · 뿌리 대성당', hp: 5200, dmg: 74, def: 34, spd: 0, ai: 'b_root', w: 140, h: 180, wall: 1, c: '#3f7a34', xp: 2300, gold: 1500, ph: 3, boss: 1,

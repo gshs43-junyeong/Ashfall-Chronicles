@@ -48,6 +48,7 @@ export const BossAI: Bag & ThisType<Enemy> = {
     else if (AI === 'b_judge') this.jdAI(dt, world);                  // 판결석 좌상(entity/boss-judge)
     else if (AI === 'b_eclipse') this.ecAI(dt, world);                // 일식(entity/boss-eclipse)
     else if (AI === 'b_pool') this.poolAI(dt, world, p, dx);          // 잿물 군체(entity/boss-pool)
+    else if (AI === 'b_watch') this.iwAI(dt, world, p);              // 얼음 감시자 — 빛줄기 · 포탑(entity/boss-watch)
     else if (AI === 'b_cart') {
       this.mhAI(dt, world, p);                                         // 갱도의 것 — 레일 위만 달리는 광차(entity/boss-cart)
     } else if (AI === 'b_bone') {

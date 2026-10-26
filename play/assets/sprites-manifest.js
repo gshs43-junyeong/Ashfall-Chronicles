@@ -3957,15 +3957,15 @@ window.SPRITE_MANIFEST = {
       },
       "ice_warden": {
         "file": "boss/ice_warden.png",
-        "frameW": 116,
-        "frameH": 144,
-        "count": 6,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 1,
+        "frameW": 224,
+        "frameH": 272,
+        "count": 8,
+        "foot": 35,
+        "side": 1.5,
         "death": 2,
         "scale": 1,
-        "big": 2
+        "gap": 0,
+        "rig": 1
       },
       "sand_guardian": {
         "file": "boss/sand_guardian.png",
@@ -4114,18 +4114,6 @@ window.SPRITE_MANIFEST = {
         "gap": 0,
         "foot": 1.25,
         "side": 0,
-        "pose": 1
-      },
-      "ice_warden_pose": {
-        "file": "boss/ice_warden_pose.png",
-        "frameW": 186,
-        "frameH": 195,
-        "count": 18,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -1.5,
-        "side": 1,
         "pose": 1
       },
       "spore_queen_pose": {
@@ -4366,6 +4354,15 @@ window.SPRITE_MANIFEST = {
         "file": "boss/mine_horror_parts.png",
         "frameW": 96,
         "frameH": 96,
+        "count": 5,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "ice_warden_parts": {
+        "file": "boss/ice_warden_parts.png",
+        "frameW": 80,
+        "frameH": 144,
         "count": 5,
         "scale": 1,
         "gap": 0,
