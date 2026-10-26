@@ -2914,6 +2914,112 @@ def drowned_parts(f):
     return F.render()
 
 
+# ===== 조수의 파수꾼(tide_warden) — 물이 지운 것: 조수에 깎인 돌 거상 · 지워진 얼굴(눈구멍에서 물이 흐른다) · 가슴의 조수 눈금 · 배의 조수 심장 · 허리 아래는 물 =====
+TW_ST, TW_ST_D, TW_ST_L, TW_CORAL, TW_HEART, TW_WATER = '#6a8a94', '#34505a', '#9ab8c0', '#d87a6a', '#7fe0ff', '#3f7fa8'
+TW_W, TW_H, TW_DY = 56, 64, 4                                 # 게임 game/boss-tide-art.ts TW 와 같게(그린 뒤 TW_DY 내린 자리: 가운데 28 · 허리 62 · 어깨 (11, 26) · (45, 26) · 눈구멍 · 심장 (28, 50))
+
+
+def tide_body(f):
+    """윗몸 8장(56×60 · 팔은 조각 · 허리 아래 물은 게임) — 0·1 심장이 숨 쉰다 · 2·3 산호 · 금 · 4·5 어깨가 깎여 나간다 · 6·7 무너짐"""
+    F = ZFig(TW_W, TW_H - TW_DY)
+    cx = 28
+    st = min(2, f // 2) if f < 6 else 2
+    b = f % 2 if f < 6 else 0
+    dead = f >= 6
+    sag = 0 if f < 6 else (3 if f == 6 else 7)
+    # 몸통 — 물에 깎여 매끈해진 돌 · 결이 물결처럼 휜다
+    torso = [(cx - 18, 22 + sag), (cx - 12, 17 + sag), (cx + 12, 17 + sag), (cx + 18, 22 + sag), (cx + 16, 38), (cx + 13, 50), (cx + 14, 58), (cx - 14, 58), (cx - 13, 50), (cx - 16, 38)]
+    F.part('stone', TW_ST_D, bevel=4).poly(torso)
+    F.part('stone', TW_ST, bevel=3).poly([(x + (cx - x) * 0.08, y + 1) for (x, y) in torso])
+    F.part('stone', TW_ST_L, flat=True).poly([(cx - 15, 23 + sag), (cx - 10, 19.4 + sag), (cx - 4, 19.6 + sag), (cx - 7, 30), (cx - 14, 33)])
+    for k in range(6):                                                                             # 물결 결 — 물이 깎은 자국
+        y = 26 + k * 4.6
+        pts = [(cx - 14 + j * 2.8, y + math.sin(j * 0.9 + k) * 0.8) for j in range(11)]
+        for (a, bb) in zip(pts, pts[1:]):
+            fine(F, a, bb, TW_ST_D, 150)
+    # 조수 눈금 — 가슴에 새긴 세로 자 · 눈금 · 표시
+    F.part('stone', TW_ST_D, flat=True).box(cx + 6, 21 + sag, 3, 26, 0.6)
+    for k in range(9):
+        y = 22 + sag + k * 2.9
+        fine(F, (cx + 6.2, y), (cx + (8.6 if k % 2 else 9.8), y), '#d8e8ec', 230)
+    # 조수 심장 — 배에 박힌 빛(썰물 때 드러난다 · 게임이 물 높이로 가린다)
+    F.part('stone', '#1a2a30', flat=True).ell(cx, 46, 5.6, 5.0)
+    if not dead:
+        F.part('glow', TW_HEART, glow=True).ell(cx, 46, 3.6 + b * 0.4, 3.2 + b * 0.4)
+        F.part('glow', '#e8fbff', glow=True).ell(cx - 1, 45.2, 1.2, 1.0)
+        F.glow(cx, 46, 8 + b, TW_HEART, 0.4)
+    for k in range(6):                                                                             # 심장 둘레 따개비
+        a = k / 6 * math.tau + 0.3
+        F.part('stone', '#c8c0a8', bevel=0.5).ell(cx + math.cos(a) * 6.4, 46 + math.sin(a) * 5.8, 1.0, 0.8)
+    # 머리 — 지워진 얼굴: 물에 깎여 한쪽이 무너진 머리 · 아래턱은 닳아 없다 · 깊은 눈구멍(물이 흐른다 — 게임) · 곰보 자국 · 갈라진 산호 · 늘어진 해초
+    hy = 2 + sag
+    skull = [(cx - 8, hy + 12), (cx - 8.6, hy + 7), (cx - 6.4, hy + 2.6), (cx - 2, hy + 0.6), (cx + 3, hy + 0.8), (cx + 7.2, hy + 3.4), (cx + 8.4, hy + 8),
+             (cx + 7, hy + 13), (cx + 4.6, hy + 15.4), (cx + 1.4, hy + 14.2), (cx - 1.6, hy + 16), (cx - 4.8, hy + 14.6)]   # 아래가 들쭉날쭉 — 닳아 없어진 턱
+    F.part('stone', TW_ST_D, bevel=3).poly(skull)
+    F.part('stone', TW_ST, bevel=2).poly([(x + (cx - x) * 0.1, y + (hy + 8 - y) * 0.06) for (x, y) in skull])
+    F.part('stone', TW_ST_L, flat=True).poly([(cx - 5.6, hy + 3.6), (cx - 1.6, hy + 2), (cx - 2.6, hy + 5.4), (cx - 6, hy + 6.4)])
+    for s2, (ex, ey, rx, ry) in [(-1, (cx - 3.4, hy + 8.6, 1.9, 3.0)), (1, (cx + 3.8, hy + 9.2, 1.6, 3.4))]:   # 눈구멍 — 세로로 길고 깊다(좌우가 다르다)
+        F.part('stone', '#0a1418', flat=True).ell(ex, ey, rx, ry)
+        F.part('stone', TW_ST_D, flat=True).poly([(ex - rx * 0.6, ey + ry * 0.8), (ex + rx * 0.6, ey + ry * 0.8), (ex + 0.2, ey + ry + 2.4)])   # 흘러내린 자국
+        if not dead:
+            F.part('glow', '#2a7a98', glow=True).ell(ex, ey + 0.6, rx * 0.4, ry * 0.4)
+    for (x, y, r) in [(cx + 5.6, hy + 4.6, 0.7), (cx - 6.6, hy + 10.6, 0.6), (cx + 6.4, hy + 11.4, 0.8), (cx - 1, hy + 3.4, 0.5), (cx + 1.4, hy + 12.6, 0.6)]:   # 곰보 — 물이 판 구멍
+        F.part('stone', '#1a2a30', flat=True).ell(x, y, r, r * 0.8)
+    coral = [(cx - 5, hy + 2.4, -0.55, 5.6), (cx + 1, hy + 0.8, 0.1, 6.4), (cx + 6, hy + 3, 0.65, 4.6)]
+    if st >= 1:
+        coral += [(cx - 2.4, hy + 1.2, -0.2, 4.4)]
+    for (x, y, a, ln) in coral:                                                                      # 산호 — 굵은 줄기에서 두 갈래로
+        tx, ty = x + math.sin(a) * ln, y - math.cos(a) * ln
+        F.part('flesh', TW_CORAL, bevel=0.6).cap(x, y, tx, ty, 1.0, 0.7)
+        for s3 in (-1, 1):
+            F.part('flesh', '#f0a090', bevel=0.4).cap(tx, ty, tx + math.sin(a + s3 * 0.7) * 2.6, ty - math.cos(a + s3 * 0.7) * 2.6, 0.6, 0.4)
+        F.part('flesh', '#f8c8b8', flat=True).ell(tx, ty, 0.5, 0.5)
+    for (x0, y0, ln) in [(cx + 7.6, hy + 7, 9), (cx - 7.8, hy + 9, 7)]:                              # 늘어진 해초
+        pts = [(x0 + math.sin(t * 3 + x0) * 1.2, y0 + t * ln) for t in [k / 5 for k in range(6)]]
+        for (p0, p1) in zip(pts, pts[1:]):
+            F.part('cloth', '#4a7a3a', bevel=0.4).cap(p0[0], p0[1], p1[0], p1[1], 0.8, 0.6)
+    # 어깨 — 둥근 돌 · 막 2 엔 깎여 나간다
+    for s2 in (-1, 1):
+        sx = cx + s2 * 17
+        F.part('stone', TW_ST_D, bevel=2).ell(sx, 22 + sag, 6.4, 5.2)
+        F.part('stone', TW_ST, bevel=1.5).ell(sx - s2 * 0.4, 21.4 + sag, 5.4, 4.2)
+        if st >= 2:
+            F.part('stone', '#1a2a30', flat=True).poly([(sx + s2 * 2, 18 + sag), (sx + s2 * 6.4, 20 + sag), (sx + s2 * 4, 23.6 + sag)])
+    for (x, y) in [(cx - 12, 30), (cx + 11, 35), (cx - 9, 52), (cx + 4, 40)]:                       # 따개비
+        F.part('stone', '#c8c0a8', bevel=0.6).ell(x, y, 1.2, 1.0)
+        F.part('stone', '#5a5448', flat=True).ell(x, y - 0.2, 0.4, 0.3)
+    if st >= 1:
+        crack(F, [(cx - 10, 24 + sag), (cx - 7, 31), (cx - 10, 38)], 0.4, TW_HEART)
+    if st >= 2:
+        crack(F, [(cx + 13, 28), (cx + 10, 36), (cx + 12, 44)], 0.45, TW_HEART)
+    out = Image.new('RGBA', (TW_W * K, TW_H * K), (0, 0, 0, 0))
+    out.paste(F.render(), (0, TW_DY * K))
+    return out
+
+
+def tide_parts(f):
+    """조각 4장(20×40) — 0 윗팔((10, 4) → 팔꿈치 (10, 20) · 깎인 돌 · 따개비) · 1 아래팔 + 손((10, 3) → 손끝 (10, 37) · 물갈퀴 같은 손가락) · 2 물을 든 손(손바닥에 물 고임) · 3 금 간 아래팔"""
+    F = ZFig(20, 40)
+    if f == 0:
+        F.part('stone', TW_ST_D, bevel=1.5).cap(10, 4.6, 10, 19, 4.2, 3.6)
+        F.part('stone', TW_ST, bevel=1).cap(9.4, 5.4, 9.4, 18, 3.2, 2.8)
+        F.part('stone', '#c8c0a8', bevel=0.5).ell(12, 12, 1.0, 0.8)
+    else:
+        F.part('stone', TW_ST_D, bevel=1.5).cap(10, 4, 10, 26, 3.6, 3.0)
+        F.part('stone', TW_ST, bevel=1).cap(9.4, 4.8, 9.4, 25, 2.8, 2.4)
+        F.part('stone', TW_ST_D, bevel=1.2).ell(10, 29, 4.4, 3.4)                                     # 손바닥
+        for k in range(4):                                                                           # 손가락 — 물갈퀴처럼 붙었다
+            x = 6.6 + k * 2.3
+            F.part('stone', TW_ST, bevel=0.6).cap(x, 30, x + (k - 1.5) * 0.6, 36.6 - abs(k - 1.5) * 0.8, 1.0, 0.7)
+        F.part('stone', TW_ST_L, flat=True).poly([(7, 31), (13, 31), (12.4, 34.6), (7.6, 34.6)])        # 물갈퀴 막
+        if f == 2:
+            F.part('glow', TW_HEART, glow=True).ell(10, 29.6, 3.0, 1.4)
+            F.glow(10, 29.6, 5, TW_HEART, 0.4)
+        if f == 3:
+            crack(F, [(8, 8), (11, 14), (9, 20)], 0.4, TW_HEART)
+    return F.render()
+
+
 RIGS = {
     'king_slime': {'body': (64, 56, 8, 2, pool_shell), 'parts': (30, 30, 10, pool_parts, (6,))},
     'bone_lord': {'body': (80, 96, 8, 2, organ_body), 'parts': (64, 24, 3, organ_parts),
@@ -2936,6 +3042,7 @@ RIGS = {
     'restorer': {'body': (RS_W, RS_H, 8, 2, restorer_core), 'parts': (64, 64, 6, restorer_parts)},
     'shaft_maw': {'body': (SM_W, SM_H, 8, 2, shaft_head), 'parts': (64, 24, 5, shaft_parts)},
     'drowned_keeper': {'body': (DK_W, DK_H, 8, 2, drowned_body), 'parts': (20, 36, 6, drowned_parts)},
+    'tide_warden': {'body': (TW_W, TW_H, 8, 2, tide_body), 'parts': (20, 40, 4, tide_parts)},
     'vine_lord': {'body': (RT_W, RT_H, 8, 2, root_body), 'parts': (64, 40, 8, root_parts, (5,)), 'more': {'crown': (120, 60, 3, root_crown)}},
 }
 

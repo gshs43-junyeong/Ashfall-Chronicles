@@ -4104,12 +4104,15 @@ window.SPRITE_MANIFEST = {
       },
       "tide_warden": {
         "file": "boss/tide_warden.png",
-        "frameW": 104,
-        "frameH": 120,
+        "frameW": 224,
+        "frameH": 256,
         "count": 8,
-        "foot": -0.75,
+        "foot": 3,
         "side": 0,
-        "death": 2
+        "death": 2,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
       },
       "isle_keeper": {
         "file": "boss/isle_keeper.png",
@@ -4119,18 +4122,6 @@ window.SPRITE_MANIFEST = {
         "foot": -0.75,
         "side": 0,
         "death": 2
-      },
-      "tide_warden_pose": {
-        "file": "boss/tide_warden_pose.png",
-        "frameW": 168,
-        "frameH": 162,
-        "count": 27,
-        "cols": 9,
-        "scale": 1,
-        "gap": 0,
-        "foot": -0.75,
-        "side": 0,
-        "pose": 1
       },
       "isle_keeper_pose": {
         "file": "boss/isle_keeper_pose.png",
@@ -4356,6 +4347,15 @@ window.SPRITE_MANIFEST = {
         "frameW": 80,
         "frameH": 144,
         "count": 6,
+        "scale": 1,
+        "gap": 0,
+        "rig": 1
+      },
+      "tide_warden_parts": {
+        "file": "boss/tide_warden_parts.png",
+        "frameW": 80,
+        "frameH": 160,
+        "count": 4,
         "scale": 1,
         "gap": 0,
         "rig": 1

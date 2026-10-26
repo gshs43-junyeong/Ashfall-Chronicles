@@ -282,7 +282,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
                  drops: [['arche_core', 1, 1, 1], ['draft_glass', 1, 40, 60], ['archestone', 1, 30, 50]] },
 
   /* --- 세션 3 보스 --- */
-  tide_warden:  { n: '조수의 파수꾼 · 물이 지운 것', hp: 148000, dmg: 310, def: 104, spd: 96, ai: 'b_keeper', w: 104, h: 120, c: '#3f7fa8', boss: 1,
+  tide_warden:  { n: '조수의 파수꾼 · 물이 지운 것', hp: 148000, dmg: 310, def: 104, spd: 96, ai: 'b_tide', w: 150, h: 300, c: '#3f7fa8', boss: 1,
                  xp: 28000, gold: 520000, minion: 'deep_octopus', aggro: 4200,
                  drops: [['abyss_pearl', 1, 20, 30], ['abyss_core', 1, 4, 6], ['tide_heart', 1, 1, 1]] },
 

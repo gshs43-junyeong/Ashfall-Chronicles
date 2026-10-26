@@ -1714,6 +1714,9 @@
   "물을 받는다": [
    "ui/process.sprinkler"
   ],
+  "물이 막는다": [
+   "entity/boss-tide.twHurt"
+  ],
   "물줄기로 자른다": [
    "ui/process.craftPlan"
   ],
